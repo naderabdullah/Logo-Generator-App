@@ -1,0 +1,30 @@
+{
+    "name": "AI Logo Generator",
+    "short_name": "Logo Gen",
+    "description": "Generate professional logos using AI with customizable style options",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#6366f1",
+    "orientation": "portrait-primary",
+    "icons": [
+      {
+        "src": "/icons/smartyapps.png",
+        "sizes": "192x192",
+        "type": "image/svg+xml",
+        "purpose": "any"
+      },
+      {
+        "src": "/icons/smartyapps.png",
+        "sizes": "512x512",
+        "type": "image/svg+xml",
+        "purpose": "any"
+      },
+      {
+        "src": "/icons/smartyapps.png",
+        "sizes": "192x192",
+        "type": "image/svg+xml",
+        "purpose": "maskable"
+      }
+    ]
+  }

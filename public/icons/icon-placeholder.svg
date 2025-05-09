@@ -1,0 +1,6 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="100" fill="#6366f1"/>
+  <circle cx="256" cy="180" r="100" fill="#ffffff" fill-opacity="0.9"/>
+  <path d="M145 300 L225 390 L290 330 L367 400" stroke="#ffffff" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <text x="256" y="440" text-anchor="middle" font-family="Arial" font-weight="bold" font-size="60" fill="#ffffff">LOGO</text>
+</svg>

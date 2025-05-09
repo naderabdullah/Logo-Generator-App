@@ -1,0 +1,39 @@
+{
+  "name": "ai-logo-generator",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "install-deps": "npm install axios formidable @types/formidable next-pwa",
+    "generate-icons": "node scripts/generate-icons.js",
+    "pwa-setup": "npm install canvas --save-dev && npm run generate-icons"
+  },
+  "dependencies": {
+    "@aws-sdk/client-lambda": "^3.806.0",
+    "@types/formidable": "^3.4.5",
+    "aws": "^0.0.3-2",
+    "axios": "^1.9.0",
+    "canvas": "^3.1.0",
+    "formidable": "^3.5.4",
+    "imagetracerjs": "^1.2.6",
+    "next": "15.3.1",
+    "next-pwa": "^5.6.0",
+    "openai": "^4.96.2",
+    "react": "^18",
+    "react-dom": "^18"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^8",
+    "eslint-config-next": "15.3.1",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5"
+  }
+}
