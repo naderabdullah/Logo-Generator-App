@@ -1,9 +1,17 @@
-// src/app/components/GenerateForm.tsx
 'use client';
 
 import { useState, useCallback, useRef, ChangeEvent, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import { use } from 'react';
 import { saveLogo, getLogo, LogoParameters } from '@/app/utils/indexedDBUtils';
+
+// Move useSearchParams to a wrapper component
+import { useSearchParams } from 'next/navigation';
+
+function useEditParam() {
+  const searchParams = useSearchParams();
+  return searchParams.get('edit');
+}
 
 interface GenerateFormProps {
   setLoading: (loading: boolean) => void;
@@ -15,7 +23,9 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   // Create unique IDs for form elements
   const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
-  const searchParams = useSearchParams();
+  
+  // Get the edit param using the hook that uses useSearchParams
+  const editLogoId = useEditParam();
   
   // Required options state
   const [companyName, setCompanyName] = useState('');
@@ -47,8 +57,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
 
   // Check for edit mode
   useEffect(() => {
-    const editLogoId = searchParams.get('edit');
-    
     if (editLogoId) {
       const loadLogoData = async () => {
         try {
@@ -105,7 +113,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       
       loadLogoData();
     }
-  }, [searchParams, setLoading, setError]);
+  }, [editLogoId, setLoading, setError]);
 
   // Handle reference image upload
   const handleReferenceImageChange = (e: ChangeEvent<HTMLInputElement>) => {
