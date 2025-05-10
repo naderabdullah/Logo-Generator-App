@@ -1,7 +1,9 @@
 // src/app/components/GenerateForm.tsx
 'use client';
 
-import { useState, useCallback, useRef, ChangeEvent } from 'react';
+import { useState, useCallback, useRef, ChangeEvent, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { saveLogo, getLogo, LogoParameters } from '@/app/utils/indexedDBUtils';
 
 interface GenerateFormProps {
   setLoading: (loading: boolean) => void;
@@ -12,6 +14,8 @@ interface GenerateFormProps {
 export default function GenerateForm({ setLoading, setImageDataUri, setError }: GenerateFormProps) {
   // Create unique IDs for form elements
   const formRef = useRef<HTMLFormElement>(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
   
   // Required options state
   const [companyName, setCompanyName] = useState('');
@@ -40,6 +44,68 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   
   // Track loading state locally
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // Check for edit mode
+  useEffect(() => {
+    const editLogoId = searchParams.get('edit');
+    
+    if (editLogoId) {
+      const loadLogoData = async () => {
+        try {
+          setLoading(true);
+          const logoData = await getLogo(editLogoId);
+          
+          if (logoData) {
+            // Fill in the form with the logo parameters
+            const params = logoData.parameters;
+            setCompanyName(params.companyName || '');
+            setOverallStyle(params.overallStyle || '');
+            setColorScheme(params.colorScheme || '');
+            setSymbolFocus(params.symbolFocus || '');
+            setBrandPersonality(params.brandPersonality || '');
+            setIndustry(params.industry || '');
+            
+            // Advanced options
+            if (params.typographyStyle || params.lineStyle || params.composition || 
+                params.shapeEmphasis || params.texture || params.complexityLevel || 
+                params.applicationContext) {
+              setShowAdvanced(true);
+            }
+            
+            setTypographyStyle(params.typographyStyle || '');
+            setLineStyle(params.lineStyle || '');
+            setComposition(params.composition || '');
+            setShapeEmphasis(params.shapeEmphasis || '');
+            setTexture(params.texture || '');
+            setComplexityLevel(params.complexityLevel || '');
+            setApplicationContext(params.applicationContext || '');
+            
+            // Convert the data URI to a File object for reference
+            if (logoData.imageDataUri) {
+              setReferenceImagePreview(logoData.imageDataUri);
+              
+              // Convert the data URI to a blob and create a file
+              try {
+                const response = await fetch(logoData.imageDataUri);
+                const blob = await response.blob();
+                const file = new File([blob], 'reference-logo.png', { type: 'image/png' });
+                setReferenceImage(file);
+              } catch (err) {
+                console.error('Error converting data URI to File:', err);
+              }
+            }
+          }
+        } catch (err) {
+          console.error('Error loading logo data for editing:', err);
+          setError('Failed to load logo data for editing');
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      loadLogoData();
+    }
+  }, [searchParams, setLoading, setError]);
 
   // Handle reference image upload
   const handleReferenceImageChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -169,6 +235,30 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     applicationContext
   ]);
 
+  // Collect parameters for saving
+  const collectParameters = useCallback((): LogoParameters => {
+    return {
+      companyName,
+      overallStyle,
+      colorScheme,
+      symbolFocus,
+      brandPersonality,
+      industry,
+      typographyStyle: typographyStyle || undefined,
+      lineStyle: lineStyle || undefined,
+      composition: composition || undefined,
+      shapeEmphasis: shapeEmphasis || undefined,
+      texture: texture || undefined,
+      complexityLevel: complexityLevel || undefined,
+      applicationContext: applicationContext || undefined
+    };
+  }, [
+    companyName, overallStyle, colorScheme, symbolFocus, 
+    brandPersonality, industry, typographyStyle, lineStyle,
+    composition, shapeEmphasis, texture, complexityLevel, 
+    applicationContext
+  ]);
+
   const areRequiredFieldsFilled = useCallback(() => {
     return companyName && overallStyle && colorScheme && symbolFocus && brandPersonality && industry;
   }, [companyName, overallStyle, colorScheme, symbolFocus, brandPersonality, industry]);
@@ -224,24 +314,31 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       console.log('Response received from API');
       
       // Process the response data
+      let imageDataUriString = '';
       if (data?.data?.[0]?.b64_json) {
-        const imageDataUriString = `data:image/png;base64,${data.data[0].b64_json}`;
-        setImageDataUri(imageDataUriString);
+        imageDataUriString = `data:image/png;base64,${data.data[0].b64_json}`;
       } else if (data?.data?.[0]?.url) {
-        setImageDataUri(data.data[0].url);
+        imageDataUriString = data.data[0].url;
       } else {
         throw new Error('No image data received in the expected format');
       }
+      
+      // Save the logo to IndexedDB
+      const parameters = collectParameters();
+      const logoId = await saveLogo(imageDataUriString, parameters);
+      
+      // Navigate to the logo view page
+      router.push(`/logos/${logoId}`);
+      
     } catch (error) {
       console.error('Error generating logo:', error);
       setError(error instanceof Error ? error.message : 'An unknown error occurred');
-    } finally {
       setLoading(false);
       setIsGenerating(false);
     }
   }, [
-    isGenerating, areRequiredFieldsFilled, buildPrompt, 
-    setLoading, setError, setImageDataUri, referenceImage
+    isGenerating, areRequiredFieldsFilled, buildPrompt, collectParameters,
+    setLoading, setError, setImageDataUri, referenceImage, router
   ]);
 
   // Function to create dropdown 

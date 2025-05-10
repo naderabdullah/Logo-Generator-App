@@ -48,17 +48,17 @@ export async function POST(request: NextRequest) {
         { type: referenceImage.type }
       );
       
-      // Use images.edit with just model, image, and prompt parameters
+      // Use images.edit with ONLY model and prompt parameters as requested
       response = await openai.images.edit({
-        model: "gpt-image-1",
+        model: "dall-e-2",
         image: imageFile,
         prompt: prompt
       });
     } else {
-      // If no reference image, use images.generate with just model and prompt
+      // If no reference image, use images.generate with ONLY model and prompt
       console.log('Using images.generate (no reference image)');
       response = await openai.images.generate({
-        model: "gpt-image-1",
+        model: "dall-e-2",
         prompt: prompt
       });
     }
