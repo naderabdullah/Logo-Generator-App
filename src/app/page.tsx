@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import Header from './components/Header';
 import GenerateForm from './components/GenerateForm';
 import LoadingSpinner from './components/LoadingSpinner';
@@ -78,31 +77,23 @@ export default function Home() {
   }, []);
 
   return (
-    <main className={`container mx-auto px-4 py-6 max-w-4xl ${appReady ? 'app-loading' : 'opacity-0'}`}>
-      <OfflineIndicator />
-      {/* <InstallBanner /> */}
-      
+    <>
       <Header />
       
-      {/* Navigation Tabs */}
-      <div className="flex mb-4 border-b border-gray-200">
-        <div className="text-center flex-1 tab-btn active">
-          Generator
+      <main className={`container mx-auto px-4 pt-28 pb-6 max-w-4xl ${appReady ? 'app-loading' : 'opacity-0'}`}>
+        <OfflineIndicator />
+        {/* <InstallBanner /> */}
+        
+        <div className="mt-2">
+          <Suspense fallback={<div className="p-4 text-center">Loading form...</div>}>
+            <GenerateFormWithParams />
+          </Suspense>
         </div>
-        <Link href="/history" className="text-center flex-1 tab-btn">
-          History
-        </Link>
-      </div>
 
-      <div className="mt-4 sm:mt-6">
-        <Suspense fallback={<div className="p-4 text-center">Loading form...</div>}>
-          <GenerateFormWithParams />
-        </Suspense>
-      </div>
-
-      <footer className="mt-8 sm:mt-12 text-center text-gray-500 text-sm pb-6">
-        <p>Logo Generation Tool • Smarty Apps • {new Date().getFullYear()}</p>
-      </footer>
-    </main>
+        <footer className="mt-8 sm:mt-12 text-center text-gray-500 text-sm pb-6">
+          <p>Logo Generation Tool • Smarty Apps • {new Date().getFullYear()}</p>
+        </footer>
+      </main>
+    </>
   );
 }

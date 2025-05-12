@@ -384,7 +384,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
 
   return (
     <div className="card">
-      <h2 className="text-xl font-semibold mb-4">Generate Logo</h2>
       <form ref={formRef} onSubmit={(e) => e.preventDefault()} className="space-y-4">
         <div className="mb-4 sm:mb-6">
           <h3 className="text-lg font-medium mb-3">Required Options</h3>
