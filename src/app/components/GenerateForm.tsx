@@ -408,7 +408,8 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       const logoId = await saveLogo(
         imageDataUriString, 
         parameters,
-        isRevision ? originalLogoId : undefined
+        isRevision ? originalLogoId : undefined,
+        companyName ? '${companyName} Logo' : 'Untitled' // Use company name for the logo name
       );
       
       // Navigate to the logo view page
@@ -681,7 +682,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
         {isRevision && (
           <div className="text-sm text-gray-600 mb-4">
             <p>This will count as a revision of your original logo.</p>
-            <p>You are allowed up to 3 revisions per logo.</p>
+            <p>You are allowed up to 3 free revisions per logo.</p>
           </div>
         )}
 

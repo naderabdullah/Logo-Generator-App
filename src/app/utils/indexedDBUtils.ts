@@ -1,13 +1,14 @@
 // src/app/utils/indexedDBUtils.ts
 import { v4 as uuidv4 } from 'uuid';
 
-// Define the logo interface with revision tracking
+// Define the logo interface with revision tracking and name field
 export interface StoredLogo {
   id: string;
+  name: string; // New field for logo name
   imageDataUri: string;
   createdAt: number;
   parameters: LogoParameters;
-  // New properties for revision tracking
+  // Properties for revision tracking
   isRevision: boolean;
   originalLogoId?: string;
   revisionNumber?: number;
@@ -39,7 +40,7 @@ export interface UserUsage {
 
 // Database configuration
 const DB_NAME = 'logoGeneratorDB';
-const DB_VERSION = 2; // Increased version for schema update
+const DB_VERSION = 3; // Increased version for schema update to add name field
 const LOGOS_STORE = 'logos';
 const USAGE_STORE = 'usage';
 
@@ -50,6 +51,7 @@ export const initDB = (): Promise<IDBDatabase> => {
 
     request.onupgradeneeded = (event: IDBVersionChangeEvent) => {
       const db = (event.target as IDBOpenDBRequest).result;
+      const oldVersion = event.oldVersion;
       
       // Create logo store if it doesn't exist
       if (!db.objectStoreNames.contains(LOGOS_STORE)) {
@@ -76,6 +78,27 @@ export const initDB = (): Promise<IDBDatabase> => {
       // Create usage store
       if (!db.objectStoreNames.contains(USAGE_STORE)) {
         db.createObjectStore(USAGE_STORE, { keyPath: 'id' });
+      }
+      
+      // Migrate existing logos to add name field if upgrading from version 2
+      if (oldVersion < 3 && oldVersion > 0) {
+        const transaction = (event.target as IDBOpenDBRequest).transaction;
+        if (transaction) {
+          const store = transaction.objectStore(LOGOS_STORE);
+          
+          // Get all existing logos and add name field
+          store.openCursor().onsuccess = (cursorEvent) => {
+            const cursor = (cursorEvent.target as IDBRequest).result;
+            if (cursor) {
+              const logo = cursor.value;
+              if (!logo.name) {
+                logo.name = "Untitled";
+                cursor.update(logo);
+              }
+              cursor.continue();
+            }
+          };
+        }
       }
     };
 
@@ -109,7 +132,7 @@ export const initializeUserUsage = async (): Promise<void> => {
         const initialUsage: UserUsage = {
           id: 'usage', // Single record
           logosCreated: 0,
-          logosLimit: 100 // Free tier: 1 logo
+          logosLimit: 100 // Free tier: 100 logos
         };
         
         const request = store.add(initialUsage);
@@ -263,7 +286,8 @@ export const canCreateRevision = async (originalLogoId: string): Promise<boolean
 export const saveLogo = async (
   imageDataUri: string, 
   parameters: LogoParameters,
-  originalLogoId?: string
+  originalLogoId?: string,
+  name?: string // New optional name parameter
 ): Promise<string> => {
   try {
     const db = await initDB();
@@ -300,6 +324,7 @@ export const saveLogo = async (
       
       const logo: StoredLogo = {
         id,
+        name: name || "Untitled", // Default to "Untitled" if no name provided
         imageDataUri,
         createdAt: Date.now(),
         parameters,
@@ -324,6 +349,46 @@ export const saveLogo = async (
     });
   } catch (error) {
     console.error('Error saving logo to IndexedDB:', error);
+    throw error;
+  }
+};
+
+// New function to rename a logo
+export const renameLogo = async (id: string, newName: string): Promise<void> => {
+  try {
+    const db = await initDB();
+    const logo = await getLogo(id);
+    
+    if (!logo) {
+      throw new Error('Logo not found');
+    }
+    
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction([LOGOS_STORE], 'readwrite');
+      const store = transaction.objectStore(LOGOS_STORE);
+      
+      // Update only the name field, keeping all other properties the same
+      const updatedLogo = {
+        ...logo,
+        name: newName.trim() || "Untitled" // Use "Untitled" if empty string
+      };
+      
+      const request = store.put(updatedLogo);
+      
+      request.onsuccess = () => {
+        resolve();
+      };
+      
+      request.onerror = (event) => {
+        reject((event.target as IDBRequest).error);
+      };
+      
+      transaction.oncomplete = () => {
+        db.close();
+      };
+    });
+  } catch (error) {
+    console.error('Error renaming logo:', error);
     throw error;
   }
 };

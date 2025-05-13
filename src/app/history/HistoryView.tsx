@@ -49,6 +49,16 @@ export default function HistoryView() {
     
     fetchLogos();
   }, []);
+
+  // Helper function to get the latest revision
+  const getLatestRevision = (revisions: StoredLogo[]): StoredLogo | null => {
+    if (revisions.length === 0) return null;
+    
+    // Sort by revision number and return the highest one
+    return [...revisions].sort((a, b) => 
+      (b.revisionNumber || 0) - (a.revisionNumber || 0)
+    )[0];
+  };
   
   const handleViewLogo = (id: string) => {
     router.push(`/logos/${id}`);
@@ -135,51 +145,60 @@ export default function HistoryView() {
           
           {!loading && !error && logosWithRevisions.length > 0 && (
             <div className="space-y-6">
-              {logosWithRevisions.map(({ original, revisions }) => (
-                <div key={original.id} className="border rounded-lg overflow-hidden shadow-sm">
-                  <div className="bg-indigo-50 p-3 border-b">
-                    <h3 className="font-medium text-indigo-800">
-                      {original.parameters.companyName} Logo
-                      <span className="text-xs text-indigo-600 ml-2">
-                        ({revisions.length} revision{revisions.length !== 1 ? 's' : ''})
-                      </span>
-                    </h3>
-                    <p className="text-xs text-gray-500">
-                      Created on {formatDate(original.createdAt)}
-                    </p>
-                  </div>
-                  
-                  <div className="p-3">
-                    <div className="flex items-start gap-3">
-                      <div className="w-1/3 sm:w-1/4 h-32 flex-shrink-0 bg-gray-50 flex items-center justify-center p-2 rounded border">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={original.imageDataUri}
-                          alt={`${original.parameters.companyName} logo`}
-                          className="max-w-full max-h-full object-contain"
-                        />
-                      </div>
-                      
-                      <div className="flex-1">
-                        <div className="mb-3">
-                          <h4 className="font-medium text-gray-800">Original Logo</h4>
-                          <p className="text-xs text-gray-500">
-                            Style: {original.parameters.overallStyle}, 
-                            Colors: {original.parameters.colorScheme}
-                          </p>
+              {logosWithRevisions.map(({ original, revisions }) => {
+                const latestRevision = getLatestRevision(revisions);
+                // Determine which logo to display - the latest revision if it exists, otherwise the original
+                const displayedLogo = latestRevision || original;
+                // Use the latest revision ID to view the latest version by default
+                const idToView = latestRevision ? latestRevision.id : original.id;
+                
+                return (
+                  <div key={original.id} className="border rounded-lg overflow-hidden shadow-sm">
+                    <div className="bg-indigo-50 p-3 border-b">
+                      <h3 className="font-medium text-indigo-800">
+                        {displayedLogo.name || "Untitled"}
+                        <span className="text-xs text-indigo-600 ml-2">
+                          ({revisions.length} revision{revisions.length !== 1 ? 's' : ''})
+                        </span>
+                      </h3>
+                      <p className="text-xs text-gray-500">
+                        {original.parameters.companyName} • Created on {formatDate(original.createdAt)}
+                        {latestRevision && (
+                          <span> • Last updated: {formatDate(latestRevision.createdAt)}</span>
+                        )}
+                      </p>
+                    </div>
+                    
+                    <div className="p-3">
+                      <div className="flex flex-col items-center">
+                        <div className="bg-gray-50 h-40 w-full flex items-center justify-center p-2 rounded border mb-3">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={displayedLogo.imageDataUri}
+                            alt={`${displayedLogo.name || displayedLogo.parameters.companyName} logo`}
+                            className="max-w-full max-h-full object-contain"
+                          />
                         </div>
                         
-                        <div className="flex flex-wrap gap-2">
+                        <div className="text-center text-sm mb-3">
+                          {latestRevision ? (
+                            <span className="font-medium">Latest Revision (#{latestRevision.revisionNumber})</span>
+                          ) : (
+                            <span className="font-medium">Original Logo</span>
+                          )}
+                        </div>
+                        
+                        <div className="flex gap-2 justify-center w-full">
                           <button
-                            onClick={() => handleViewLogo(original.id)}
-                            className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition-colors text-sm"
+                            onClick={() => handleViewLogo(idToView)}
+                            className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition-colors text-sm flex-1 max-w-32"
                           >
-                            View
+                            {revisions.length > 0 ? "View Logo" : "View Logo"}
                           </button>
                           
                           <button
-                            onClick={() => handleEditLogo(original.id)}
-                            className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors text-sm"
+                            onClick={() => handleEditLogo(displayedLogo.id)}
+                            className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors text-sm flex-1 max-w-24"
                             disabled={revisions.length >= 3}
                           >
                             {revisions.length >= 3 ? 'Max Revisions' : 'Revise'}
@@ -187,54 +206,16 @@ export default function HistoryView() {
                           
                           <button
                             onClick={() => confirmDeleteLogo(original.id)}
-                            className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors text-sm"
+                            className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors text-sm flex-1 max-w-24"
                           >
                             Delete
                           </button>
                         </div>
                       </div>
                     </div>
-                    
-                    {revisions.length > 0 && (
-                      <div className="mt-4 pt-4 border-t">
-                        <h4 className="font-medium text-gray-800 mb-3">Revisions</h4>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                          {revisions.map((revision) => (
-                            <div key={revision.id} className="border rounded p-2">
-                              <div className="h-24 bg-gray-50 flex items-center justify-center mb-2 rounded border">
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
-                                  src={revision.imageDataUri}
-                                  alt={`${revision.parameters.companyName} logo revision ${revision.revisionNumber}`}
-                                  className="max-w-full max-h-full object-contain"
-                                />
-                              </div>
-                              <div className="text-xs text-gray-500 mb-1">
-                                Revision #{revision.revisionNumber} - {formatDate(revision.createdAt)}
-                              </div>
-                              <div className="flex gap-1">
-                                <button
-                                  onClick={() => handleViewLogo(revision.id)}
-                                  className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition-colors text-xs flex-1"
-                                >
-                                  View
-                                </button>
-                                <button
-                                  onClick={() => handleEditLogo(revision.id)}
-                                  className="px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors text-xs flex-1"
-                                  disabled={revisions.length >= 3}
-                                >
-                                  {revisions.length >= 3 ? 'Max' : 'Revise'}
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

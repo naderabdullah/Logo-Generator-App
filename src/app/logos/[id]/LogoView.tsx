@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { getLogo, StoredLogo } from '@/app/utils/indexedDBUtils';
+import { getLogo, getRevisionsForLogo, StoredLogo, renameLogo } from '@/app/utils/indexedDBUtils';
 import Header from '@/app/components/Header';
 import ImageDisplay from '@/app/components/ImageDisplay';
 
@@ -14,6 +14,14 @@ export default function LogoViewClient({ logoId }: LogoViewClientProps) {
   const [logo, setLogo] = useState<StoredLogo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [originalLogo, setOriginalLogo] = useState<StoredLogo | null>(null);
+  const [revisions, setRevisions] = useState<StoredLogo[]>([]);
+  const [activeLogoId, setActiveLogoId] = useState<string>(logoId);
+  
+  // New state for name editing
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [logoName, setLogoName] = useState('Untitled');
+  const nameInputRef = useRef<HTMLInputElement>(null);
   
   const router = useRouter();
   
@@ -25,8 +33,30 @@ export default function LogoViewClient({ logoId }: LogoViewClientProps) {
         
         if (!logoData) {
           setError('Logo not found');
+          return;
+        }
+        
+        // Set the active logo to the requested logo
+        setLogo(logoData);
+        setActiveLogoId(logoId);
+        // Set the logo name
+        setLogoName(logoData.name || 'Untitled');
+        
+        // Determine if this is an original or a revision
+        if (logoData.isRevision && logoData.originalLogoId) {
+          // If it's a revision, get the original
+          const originalData = await getLogo(logoData.originalLogoId);
+          if (originalData) {
+            setOriginalLogo(originalData);
+            // Get all revisions of the original
+            const allRevisions = await getRevisionsForLogo(logoData.originalLogoId);
+            setRevisions(allRevisions);
+          }
         } else {
-          setLogo(logoData);
+          // If it's an original, set it as the original and get its revisions
+          setOriginalLogo(logoData);
+          const allRevisions = await getRevisionsForLogo(logoData.id);
+          setRevisions(allRevisions);
         }
       } catch (err) {
         console.error('Error fetching logo:', err);
@@ -44,12 +74,78 @@ export default function LogoViewClient({ logoId }: LogoViewClientProps) {
     }
   }, [logoId]);
   
+  // Handle switching to a different logo version
+  const switchLogoVersion = async (id: string) => {
+    try {
+      // If we're already displaying this logo, do nothing
+      if (id === activeLogoId) return;
+      
+      setLoading(true);
+      const logoData = await getLogo(id);
+      
+      if (!logoData) {
+        setError('Logo version not found');
+      } else {
+        setLogo(logoData);
+        setActiveLogoId(id);
+        // Update the logo name
+        setLogoName(logoData.name || 'Untitled');
+        // Update the URL without reloading the page
+        window.history.pushState({}, '', `/logos/${id}`);
+      }
+    } catch (err) {
+      console.error('Error switching logo version:', err);
+      setError('Failed to switch logo version');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Handle logo name update
+  const handleNameUpdate = async () => {
+    if (!logo) return;
+    
+    try {
+      // Make sure there's a name, or use "Untitled"
+      const newName = logoName.trim() || 'Untitled';
+      setLogoName(newName);
+      
+      // Update the logo name in the database
+      await renameLogo(logo.id, newName);
+      
+      // Update the logo object with the new name
+      setLogo({
+        ...logo,
+        name: newName
+      });
+      
+      // Exit editing mode
+      setIsEditingName(false);
+    } catch (err) {
+      console.error('Error renaming logo:', err);
+      setError('Failed to rename logo');
+    }
+  };
+  
+  // Handle keyboard events in the name input
+  const handleNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleNameUpdate();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      // Reset to the original name and exit editing mode
+      setLogoName(logo?.name || 'Untitled');
+      setIsEditingName(false);
+    }
+  };
+  
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleString();
   };
   
   const handleEdit = () => {
-    router.push(`/?edit=${logoId}`);
+    router.push(`/?edit=${activeLogoId}`);
   };
   
   return (
@@ -80,8 +176,90 @@ export default function LogoViewClient({ logoId }: LogoViewClientProps) {
         {logo && !loading && !error && (
           <div className="mt-4">
             <div className="card mb-4">
-              <h2 className="text-xl font-semibold mb-2">{logo.parameters.companyName} Logo</h2>
-              <p className="text-sm text-gray-500 mb-4">Generated on {formatDate(logo.createdAt)}</p>
+              {/* Editable logo name */}
+              <div className="flex items-center mb-2">
+                {isEditingName ? (
+                  <div className="flex-1">
+                    <input
+                      ref={nameInputRef}
+                      type="text"
+                      value={logoName}
+                      onChange={(e) => setLogoName(e.target.value)}
+                      onBlur={handleNameUpdate}
+                      onKeyDown={handleNameKeyDown}
+                      className="form-input text-xl font-semibold w-full py-1"
+                      placeholder="Untitled"
+                      autoFocus
+                    />
+                  </div>
+                ) : (
+                  <h2 
+                    className="text-xl font-semibold cursor-pointer hover:bg-gray-100 px-2 py-1 rounded transition"
+                    onClick={() => {
+                      setIsEditingName(true);
+                      // Focus input after state update
+                      setTimeout(() => nameInputRef.current?.focus(), 0);
+                    }}
+                  >
+                    {logoName || 'Untitled'}
+                  </h2>
+                )}
+                {!isEditingName && (
+                  <button 
+                    onClick={() => {
+                      setIsEditingName(true);
+                      // Focus input after state update
+                      setTimeout(() => nameInputRef.current?.focus(), 0);
+                    }}
+                    className="ml-2 text-gray-500 hover:text-indigo-600 p-1"
+                    aria-label="Edit logo name"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+              
+              <p className="text-sm text-gray-500 mb-4">
+                {logo.parameters.companyName} • Generated on {formatDate(logo.createdAt)}
+              </p>
+              
+              {/* Revision switching buttons */}
+              {(originalLogo || revisions.length > 0) && (
+                <div className="mb-4 border-b pb-3 revision-switcher">
+                  <div className="flex flex-wrap">
+                    {originalLogo && (
+                      <button
+                        onClick={() => switchLogoVersion(originalLogo.id)}
+                        className={`logo-revision-btn ${
+                          activeLogoId === originalLogo.id ? 'active' : ''
+                        }`}
+                      >
+                        Original
+                      </button>
+                    )}
+                    
+                    {revisions.map((revision) => (
+                      <button
+                        key={revision.id}
+                        onClick={() => switchLogoVersion(revision.id)}
+                        className={`logo-revision-btn ${
+                          activeLogoId === revision.id ? 'active' : ''
+                        }`}
+                      >
+                        Revision {revision.revisionNumber}
+                      </button>
+                    ))}
+                  </div>
+                  
+                  {originalLogo && revisions.length < 3 && (
+                    <div className="text-sm text-gray-600 mt-1">
+                      <span className="font-medium">{revisions.length}</span> of <span className="font-medium">3</span> revisions used
+                    </div>
+                  )}
+                </div>
+              )}
               
               <ImageDisplay imageDataUri={logo.imageDataUri} />
               
@@ -90,7 +268,7 @@ export default function LogoViewClient({ logoId }: LogoViewClientProps) {
                   onClick={handleEdit}
                   className="btn-primary"
                 >
-                  Edit This Logo
+                  {revisions.length >= 3 ? 'Create New Logo' : 'Revise This Logo'}
                 </button>
               </div>
             </div>
