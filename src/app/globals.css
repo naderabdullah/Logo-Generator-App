@@ -349,12 +349,12 @@ form > div:last-of-type:has(button) {
 
 .image-preview {
   max-width: 100%;
-  max-height: 8rem;
+  max-height: 6rem;
   border-radius: 0.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   margin-left: auto;
   margin-right: auto;
-  margin-top: 1rem;
+  margin-top: 0.5rem;
 }
 
 /* ========== Loading & Status Indicators ========== */
@@ -550,4 +550,83 @@ form > div:last-of-type:has(button) {
   z-index: 10;
   margin-top: auto;
   padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+}
+
+/* ========== Fully Adaptive Form Layout ========== */
+.form-container {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 120px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  max-height: calc(100vh - 120px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+}
+
+.form-wrapper {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding-right: 2px; /* Space for the scrollbar */
+  /* Hide scrollbar */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.form-wrapper::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
+.footer-wrapper {
+  flex: 0 0 auto;
+  padding-top: 0.5rem;
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+}
+
+/* Make form compact on all screen sizes */
+.compact-form {
+  --form-spacing: clamp(0.15rem, calc(100vh * 0.005), 0.5rem);
+}
+
+.compact-form .form-label {
+  font-size: 0.85rem;
+  margin-bottom: 0.05rem;
+}
+
+.compact-form .mb-2,
+.compact-form .mb-4 {
+  margin-bottom: var(--form-spacing) !important;
+}
+
+.compact-form .card {
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+/* Hide advanced options initially */
+.advanced-options-container {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-in-out;
+}
+
+.advanced-options-container.expanded {
+  max-height: 600px; /* Taller than needed, will be constrained by content */
+  overflow-y: auto;
+}
+
+/* Media query to make form even more compact on smaller height screens */
+@media (max-height: 700px) {
+  .compact-form .form-label {
+    font-size: 0.8rem;
+    margin-bottom: 0;
+  }
+  
+  .compact-form .mb-2 {
+    margin-bottom: 0.125rem !important;
+  }
+  
+  .compact-form .card {
+    padding: 0.375rem 0.5rem;
+  }
+  
+  .image-preview {
+    max-height: 5rem;
+  }
 }

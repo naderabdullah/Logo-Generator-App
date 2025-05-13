@@ -469,14 +469,14 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
         </div>
       )}
       
-      <form ref={formRef} onSubmit={(e) => e.preventDefault()} className="space-y-4">
-        <div className="mb-4 sm:mb-6">
-          <h3 className="text-lg font-medium mb-3">
+      <form ref={formRef} onSubmit={(e) => e.preventDefault()} className="space-y-2">
+        <div className="mb-2 sm:mb-3">
+          <h3 className="text-lg font-medium mb-2">
             {isRevision ? 'Revise Logo' : 'Create New Logo'}
           </h3>
 
           {/* Company Name Input */}
-          <div className="mb-4">
+          <div className="mb-2">
             <label htmlFor="company-name" className="form-label">
               Company Name <span className="text-red-500">*</span>
             </label>
@@ -494,14 +494,14 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
           </div>
 
           {/* Reference Image Upload - Mobile-friendly version */}
-          <div className="mb-4">
+          <div className="mb-2">
             <label htmlFor="reference-image" className="form-label">
               Reference Image {isRevision ? '(Current Logo)' : '(Optional)'}
             </label>
             <div className="relative">
               <label 
                 className="w-full flex items-center justify-center p-2 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-indigo-300 transition text-gray-500 hover:text-indigo-500"
-                style={{ minHeight: '44px' }}
+                style={{ minHeight: '40px' }}
               >
                 <span className="text-center">
                   {referenceImage ? referenceImage.name : 'Tap to upload an image'}
@@ -516,7 +516,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                 />
               </label>
             </div>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 mt-1">
               {isRevision 
                 ? 'The current logo is used as a reference for the revision'
                 : 'Upload an image for inspiration'}
@@ -594,7 +594,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
         </div>
 
         {/* Advanced Options Toggle - Mobile friendly with larger touch target */}
-        <div className="mb-4 sm:mb-6">
+        <div className="mb-2 sm:mb-3">
           <button
             type="button"
             onClick={toggleAdvancedOptions}
@@ -608,15 +608,10 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
 
         {/* Advanced Options Section with Animation */}
         <div 
-          ref={advancedSectionRef}
-          className={`transition-all duration-300 ease-in-out ${
-            showAdvanced 
-              ? 'max-h-[2000px] opacity-100 transform translate-y-0' 
-              : 'max-h-0 opacity-0 overflow-hidden transform -translate-y-4'
-          }`}
+          className={`advanced-options-container ${showAdvanced ? 'expanded' : ''}`}
         >
-          <div className="mb-4 sm:mb-6">
-            <h3 className="text-lg font-medium mb-3">Advanced Options</h3>
+          <div className="mb-2 sm:mb-3">
+            <h3 className="text-lg font-medium mb-2">Advanced Options</h3>
             
             <div className="grid grid-cols-1 gap-4">
               {renderDropdown(

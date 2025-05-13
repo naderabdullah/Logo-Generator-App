@@ -80,22 +80,24 @@ export default function Home() {
     <>
       <Header />
       
-      <div className={`app-container ${appReady ? 'app-loading' : 'opacity-0'}`}>
-        <main className="container mx-auto px-4 pt-28 pb-0 max-w-4xl content-area">
-          <OfflineIndicator />
-          {/* <InstallBanner /> */}
-          
-          <div className="mt-2">
+      <main className={`container mx-auto px-4 pt-28 pb-0 max-w-4xl ${appReady ? 'app-loading' : 'opacity-0'}`}>
+        <OfflineIndicator />
+        {/* <InstallBanner /> */}
+        
+        <div className="form-container">
+          <div className="form-wrapper compact-form">
             <Suspense fallback={<div className="p-4 text-center">Loading form...</div>}>
               <GenerateFormWithParams />
             </Suspense>
           </div>
-        </main>
-
-        <footer className="sticky-footer text-center text-gray-500 text-sm">
-          <p>Logo Generation Tool • Smarty Apps • {new Date().getFullYear()}</p>
-        </footer>
-      </div>
+          
+          <div className="footer-wrapper">
+            <p className="text-center text-gray-500 text-sm">
+              Logo Generation Tool • Smarty Apps • {new Date().getFullYear()}
+            </p>
+          </div>
+        </div>
+      </main>
     </>
   );
 }
