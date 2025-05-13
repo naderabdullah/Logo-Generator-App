@@ -2,12 +2,16 @@
 
 import { useState, useCallback, useRef, ChangeEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { use } from 'react';
-import { saveLogo, getLogo, LogoParameters } from '@/app/utils/indexedDBUtils';
-
-// Move useSearchParams to a wrapper component
 import { useSearchParams } from 'next/navigation';
+import { 
+  saveLogo, 
+  getLogo, 
+  LogoParameters, 
+  canCreateOriginalLogo, 
+  canCreateRevision 
+} from '@/app/utils/indexedDBUtils';
 
+// Helper hook to get edit param
 function useEditParam() {
   const searchParams = useSearchParams();
   return searchParams.get('edit');
@@ -26,6 +30,10 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   
   // Get the edit param using the hook that uses useSearchParams
   const editLogoId = useEditParam();
+  
+  // State to track if we're editing an original logo or a revision
+  const [isRevision, setIsRevision] = useState(false);
+  const [originalLogoId, setOriginalLogoId] = useState<string | undefined>(undefined);
   
   // Required options state
   const [companyName, setCompanyName] = useState('');
@@ -54,6 +62,32 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   
   // Track loading state locally
   const [isGenerating, setIsGenerating] = useState(false);
+  
+  // Track usage limits
+  const [canCreateLogo, setCanCreateLogo] = useState(true);
+  const [canRevise, setCanRevise] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Check usage limits when component loads
+  useEffect(() => {
+    const checkUsageLimits = async () => {
+      try {
+        // If not editing, check if user can create a new original logo
+        if (!editLogoId) {
+          const canCreate = await canCreateOriginalLogo();
+          setCanCreateLogo(canCreate);
+          
+          if (!canCreate) {
+            setErrorMessage('You have reached your logo creation limit. Please upgrade to create more logos.');
+          }
+        }
+      } catch (error) {
+        console.error('Error checking usage limits:', error);
+      }
+    };
+    
+    checkUsageLimits();
+  }, [editLogoId]);
 
   // Check for edit mode
   useEffect(() => {
@@ -100,6 +134,33 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                 setReferenceImage(file);
               } catch (err) {
                 console.error('Error converting data URI to File:', err);
+              }
+            }
+            
+            // Determine if this is a revision or an original logo
+            if (logoData.isRevision && logoData.originalLogoId) {
+              // If editing a revision, the original is its originalLogoId
+              setIsRevision(true);
+              setOriginalLogoId(logoData.originalLogoId);
+              
+              // Check if can create more revisions for this original
+              const canReviseMore = await canCreateRevision(logoData.originalLogoId);
+              setCanRevise(canReviseMore);
+              
+              if (!canReviseMore) {
+                setErrorMessage('You have reached the revision limit for this logo (maximum 3 revisions).');
+              }
+            } else {
+              // If editing an original logo, this becomes a revision of itself
+              setIsRevision(true);
+              setOriginalLogoId(logoData.id);
+              
+              // Check if can create more revisions for this original
+              const canReviseMore = await canCreateRevision(logoData.id);
+              setCanRevise(canReviseMore);
+              
+              if (!canReviseMore) {
+                setErrorMessage('You have reached the revision limit for this logo (maximum 3 revisions).');
               }
             }
           }
@@ -277,8 +338,19 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       return;
     }
     
+    // Check usage limits
+    if (isRevision && !canRevise) {
+      setError('You have reached the revision limit for this logo (maximum 3 revisions).');
+      return;
+    } else if (!isRevision && !canCreateLogo) {
+      setError('You have reached your logo creation limit. Please upgrade to create more logos.');
+      return;
+    }
+    
     const prompt = buildPrompt();
     console.log('Starting logo generation with prompt:', prompt);
+    console.log('Is revision:', isRevision);
+    console.log('Original logo ID:', originalLogoId);
 
     // Update states to indicate generation is in progress
     setLoading(true);
@@ -331,9 +403,13 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
         throw new Error('No image data received in the expected format');
       }
       
-      // Save the logo to IndexedDB
+      // Save the logo to IndexedDB with revision tracking
       const parameters = collectParameters();
-      const logoId = await saveLogo(imageDataUriString, parameters);
+      const logoId = await saveLogo(
+        imageDataUriString, 
+        parameters,
+        isRevision ? originalLogoId : undefined
+      );
       
       // Navigate to the logo view page
       router.push(`/logos/${logoId}`);
@@ -346,7 +422,8 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     }
   }, [
     isGenerating, areRequiredFieldsFilled, buildPrompt, collectParameters,
-    setLoading, setError, setImageDataUri, referenceImage, router
+    setLoading, setError, setImageDataUri, referenceImage, router,
+    isRevision, originalLogoId, canRevise, canCreateLogo
   ]);
 
   // Function to create dropdown 
@@ -384,9 +461,18 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
 
   return (
     <div className="card">
+      {errorMessage && (
+        <div className="mb-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded-lg">
+          <p className="font-bold">Notice</p>
+          <p>{errorMessage}</p>
+        </div>
+      )}
+      
       <form ref={formRef} onSubmit={(e) => e.preventDefault()} className="space-y-4">
         <div className="mb-4 sm:mb-6">
-          <h3 className="text-lg font-medium mb-3">Required Options</h3>
+          <h3 className="text-lg font-medium mb-3">
+            {isRevision ? 'Revise Logo' : 'Create New Logo'}
+          </h3>
 
           {/* Company Name Input */}
           <div className="mb-4">
@@ -409,7 +495,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
           {/* Reference Image Upload - Mobile-friendly version */}
           <div className="mb-4">
             <label htmlFor="reference-image" className="form-label">
-              Reference Image (Optional)
+              Reference Image {isRevision ? '(Current Logo)' : '(Optional)'}
             </label>
             <div className="relative">
               <label 
@@ -430,7 +516,9 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               </label>
             </div>
             <p className="text-sm text-gray-500 mt-1">
-              Upload an image for inspiration
+              {isRevision 
+                ? 'The current logo is used as a reference for the revision'
+                : 'Upload an image for inspiration'}
             </p>
             
             {referenceImagePreview && (
@@ -589,15 +677,28 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
           </div>
         </div>
 
+                      {/* Usage Limits Information */}
+        {isRevision && (
+          <div className="text-sm text-gray-600 mb-4">
+            <p>This will count as a revision of your original logo.</p>
+            <p>You are allowed up to 3 revisions per logo.</p>
+          </div>
+        )}
+
         {/* Generate Button - Mobile optimized size */}
         <button
           type="button"
           className="btn-primary w-full"
-          disabled={isGenerating || !areRequiredFieldsFilled()}
+          disabled={
+            isGenerating || 
+            !areRequiredFieldsFilled() || 
+            (isRevision && !canRevise) ||
+            (!isRevision && !canCreateLogo)
+          }
           onClick={handleGenerateLogo}
           style={{ minHeight: '48px' }}
         >
-          {isGenerating ? 'Generating Logo...' : 'Generate Logo'}
+          {isGenerating ? 'Generating Logo...' : isRevision ? 'Generate Revision' : 'Generate Logo'}
         </button>
 
         {/* Loading indicator text */}

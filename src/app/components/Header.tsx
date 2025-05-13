@@ -4,9 +4,11 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { getUserUsage } from '@/app/utils/indexedDBUtils';
 
 export default function Header() {
   const [isInstalled, setIsInstalled] = useState(false);
+  const [usage, setUsage] = useState<{ used: number, limit: number } | null>(null);
   const pathname = usePathname();
   
   // Determine active tab based on pathname
@@ -25,6 +27,24 @@ export default function Header() {
     };
     
     mediaQuery.addEventListener('change', handleChange);
+    
+    // Get user usage information
+    const fetchUsage = async () => {
+      try {
+        const usageData = await getUserUsage();
+        if (usageData) {
+          setUsage({
+            used: usageData.logosCreated,
+            limit: usageData.logosLimit
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching usage:', error);
+      }
+    };
+    
+    fetchUsage();
+    
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
@@ -47,15 +67,28 @@ export default function Header() {
               <h1 className="text-lg font-bold text-indigo-500 leading-tight">
                 AI Logo Generator
               </h1>
-              {/*}
-              {isInstalled && (
-                <div className="text-xs text-indigo-600">
-                  ✓ App installed
+              {usage && usage.used >= usage.limit && (
+                <div className="text-xs text-yellow-600">
+                  Logo limit reached
                 </div>
               )}
-              */}
             </div>
           </div>
+          
+          {/* Usage indicator */}
+          {usage && (
+            <div className="hidden sm:block text-right">
+              <div className="text-xs text-gray-600">
+                <span className="font-medium">{usage.used}</span> of <span className="font-medium">{usage.limit}</span> logos
+              </div>
+              <div className="w-24 bg-gray-200 rounded-full h-1.5 mt-1">
+                <div 
+                  className="bg-indigo-600 h-1.5 rounded-full" 
+                  style={{ width: `${Math.min(100, (usage.used / usage.limit) * 100)}%` }}
+                ></div>
+              </div>
+            </div>
+          )}
         </div>
         
         {/* Navigation Tabs */}

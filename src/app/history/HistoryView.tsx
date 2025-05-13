@@ -2,15 +2,25 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getAllLogos, deleteLogo, StoredLogo } from '@/app/utils/indexedDBUtils';
+import { 
+  getAllLogosWithRevisions, 
+  deleteLogo, 
+  StoredLogo,
+  getUserUsage
+} from '@/app/utils/indexedDBUtils';
 import Header from '@/app/components/Header';
 import Link from 'next/link';
 
 export default function HistoryView() {
-  const [logos, setLogos] = useState<StoredLogo[]>([]);
+  const [logosWithRevisions, setLogosWithRevisions] = useState<{
+    original: StoredLogo;
+    revisions: StoredLogo[];
+  }[]>([]);
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedLogo, setSelectedLogo] = useState<string | null>(null);
+  const [usage, setUsage] = useState<{ used: number, limit: number } | null>(null);
   
   const router = useRouter();
   
@@ -18,8 +28,17 @@ export default function HistoryView() {
     const fetchLogos = async () => {
       try {
         setLoading(true);
-        const allLogos = await getAllLogos();
-        setLogos(allLogos);
+        const allLogosWithRevisions = await getAllLogosWithRevisions();
+        setLogosWithRevisions(allLogosWithRevisions);
+        
+        // Get usage information
+        const usageData = await getUserUsage();
+        if (usageData) {
+          setUsage({
+            used: usageData.logosCreated,
+            limit: usageData.logosLimit
+          });
+        }
       } catch (err) {
         console.error('Error fetching logos:', err);
         setError('Failed to load logo history');
@@ -48,7 +67,9 @@ export default function HistoryView() {
     
     try {
       await deleteLogo(selectedLogo);
-      setLogos(logos.filter(logo => logo.id !== selectedLogo));
+      // Refresh the list after deletion
+      const allLogosWithRevisions = await getAllLogosWithRevisions();
+      setLogosWithRevisions(allLogosWithRevisions);
       setSelectedLogo(null);
     } catch (err) {
       console.error('Error deleting logo:', err);
@@ -68,6 +89,27 @@ export default function HistoryView() {
         <div className="mt-4 card">
           <h2 className="text-xl font-semibold mb-4">Logo History</h2>
           
+          {/* Usage information */}
+          {usage && (
+            <div className="mb-6 p-3 bg-indigo-50 rounded-lg">
+              <h3 className="font-medium text-indigo-700">Your Logo Usage</h3>
+              <p className="text-sm text-indigo-600">
+                You have created {usage.used} of {usage.limit} available logos
+                {usage.used >= usage.limit && (
+                  <span className="ml-2">
+                    <Link href="/upgrade" className="text-indigo-800 underline">Upgrade for more</Link>
+                  </span>
+                )}
+              </p>
+              <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                <div 
+                  className="bg-indigo-600 h-2.5 rounded-full" 
+                  style={{ width: `${Math.min(100, (usage.used / usage.limit) * 100)}%` }}
+                ></div>
+              </div>
+            </div>
+          )}
+          
           {loading && (
             <div className="text-center my-8">
               <div className="spinner"></div>
@@ -82,7 +124,7 @@ export default function HistoryView() {
             </div>
           )}
           
-          {!loading && !error && logos.length === 0 && (
+          {!loading && !error && logosWithRevisions.length === 0 && (
             <div className="text-center py-8">
               <p className="text-gray-600 mb-4">You haven't generated any logos yet.</p>
               <Link href="/" className="btn-primary inline-block">
@@ -91,49 +133,105 @@ export default function HistoryView() {
             </div>
           )}
           
-          {!loading && !error && logos.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {logos.map(logo => (
-                <div key={logo.id} className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                  <div className="p-2 h-48 flex items-center justify-center bg-gray-50">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={logo.imageDataUri}
-                      alt={`${logo.parameters.companyName} logo`}
-                      className="max-w-full max-h-full object-contain"
-                    />
+          {!loading && !error && logosWithRevisions.length > 0 && (
+            <div className="space-y-6">
+              {logosWithRevisions.map(({ original, revisions }) => (
+                <div key={original.id} className="border rounded-lg overflow-hidden shadow-sm">
+                  <div className="bg-indigo-50 p-3 border-b">
+                    <h3 className="font-medium text-indigo-800">
+                      {original.parameters.companyName} Logo
+                      <span className="text-xs text-indigo-600 ml-2">
+                        ({revisions.length} revision{revisions.length !== 1 ? 's' : ''})
+                      </span>
+                    </h3>
+                    <p className="text-xs text-gray-500">
+                      Created on {formatDate(original.createdAt)}
+                    </p>
                   </div>
                   
                   <div className="p-3">
-                    <h3 className="font-medium truncate" title={logo.parameters.companyName}>
-                      {logo.parameters.companyName}
-                    </h3>
-                    <p className="text-xs text-gray-500 mb-2">
-                      {formatDate(logo.createdAt)}
-                    </p>
-                    
-                    <div className="flex flex-wrap gap-2 text-sm">
-                      <button
-                        onClick={() => handleViewLogo(logo.id)}
-                        className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition-colors flex-1"
-                      >
-                        View
-                      </button>
+                    <div className="flex items-start gap-3">
+                      <div className="w-1/3 sm:w-1/4 h-32 flex-shrink-0 bg-gray-50 flex items-center justify-center p-2 rounded border">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={original.imageDataUri}
+                          alt={`${original.parameters.companyName} logo`}
+                          className="max-w-full max-h-full object-contain"
+                        />
+                      </div>
                       
-                      <button
-                        onClick={() => handleEditLogo(logo.id)}
-                        className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors flex-1"
-                      >
-                        Edit
-                      </button>
-                      
-                      <button
-                        onClick={() => confirmDeleteLogo(logo.id)}
-                        className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors flex-1"
-                      >
-                        Delete
-                      </button>
+                      <div className="flex-1">
+                        <div className="mb-3">
+                          <h4 className="font-medium text-gray-800">Original Logo</h4>
+                          <p className="text-xs text-gray-500">
+                            Style: {original.parameters.overallStyle}, 
+                            Colors: {original.parameters.colorScheme}
+                          </p>
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            onClick={() => handleViewLogo(original.id)}
+                            className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition-colors text-sm"
+                          >
+                            View
+                          </button>
+                          
+                          <button
+                            onClick={() => handleEditLogo(original.id)}
+                            className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors text-sm"
+                            disabled={revisions.length >= 3}
+                          >
+                            {revisions.length >= 3 ? 'Max Revisions' : 'Revise'}
+                          </button>
+                          
+                          <button
+                            onClick={() => confirmDeleteLogo(original.id)}
+                            className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors text-sm"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
                     </div>
+                    
+                    {revisions.length > 0 && (
+                      <div className="mt-4 pt-4 border-t">
+                        <h4 className="font-medium text-gray-800 mb-3">Revisions</h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                          {revisions.map((revision) => (
+                            <div key={revision.id} className="border rounded p-2">
+                              <div className="h-24 bg-gray-50 flex items-center justify-center mb-2 rounded border">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={revision.imageDataUri}
+                                  alt={`${revision.parameters.companyName} logo revision ${revision.revisionNumber}`}
+                                  className="max-w-full max-h-full object-contain"
+                                />
+                              </div>
+                              <div className="text-xs text-gray-500 mb-1">
+                                Revision #{revision.revisionNumber} - {formatDate(revision.createdAt)}
+                              </div>
+                              <div className="flex gap-1">
+                                <button
+                                  onClick={() => handleViewLogo(revision.id)}
+                                  className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition-colors text-xs flex-1"
+                                >
+                                  View
+                                </button>
+                                <button
+                                  onClick={() => handleEditLogo(revision.id)}
+                                  className="px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors text-xs flex-1"
+                                  disabled={revisions.length >= 3}
+                                >
+                                  {revisions.length >= 3 ? 'Max' : 'Revise'}
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -146,7 +244,7 @@ export default function HistoryView() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
               <h3 className="text-lg font-semibold mb-4">Confirm Delete</h3>
-              <p className="mb-6">Are you sure you want to delete this logo? This action cannot be undone.</p>
+              <p className="mb-6">Are you sure you want to delete this logo? This will delete the original logo and all its revisions. This action cannot be undone.</p>
               
               <div className="flex justify-end gap-3">
                 <button
