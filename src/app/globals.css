@@ -2,18 +2,33 @@
 @tailwind components;
 @tailwind utilities;
 
-/* CSS Variables */
+/**
+ * AI Logo Generator - Global Styles
+ * Organized CSS with proper grouping and comments
+ */
+
+/* ========== CSS Variables ========== */
 :root {
   --primary: #6366f1;
   --primary-hover: #4f46e5;
+  --primary-dark: #3730a3;
   --error: #ef4444;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  
+  /* iOS safe area insets */
   --safe-area-inset-top: env(safe-area-inset-top, 0px);
   --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
   --safe-area-inset-left: env(safe-area-inset-left, 0px);
   --safe-area-inset-right: env(safe-area-inset-right, 0px);
 }
 
-/* Base Elements */
+/* ========== Base Elements & Reset ========== */
 html {
   height: -webkit-fill-available;
   overflow-x: hidden;
@@ -27,38 +42,75 @@ body {
   overflow-x: hidden;
   -webkit-tap-highlight-color: transparent;
   padding-top: var(--safe-area-inset-top);
-  padding-bottom: var(--safe-area-inset-bottom);
+  padding-bottom: 0; /* Remove bottom padding since the footer will handle this */
   padding-left: var(--safe-area-inset-left);
   padding-right: var(--safe-area-inset-right);
   touch-action: manipulation;
-  -webkit-overflow-scrolling: auto; /* Change from 'touch' to 'auto' to reduce bounce */
-  overscroll-behavior-y: none; /* Prevent bouncy scrolling */
-  position: fixed; /* Prevent overscroll */
+  -webkit-overflow-scrolling: auto;
+  overscroll-behavior-y: none;
+  position: fixed;
   width: 100%;
   height: 100%;
-  overflow-y: auto; /* Allow scrolling with a fixed position */
+  overflow-y: auto;
 }
 
-/* Animations */
-@keyframes spin {
-  to { transform: rotate(360deg); }
+/* Hide scrollbars on mobile */
+@media (max-width: 768px) {
+  ::-webkit-scrollbar {
+    display: none;
+  }
+  
+  body {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+/* ========== Layout & Structure ========== */
+main {
+  padding-top: calc(84px + env(safe-area-inset-top, 0));
+  padding-bottom: 0;
 }
 
-@keyframes slideUp {
-  from { transform: translateY(50px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+.container {
+  max-width: 72rem;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.app-loading {
-  animation: fadeIn 0.5s ease-in-out;
+.card {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
-/* Header & Navigation */
+/* History page specific */
+.history-page {
+  padding-top: calc(84px + env(safe-area-inset-top, 0) + 28px);
+}
+
+.history-page .card {
+  margin-top: 0.5rem;
+}
+
+.history-page button {
+  min-height: 44px;
+}
+
+/* Logo view specific */
+.logo-view-page main {
+  padding-top: calc(84px + env(safe-area-inset-top, 0) + 16px);
+}
+
+main > div.mt-4 > .card:first-child {
+  margin-top: 0.5rem;
+}
+
+/* ========== Header & Navigation ========== */
 .fixed-header {
   position: fixed;
   top: 0;
@@ -72,7 +124,7 @@ body {
 }
 
 .header-content {
-  max-width: 72rem; /* 4xl in Tailwind */
+  max-width: 72rem;
   margin-left: auto;
   margin-right: auto;
   padding-left: 1rem;
@@ -86,13 +138,13 @@ body {
   position: relative;
   padding: 0.7rem 0.5rem;
   font-weight: 500;
-  color: #4b5563;
+  color: var(--gray-600);
   user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
 
 .tab-btn:hover {
-  color: #1f2937;
+  color: var(--gray-800);
 }
 
 .tab-btn.active {
@@ -108,50 +160,23 @@ body {
   left: 0;
   right: 0;
   height: 2px;
-  background-color: #4f46e5;
+  background-color: var(--primary-hover);
 }
 
 .tab-btn:not(.active) {
   background-color: white;
-  color: #4b5563;
+  color: var(--gray-600);
 }
 
 .tab-btn:not(.active):hover {
-  background-color: #f3f4f6;
+  background-color: var(--gray-100);
 }
 
 .tab-btn:not(.active):active {
-  background-color: #e5e7eb;
+  background-color: var(--gray-200);
 }
 
-/* Layout & Content */
-main {
-  padding-top: calc(84px + env(safe-area-inset-top, 0) + 8px);
-}
-
-.history-page {
-  padding-top: calc(84px + env(safe-area-inset-top, 0) + 28px);
-}
-
-.history-page .card {
-  margin-top: 0.5rem;
-}
-
-.history-page button {
-  min-height: 44px;
-}
-
-/* Components */
-.card {
-  background-color: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  padding: 0.75rem;
-  margin-bottom: 1rem;
-  max-width: 100%;
-  overflow-x: hidden;
-}
-
+/* ========== Buttons & Interactive Elements ========== */
 .btn-primary {
   background-color: var(--primary);
   color: white;
@@ -168,19 +193,150 @@ main {
 }
 
 .btn-primary:active {
-  background-color: #3730a3;
+  background-color: var(--primary-dark);
 }
 
-.spinner {
-  display: inline-block;
-  width: 2rem;
-  height: 2rem;
-  border: 0.25rem solid #e0e7ff;
-  border-left-color: var(--primary);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+button, 
+select, 
+input[type="file"] {
+  min-height: 44px; /* Minimum touch target size */
 }
 
+/* Logo revision buttons */
+.logo-revision-btn {
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.5rem;
+  margin-right: 0.5rem;
+  margin-bottom: 0.5rem;
+  min-height: 2.25rem;
+  min-width: 5rem;
+  text-align: center;
+}
+
+.logo-revision-btn.active {
+  background-color: var(--primary-hover);
+  color: white;
+  font-weight: 600;
+}
+
+.logo-revision-btn:not(.active) {
+  background-color: #eef2ff;
+  color: #4338ca;
+}
+
+.logo-revision-btn:not(.active):hover {
+  background-color: #c7d2fe;
+}
+
+.revision-switcher {
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+/* Editable logo name */
+.editable-name {
+  cursor: pointer;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.375rem;
+  transition: background-color 0.2s;
+  display: inline-flex;
+  align-items: center;
+}
+
+.editable-name:hover {
+  background-color: var(--gray-100);
+}
+
+.editable-name-input {
+  font-size: 1.25rem;
+  font-weight: 600;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--gray-300);
+  border-radius: 0.375rem;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.editable-name-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.edit-icon {
+  width: 1rem;
+  height: 1rem;
+  color: #9ca3af;
+  margin-left: 0.5rem;
+  transition: color 0.2s;
+}
+
+.edit-icon:hover {
+  color: var(--primary);
+}
+
+/* ========== Form Elements ========== */
+.form-label {
+  display: block;
+  font-weight: 500;
+  color: var(--gray-700);
+  font-size: 0.9rem;
+  line-height: 1.2;
+  margin-bottom: 0.125rem;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.375rem 0.5rem;
+  border: 1px solid var(--gray-300);
+  border-radius: 0.5rem;
+  font-size: 16px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+  margin-bottom: 0.01rem;
+}
+
+.form-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+select {
+  background-position: right 0.5rem center;
+  padding-right: 2rem;
+}
+
+/* Form spacing adjustments */
+form .space-y-4 {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(0.5rem * var(--tw-space-y-reverse));
+}
+
+.advanced-options .mb-4 {
+  margin-bottom: 0.25rem !important;
+}
+
+/* Compact form layout adjustments */
+.mb-4.sm\\:mb-6:has(button:contains("Advanced Options")),
+form button[type="button"]:contains("Advanced Options") {
+  margin-bottom: 0.01rem !important;
+}
+
+form > div:has(button) {
+  margin-bottom: 0.05rem !important;
+}
+
+form > button[type="button"], 
+form > div:last-of-type:has(button) {
+  margin-top: 0.05rem !important;
+}
+
+/* ========== Images & Media ========== */
 .result-image {
   max-width: 100%;
   height: auto;
@@ -201,43 +357,18 @@ main {
   margin-top: 1rem;
 }
 
-/* Form Styles */
-.form-label {
-  display: block;
-  font-weight: 500;
-  color: #374151;
-  font-size: 0.9rem;
-  line-height: 1.2;
-  margin-bottom: 0.125rem;
+/* ========== Loading & Status Indicators ========== */
+.spinner {
+  display: inline-block;
+  width: 2rem;
+  height: 2rem;
+  border: 0.25rem solid #e0e7ff;
+  border-left-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
-.form-input {
-  width: 100%;
-  padding: 0.375rem 0.5rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  font-size: 16px;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  outline: none;
-  margin-bottom: 0.01rem;
-}
-
-.form-input:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
-}
-
-form .space-y-4 {
-  --tw-space-y-reverse: 0;
-  margin-top: calc(0.75rem * calc(1 - var(--tw-space-y-reverse)));
-  margin-bottom: calc(0.75rem * var(--tw-space-y-reverse));
-}
-
-.advanced-options .mb-4 {
-  margin-bottom: 0.375rem !important;
-}
-
-/* Notifications & Overlays */
+/* ========== Notifications & Overlays ========== */
 .install-banner {
   position: fixed;
   bottom: 0;
@@ -268,7 +399,26 @@ form .space-y-4 {
   animation: slideUp 0.3s ease-out;
 }
 
-/* Utility Classes */
+/* ========== Animations ========== */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(50px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.app-loading {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+/* ========== Utility Classes ========== */
 .mb-4 {
   margin-bottom: 0.5rem !important;
 }
@@ -281,7 +431,12 @@ form .space-y-4 {
   gap: 0.5rem !important;
 }
 
-/* Responsive Styles */
+.gap-2 {
+  gap: 0.25rem !important;
+}
+
+/* ========== Responsive Styles ========== */
+/* Desktop and large screens */
 @media (min-width: 640px) {
   .card {
     padding: 1rem;
@@ -313,6 +468,7 @@ form .space-y-4 {
   }
 }
 
+/* Mobile screens */
 @media (max-width: 640px) {
   .container {
     padding-left: 1rem;
@@ -345,31 +501,9 @@ form .space-y-4 {
     width: 34px;
     height: 34px;
   }
-  
-  button, 
-  select, 
-  input[type="file"] {
-    min-height: 44px;
-  }
-  
-  select {
-    background-position: right 0.5rem center;
-    padding-right: 2rem;
-  }
 }
 
-@media (max-width: 768px) {
-  ::-webkit-scrollbar {
-    display: none;
-  }
-  
-  body {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-}
-
-/* Safari & iOS Support */
+/* ========== iOS & Safari Special Support ========== */
 @supports (padding: max(0px)) {
   body {
     padding-left: max(var(--safe-area-inset-left), 1rem);
@@ -391,123 +525,29 @@ form .space-y-4 {
     padding-left: max(env(safe-area-inset-left, 0), 1rem);
     padding-right: max(env(safe-area-inset-right, 0), 1rem);
   }
-  
-  main {
-    padding-top: calc(84px + max(env(safe-area-inset-top, 0), 0px));
-  }
 }
 
-.mb-4.sm\\:mb-6:has(button:contains("Advanced Options")) {
-  margin-bottom: 0.01rem !important;
+/* ========== Full-height Layout & Sticky Footer ========== */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 84px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* Alternative approach with a more specific class */
-form button[type="button"]:contains("Advanced Options") {
-  margin-bottom: 0.05rem !important;
-}
-
-/* If those don't work, this is a more general approach that will make all buttons in the form closer together */
-form > div:has(button) {
-  margin-bottom: 0.05rem !important;
-}
-
-/* Reduce the top margin of the generate button container */
-form > button[type="button"], 
-form > div:last-of-type:has(button) {
-  margin-top: 0.05rem !important;
-}
-
-/* Add these styles to your globals.css file */
-
-/* Specific styles for logo view page */
-.logo-view-page main {
-  padding-top: calc(84px + env(safe-area-inset-top, 0) + 16px);
-}
-
-/* If you don't want to add a specific class, you can target all main elements */
-main {
-  padding-top: calc(84px + env(safe-area-inset-top, 0) + 28px);
-}
-
-/* Adjust margin for logo view cards */
-main > div.mt-4 > .card:first-child {
-  margin-top: 0.5rem;
-}
-
-.logo-revision-btn {
-  transition: all 0.2s ease;
-  font-size: 0.875rem;
-  font-weight: 500;
-  padding: 0.375rem 0.75rem;
-  border-radius: 0.5rem;
-  margin-right: 0.5rem;
-  margin-bottom: 0.5rem;
-  min-height: 2.25rem;
-  min-width: 5rem;
-  text-align: center;
-}
-
-.logo-revision-btn.active {
-  background-color: #4f46e5;
-  color: white;
-  font-weight: 600;
-}
-
-.logo-revision-btn:not(.active) {
-  background-color: #eef2ff;
-  color: #4338ca;
-}
-
-.logo-revision-btn:not(.active):hover {
-  background-color: #c7d2fe;
-}
-
-/* Add spacing between the revision buttons and the image display */
-.revision-switcher {
-  margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-/* Editable name styles */
-.editable-name {
-  cursor: pointer;
-  padding: 0.375rem 0.75rem;
-  border-radius: 0.375rem;
-  transition: background-color 0.2s;
-  display: inline-flex;
-  align-items: center;
-}
-
-.editable-name:hover {
-  background-color: #f3f4f6;
-}
-
-.editable-name-input {
-  font-size: 1.25rem;
-  font-weight: 600;
-  padding: 0.375rem 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
+.content-area {
+  flex: 1;
   width: 100%;
-  outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  overflow-y: auto;
 }
 
-.editable-name-input:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
-}
-
-/* Edit icon styles */
-.edit-icon {
-  width: 1rem;
-  height: 1rem;
-  color: #9ca3af;
-  margin-left: 0.5rem;
-  transition: color 0.2s;
-}
-
-.edit-icon:hover {
-  color: #6366f1;
+.sticky-footer {
+  position: sticky;
+  bottom: 0;
+  width: 100%;
+  padding: 0.75rem 0;
+  background-color: transparent;
+  z-index: 10;
+  margin-top: auto;
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
 }
