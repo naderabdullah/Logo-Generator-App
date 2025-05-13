@@ -29,8 +29,8 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="fixed top-0 left-0 right-0 bg-white z-50 shadow-sm">
-      <div className="max-w-4xl mx-auto px-4 pt-3">
+    <header className="fixed-header">
+      <div className="header-content">
         <div className="flex items-center justify-between mb-2">
           {/* Logo and Title */}
           <div className="flex items-center">
@@ -61,14 +61,16 @@ export default function Header() {
           <Link 
             href="/" 
             className={`text-center flex-1 tab-btn ${isGeneratorActive ? 'active' : ''}`}
+            aria-current={isGeneratorActive ? 'page' : undefined}
           >
-            Generator
+            <span>Generator</span>
           </Link>
           <Link 
             href="/history" 
             className={`text-center flex-1 tab-btn ${isHistoryActive ? 'active' : ''}`}
+            aria-current={isHistoryActive ? 'page' : undefined}
           >
-            History
+            <span>History</span>
           </Link>
         </div>
       </div>

@@ -606,13 +606,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
             Logo generation can take 15-30 seconds. Please be patient...
           </p>
         )}
-        
-        {/* Required fields reminder */}
-        {!areRequiredFieldsFilled() && !isGenerating && (
-          <p className="text-sm text-amber-600 mt-2 text-center">
-            Please fill in all required fields marked with <span className="text-red-500">*</span>
-          </p>
-        )}
       </form>
     </div>
   );

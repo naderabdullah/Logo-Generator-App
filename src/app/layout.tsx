@@ -21,13 +21,13 @@ export const metadata: Metadata = {
   }
 };
 
-// Viewport configuration
+// Updated viewport configuration for proper iOS handling
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  viewportFit: 'cover',
+  viewportFit: 'cover', // Important for iOS devices with notches
   themeColor: '#6366f1'
 };
 

@@ -64,8 +64,8 @@ export default function HistoryView() {
     <>
       <Header />
       
-      <main className="container mx-auto px-4 pt-28 pb-6 max-w-4xl">
-        <div className="card">
+      <main className="container mx-auto px-4 pb-6 max-w-4xl history-page">
+        <div className="mt-4 card">
           <h2 className="text-xl font-semibold mb-4">Logo History</h2>
           
           {loading && (
