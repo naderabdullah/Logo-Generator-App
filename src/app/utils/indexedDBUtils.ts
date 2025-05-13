@@ -296,12 +296,22 @@ export const saveLogo = async (
     // Determine if this is a revision or an original logo
     const isRevision = !!originalLogoId;
     
-    // For revisions, determine the revision number
+    // For revisions, determine the revision number and set proper name
     let revisionNumber: number | undefined = undefined;
+    let finalName = name || "Untitled";
     
     if (isRevision) {
+      // Get revisions and original logo
       const revisions = await getRevisionsForLogo(originalLogoId!);
       revisionNumber = revisions.length + 1;
+      
+      // Get the original logo to base the revision name on it
+      const originalLogo = await getLogo(originalLogoId!);
+      if (originalLogo) {
+        // Set the revision name based on the original logo name
+        const baseName = originalLogo.name || "Untitled";
+        finalName = `${baseName} - Revision ${revisionNumber}`;
+      }
       
       // Validate revision limits
       if (revisionNumber > 3) {
@@ -324,7 +334,7 @@ export const saveLogo = async (
       
       const logo: StoredLogo = {
         id,
-        name: name || "Untitled", // Default to "Untitled" if no name provided
+        name: finalName, // Use the determined name with revision suffix if applicable
         imageDataUri,
         createdAt: Date.now(),
         parameters,
