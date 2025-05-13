@@ -47,11 +47,13 @@ export default function Header() {
               <h1 className="text-lg font-bold text-indigo-500 leading-tight">
                 AI Logo Generator
               </h1>
+              {/*}
               {isInstalled && (
                 <div className="text-xs text-indigo-600">
                   ✓ App installed
                 </div>
               )}
+              */}
             </div>
           </div>
         </div>

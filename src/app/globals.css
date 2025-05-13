@@ -409,3 +409,20 @@ form > button[type="button"],
 form > div:last-of-type:has(button) {
   margin-top: 0.05rem !important;
 }
+
+/* Add these styles to your globals.css file */
+
+/* Specific styles for logo view page */
+.logo-view-page main {
+  padding-top: calc(84px + env(safe-area-inset-top, 0) + 16px);
+}
+
+/* If you don't want to add a specific class, you can target all main elements */
+main {
+  padding-top: calc(84px + env(safe-area-inset-top, 0) + 16px);
+}
+
+/* Adjust margin for logo view cards */
+main > div.mt-4 > .card:first-child {
+  margin-top: 0.5rem;
+}
