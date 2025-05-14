@@ -409,7 +409,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
         imageDataUriString, 
         parameters,
         isRevision ? originalLogoId : undefined,
-        companyName ? `${companyName} Logo` : 'Untitled' // Use company name for the logo name
+        'Untitled' // Use company name for the logo name
       );
       
       // Navigate to the logo view page

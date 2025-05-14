@@ -290,32 +290,46 @@ export const saveLogo = async (
   name?: string // New optional name parameter
 ): Promise<string> => {
   try {
+    console.log("saveLogo called with name:", name); // Log the input name
+    
     const db = await initDB();
     const id = generateLogoId();
     
     // Determine if this is a revision or an original logo
     const isRevision = !!originalLogoId;
+    console.log("Is revision:", isRevision, "Original logo ID:", originalLogoId);
     
     // For revisions, determine the revision number and set proper name
     let revisionNumber: number | undefined = undefined;
     let finalName = name || "Untitled";
+    console.log("Initial finalName:", finalName);
     
-    if (isRevision) {
-      // Get revisions and original logo
-      const revisions = await getRevisionsForLogo(originalLogoId!);
-      revisionNumber = revisions.length + 1;
-      
-      // Get the original logo to base the revision name on it
-      const originalLogo = await getLogo(originalLogoId!);
-      if (originalLogo) {
-        // Set the revision name based on the original logo name
-        const baseName = originalLogo.name || "Untitled";
-        finalName = `${baseName} - Revision ${revisionNumber}`;
-      }
-      
-      // Validate revision limits
-      if (revisionNumber > 3) {
-        throw new Error('Maximum revisions reached for this logo');
+    if (isRevision && originalLogoId) {
+      try {
+        // Get revisions and original logo
+        const revisions = await getRevisionsForLogo(originalLogoId);
+        revisionNumber = revisions.length + 1;
+        console.log("Revision number:", revisionNumber, "Total revisions:", revisions.length);
+        
+        // Get the original logo to base the revision name on it
+        const originalLogo = await getLogo(originalLogoId);
+        console.log("Original logo:", originalLogo ? originalLogo.name : "not found");
+        
+        if (originalLogo) {
+          // Set the revision name based on the original logo name
+          const baseName = originalLogo.name || "Untitled";
+          finalName = `${baseName} - Revision ${revisionNumber}`;
+          console.log("Setting revision name to:", finalName);
+        }
+        
+        // Validate revision limits
+        if (revisionNumber > 3) {
+          throw new Error('Maximum revisions reached for this logo');
+        }
+      } catch (err) {
+        console.error("Error processing revision:", err);
+        // Fallback to a default name if something went wrong with original logo retrieval
+        finalName = `Logo Revision ${Date.now()}`;
       }
     } else {
       // Validate logo creation limits for original logos
@@ -327,6 +341,8 @@ export const saveLogo = async (
       // Increment the logos created count
       await incrementLogosCreated();
     }
+    
+    console.log("Final name before saving:", finalName);
     
     return new Promise((resolve, reject) => {
       const transaction = db.transaction([LOGOS_STORE], 'readwrite');
@@ -343,13 +359,23 @@ export const saveLogo = async (
         revisionNumber
       };
       
+      console.log("Logo object being saved:", {
+        id: logo.id,
+        name: logo.name,
+        isRevision: logo.isRevision,
+        originalLogoId: logo.originalLogoId,
+        revisionNumber: logo.revisionNumber
+      });
+      
       const request = store.add(logo);
       
       request.onsuccess = () => {
+        console.log("Logo saved successfully with ID:", id);
         resolve(id);
       };
       
       request.onerror = (event) => {
+        console.error("Error saving logo:", (event.target as IDBRequest).error);
         reject((event.target as IDBRequest).error);
       };
       
