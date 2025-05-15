@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import Script from 'next/script';
+import AuthHeader from './components/AuthHeader';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -47,7 +48,10 @@ export default function RootLayout({
         <link rel="icon" href="/icons/smartyapps.png" type="image/png" />
       </head>
       <body className={inter.className}>
-        {children}
+        <AuthHeader />
+        <main>
+          {children}
+        </main>
         
         {/* Register service worker */}
         <Script src="/sw-register.js" strategy="beforeInteractive" />

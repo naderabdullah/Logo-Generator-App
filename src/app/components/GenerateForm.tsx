@@ -17,6 +17,40 @@ function useEditParam() {
   return searchParams.get('edit');
 }
 
+// Simple hook to check authentication status
+function useAuthCheck() {
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+  const [userInfo, setUserInfo] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    // Function to check if user is logged in by trying to fetch user data
+    const checkAuthStatus = async () => {
+      try {
+        const response = await fetch('/api/user');
+        
+        if (response.ok) {
+          const userData = await response.json();
+          setIsLoggedIn(true);
+          setUserInfo(userData);
+        } else {
+          setIsLoggedIn(false);
+          setUserInfo(null);
+        }
+      } catch (error) {
+        console.error('Error checking auth status:', error);
+        setIsLoggedIn(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    checkAuthStatus();
+  }, []);
+  
+  return { isLoggedIn, userInfo, loading };
+}
+
 interface GenerateFormProps {
   setLoading: (loading: boolean) => void;
   setImageDataUri: (dataUri: string | null) => void;
@@ -24,6 +58,9 @@ interface GenerateFormProps {
 }
 
 export default function GenerateForm({ setLoading, setImageDataUri, setError }: GenerateFormProps) {
+  // Get authentication status
+  const { isLoggedIn, userInfo, loading: authLoading } = useAuthCheck();
+  
   // Create unique IDs for form elements
   const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
@@ -333,24 +370,19 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   }, [companyName, overallStyle, colorScheme, symbolFocus, brandPersonality, industry]);
 
   const handleGenerateLogo = useCallback(async () => {
+    // Redirect to login if not authenticated
+    if (!isLoggedIn) {
+      router.push('/login?redirect=/');
+      return;
+    }
+    
     // If already generating or missing required fields, do nothing
     if (isGenerating || !areRequiredFieldsFilled()) {
       return;
     }
     
-    // Check usage limits
-    if (isRevision && !canRevise) {
-      setError('You have reached the revision limit for this logo (maximum 3 revisions).');
-      return;
-    } else if (!isRevision && !canCreateLogo) {
-      setError('You have reached your logo creation limit. Please upgrade to create more logos.');
-      return;
-    }
-    
     const prompt = buildPrompt();
     console.log('Starting logo generation with prompt:', prompt);
-    console.log('Is revision:', isRevision);
-    console.log('Original logo ID:', originalLogoId);
 
     // Update states to indicate generation is in progress
     setLoading(true);
@@ -368,8 +400,8 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
         formData.append('referenceImage', referenceImage);
       }
 
-      // Send the request
-      const response = await fetch('/api/generate', {
+      // Send the request to server for logo generation and usage tracking
+      const response = await fetch('/api/logos', {
         method: 'POST',
         body: formData
       });
@@ -395,10 +427,10 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       
       // Process the response data
       let imageDataUriString = '';
-      if (data?.data?.[0]?.b64_json) {
-        imageDataUriString = `data:image/png;base64,${data.data[0].b64_json}`;
-      } else if (data?.data?.[0]?.url) {
-        imageDataUriString = data.data[0].url;
+      if (data.image.type === 'base64') {
+        imageDataUriString = `data:image/png;base64,${data.image.data}`;
+      } else if (data.image.type === 'url') {
+        imageDataUriString = data.image.data;
       } else {
         throw new Error('No image data received in the expected format');
       }
@@ -409,22 +441,26 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
         imageDataUriString, 
         parameters,
         isRevision ? originalLogoId : undefined,
-        'Untitled' // Use company name for the logo name
+        companyName // Use company name for the logo name
       );
       
-      // Navigate to the logo view page
+      // Show success message
+      setImageDataUri(imageDataUriString);
+      
+      // Optionally navigate to the logo view page
       router.push(`/logos/${logoId}`);
       
     } catch (error) {
       console.error('Error generating logo:', error);
       setError(error instanceof Error ? error.message : 'An unknown error occurred');
+    } finally {
       setLoading(false);
       setIsGenerating(false);
     }
   }, [
-    isGenerating, areRequiredFieldsFilled, buildPrompt, collectParameters,
+    isLoggedIn, isGenerating, areRequiredFieldsFilled, buildPrompt, collectParameters,
     setLoading, setError, setImageDataUri, referenceImage, router,
-    isRevision, originalLogoId, canRevise, canCreateLogo
+    isRevision, originalLogoId, companyName
   ]);
 
   // Function to create dropdown 
@@ -466,6 +502,19 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
         <div className="mb-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded-lg">
           <p className="font-bold">Notice</p>
           <p>{errorMessage}</p>
+        </div>
+      )}
+      
+      {!isLoggedIn && !authLoading && (
+        <div className="mb-4 p-3 bg-indigo-100 border border-indigo-300 text-indigo-700 rounded-lg">
+          <p className="font-bold">Authentication Required</p>
+          <p>Please log in to generate logos and track your usage.</p>
+          <button
+            onClick={() => router.push('/login?redirect=/')}
+            className="mt-2 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition"
+          >
+            Log In / Sign Up
+          </button>
         </div>
       )}
       
@@ -673,7 +722,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
           </div>
         </div>
 
-                      {/* Usage Limits Information */}
+        {/* Usage Limits Information */}
         {isRevision && (
           <div className="text-sm text-gray-600 mb-4">
             <p>This will count as a revision of your original logo.</p>
@@ -689,12 +738,16 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
             isGenerating || 
             !areRequiredFieldsFilled() || 
             (isRevision && !canRevise) ||
-            (!isRevision && !canCreateLogo)
+            (!isRevision && !canCreateLogo) ||
+            !isLoggedIn
           }
           onClick={handleGenerateLogo}
           style={{ minHeight: '48px' }}
         >
-          {isGenerating ? 'Generating Logo...' : isRevision ? 'Generate Revision' : 'Generate Logo'}
+          {isGenerating ? 'Generating Logo...' : 
+           !isLoggedIn ? 'Login to Generate' :
+           isRevision ? 'Generate Revision' : 
+           'Generate Logo'}
         </button>
 
         {/* Loading indicator text */}
