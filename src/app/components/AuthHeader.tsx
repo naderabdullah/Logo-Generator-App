@@ -1,4 +1,5 @@
 // src/app/components/AuthHeader.tsx
+
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -14,14 +15,19 @@ export default function AuthHeader() {
   
   // Close menu when clicking outside
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
+    function handleClickOutside(event: MouseEvent | TouchEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setMenuOpen(false);
       }
     }
+    
+    // Add both mouse and touch event listeners for better mobile support
     document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
     };
   }, []);
   
@@ -78,7 +84,13 @@ export default function AuthHeader() {
     checkAuth();
   }, []);
   
-  const handleLogout = async () => {
+  const handleLogout = async (e: React.MouseEvent | React.TouchEvent) => {
+    // Prevent default behavior and stop propagation
+    e.preventDefault();
+    e.stopPropagation();
+    
+    console.log("Logout button clicked");
+    
     try {
       // Try different API endpoints for logout
       const endpointsToTry = ['/auth/logout', '/api/auth/logout', '/logout'];
@@ -107,7 +119,12 @@ export default function AuthHeader() {
       
       // Even if API call fails, we can still clear user state and redirect
       setUser(null);
-      router.push('/auth');
+      setMenuOpen(false); // Close the menu before navigating
+      
+      // Delay navigation slightly to ensure UI updates
+      setTimeout(() => {
+        router.push('/auth');
+      }, 100);
     } catch (err) {
       console.error('Logout failed:', err);
       // Still clear user state and redirect even if error
@@ -153,7 +170,8 @@ export default function AuthHeader() {
             
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="inline-flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100"
+              className="inline-flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 active:bg-gray-200"
+              style={{ minHeight: '44px', minWidth: '80px' }} // Better touch target size
             >
               {user.email.split('@')[0]}
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
@@ -162,17 +180,24 @@ export default function AuthHeader() {
             </button>
             
             {menuOpen && (
-              <div className="absolute header-user-menu w-48 bg-white rounded-md shadow-lg py-1 z-10 top-full">
+              <div 
+                className="fixed left-0 right-0 mt-2 mx-auto w-64 bg-white rounded-md shadow-lg py-1 z-50"
+                style={{ 
+                  top: '110px', // Position below header
+                  maxWidth: '90%'
+                }}
+              >
                 <Link 
                   href="/account" 
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  className="block w-full text-left px-4 py-4 text-sm text-gray-700 hover:bg-gray-100 active:bg-gray-200"
                   onClick={() => setMenuOpen(false)}
                 >
                   Account Settings
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                  className="block w-full text-left px-4 py-4 text-sm text-red-600 hover:bg-gray-100 active:bg-gray-200"
+                  style={{ minHeight: '50px' }} // Larger touch target
                 >
                   Logout
                 </button>

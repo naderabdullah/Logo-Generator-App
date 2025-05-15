@@ -566,4 +566,54 @@ select {
     padding: 0.25rem 0.5rem;
     font-weight: 500;
   }
+
+  /* Add to globals.css for better mobile dropdown behavior */
+
+  /* Improved mobile dropdown styling */
+  .mobile-menu-dropdown {
+    /* Better positioning */
+    position: fixed;
+    top: 110px;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    width: 80%;
+    max-width: 300px;
+    
+    /* Visual styling */
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    
+    /* Ensure it's on top */
+    z-index: 9999;
+  }
+
+  /* Larger touch targets for mobile menu items */
+  .mobile-menu-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 16px;
+    font-size: 16px;
+    min-height: 56px;
+    
+    /* Better tap feedback */
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  }
+
+  .mobile-menu-item:active {
+    background-color: #f3f4f6;
+  }
+
+  /* Optional overlay to help with closing the menu */
+  .menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.3);
+    z-index: 9998;
+  }
 }
