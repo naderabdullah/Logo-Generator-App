@@ -86,26 +86,30 @@ export default function AuthHeader() {
       {/* Full-screen menu for both mobile and desktop */}
       {menuOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex flex-col">
-          <div className="bg-white p-4 shadow-lg">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold">Account Menu</h3>
-              <button 
-                onClick={() => setMenuOpen(false)}
-                className="p-2 rounded-full hover:bg-gray-100"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+          {/* Menu with improved layout for tall phones */}
+          <div className="bg-white flex flex-col h-full">
+            {/* Header Section */}
+            <div className="p-4 border-b">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold">Account Menu</h3>
+                <button 
+                  onClick={() => setMenuOpen(false)}
+                  className="p-2 rounded-full hover:bg-gray-100"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
             </div>
-          </div>
-          
-          <div className="bg-white flex-1 overflow-y-auto">
+            
+            {/* User Info Section */}
             <div className="p-4 border-b">
               <p className="text-sm text-gray-500">Logged in as</p>
               <p className="font-medium">{user.email}</p>
             </div>
             
+            {/* Logo Usage Section */}
             <div className="p-4 border-b">
               <div className="text-center p-3 bg-indigo-50 rounded-lg">
                 <p className="text-sm text-indigo-700">Logo Usage</p>
@@ -121,6 +125,10 @@ export default function AuthHeader() {
               </div>
             </div>
             
+            {/* Spacer to push buttons to the bottom */}
+            <div className="flex-grow"></div>
+            
+            {/* Navigation Buttons - At the bottom for better reachability */}
             <div className="divide-y">
               <button 
                 onClick={handleAccountClick}
@@ -142,6 +150,19 @@ export default function AuthHeader() {
                 Logout
               </button>
             </div>
+            
+            {/* Additional close button for easy access on tall phones */}
+            <div className="p-4 border-t">
+              <button 
+                onClick={() => setMenuOpen(false)}
+                className="w-full py-4 text-center bg-gray-100 rounded-lg text-gray-700 font-medium"
+              >
+                Close Menu
+              </button>
+            </div>
+            
+            {/* Safe area spacing for notched phones */}
+            <div className="h-safe-bottom"></div>
           </div>
         </div>
       )}
