@@ -22,8 +22,17 @@
   --gray-700: #374151;
   --gray-800: #1f2937;
   
-  /* Spacing */
-  --header-height: 84px;
+  /* Header Spacing - Customizable per page type */
+  --auth-header-height: 64px;
+  --app-header-height: 48px;
+  --total-header-height: calc(var(--auth-header-height) + var(--app-header-height));
+  
+  /* Page-specific content padding */
+  --generator-page-padding-top: 8px;
+  --history-page-padding-top: 16px;
+  --logo-view-padding-top: 16px;
+  
+  /* Form spacing */
   --form-spacing: clamp(0.15rem, calc(100vh * 0.005), 0.5rem);
   
   /* iOS safe area insets */
@@ -69,8 +78,9 @@ body {
 }
 
 /* ========== Layout & Structure ========== */
+/* Main content area - Default spacing that can be overridden by page-specific classes */
 main {
-  padding-top: 8px;
+  padding-top: var(--generator-page-padding-top);
   padding-bottom: 0;
 }
 
@@ -90,9 +100,15 @@ main {
   overflow-x: hidden;
 }
 
+/* ========== Page-Specific Layout Classes ========== */
+/* Generator page (home) */
+.generator-page main {
+  padding-top: var(--generator-page-padding-top);
+}
+
 /* History page specific */
-.history-page {
-  padding-top: 16px;
+.history-page main {
+  padding-top: var(--history-page-padding-top);
 }
 
 .history-page .card {
@@ -104,16 +120,16 @@ main {
 }
 
 /* Logo view specific */
-.logo-view-page {
-  padding-top: 16px;
+.logo-view-page main {
+  padding-top: var(--logo-view-padding-top);
 }
 
+/* Reset margin for first card in content areas */
 main > div.mt-4 > .card:first-child {
   margin-top: 0.5rem;
 }
 
-/* Add these styles to your globals.css file */
-
+/* ========== Auth Pages ========== */
 /* Make specific pages unscrollable */
 body[data-page="auth"],
 body[data-page="login"],
@@ -151,28 +167,65 @@ body[data-page="signup"] {
 }
 
 /* ========== Header & Navigation ========== */
-.fixed-header {
+/* Auth Header (top level header with account info) */
+.auth-header {
+  background: white;
+  border-bottom: 1px solid var(--gray-200);
+  height: var(--auth-header-height);
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 1rem;
+  position: relative;
+  z-index: 40;
+}
+
+/* App Header (tabs navigation) */
+.app-header {
+  background: white;
+  border-bottom: 1px solid var(--gray-200);
+  height: var(--app-header-height);
+  width: 100%;
+  display: flex;
+  align-items: center;
+  position: relative;
+  z-index: 30;
+}
+
+/* Fixed header layout (when headers should be sticky) */
+.fixed-headers {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 50;
+}
+
+.fixed-headers .auth-header {
   background-color: rgba(255, 255, 255, 0.98);
   backdrop-filter: blur(8px);
-  border-bottom: 1px solid rgba(229, 231, 235, 0.8);
   padding-top: env(safe-area-inset-top, 0);
 }
 
+.fixed-headers + main {
+  margin-top: var(--total-header-height);
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+/* Header content container */
 .header-content {
   max-width: 72rem;
   margin-left: auto;
   margin-right: auto;
   padding-left: 1rem;
   padding-right: 1rem;
-  padding-top: 0.75rem;
-  padding-bottom: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
 }
 
+/* Tab button styles */
 .tab-btn {
   transition: all 0.2s ease;
   position: relative;
@@ -454,6 +507,14 @@ select {
 /* ========== Responsive Styles ========== */
 /* Desktop and larger screens */
 @media (min-width: 640px) {
+  :root {
+    --auth-header-height: 72px;
+    --app-header-height: 56px;
+    --generator-page-padding-top: 16px;
+    --history-page-padding-top: 24px;
+    --logo-view-padding-top: 24px;
+  }
+  
   .card {
     padding: 1rem;
   }
@@ -488,6 +549,14 @@ select {
 
 /* Small height screens */
 @media (max-height: 700px) {
+  :root {
+    --auth-header-height: 56px;
+    --app-header-height: 40px;
+    --generator-page-padding-top: 4px;
+    --history-page-padding-top: 8px;
+    --logo-view-padding-top: 8px;
+  }
+  
   .compact-form .form-label {
     font-size: 0.8rem;
     margin-bottom: 0;
@@ -506,7 +575,7 @@ select {
   }
   
   .form-container {
-    height: calc(100vh - var(--header-height) - var(--safe-area-inset-top) - var(--safe-area-inset-bottom));
+    height: calc(100vh - var(--total-header-height) - var(--safe-area-inset-top) - var(--safe-area-inset-bottom));
   }
   
   /* Smaller buttons */
@@ -522,6 +591,11 @@ select {
 
 /* Mobile phones - small width screens */
 @media (max-width: 640px) {
+  :root {
+    --auth-header-height: 64px;
+    --app-header-height: 48px;
+  }
+  
   h1 {
     font-size: 1.5rem;
   }
@@ -566,8 +640,6 @@ select {
     padding: 0.25rem 0.5rem;
     font-weight: 500;
   }
-
-  /* Add to globals.css for better mobile dropdown behavior */
 
   /* Improved mobile dropdown styling */
   .mobile-menu-dropdown {
@@ -640,34 +712,32 @@ select {
   }
 
   /* Active states for better mobile touch feedback */
-  @media (max-width: 640px) {
-    .mobile-menu-button {
-      min-height: 48px;
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .mobile-menu-button:active::after {
-      content: '';
-      display: block;
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      top: 0;
-      left: 0;
-      background: rgba(0, 0, 0, 0.05);
-      pointer-events: none;
-    }
-    
-    /* For the menu buttons */
-    .mobile-menu-item {
-      min-height: 56px; /* Larger tap target */
-      position: relative;
-      -webkit-tap-highlight-color: transparent;
-    }
-    
-    .mobile-menu-item:active {
-      background-color: rgba(0, 0, 0, 0.05);
-    }
+  .mobile-menu-button {
+    min-height: 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .mobile-menu-button:active::after {
+    content: '';
+    display: block;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background: rgba(0, 0, 0, 0.05);
+    pointer-events: none;
+  }
+  
+  /* For the menu buttons */
+  .mobile-menu-item {
+    min-height: 56px; /* Larger tap target */
+    position: relative;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  .mobile-menu-item:active {
+    background-color: rgba(0, 0, 0, 0.05);
   }
 }

@@ -559,19 +559,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
 
   return (
     <div className="card">
-      {!isLoggedIn && !authLoading && (
-        <div className="mb-4 p-3 bg-indigo-100 border border-indigo-300 text-indigo-700 rounded-lg">
-          <p className="font-bold">Authentication Required</p>
-          <p>Please log in to generate logos and track your usage.</p>
-          <button
-            onClick={() => router.push('/login?redirect=/')}
-            className="mt-2 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition"
-          >
-            Log In / Sign Up
-          </button>
-        </div>
-      )}
-
       {authLoading && (
         <div className="text-center my-4">
           <div className="spinner inline-block"></div>
