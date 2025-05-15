@@ -89,7 +89,7 @@ export default function AuthHeader() {
           {/* Menu with improved layout for tall phones */}
           <div className="bg-white flex flex-col h-full">
             {/* Header Section */}
-            <div className="p-4 border-b">
+            <div className="p-8 border-b">
               <div className="flex justify-between items-center">
               </div>
             </div>
