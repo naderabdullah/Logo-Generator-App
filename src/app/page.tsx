@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
-import Header from './components/Header';
 import GenerateForm from './components/GenerateForm';
 import LoadingSpinner from './components/LoadingSpinner';
 import InstallBanner from './components/InstallBanner';
@@ -77,27 +76,23 @@ export default function Home() {
   }, []);
 
   return (
-    <>
-      <Header />
+    <div className={`container mx-auto px-4 pt-6 pb-0 max-w-4xl ${appReady ? 'app-loading' : 'opacity-0'}`}>
+      <OfflineIndicator />
+      {/* <InstallBanner /> */}
       
-      <main className={`container mx-auto px-4 pt-28 pb-0 max-w-4xl ${appReady ? 'app-loading' : 'opacity-0'}`}>
-        <OfflineIndicator />
-        {/* <InstallBanner /> */}
-        
-        <div className="form-container">
-          <div className="form-wrapper compact-form">
-            <Suspense fallback={<div className="p-4 text-center">Loading form...</div>}>
-              <GenerateFormWithParams />
-            </Suspense>
-          </div>
-          
-          <div className="footer-wrapper">
-            <p className="text-center text-gray-500 text-sm">
-              Logo Generation Tool • Smarty Apps • {new Date().getFullYear()}
-            </p>
-          </div>
+      <div className="form-container">
+        <div className="form-wrapper compact-form">
+          <Suspense fallback={<div className="p-4 text-center">Loading form...</div>}>
+            <GenerateFormWithParams />
+          </Suspense>
         </div>
-      </main>
-    </>
+        
+        <div className="footer-wrapper">
+          <p className="text-center text-gray-500 text-sm">
+            Logo Generation Tool • Smarty Apps • {new Date().getFullYear()}
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }

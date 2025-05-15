@@ -132,7 +132,7 @@ export const initializeUserUsage = async (): Promise<void> => {
         const initialUsage: UserUsage = {
           id: 'usage', // Single record
           logosCreated: 0,
-          logosLimit: 100 // Free tier: 100 logos
+          logosLimit: 10 // Free tier: 10 logos
         };
         
         const request = store.add(initialUsage);

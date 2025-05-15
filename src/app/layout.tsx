@@ -1,12 +1,14 @@
+// src/app/layout.tsx
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import Script from 'next/script';
 import AuthHeader from './components/AuthHeader';
+import AppHeader from './components/AppHeader';
 
 const inter = Inter({ subsets: ['latin'] });
 
-// Metadata for the app
+// Metadata and viewport configuration
 export const metadata: Metadata = {
   title: 'AI Logo Generator',
   description: 'Generate professional logos using AI with customizable style options',
@@ -22,7 +24,6 @@ export const metadata: Metadata = {
   }
 };
 
-// Updated viewport configuration for proper iOS handling
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
@@ -49,7 +50,8 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <AuthHeader />
-        <main>
+        <AppHeader />
+        <main className="pt-4">
           {children}
         </main>
         

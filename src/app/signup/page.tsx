@@ -1,8 +1,11 @@
+// src/app/signup/page.tsx
 'use client';
 
 import { useState, FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+
+export const runtime = 'edge';
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');
@@ -62,7 +65,7 @@ export default function SignupPage() {
   };
   
   return (
-    <div className="flex items-center justify-center bg-gray-100 py-8 px-4 sm:px-6 lg:px-8 min-h-[calc(100vh-64px)]">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-indigo-600">AI Logo Generator</h1>
@@ -132,7 +135,7 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
               {loading ? 'Creating account...' : 'Sign up'}
             </button>
@@ -150,6 +153,15 @@ export default function SignupPage() {
             </p>
           </div>
         </form>
+        
+        <div className="text-center mt-6">
+          <Link 
+            href="/auth" 
+            className="text-sm text-gray-600 hover:text-indigo-500"
+          >
+            Back to options
+          </Link>
+        </div>
       </div>
     </div>
   );

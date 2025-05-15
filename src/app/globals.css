@@ -92,7 +92,7 @@ main {
 
 /* History page specific */
 .history-page {
-  padding-top: calc(84px + env(safe-area-inset-top, 0) + 28px);
+  padding-top: 16px;
 }
 
 .history-page .card {
