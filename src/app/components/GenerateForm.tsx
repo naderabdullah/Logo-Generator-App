@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, ChangeEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { 
   saveLogo, 
   getLogo, 
@@ -58,6 +59,54 @@ function useAuthCheck() {
   return { isLoggedIn, userInfo, loading };
 }
 
+// Modal component for showing limit reached message
+function LimitReachedModal({ isOpen, onClose, isRevision }: { 
+  isOpen: boolean; 
+  onClose: () => void;
+  isRevision: boolean;
+}) {
+  if (!isOpen) return null;
+  
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-6">
+      <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+        <div className="text-center mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          <h3 className="text-xl font-bold mt-2">
+            {isRevision 
+              ? "Maximum Revisions Reached" 
+              : "Logo Limit Reached"}
+          </h3>
+        </div>
+        
+        <p className="text-gray-600 mb-6">
+          {isRevision 
+            ? "You've reached the maximum of 3 revisions for this logo." 
+            : "You've reached your logo creation limit. Please purchase more logos."}
+        </p>
+        
+        <div className="flex justify-center space-x-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+          >
+            Close
+          </button>
+          
+          <Link
+            href="/account"
+            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+          >
+            Go to Account
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface GenerateFormProps {
   setLoading: (loading: boolean) => void;
   setImageDataUri: (dataUri: string | null) => void;
@@ -100,6 +149,9 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   
   // Show advanced options toggle
   const [showAdvanced, setShowAdvanced] = useState(false);
+
+  // Modal state
+  const [showLimitModal, setShowLimitModal] = useState(false);
   
   // Animation reference
   const advancedSectionRef = useRef<HTMLDivElement>(null);
@@ -110,7 +162,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   // Track usage limits
   const [canCreateLogo, setCanCreateLogo] = useState(true);
   const [canRevise, setCanRevise] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Check usage limits when component loads
   useEffect(() => {
@@ -120,10 +171,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
         if (!editLogoId) {
           const canCreate = await canCreateOriginalLogo();
           setCanCreateLogo(canCreate);
-          
-          if (!canCreate) {
-            setErrorMessage('You have reached your logo creation limit. Please upgrade to create more logos.');
-          }
         }
       } catch (error) {
         console.error('Error checking usage limits:', error);
@@ -190,10 +237,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               // Check if can create more revisions for this original
               const canReviseMore = await canCreateRevision(logoData.originalLogoId);
               setCanRevise(canReviseMore);
-              
-              if (!canReviseMore) {
-                setErrorMessage('You have reached the revision limit for this logo (maximum 3 revisions).');
-              }
             } else {
               // If editing an original logo, this becomes a revision of itself
               setIsRevision(true);
@@ -202,10 +245,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               // Check if can create more revisions for this original
               const canReviseMore = await canCreateRevision(logoData.id);
               setCanRevise(canReviseMore);
-              
-              if (!canReviseMore) {
-                setErrorMessage('You have reached the revision limit for this logo (maximum 3 revisions).');
-              }
             }
           }
         } catch (err) {
@@ -382,9 +421,20 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       router.push('/login?redirect=/');
       return;
     }
-    
+
     // If already generating or missing required fields, do nothing
     if (isGenerating || !areRequiredFieldsFilled()) {
+      return;
+    }
+    
+    // Check limit conditions and show modal if needed
+    if (isRevision && !canRevise) {
+      setShowLimitModal(true);
+      return;
+    }
+    
+    if (!isRevision && !canCreateLogo) {
+      setShowLimitModal(true);
       return;
     }
     
@@ -408,7 +458,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       }
 
       if (isRevision && originalLogoId) {
-      formData.append('originalLogoId', originalLogoId);
+        formData.append('originalLogoId', originalLogoId);
       }
 
       // Send the request to server for logo generation and usage tracking
@@ -465,13 +515,13 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       console.error('Error generating logo:', error);
       setError(error instanceof Error ? error.message : 'An unknown error occurred');
     } finally {
-      //setLoading(false);
+      setLoading(false);
       setIsGenerating(false);
     }
   }, [
     isLoggedIn, isGenerating, areRequiredFieldsFilled, buildPrompt, collectParameters,
     setLoading, setError, setImageDataUri, referenceImage, router,
-    isRevision, originalLogoId, companyName
+    isRevision, originalLogoId, companyName, canRevise, canCreateLogo
   ]);
 
   // Function to create dropdown 
@@ -509,13 +559,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
 
   return (
     <div className="card">
-      {errorMessage && (
-        <div className="mb-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded-lg">
-          <p className="font-bold">Notice</p>
-          <p>{errorMessage}</p>
-        </div>
-      )}
-      
       {!isLoggedIn && !authLoading && (
         <div className="mb-4 p-3 bg-indigo-100 border border-indigo-300 text-indigo-700 rounded-lg">
           <p className="font-bold">Authentication Required</p>
@@ -526,6 +569,13 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
           >
             Log In / Sign Up
           </button>
+        </div>
+      )}
+
+      {authLoading && (
+        <div className="text-center my-4">
+          <div className="spinner inline-block"></div>
+          <p className="mt-2 text-gray-600">Checking authentication...</p>
         </div>
       )}
       
@@ -669,8 +719,10 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
         {/* Advanced Options Section with Animation */}
         <div 
           className={`advanced-options-container ${showAdvanced ? 'expanded' : ''}`}
+          ref={advancedSectionRef}
         >
           <div className="mb-2 sm:mb-3">
+            <h3 className="text-lg font-medium mb-2">Advanced Options</h3>
             
             <div className="grid grid-cols-1 gap-4">
               {renderDropdown(
@@ -732,7 +784,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
           </div>
         </div>
 
-        {/* Usage Limits Information */}
+        {/* Usage Limits Information - only show for standard informational purposes */}
         {isRevision && (
           <div className="text-sm text-gray-600 mb-4">
             <p>This will count as a revision of your original logo.</p>
@@ -747,38 +799,31 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
           disabled={
             isGenerating || 
             !areRequiredFieldsFilled() || 
-            (isRevision && !canRevise) ||
-            (!isRevision && !canCreateLogo) ||
             !isLoggedIn
           }
           onClick={handleGenerateLogo}
           style={{ minHeight: '48px' }}
         >
-          {isGenerating ? 'Generating Logo. This may take 30-60 seconds...' : 
+          {isGenerating ? 'Generating Logo...' : 
            !isLoggedIn ? 'Login to Generate' :
            isRevision ? 'Generate Revision' : 
            'Generate Logo'}
         </button>
-        
-        {isRevision && !canRevise && (
-          <p className="text-sm text-red-500 mt-2 text-center">
-            You've reached the maximum of 3 revisions for this logo.
-          </p>
-        )}
 
-        {!isRevision && !canCreateLogo && (
-          <p className="text-sm text-red-500 mt-2 text-center">
-            You've reached your logo creation limit. Please upgrade your plan.
-          </p>
-        )}
-
-        {/* Remove or comment out the loading indicator text */}
-        {/* {isGenerating && (
+        {/* Loading indicator text */}
+        {isGenerating && (
           <p className="text-sm text-gray-500 mt-2 text-center">
             Logo generation can take 15-30 seconds. Please be patient...
           </p>
-        )} */}
+        )}
       </form>
+
+      {/* The modal needs to be rendered at the document root level to ensure proper z-index and positioning */}
+      <LimitReachedModal 
+        isOpen={showLimitModal} 
+        onClose={() => setShowLimitModal(false)} 
+        isRevision={isRevision}
+      />
     </div>
   );
 }

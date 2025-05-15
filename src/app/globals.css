@@ -616,4 +616,58 @@ select {
     background-color: rgba(0, 0, 0, 0.3);
     z-index: 9998;
   }
+
+  /* Full-screen mobile menu transition */
+  .mobile-menu-enter {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  .mobile-menu-enter-active {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 300ms, transform 300ms;
+  }
+
+  .mobile-menu-exit {
+    opacity: 1;
+  }
+
+  .mobile-menu-exit-active {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 300ms, transform 300ms;
+  }
+
+  /* Active states for better mobile touch feedback */
+  @media (max-width: 640px) {
+    .mobile-menu-button {
+      min-height: 48px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .mobile-menu-button:active::after {
+      content: '';
+      display: block;
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      background: rgba(0, 0, 0, 0.05);
+      pointer-events: none;
+    }
+    
+    /* For the menu buttons */
+    .mobile-menu-item {
+      min-height: 56px; /* Larger tap target */
+      position: relative;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    .mobile-menu-item:active {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+  }
 }

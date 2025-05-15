@@ -38,12 +38,6 @@ export default function AuthLanding() {
           >
             Create new account
           </Link>
-          
-          <div className="text-center mt-6">
-            <Link href="/" className="text-sm text-gray-600 hover:text-indigo-500">
-              Continue as guest
-            </Link>
-          </div>
         </div>
       </div>
     </div>

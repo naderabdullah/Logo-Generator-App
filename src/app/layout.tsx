@@ -1,10 +1,12 @@
 // src/app/layout.tsx
+
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import Script from 'next/script';
 import AuthHeader from './components/AuthHeader';
 import AppHeader from './components/AppHeader';
+import { AuthProvider } from './context/AuthContext'; // Import the AuthProvider
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -49,11 +51,14 @@ export default function RootLayout({
         <link rel="icon" href="/icons/smartyapps.png" type="image/png" />
       </head>
       <body className={inter.className}>
-        <AuthHeader />
-        <AppHeader />
-        <main className="pt-1">
-          {children}
-        </main>
+        {/* Wrap the entire app with the AuthProvider */}
+        <AuthProvider>
+          <AuthHeader />
+          <AppHeader />
+          <main className="pt-4">
+            {children}
+          </main>
+        </AuthProvider>
         
         {/* Register service worker */}
         <Script src="/sw-register.js" strategy="beforeInteractive" />

@@ -1,11 +1,12 @@
-// src/app/login/LoginForm.tsx
+// src/app/login/page.tsx (Updated)
 'use client';
 
 import { useState, FormEvent, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '../context/AuthContext'; // Import useAuth
 
-export default function LoginForm() {
+export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -15,15 +16,8 @@ export default function LoginForm() {
   const searchParams = useSearchParams();
   const redirectPath = searchParams.get('redirect') || '/';
   
-  // Set the data-page attribute on the body for targeting with CSS
-  useEffect(() => {
-    document.body.setAttribute('data-page', 'login');
-    
-    // Clean up function to remove the attribute when component unmounts
-    return () => {
-      document.body.removeAttribute('data-page');
-    };
-  }, []);
+  // Get the refreshAuth function from the auth context
+  const { refreshAuth } = useAuth();
   
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -52,6 +46,9 @@ export default function LoginForm() {
         throw new Error(data.error || 'Login failed');
       }
       
+      // Refresh auth state to update the UI immediately
+      await refreshAuth();
+      
       // Redirect to the page they came from or home
       router.push(redirectPath);
     } catch (err: any) {
@@ -62,10 +59,11 @@ export default function LoginForm() {
   };
   
   return (
-    <div className="auth-page-container">
-      <div className="auth-content">
+    <div className="flex items-center justify-center bg-gray-100 py-8 px-4 sm:px-6 lg:px-8 min-h-[calc(100vh-64px)]">
+      <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
         <div className="text-center mb-8">
-          <h2 className="text-xl font-semibold text-gray-900">Log in to your account</h2>
+          <h1 className="text-2xl font-bold text-indigo-600">AI Logo Generator</h1>
+          <h2 className="mt-2 text-xl font-semibold text-gray-900">Log in to your account</h2>
         </div>
         
         {error && (

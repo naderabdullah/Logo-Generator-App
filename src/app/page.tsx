@@ -63,7 +63,7 @@ export default function Home() {
       try {
         // Try different API endpoints to see which one works
         let response = null;
-        const endpointsToTry = ['/user', '/api/user', '/auth/user'];
+        const endpointsToTry = ['/api/user'];
         
         for (const endpoint of endpointsToTry) {
           try {
