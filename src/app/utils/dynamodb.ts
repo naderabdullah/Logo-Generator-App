@@ -213,6 +213,26 @@ export async function updateLogo(logoId: string, updates: any) {
   }
 }
 
+// Count revisions for a specific original logo
+export async function countRevisionsForLogo(originalLogoId: string): Promise<number> {
+  try {
+    const params = {
+      TableName: TABLES.LOGOS,
+      IndexName: 'originalLogoId-index',
+      KeyConditionExpression: 'originalLogoId = :originalId',
+      ExpressionAttributeValues: {
+        ':originalId': originalLogoId
+      }
+    };
+
+    const result = await dynamoDb.query(params).promise();
+    return result.Items ? result.Items.length : 0;
+  } catch (error) {
+    console.error('Error counting revisions for logo:', error);
+    throw error;
+  }
+}
+
 /**
  * Delete a logo
  */

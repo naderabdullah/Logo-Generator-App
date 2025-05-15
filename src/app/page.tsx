@@ -37,7 +37,8 @@ function GenerateFormWithParams() {
         setError={handleSetError}
       />
       
-      {loading && <LoadingSpinner />}
+      {/* Remove the spinner */}
+      {/* {loading && <LoadingSpinner />} */}
 
       {error && !loading && (
         <div className="mt-4 sm:mt-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg text-center">
@@ -51,6 +52,56 @@ function GenerateFormWithParams() {
 
 export default function Home() {
   const [appReady, setAppReady] = useState(false);
+  const router = useRouter();
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
+  // Check auth status and redirect to auth page if not authenticated
+  useEffect(() => {
+    const checkAuth = async () => {
+      setIsCheckingAuth(true);
+      try {
+        // Try different API endpoints to see which one works
+        let response = null;
+        const endpointsToTry = ['/user', '/api/user', '/auth/user'];
+        
+        for (const endpoint of endpointsToTry) {
+          try {
+            console.log(`Trying user endpoint: ${endpoint}`);
+            const tempResponse = await fetch(endpoint);
+            
+            // If we get a non-404 response, use it
+            if (tempResponse.status !== 404) {
+              response = tempResponse;
+              break;
+            }
+          } catch (err) {
+            console.error(`Error with user endpoint ${endpoint}:`, err);
+          }
+        }
+        
+        if (!response || response.status === 401) {
+          // User is not authenticated, redirect to auth page
+          console.log("User not authenticated, redirecting to auth page");
+          setIsAuthenticated(false);
+          router.push('/auth');
+        } else if (response.ok) {
+          // User is authenticated
+          console.log("User is authenticated");
+          setIsAuthenticated(true);
+        }
+      } catch (err) {
+        console.error('Error checking auth status:', err);
+        // If there's an error, still redirect to auth page to be safe
+        setIsAuthenticated(false);
+        router.push('/auth');
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+    
+    checkAuth();
+  }, [router]);
   
   // Initialize PWA functionality
   useEffect(() => {
@@ -74,6 +125,18 @@ export default function Home() {
 
     return () => clearTimeout(timer);
   }, []);
+
+  // If still checking auth, show loading
+  if (isCheckingAuth) {
+    return (
+      <div className="container mx-auto px-4 pt-6 pb-0 max-w-4xl">
+        <div className="text-center my-8">
+          <div className="spinner"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`container mx-auto px-4 pt-6 pb-0 max-w-4xl ${appReady ? 'app-loading' : 'opacity-0'}`}>

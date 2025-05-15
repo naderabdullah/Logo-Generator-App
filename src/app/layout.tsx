@@ -51,7 +51,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <AuthHeader />
         <AppHeader />
-        <main className="pt-4">
+        <main className="pt-1">
           {children}
         </main>
         

@@ -132,7 +132,7 @@ export const initializeUserUsage = async (): Promise<void> => {
         const initialUsage: UserUsage = {
           id: 'usage', // Single record
           logosCreated: 0,
-          logosLimit: 10 // Free tier: 10 logos
+          logosLimit: 0 // Changed from 10 to 0
         };
         
         const request = store.add(initialUsage);
@@ -246,6 +246,26 @@ export const incrementLogosCreated = async (): Promise<void> => {
 // Check if user can create more original logos
 export const canCreateOriginalLogo = async (): Promise<boolean> => {
   try {
+    // First try to get the latest values from DynamoDB
+    try {
+      const response = await fetch('/user');
+      if (response.ok) {
+        const userData = await response.json();
+        
+        // Sync with IndexedDB but use the values directly for the check
+        await syncUserUsageWithDynamoDB({
+          logosCreated: userData.logosCreated,
+          logosLimit: userData.logosLimit
+        });
+        
+        return userData.logosCreated < userData.logosLimit;
+      }
+    } catch (err) {
+      console.error('Error fetching user data from API:', err);
+      // Fall back to IndexedDB if API call fails
+    }
+    
+    // Fall back to IndexedDB values if API call fails
     const usage = await getUserUsage();
     
     if (!usage) {
@@ -554,6 +574,51 @@ export const getAllLogosWithRevisions = async (): Promise<{
     return logosWithRevisions;
   } catch (error) {
     console.error('Error getting all logos with revisions:', error);
+    throw error;
+  }
+};
+
+// Update user usage with values from DynamoDB
+export const syncUserUsageWithDynamoDB = async (dbUsage: {
+  logosCreated: number;
+  logosLimit: number;
+}): Promise<void> => {
+  try {
+    const db = await initDB();
+    const currentUsage = await getUserUsage();
+    
+    if (!currentUsage) {
+      await initializeUserUsage();
+      return syncUserUsageWithDynamoDB(dbUsage);
+    }
+    
+    // Always use DynamoDB values as they take precedence
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction([USAGE_STORE], 'readwrite');
+      const store = transaction.objectStore(USAGE_STORE);
+      
+      const updatedUsage: UserUsage = {
+        ...currentUsage,
+        logosCreated: dbUsage.logosCreated,
+        logosLimit: dbUsage.logosLimit
+      };
+      
+      const request = store.put(updatedUsage);
+      
+      request.onsuccess = () => {
+        resolve();
+      };
+      
+      request.onerror = (event) => {
+        reject((event.target as IDBRequest).error);
+      };
+      
+      transaction.oncomplete = () => {
+        db.close();
+      };
+    });
+  } catch (error) {
+    console.error('Error syncing user usage with DynamoDB:', error);
     throw error;
   }
 };

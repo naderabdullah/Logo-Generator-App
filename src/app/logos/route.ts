@@ -103,20 +103,14 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Check if user has reached logo limit
-    if ((user.logosCreated || 0) >= (user.logosLimit || 10)) {
-      return NextResponse.json(
-        { error: 'You have reached your logo creation limit. Please upgrade your plan.' },
-        { status: 403 }
-      );
-    }
-    
-    // Parse the form data
+    // Parse the form data first to determine if this is a revision
     const formData = await request.formData();
     
     // Extract parameters for logo generation
     const prompt = formData.get('prompt') as string;
     const referenceImage = formData.get('referenceImage') as File | null;
+    const originalLogoId = formData.get('originalLogoId') as string | null;
+    const isRevision = originalLogoId !== null;
     
     if (!prompt) {
       return NextResponse.json(
@@ -124,9 +118,53 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+    
+    // Check limits based on whether this is a revision or original logo
+    if (!isRevision) {
+      // For original logos, check the global limit
+      if ((user.logosLimit || 0) <= 0) {
+        return NextResponse.json(
+          { error: 'Your account does not have any logo credits. Please upgrade your plan.' },
+          { status: 403 }
+        );
+      }
+      
+      if ((user.logosCreated || 0) >= (user.logosLimit || 0)) {
+        return NextResponse.json(
+          { error: 'You have reached your logo creation limit. Please upgrade your plan.' },
+          { status: 403 }
+        );
+      }
+    } else if (originalLogoId) {
+      // For revisions, check if already reached 3 revisions for this logo
+      try {
+        // Get all logos with this originalLogoId from DynamoDB
+        const revisions = await dynamoDB.query({
+          TableName: process.env.DYNAMODB_LOGOS_TABLE || 'logos',
+          IndexName: 'originalLogoId-index',
+          KeyConditionExpression: 'originalLogoId = :originalId',
+          ExpressionAttributeValues: {
+            ':originalId': originalLogoId
+          }
+        }).promise();
+        
+        const revisionCount = revisions.Items ? revisions.Items.length : 0;
+        
+        if (revisionCount >= 3) {
+          return NextResponse.json(
+            { error: 'You have reached the maximum of 3 revisions for this logo.' },
+            { status: 403 }
+          );
+        }
+      } catch (error) {
+        console.error('Error checking revision count:', error);
+        // If we can't check, we'll proceed - better UX than blocking
+      }
+    }
 
     console.log('Generating image with prompt:', prompt);
     console.log('Reference image provided:', !!referenceImage);
+    console.log('Is revision:', isRevision);
     
     // Verify API key is present
     const apiKey = process.env.OPENAI_API_KEY;
@@ -189,9 +227,6 @@ export async function POST(request: NextRequest) {
     }
     
     // Update the user's logo count in DynamoDB if this is not a revision
-    // For revisions, check if originalLogoId was passed
-    const isRevision = formData.get('originalLogoId') !== null;
-    
     if (!isRevision) {
       // Only increment count for original logos, not revisions
       await updateUserLogoCount(user.id);
@@ -205,8 +240,8 @@ export async function POST(request: NextRequest) {
       image: imageData,
       usage: {
         logosCreated: (user.logosCreated || 0) + (isRevision ? 0 : 1),
-        logosLimit: user.logosLimit || 10,
-        remainingLogos: Math.max(0, (user.logosLimit || 10) - ((user.logosCreated || 0) + (isRevision ? 0 : 1)))
+        logosLimit: user.logosLimit || 0,
+        remainingLogos: Math.max(0, (user.logosLimit || 0) - ((user.logosCreated || 0) + (isRevision ? 0 : 1)))
       }
     });
   } catch (error: any) {

@@ -1,6 +1,8 @@
+// Update src/app/login/page.tsx
+
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -13,6 +15,16 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectPath = searchParams.get('redirect') || '/';
+  
+  // Set the data-page attribute on the body for targeting with CSS
+  useEffect(() => {
+    document.body.setAttribute('data-page', 'login');
+    
+    // Clean up function to remove the attribute when component unmounts
+    return () => {
+      document.body.removeAttribute('data-page');
+    };
+  }, []);
   
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -51,10 +63,9 @@ export default function LoginPage() {
   };
   
   return (
-    <div className="flex items-center justify-center bg-gray-100 py-8 px-4 sm:px-6 lg:px-8 min-h-[calc(100vh-64px)]">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
+    <div className="auth-page-container">
+      <div className="auth-content">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-indigo-600">AI Logo Generator</h1>
           <h2 className="mt-2 text-xl font-semibold text-gray-900">Log in to your account</h2>
         </div>
         

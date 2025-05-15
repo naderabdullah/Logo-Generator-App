@@ -70,7 +70,7 @@ body {
 
 /* ========== Layout & Structure ========== */
 main {
-  padding-top: calc(84px + env(safe-area-inset-top, 0));
+  padding-top: 8px;
   padding-bottom: 0;
 }
 
@@ -104,13 +104,52 @@ main {
 }
 
 /* Logo view specific */
-.logo-view-page main {
-  padding-top: calc(84px + env(safe-area-inset-top, 0) + 16px);
+.logo-view-page {
+  padding-top: 16px;
 }
 
 main > div.mt-4 > .card:first-child {
   margin-top: 0.5rem;
 }
+
+/* Add these styles to your globals.css file */
+
+/* Make specific pages unscrollable */
+body[data-page="auth"],
+body[data-page="login"],
+body[data-page="signup"] {
+  overflow: hidden;
+  height: 100vh;
+  position: fixed;
+  width: 100%;
+  inset: 0;
+}
+
+/* Style the content container for these pages */
+.auth-page-container {
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+}
+
+/* Make the inner content scroll if it's too tall, but keep the page itself fixed */
+.auth-content {
+  max-height: 90vh;
+  overflow-y: auto;
+  width: 100%;
+  max-width: 28rem; /* 448px */
+  scrollbar-width: none; /* Hide scrollbar for Firefox */
+}
+
+.auth-content::-webkit-scrollbar {
+  display: none; /* Hide scrollbar for Chrome/Safari */
+}
+
 /* ========== Header & Navigation ========== */
 .fixed-header {
   position: fixed;
@@ -503,5 +542,28 @@ select {
   header .relative {
     width: 34px;
     height: 34px;
+  }
+
+  .header-user-menu {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+  }
+  
+  /* Fix for ensuring the header has enough height for the dropdown */
+  .mobile-auth-header {
+    min-height: 110px;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    position: relative;
+  }
+  
+  /* Improve logo counter visibility */
+  .logo-count-badge {
+    background-color: #f3f4f6;
+    border-radius: 0.375rem;
+    padding: 0.25rem 0.5rem;
+    font-weight: 500;
   }
 }

@@ -6,9 +6,9 @@ import {
   getAllLogosWithRevisions, 
   deleteLogo, 
   StoredLogo,
-  getUserUsage
+  getUserUsage,
+  syncUserUsageWithDynamoDB
 } from '@/app/utils/indexedDBUtils';
-import Header from '@/app/components/AppHeader';
 import Link from 'next/link';
 
 export default function HistoryView() {
@@ -25,30 +25,45 @@ export default function HistoryView() {
   const router = useRouter();
   
   useEffect(() => {
-    const fetchLogos = async () => {
-      try {
-        setLoading(true);
-        const allLogosWithRevisions = await getAllLogosWithRevisions();
-        setLogosWithRevisions(allLogosWithRevisions);
+  const fetchLogos = async () => {
+    try {
+      setLoading(true);
+      
+      // First, fetch usage information from DynamoDB via API
+      const userResponse = await fetch('/api/user');
+      
+      if (userResponse.ok) {
+        const userData = await userResponse.json();
         
-        // Get usage information
-        const usageData = await getUserUsage();
-        if (usageData) {
-          setUsage({
-            used: usageData.logosCreated,
-            limit: usageData.logosLimit
-          });
-        }
-      } catch (err) {
-        console.error('Error fetching logos:', err);
-        setError('Failed to load logo history');
-      } finally {
-        setLoading(false);
+        // Sync the DynamoDB usage with IndexedDB
+        await syncUserUsageWithDynamoDB({
+          logosCreated: userData.logosCreated,
+          logosLimit: userData.logosLimit
+        });
+        
+        setUsage({
+          used: userData.logosCreated,
+          limit: userData.logosLimit
+        });
+      } else if (userResponse.status === 401) {
+        // If unauthorized, redirect to login
+        router.push('/login?redirect=/history');
+        return;
       }
-    };
-    
-    fetchLogos();
-  }, []);
+      
+      const allLogosWithRevisions = await getAllLogosWithRevisions();
+      setLogosWithRevisions(allLogosWithRevisions);
+      
+    } catch (err) {
+      console.error('Error fetching logos:', err);
+      setError('Failed to load logo history');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  fetchLogos();
+}, [router]);
 
   // Helper function to get the latest revision
   const getLatestRevision = (revisions: StoredLogo[]): StoredLogo | null => {
@@ -217,6 +232,12 @@ export default function HistoryView() {
         )}
       </div>
       
+      <div className="footer-wrapper mt-6">
+        <p className="text-center text-gray-500 text-sm">
+          Logo Generation Tool • Smarty Apps • {new Date().getFullYear()}
+        </p>
+      </div>
+
       {/* Delete Confirmation Modal */}
       {selectedLogo && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">

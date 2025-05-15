@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
       email: email.toLowerCase(),
       password: hashedPassword,
       logosCreated: 0,
-      logosLimit: 10 // Default limit for free users
+      logosLimit: 0 // Default limit is 0 instead of 10
     };
     
     await dynamoDB.put({

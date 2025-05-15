@@ -8,7 +8,8 @@ import {
   getLogo, 
   LogoParameters, 
   canCreateOriginalLogo, 
-  canCreateRevision 
+  canCreateRevision,
+  syncUserUsageWithDynamoDB
 } from '@/app/utils/indexedDBUtils';
 
 // Helper hook to get edit param
@@ -33,6 +34,12 @@ function useAuthCheck() {
           const userData = await response.json();
           setIsLoggedIn(true);
           setUserInfo(userData);
+          
+          // Sync DynamoDB usage with IndexedDB
+          await syncUserUsageWithDynamoDB({
+            logosCreated: userData.logosCreated,
+            logosLimit: userData.logosLimit
+          });
         } else {
           setIsLoggedIn(false);
           setUserInfo(null);
@@ -400,8 +407,12 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
         formData.append('referenceImage', referenceImage);
       }
 
+      if (isRevision && originalLogoId) {
+      formData.append('originalLogoId', originalLogoId);
+      }
+
       // Send the request to server for logo generation and usage tracking
-      const response = await fetch('/api/logos', {
+      const response = await fetch('/logos', {
         method: 'POST',
         body: formData
       });
@@ -454,7 +465,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       console.error('Error generating logo:', error);
       setError(error instanceof Error ? error.message : 'An unknown error occurred');
     } finally {
-      setLoading(false);
+      //setLoading(false);
       setIsGenerating(false);
     }
   }, [
@@ -660,7 +671,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
           className={`advanced-options-container ${showAdvanced ? 'expanded' : ''}`}
         >
           <div className="mb-2 sm:mb-3">
-            <h3 className="text-lg font-medium mb-2">Advanced Options</h3>
             
             <div className="grid grid-cols-1 gap-4">
               {renderDropdown(
@@ -744,18 +754,30 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
           onClick={handleGenerateLogo}
           style={{ minHeight: '48px' }}
         >
-          {isGenerating ? 'Generating Logo...' : 
+          {isGenerating ? 'Generating Logo. This may take 30-60 seconds...' : 
            !isLoggedIn ? 'Login to Generate' :
            isRevision ? 'Generate Revision' : 
            'Generate Logo'}
         </button>
+        
+        {isRevision && !canRevise && (
+          <p className="text-sm text-red-500 mt-2 text-center">
+            You've reached the maximum of 3 revisions for this logo.
+          </p>
+        )}
 
-        {/* Loading indicator text */}
-        {isGenerating && (
+        {!isRevision && !canCreateLogo && (
+          <p className="text-sm text-red-500 mt-2 text-center">
+            You've reached your logo creation limit. Please upgrade your plan.
+          </p>
+        )}
+
+        {/* Remove or comment out the loading indicator text */}
+        {/* {isGenerating && (
           <p className="text-sm text-gray-500 mt-2 text-center">
             Logo generation can take 15-30 seconds. Please be patient...
           </p>
-        )}
+        )} */}
       </form>
     </div>
   );

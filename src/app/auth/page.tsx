@@ -1,14 +1,25 @@
-// src/app/auth/page.tsx
+// Update src/app/auth/page.tsx
+
 'use client';
 
 import Link from 'next/link';
+import { useEffect } from 'react';
 
 export default function AuthLanding() {
+  // Set the data-page attribute on the body for targeting with CSS
+  useEffect(() => {
+    document.body.setAttribute('data-page', 'auth');
+    
+    // Clean up function to remove the attribute when component unmounts
+    return () => {
+      document.body.removeAttribute('data-page');
+    };
+  }, []);
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="max-w-md w-full space-y-8">
+    <div className="auth-page-container">
+      <div className="auth-content">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-indigo-600">AI Logo Generator</h1>
           <h2 className="mt-6 text-xl font-semibold text-gray-900">Get Started</h2>
           <p className="mt-2 text-gray-600">Create professional logos with AI</p>
         </div>
