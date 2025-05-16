@@ -52,12 +52,13 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // Return user data (limited to just email and logo usage)
+    // Return user data - IMPORTANT: Use exactly what's in the database with no defaults
+    // The previous version was likely setting a default of 10 for logosLimit
     return NextResponse.json({
       email: user.email,
       logosCreated: user.logosCreated || 0,
-      logosLimit: user.logosLimit || 10,
-      remainingLogos: Math.max(0, (user.logosLimit || 10) - (user.logosCreated || 0))
+      logosLimit: user.logosLimit || 0, // Changed from 10 to 0
+      remainingLogos: Math.max(0, (user.logosLimit || 0) - (user.logosCreated || 0))
     });
   } catch (error) {
     console.error('Error fetching user data:', error);

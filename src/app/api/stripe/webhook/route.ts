@@ -4,10 +4,13 @@ import Stripe from 'stripe';
 import { DynamoDB } from 'aws-sdk';
 import { buffer } from 'micro';
 
-// Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2025-04-30.basil',
-});
+// Initialize Stripe only if the API key is available
+let stripe: Stripe | undefined;
+if (process.env.STRIPE_SECRET_KEY) {
+  stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2025-04-30.basil',
+  });
+}
 
 // Initialize DynamoDB client
 const dynamoDB = new DynamoDB.DocumentClient({
@@ -37,9 +40,11 @@ async function updateUserLogoLimit(userId: string, quantity: number) {
       throw new Error(`User with ID ${userId} not found`);
     }
     
-    // Calculate new limit
+    // Calculate new limit - ALWAYS add to existing limit
     const currentLimit = user.logosLimit || 0;
     const newLimit = currentLimit + quantity;
+    
+    console.log(`Updating user ${userId} logo limit: ${currentLimit} + ${quantity} = ${newLimit}`);
     
     // Update the user's logo limit
     await dynamoDB.update({
@@ -68,6 +73,13 @@ export const config = {
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if Stripe is initialized
+    if (!stripe) {
+      return NextResponse.json(
+        { error: 'Stripe is not configured. Please set STRIPE_SECRET_KEY environment variable.' },
+        { status: 500 }
+      );
+    }
     // Get the raw body for signature verification
     const rawBody = await getRawBody(request);
     

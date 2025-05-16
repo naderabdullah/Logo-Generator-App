@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { DynamoDB } from 'aws-sdk';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-// No need for UUID import since we'll use numeric IDs
 
 // Initialize DynamoDB client
 const dynamoDB = new DynamoDB.DocumentClient({
@@ -102,7 +101,7 @@ export async function POST(request: NextRequest) {
       email: email.toLowerCase(),
       password: hashedPassword,
       logosCreated: 0,
-      logosLimit: 0 // Default limit is 0 instead of 10
+      logosLimit: 0  // Explicitly set to 0 to fix the issue
     };
     
     await dynamoDB.put({

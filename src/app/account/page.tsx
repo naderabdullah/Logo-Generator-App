@@ -198,7 +198,7 @@ export default function AccountPage() {
                 <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
                   <div 
                     className="bg-blue-600 h-2.5 rounded-full" 
-                    style={{ width: `${Math.min(100, (userData.logosCreated / userData.logosLimit) * 100)}%` }}
+                    style={{ width: `${Math.min(100, (userData.logosCreated / Math.max(1, userData.logosLimit)) * 100)}%` }}
                   ></div>
                 </div>
               </div>
