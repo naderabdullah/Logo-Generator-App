@@ -1,7 +1,7 @@
-// src/app/signup/page.tsx (Updated)
+// src/app/signup/SignupForm.tsx (Updated)
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '../context/AuthContext';
@@ -21,6 +21,16 @@ export default function SignupPage() {
   
   // Get refreshAuth from auth context
   const { refreshAuth } = useAuth();
+  
+  // Set body data attribute for styling
+  useEffect(() => {
+    document.body.setAttribute('data-page', 'signup');
+    
+    // Clean up function to remove the attribute when component unmounts
+    return () => {
+      document.body.removeAttribute('data-page');
+    };
+  }, []);
   
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -72,9 +82,9 @@ export default function SignupPage() {
   };
   
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
-        <div className="text-center mb-8">
+    <div className="signup-page-container min-h-screen flex flex-col justify-center items-center px-4">
+      <div className="w-full max-w-md bg-white rounded-lg shadow-md p-6 sm:p-8">
+        <div className="text-center mb-6">
           <h1 className="text-2xl font-bold text-indigo-600">AI Logo Generator</h1>
           <h2 className="mt-2 text-xl font-semibold text-gray-900">Create your account</h2>
         </div>
@@ -85,7 +95,7 @@ export default function SignupPage() {
           </div>
         )}
         
-        <form className="space-y-6" onSubmit={handleSubmit}>
+        <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
               Email address
@@ -160,15 +170,6 @@ export default function SignupPage() {
             </p>
           </div>
         </form>
-        
-        <div className="text-center mt-6">
-          <Link 
-            href="/auth" 
-            className="text-sm text-gray-600 hover:text-indigo-500"
-          >
-            Back to options
-          </Link>
-        </div>
       </div>
     </div>
   );

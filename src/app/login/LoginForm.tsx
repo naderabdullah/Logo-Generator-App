@@ -1,10 +1,10 @@
-// src/app/login/page.tsx (Updated)
+// src/app/login/LoginForm.tsx (Updated)
 'use client';
 
 import { useState, FormEvent, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { useAuth } from '../context/AuthContext'; // Import useAuth
+import { useAuth } from '../context/AuthContext';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -18,6 +18,16 @@ export default function LoginPage() {
   
   // Get the refreshAuth function from the auth context
   const { refreshAuth } = useAuth();
+  
+  // Set body data attribute for styling
+  useEffect(() => {
+    document.body.setAttribute('data-page', 'login');
+    
+    // Clean up function to remove the attribute when component unmounts
+    return () => {
+      document.body.removeAttribute('data-page');
+    };
+  }, []);
   
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -59,9 +69,9 @@ export default function LoginPage() {
   };
   
   return (
-    <div className="flex items-center justify-center bg-gray-100 py-8 px-4 sm:px-6 lg:px-8 min-h-[calc(100vh-64px)]">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
-        <div className="text-center mb-8">
+    <div className="login-page-container min-h-screen flex flex-col justify-center items-center px-4">
+      <div className="w-full max-w-md bg-white rounded-lg shadow-md p-6 sm:p-8">
+        <div className="text-center mb-6">
           <h1 className="text-2xl font-bold text-indigo-600">AI Logo Generator</h1>
           <h2 className="mt-2 text-xl font-semibold text-gray-900">Log in to your account</h2>
         </div>
@@ -72,7 +82,7 @@ export default function LoginPage() {
           </div>
         )}
         
-        <form className="space-y-6" onSubmit={handleSubmit}>
+        <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
               Email address
@@ -111,7 +121,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
               {loading ? 'Logging in...' : 'Log in'}
             </button>

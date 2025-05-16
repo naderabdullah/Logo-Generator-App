@@ -8,7 +8,7 @@ export default function AccountPage() {
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingQuantity, setProcessingQuantity] = useState<number | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   
   const router = useRouter();
@@ -59,7 +59,7 @@ export default function AccountPage() {
   // Function to handle Stripe checkout
   const handlePurchase = async (quantity: number, price: number) => {
     try {
-      setIsProcessing(true);
+      setProcessingQuantity(quantity);
       setError(null);
       
       const response = await fetch('/api/stripe/create-checkout', {
@@ -86,8 +86,7 @@ export default function AccountPage() {
     } catch (err: any) {
       console.error('Checkout error:', err);
       setError(err.message || 'Failed to initiate checkout');
-    } finally {
-      setIsProcessing(false);
+      setProcessingQuantity(null);
     }
   };
 
@@ -216,17 +215,19 @@ export default function AccountPage() {
                 <div className="p-4 hover:bg-gray-50 transition">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-medium">1 Logo Credit</h3>
+                      <h3 className="font-medium">
+                        <span>1 Logo Credit</span> <span className="font-normal text-gray-500">+ (3 Free Revisions)</span>
+                      </h3>
                       <p className="text-sm text-gray-500">Generate one professional logo</p>
                     </div>
                     <div className="text-right">
                       <p className="font-bold text-lg text-indigo-600">$4.95</p>
                       <button
                         onClick={() => handlePurchase(1, 4.95)}
-                        disabled={isProcessing}
+                        disabled={processingQuantity !== null}
                         className="mt-2 px-4 py-2 bg-indigo-600 text-white text-sm rounded hover:bg-indigo-700 transition disabled:opacity-50"
                       >
-                        {isProcessing ? 'Processing...' : 'Buy Now'}
+                        {processingQuantity === 1 ? 'Processing...' : 'Buy Now'}
                       </button>
                     </div>
                   </div>
@@ -236,7 +237,9 @@ export default function AccountPage() {
                 <div className="p-4 hover:bg-gray-50 transition">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-medium">3 Logo Credits</h3>
+                      <h3 className="font-medium">
+                        <span>3 Logo Credits</span> <span className="font-normal text-gray-500">+ (9 Free Revisions)</span>
+                      </h3>
                       <p className="text-sm text-gray-500">Generate three professional logos</p>
                       <p className="text-xs text-green-600 mt-1">Save $4.90</p>
                     </div>
@@ -244,10 +247,10 @@ export default function AccountPage() {
                       <p className="font-bold text-lg text-indigo-600">$9.95</p>
                       <button
                         onClick={() => handlePurchase(3, 9.95)}
-                        disabled={isProcessing}
+                        disabled={processingQuantity !== null}
                         className="mt-2 px-4 py-2 bg-indigo-600 text-white text-sm rounded hover:bg-indigo-700 transition disabled:opacity-50"
                       >
-                        {isProcessing ? 'Processing...' : 'Buy Now'}
+                        {processingQuantity === 3 ? 'Processing...' : 'Buy Now'}
                       </button>
                     </div>
                   </div>
@@ -257,7 +260,9 @@ export default function AccountPage() {
                 <div className="p-4 hover:bg-gray-50 transition">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-medium">6 Logo Credits</h3>
+                      <h3 className="font-medium">
+                        <span>6 Logo Credits</span> <span className="font-normal text-gray-500">+ (18 Free Revisions)</span>
+                      </h3>
                       <p className="text-sm text-gray-500">Generate six professional logos</p>
                       <p className="text-xs text-green-600 mt-1">Save $14.75</p>
                     </div>
@@ -265,10 +270,10 @@ export default function AccountPage() {
                       <p className="font-bold text-lg text-indigo-600">$14.95</p>
                       <button
                         onClick={() => handlePurchase(6, 14.95)}
-                        disabled={isProcessing}
+                        disabled={processingQuantity !== null}
                         className="mt-2 px-4 py-2 bg-indigo-600 text-white text-sm rounded hover:bg-indigo-700 transition disabled:opacity-50"
                       >
-                        {isProcessing ? 'Processing...' : 'Buy Now'}
+                        {processingQuantity === 6 ? 'Processing...' : 'Buy Now'}
                       </button>
                     </div>
                   </div>
@@ -281,7 +286,9 @@ export default function AccountPage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-medium">9 Logo Credits</h3>
+                      <h3 className="font-medium">
+                        <span>9 Logo Credits</span> <span className="font-normal text-gray-500">+ (27 Free Revisions)</span>
+                      </h3>
                       <p className="text-sm text-gray-600">Generate nine professional logos</p>
                       <p className="text-xs text-green-600 mt-1">Save $24.60</p>
                     </div>
@@ -289,10 +296,10 @@ export default function AccountPage() {
                       <p className="font-bold text-lg text-indigo-600">$19.95</p>
                       <button
                         onClick={() => handlePurchase(9, 19.95)}
-                        disabled={isProcessing}
+                        disabled={processingQuantity !== null}
                         className="mt-2 px-4 py-2 bg-indigo-700 text-white text-sm rounded hover:bg-indigo-800 transition disabled:opacity-50"
                       >
-                        {isProcessing ? 'Processing...' : 'Buy Now'}
+                        {processingQuantity === 9 ? 'Processing...' : 'Buy Now'}
                       </button>
                     </div>
                   </div>

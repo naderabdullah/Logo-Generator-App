@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
             currency: 'usd',
             product_data: {
               name: `${quantity} Logo Credit${quantity > 1 ? 's' : ''}`,
-              description: `Generate ${quantity} professional logo${quantity > 1 ? 's' : ''} with our AI Logo Generator`,
+              description: `Generate ${quantity} professional logo${quantity > 1 ? 's' : ''} with our AI Logo Generator. Includes 3 free revisions${quantity > 1 ? ' per logo.' : '.'} ${quantity > 1 ? `(${quantity*3} Revisions total)` : ''}`,
             },
             unit_amount: priceInCents,
           },

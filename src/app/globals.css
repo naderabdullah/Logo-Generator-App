@@ -119,6 +119,64 @@ main {
   min-height: 44px;
 }
 
+/* Add these styles to your src/app/globals.css file */
+
+/* Prevent scrolling for auth pages */
+body[data-page="login"],
+body[data-page="signup"] {
+  overflow: hidden;
+  height: 100vh;
+  position: fixed;
+  width: 100%;
+  inset: 0;
+}
+
+/* Style the containers for login/signup pages */
+.login-page-container,
+.signup-page-container {
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: #f3f4f6; /* Light gray background */
+}
+
+/* Make sure the form is never taller than the viewport */
+.login-page-container > div,
+.signup-page-container > div {
+  max-height: 90vh;
+  overflow-y: auto; /* Allow scrolling within the card if needed */
+  scrollbar-width: none; /* Hide scrollbar for Firefox */
+}
+
+/* Hide scrollbar for Chrome/Safari */
+.login-page-container > div::-webkit-scrollbar,
+.signup-page-container > div::-webkit-scrollbar {
+  display: none;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-height: 600px) {
+  .login-page-container > div,
+  .signup-page-container > div {
+    padding: 1rem;
+  }
+  
+  .login-page-container h1,
+  .signup-page-container h1 {
+    font-size: 1.5rem;
+  }
+  
+  .login-page-container h2,
+  .signup-page-container h2 {
+    font-size: 1.25rem;
+  }
+}
+
 /* Logo view specific */
 .logo-view-page main {
   padding-top: var(--logo-view-padding-top);
