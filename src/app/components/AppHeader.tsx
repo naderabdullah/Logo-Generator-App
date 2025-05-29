@@ -13,10 +13,20 @@ export default function AppHeader() {
   }
   
   return (
-    <div className="border-b border-gray-200 bg-white">
+    <div className="fixed top-16 left-0 right-0 z-40 border-b border-gray-200 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-center">
-          <nav className="flex -mb-px space-x-8">
+          <nav className="flex -mb-px space-x-4 sm:space-x-8">
+            <Link 
+              href="/history" 
+              className={`py-4 px-1 border-b-2 text-sm font-medium ${
+                pathname === '/history' 
+                  ? 'border-indigo-500 text-indigo-600' 
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              History
+            </Link>
             <Link 
               href="/" 
               className={`py-4 px-1 border-b-2 text-sm font-medium ${
@@ -28,14 +38,24 @@ export default function AppHeader() {
               Generator
             </Link>
             <Link 
-              href="/history" 
+              href="/account" 
               className={`py-4 px-1 border-b-2 text-sm font-medium ${
-                pathname === '/history' 
+                pathname === '/account' 
                   ? 'border-indigo-500 text-indigo-600' 
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              History
+              Account
+            </Link>
+            <Link 
+              href="/purchase" 
+              className={`py-4 px-1 border-b-2 text-sm font-medium ${
+                pathname === '/purchase' 
+                  ? 'border-indigo-500 text-indigo-600' 
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Purchase
             </Link>
           </nav>
         </div>

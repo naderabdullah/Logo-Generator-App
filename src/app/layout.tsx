@@ -55,7 +55,7 @@ export default function RootLayout({
         <AuthProvider>
           <AuthHeader />
           <AppHeader />
-          <main className="pt-4">
+          <main className="pt-28 sm:pt-32">
             {children}
           </main>
         </AuthProvider>
