@@ -7,6 +7,160 @@
    Mobile-first responsive design system
    ======================================== */
 
+/* Add these at the very top of your globals.css file */
+
+/* Critical iOS Safe Area Variables */
+:root {
+  /* Safe area variables with fallbacks */
+  --sat: env(safe-area-inset-top, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  
+  /* Header heights */
+  --auth-header-height: 64px;
+  --app-header-height: 48px;
+  --total-header-height: calc(var(--auth-header-height) + var(--app-header-height));
+  
+  /* Total top offset including safe area */
+  --header-offset: calc(var(--total-header-height) + var(--sat));
+}
+
+/* Reset and base styles for iOS */
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  height: 100%;
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+}
+
+body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  position: fixed;
+  margin: 0;
+  padding: 0;
+  
+  /* Use safe area padding */
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  
+  /* Prevent bounce scrolling on iOS */
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* App container to handle the layout */
+.app-container {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* Update the AuthHeader styles */
+header.fixed {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  
+  /* Account for safe area at top */
+  padding-top: env(safe-area-inset-top, 0px);
+  
+  /* Ensure background covers safe area */
+  background-color: white;
+}
+
+/* Update AppHeader positioning */
+.app-header-nav {
+  position: fixed;
+  top: calc(64px + env(safe-area-inset-top, 0px)); /* AuthHeader height + safe area */
+  left: 0;
+  right: 0;
+  z-index: 40;
+  background-color: white;
+}
+
+/* Main content area with proper scrolling */
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  
+  /* Padding for fixed headers */
+  padding-top: var(--header-offset);
+  
+  /* Padding for safe areas on sides and bottom */
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 20px); /* 20px fallback for home indicator */
+}
+
+/* For iOS standalone mode (PWA) */
+@media all and (display-mode: standalone) {
+  body {
+    /* In standalone mode, we need to handle status bar ourselves */
+    padding-top: env(safe-area-inset-top, 20px);
+  }
+}
+
+/* iPhone-specific adjustments */
+@supports (-webkit-touch-callout: none) {
+  /* iOS only */
+  body {
+    /* Use -webkit-fill-available for better height calculation */
+    min-height: -webkit-fill-available;
+  }
+  
+  .app-container {
+    min-height: -webkit-fill-available;
+  }
+}
+
+/* Handle landscape orientation */
+@media screen and (orientation: landscape) {
+  :root {
+    --auth-header-height: 48px;
+    --app-header-height: 40px;
+  }
+  
+  /* Extra padding for notch in landscape */
+  .main-content {
+    padding-left: max(env(safe-area-inset-left, 0px), 20px);
+    padding-right: max(env(safe-area-inset-right, 0px), 20px);
+  }
+}
+
+/* Specific handling for devices with Dynamic Island or notch */
+@supports (padding: max(0px)) {
+  .main-content {
+    /* Use max() to ensure minimum padding even when safe area is 0 */
+    padding-top: max(var(--header-offset), calc(var(--total-header-height) + 20px));
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 20px);
+  }
+}
+
+/* Remove these old styles that might conflict */
+body[data-page="login"],
+body[data-page="signup"],
+body[data-page="auth"] {
+  /* Remove the fixed positioning from auth pages */
+  position: relative;
+  height: 100vh;
+  overflow-y: auto;
+}
+
 /* 1. CSS VARIABLES & DESIGN TOKENS */
 :root {
   /* Colors */
@@ -139,6 +293,20 @@ main {
   background-color: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+}
+
+.ios-auth-header {
+  /* Extend background to cover safe area */
+  padding-top: max(env(safe-area-inset-top, 0px), 16px);
+  
+  /* Ensure content is below safe area */
+  padding-bottom: 16px;
+}
+
+.ios-auth-header > div {
+  /* Keep content within safe bounds */
+  padding-left: env(safe-area-inset-left, 16px);
+  padding-right: env(safe-area-inset-right, 16px);
 }
 
 .header-auth {
