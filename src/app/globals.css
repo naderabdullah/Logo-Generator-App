@@ -7,8 +7,6 @@
    Mobile-first responsive design system
    ======================================== */
 
-/* Add these at the very top of your globals.css file */
-
 /* Critical iOS Safe Area Variables */
 :root {
   /* Safe area variables with fallbacks */
@@ -17,152 +15,12 @@
   --sab: env(safe-area-inset-bottom, 0px);
   --sal: env(safe-area-inset-left, 0px);
   
-  /* Header heights */
-  --auth-header-height: 64px;
-  --app-header-height: 48px;
-  --total-header-height: calc(var(--auth-header-height) + var(--app-header-height));
+  /* Single header height */
+  --header-height: 64px;
   
   /* Total top offset including safe area */
-  --header-offset: calc(var(--total-header-height) + var(--sat));
-}
-
-/* Reset and base styles for iOS */
-* {
-  box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent;
-}
-
-html {
-  height: 100%;
-  overflow: hidden;
-  position: fixed;
-  width: 100%;
-}
-
-body {
-  height: 100%;
-  width: 100%;
-  overflow: hidden;
-  position: fixed;
-  margin: 0;
-  padding: 0;
+  --header-offset: calc(var(--header-height) + var(--sat));
   
-  /* Use safe area padding */
-  padding-top: env(safe-area-inset-top, 0px);
-  padding-right: env(safe-area-inset-right, 0px);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  padding-left: env(safe-area-inset-left, 0px);
-  
-  /* Prevent bounce scrolling on iOS */
-  overscroll-behavior: none;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* App container to handle the layout */
-.app-container {
-  height: 100%;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-}
-
-/* Update the AuthHeader styles */
-header.fixed {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 50;
-  
-  /* Account for safe area at top */
-  padding-top: env(safe-area-inset-top, 0px);
-  
-  /* Ensure background covers safe area */
-  background-color: white;
-}
-
-/* Update AppHeader positioning */
-.app-header-nav {
-  position: fixed;
-  top: calc(64px + env(safe-area-inset-top, 0px)); /* AuthHeader height + safe area */
-  left: 0;
-  right: 0;
-  z-index: 40;
-  background-color: white;
-}
-
-/* Main content area with proper scrolling */
-.main-content {
-  flex: 1;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  
-  /* Padding for fixed headers */
-  padding-top: var(--header-offset);
-  
-  /* Padding for safe areas on sides and bottom */
-  padding-left: env(safe-area-inset-left, 0px);
-  padding-right: env(safe-area-inset-right, 0px);
-  padding-bottom: env(safe-area-inset-bottom, 20px); /* 20px fallback for home indicator */
-}
-
-/* For iOS standalone mode (PWA) */
-@media all and (display-mode: standalone) {
-  body {
-    /* In standalone mode, we need to handle status bar ourselves */
-    padding-top: env(safe-area-inset-top, 20px);
-  }
-}
-
-/* iPhone-specific adjustments */
-@supports (-webkit-touch-callout: none) {
-  /* iOS only */
-  body {
-    /* Use -webkit-fill-available for better height calculation */
-    min-height: -webkit-fill-available;
-  }
-  
-  .app-container {
-    min-height: -webkit-fill-available;
-  }
-}
-
-/* Handle landscape orientation */
-@media screen and (orientation: landscape) {
-  :root {
-    --auth-header-height: 48px;
-    --app-header-height: 40px;
-  }
-  
-  /* Extra padding for notch in landscape */
-  .main-content {
-    padding-left: max(env(safe-area-inset-left, 0px), 20px);
-    padding-right: max(env(safe-area-inset-right, 0px), 20px);
-  }
-}
-
-/* Specific handling for devices with Dynamic Island or notch */
-@supports (padding: max(0px)) {
-  .main-content {
-    /* Use max() to ensure minimum padding even when safe area is 0 */
-    padding-top: max(var(--header-offset), calc(var(--total-header-height) + 20px));
-    padding-bottom: max(env(safe-area-inset-bottom, 0px), 20px);
-  }
-}
-
-/* Remove these old styles that might conflict */
-body[data-page="login"],
-body[data-page="signup"],
-body[data-page="auth"] {
-  /* Remove the fixed positioning from auth pages */
-  position: relative;
-  height: 100vh;
-  overflow-y: auto;
-}
-
-/* 1. CSS VARIABLES & DESIGN TOKENS */
-:root {
   /* Colors */
   --color-primary: #6366f1;
   --color-primary-hover: #4f46e5;
@@ -212,15 +70,7 @@ body[data-page="auth"] {
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
   
   /* Layout */
-  --header-height: 4rem;  /* 64px */
-  --tab-height: 3rem;     /* 48px */
   --max-width: 72rem;     /* 1152px */
-  
-  /* Safe Areas (iOS) */
-  --safe-top: env(safe-area-inset-top, 0px);
-  --safe-right: env(safe-area-inset-right, 0px);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --safe-left: env(safe-area-inset-left, 0px);
   
   /* Touch targets */
   --touch-target: 44px;
@@ -231,14 +81,17 @@ body[data-page="auth"] {
   --transition-slow: 300ms ease;
 }
 
-/* 2. RESET & BASE STYLES */
+/* Reset and base styles for iOS */
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
 }
 
 html {
-  font-size: 16px;
+  height: 100%;
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
   -webkit-text-size-adjust: 100%;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -246,18 +99,118 @@ html {
 }
 
 body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  position: fixed;
   margin: 0;
+  padding: 0;
   font-family: var(--font-sans);
   font-size: var(--text-base);
   line-height: 1.5;
   color: var(--color-gray-900);
   background-color: var(--color-gray-50);
-  min-height: 100vh;
-  min-height: 100dvh; /* Dynamic viewport height */
-  overflow-x: hidden;
+  
+  /* Use safe area padding */
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  
+  /* Prevent bounce scrolling on iOS */
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* 3. LAYOUT COMPONENTS */
+/* App container to handle the layout */
+.app-container {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* Unified header styles */
+.ios-unified-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  
+  /* Extend background to cover safe area */
+  padding-top: env(safe-area-inset-top, 0px);
+  
+  /* Ensure background covers safe area */
+  background-color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.ios-unified-header > div > div {
+  /* The actual header content height */
+  height: var(--header-height);
+}
+
+/* Main content area with proper scrolling */
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  
+  /* Padding for fixed header - THIS IS THE KEY FIX */
+  padding-top: var(--header-offset);
+  
+  /* Padding for safe areas on sides and bottom */
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 20px);
+}
+
+/* For iOS standalone mode (PWA) */
+@media all and (display-mode: standalone) {
+  body {
+    /* In standalone mode, we need to handle status bar ourselves */
+    padding-top: env(safe-area-inset-top, 20px);
+  }
+}
+
+/* iPhone-specific adjustments */
+@supports (-webkit-touch-callout: none) {
+  /* iOS only */
+  body {
+    /* Use -webkit-fill-available for better height calculation */
+    min-height: -webkit-fill-available;
+  }
+  
+  .app-container {
+    min-height: -webkit-fill-available;
+  }
+}
+
+/* Handle landscape orientation */
+@media screen and (orientation: landscape) {
+  :root {
+    --header-height: 56px;
+  }
+  
+  /* Extra padding for notch in landscape */
+  .main-content {
+    padding-left: max(env(safe-area-inset-left, 0px), 20px);
+    padding-right: max(env(safe-area-inset-right, 0px), 20px);
+  }
+}
+
+/* Specific handling for devices with Dynamic Island or notch */
+@supports (padding: max(0px)) {
+  .main-content {
+    /* Use max() to ensure minimum padding even when safe area is 0 */
+    padding-top: max(var(--header-offset), calc(var(--header-height) + 20px));
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 20px);
+  }
+}
+
+/* Layout Components */
 .container {
   width: 100%;
   max-width: var(--max-width);
@@ -267,67 +220,7 @@ body {
   padding-right: var(--space-md);
 }
 
-/* Safe area padding wrapper */
-.safe-area {
-  padding-top: var(--safe-top);
-  padding-right: var(--safe-right);
-  padding-bottom: var(--safe-bottom);
-  padding-left: var(--safe-left);
-}
-
-/* Main content area */
-main {
-  min-height: calc(100vh - var(--header-height) - var(--tab-height));
-  min-height: calc(100dvh - var(--header-height) - var(--tab-height));
-  padding-top: calc(var(--header-height) + var(--tab-height) + var(--safe-top));
-  padding-bottom: var(--space-lg);
-}
-
-/* 4. HEADER STYLES */
-.header-fixed {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 50;
-  background-color: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-.ios-auth-header {
-  /* Extend background to cover safe area */
-  padding-top: max(env(safe-area-inset-top, 0px), 16px);
-  
-  /* Ensure content is below safe area */
-  padding-bottom: 16px;
-}
-
-.ios-auth-header > div {
-  /* Keep content within safe bounds */
-  padding-left: env(safe-area-inset-left, 16px);
-  padding-right: env(safe-area-inset-right, 16px);
-}
-
-.header-auth {
-  height: var(--header-height);
-  padding-top: var(--safe-top);
-  border-bottom: 1px solid var(--color-gray-200);
-}
-
-.header-tabs {
-  height: var(--tab-height);
-  border-bottom: 1px solid var(--color-gray-200);
-  overflow-x: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.header-tabs::-webkit-scrollbar {
-  display: none;
-}
-
-/* 5. CARD COMPONENT */
+/* Card Component */
 .card {
   background-color: white;
   border-radius: var(--radius-lg);
@@ -336,7 +229,7 @@ main {
   margin-bottom: var(--space-md);
 }
 
-/* 6. FORM STYLES */
+/* Form Styles */
 .form-label {
   display: block;
   font-size: var(--text-sm);
@@ -372,7 +265,7 @@ main {
   padding-right: var(--space-xl);
 }
 
-/* 7. BUTTON STYLES */
+/* Button Styles */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -407,39 +300,7 @@ main {
   cursor: not-allowed;
 }
 
-/* 8. TAB STYLES */
-.tab-nav {
-  display: flex;
-  height: 100%;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-xs);
-  padding: 0 var(--space-md);
-}
-
-.tab-btn {
-  display: flex;
-  align-items: center;
-  height: 100%;
-  padding: 0 var(--space-md);
-  font-size: var(--text-sm);
-  font-weight: 500;
-  color: var(--color-gray-600);
-  border-bottom: 2px solid transparent;
-  transition: all var(--transition-base);
-  white-space: nowrap;
-}
-
-.tab-btn:hover {
-  color: var(--color-gray-700);
-}
-
-.tab-btn.active {
-  color: var(--color-primary);
-  border-bottom-color: var(--color-primary);
-}
-
-/* 9. LOADING STATES */
+/* Loading States */
 .spinner {
   display: inline-block;
   width: 2rem;
@@ -454,7 +315,7 @@ main {
   to { transform: rotate(360deg); }
 }
 
-/* 10. UTILITY CLASSES */
+/* Utility Classes */
 .text-center { text-align: center; }
 .text-left { text-align: left; }
 .text-right { text-align: right; }
@@ -475,11 +336,18 @@ main {
 .gap-md { gap: var(--space-md); }
 .gap-lg { gap: var(--space-lg); }
 
-/* 11. AUTH PAGES SPECIAL HANDLING */
-.auth-page {
-  position: fixed;
-  inset: 0;
-  overflow: hidden;
+/* Auth Pages Special Handling */
+body[data-page="login"],
+body[data-page="signup"],
+body[data-page="auth"] {
+  /* Remove the fixed positioning from auth pages */
+  position: relative;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.auth-page-container {
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -487,24 +355,11 @@ main {
   background-color: var(--color-gray-50);
 }
 
-.auth-container {
-  width: 100%;
-  max-width: 28rem;
-  max-height: 90vh;
-  max-height: 90dvh;
-  overflow-y: auto;
-  background-color: white;
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  padding: var(--space-lg);
-}
-
-/* 12. RESPONSIVE BREAKPOINTS */
+/* Responsive Breakpoints */
 /* Tablet (768px+) */
 @media (min-width: 768px) {
   :root {
-    --header-height: 5rem;
-    --tab-height: 3.5rem;
+    --header-height: 64px;
   }
   
   .container {
@@ -515,31 +370,17 @@ main {
   .card {
     padding: var(--space-lg);
   }
-  
-  .tab-btn {
-    padding: 0 var(--space-lg);
-    font-size: var(--text-base);
-  }
-  
-  .auth-container {
-    padding: var(--space-xl);
-  }
 }
 
 /* Desktop (1024px+) */
 @media (min-width: 1024px) {
-  main {
-    padding-top: calc(var(--header-height) + var(--tab-height) + var(--space-lg));
-    padding-bottom: var(--space-xl);
-  }
-  
   .container {
     padding-left: var(--space-xl);
     padding-right: var(--space-xl);
   }
 }
 
-/* 13. MOBILE-SPECIFIC FIXES */
+/* Mobile-specific Fixes */
 @media (max-width: 767px) {
   /* Prevent horizontal scroll on mobile */
   html, body {
@@ -566,12 +407,16 @@ main {
   .btn-group .btn {
     width: 100%;
   }
+  
+  /* Mobile navigation adjustments */
+  .ios-unified-header nav {
+    font-size: 0.875rem;
+  }
 }
 
-/* 14. PRINT STYLES */
+/* Print Styles */
 @media print {
-  .header-fixed,
-  .header-tabs,
+  .ios-unified-header,
   .btn,
   .no-print {
     display: none !important;

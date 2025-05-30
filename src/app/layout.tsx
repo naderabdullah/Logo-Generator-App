@@ -3,8 +3,7 @@ import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import Script from 'next/script';
-import AuthHeader from './components/AuthHeader';
-import AppHeader from './components/AppHeader';
+import UnifiedHeader from './components/UnifiedHeader';
 import { AuthProvider } from './context/AuthContext';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -29,7 +28,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  viewportFit: 'cover' // Critical for iOS safe areas
+  viewportFit: 'cover'
 };
 
 export default function RootLayout({
@@ -40,18 +39,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Critical viewport meta tag with viewport-fit=cover FIRST */}
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
-        
-        {/* PWA meta tags for iOS */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Logo Gen" />
         <meta name="mobile-web-app-capable" content="yes" />
-        
-        {/* Theme color */}
         <meta name="theme-color" content="#6366f1" />
-        
         <link rel="apple-touch-icon" href="/icons/smartyapps.png" />
         <link rel="shortcut icon" href="/icons/smartyapps.png" type="image/png" />
         <link rel="icon" href="/icons/smartyapps.png" type="image/png" />
@@ -59,8 +52,7 @@ export default function RootLayout({
       <body className={`${inter.className} ios-safe`}>
         <AuthProvider>
           <div className="app-container">
-            <AuthHeader />
-            <AppHeader />
+            <UnifiedHeader />
             <main className="main-content">
               {children}
             </main>
