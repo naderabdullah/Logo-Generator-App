@@ -119,7 +119,7 @@ export default function HistoryView() {
               You have created {usage.used} of {usage.limit} available logos
               {usage.used >= usage.limit && (
                 <span className="ml-2">
-                  <Link href="/account" className="text-indigo-800 underline">Purchase more</Link>
+                  <Link href="/purchase" className="text-indigo-800 underline">Purchase more</Link>
                 </span>
               )}
             </p>

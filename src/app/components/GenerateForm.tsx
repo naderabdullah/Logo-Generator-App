@@ -26,7 +26,6 @@ function useAuthCheck() {
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    // Function to check if user is logged in by trying to fetch user data
     const checkAuthStatus = async () => {
       try {
         const response = await fetch('/api/user');
@@ -36,7 +35,6 @@ function useAuthCheck() {
           setIsLoggedIn(true);
           setUserInfo(userData);
           
-          // Sync DynamoDB usage with IndexedDB
           await syncUserUsageWithDynamoDB({
             logosCreated: userData.logosCreated,
             logosLimit: userData.logosLimit
@@ -59,54 +57,6 @@ function useAuthCheck() {
   return { isLoggedIn, userInfo, loading };
 }
 
-// Modal component for showing limit reached message
-function LimitReachedModal({ isOpen, onClose, isRevision }: { 
-  isOpen: boolean; 
-  onClose: () => void;
-  isRevision: boolean;
-}) {
-  if (!isOpen) return null;
-  
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-6">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-        <div className="text-center mb-4">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-          <h3 className="text-xl font-bold mt-2">
-            {isRevision 
-              ? "Maximum Revisions Reached" 
-              : "Logo Limit Reached"}
-          </h3>
-        </div>
-        
-        <p className="text-gray-600 mb-6">
-          {isRevision 
-            ? "You've reached the maximum of 3 revisions for this logo." 
-            : "You've reached your logo creation limit. Please purchase more logos."}
-        </p>
-        
-        <div className="flex justify-center space-x-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-          >
-            Close
-          </button>
-          
-          <Link
-            href="/account"
-            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-          >
-            Go to Account
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 interface GenerateFormProps {
   setLoading: (loading: boolean) => void;
   setImageDataUri: (dataUri: string | null) => void;
@@ -114,17 +64,10 @@ interface GenerateFormProps {
 }
 
 export default function GenerateForm({ setLoading, setImageDataUri, setError }: GenerateFormProps) {
-  // Get authentication status
   const { isLoggedIn, userInfo, loading: authLoading } = useAuthCheck();
-  
-  // Create unique IDs for form elements
-  const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
-  
-  // Get the edit param using the hook that uses useSearchParams
   const editLogoId = useEditParam();
   
-  // State to track if we're editing an original logo or a revision
   const [isRevision, setIsRevision] = useState(false);
   const [originalLogoId, setOriginalLogoId] = useState<string | undefined>(undefined);
   
@@ -147,27 +90,16 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   const [complexityLevel, setComplexityLevel] = useState('');
   const [applicationContext, setApplicationContext] = useState('');
   
-  // Show advanced options toggle
   const [showAdvanced, setShowAdvanced] = useState(false);
-
-  // Modal state
-  const [showLimitModal, setShowLimitModal] = useState(false);
-  
-  // Animation reference
-  const advancedSectionRef = useRef<HTMLDivElement>(null);
-  
-  // Track loading state locally
   const [isGenerating, setIsGenerating] = useState(false);
-  
-  // Track usage limits
   const [canCreateLogo, setCanCreateLogo] = useState(true);
   const [canRevise, setCanRevise] = useState(true);
+  const [showLimitModal, setShowLimitModal] = useState(false);
 
   // Check usage limits when component loads
   useEffect(() => {
     const checkUsageLimits = async () => {
       try {
-        // If not editing, check if user can create a new original logo
         if (!editLogoId) {
           const canCreate = await canCreateOriginalLogo();
           setCanCreateLogo(canCreate);
@@ -180,7 +112,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     checkUsageLimits();
   }, [editLogoId]);
 
-  // Check for edit mode
+  // Load logo data if editing
   useEffect(() => {
     if (editLogoId) {
       const loadLogoData = async () => {
@@ -189,7 +121,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
           const logoData = await getLogo(editLogoId);
           
           if (logoData) {
-            // Fill in the form with the logo parameters
             const params = logoData.parameters;
             setCompanyName(params.companyName || '');
             setOverallStyle(params.overallStyle || '');
@@ -198,7 +129,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
             setBrandPersonality(params.brandPersonality || '');
             setIndustry(params.industry || '');
             
-            // Advanced options
             if (params.typographyStyle || params.lineStyle || params.composition || 
                 params.shapeEmphasis || params.texture || params.complexityLevel || 
                 params.applicationContext) {
@@ -213,11 +143,9 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
             setComplexityLevel(params.complexityLevel || '');
             setApplicationContext(params.applicationContext || '');
             
-            // Convert the data URI to a File object for reference
             if (logoData.imageDataUri) {
               setReferenceImagePreview(logoData.imageDataUri);
               
-              // Convert the data URI to a blob and create a file
               try {
                 const response = await fetch(logoData.imageDataUri);
                 const blob = await response.blob();
@@ -228,21 +156,14 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               }
             }
             
-            // Determine if this is a revision or an original logo
             if (logoData.isRevision && logoData.originalLogoId) {
-              // If editing a revision, the original is its originalLogoId
               setIsRevision(true);
               setOriginalLogoId(logoData.originalLogoId);
-              
-              // Check if can create more revisions for this original
               const canReviseMore = await canCreateRevision(logoData.originalLogoId);
               setCanRevise(canReviseMore);
             } else {
-              // If editing an original logo, this becomes a revision of itself
               setIsRevision(true);
               setOriginalLogoId(logoData.id);
-              
-              // Check if can create more revisions for this original
               const canReviseMore = await canCreateRevision(logoData.id);
               setCanRevise(canReviseMore);
             }
@@ -259,7 +180,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     }
   }, [editLogoId, setLoading, setError]);
 
-  // Handle reference image upload
   const handleReferenceImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setReferenceImage(file);
@@ -275,7 +195,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     }
   };
 
-  // Required options data
+  // Options data
   const overallStyleOptions = [
     'Modern', 'Contemporary', 'Abstract', 'Classical', 
     'Hi-Tech', 'Minimalist', 'Vintage', 'Geometric', 'Hand-Drawn'
@@ -307,7 +227,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     'Non-profit/Charity', 'Fashion/Beauty', 'Construction/Real Estate'
   ];
   
-  // Advanced options data
   const typographyStyleOptions = [
     'Serif', 'Sans-serif', 'Script/Cursive', 'Display', 
     'Slab serif', 'Geometric', 'Handwritten', 'Monospace', 
@@ -355,11 +274,8 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     setShowAdvanced(prev => !prev);
   }, []);
 
-  // Function to build prompt from selections
   const buildPrompt = useCallback(() => {
     let prompt = `Create a logo with the following characteristics:\n`;
-    
-    // Add required options
     prompt += `Company Name: ${companyName}\n`;
     prompt += `Style: ${overallStyle}\n`;
     prompt += `Colors: ${colorScheme}\n`;
@@ -367,7 +283,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     prompt += `Brand Personality: ${brandPersonality}\n`;
     prompt += `Industry: ${industry}\n`;
     
-    // Add advanced options if they are set
     if (typographyStyle) prompt += `Typography: ${typographyStyle}\n`;
     if (lineStyle) prompt += `Line Style: ${lineStyle}\n`;
     if (composition) prompt += `Composition: ${composition}\n`;
@@ -376,7 +291,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     if (complexityLevel) prompt += `Complexity: ${complexityLevel}\n`;
     if (applicationContext) prompt += `Application Context: ${applicationContext}\n`;
     
-    // Add a final instruction 
     prompt += `Make it a high-quality, professional logo suitable for business use.`;
     
     return prompt;
@@ -387,7 +301,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     applicationContext
   ]);
 
-  // Collect parameters for saving
   const collectParameters = useCallback((): LogoParameters => {
     return {
       companyName,
@@ -416,18 +329,15 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   }, [companyName, overallStyle, colorScheme, symbolFocus, brandPersonality, industry]);
 
   const handleGenerateLogo = useCallback(async () => {
-    // Redirect to login if not authenticated
     if (!isLoggedIn) {
       router.push('/login?redirect=/');
       return;
     }
 
-    // If already generating or missing required fields, do nothing
     if (isGenerating || !areRequiredFieldsFilled()) {
       return;
     }
     
-    // Check limit conditions and show modal if needed
     if (isRevision && !canRevise) {
       setShowLimitModal(true);
       return;
@@ -439,20 +349,16 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     }
     
     const prompt = buildPrompt();
-    console.log('Starting logo generation with prompt:', prompt);
-
-    // Update states to indicate generation is in progress
+    
     setLoading(true);
     setError(null);
     setImageDataUri(null);
     setIsGenerating(true);
 
     try {
-      // Create a FormData object to send the data
       const formData = new FormData();
       formData.append('prompt', prompt);
       
-      // Add the reference image if one was uploaded
       if (referenceImage) {
         formData.append('referenceImage', referenceImage);
       }
@@ -461,7 +367,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
         formData.append('originalLogoId', originalLogoId);
       }
 
-      // Send the request to server for logo generation and usage tracking
       const response = await fetch('/logos', {
         method: 'POST',
         body: formData
@@ -469,24 +374,17 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('API Error:', response.status, errorText.substring(0, 200));
-        
         let errorMessage = `Error generating image (${response.status})`;
         try {
           const errorData = JSON.parse(errorText);
           errorMessage = errorData.error || errorMessage;
-        } catch (e) {
-          // If we can't parse the error, use the status code message
-        }
+        } catch (e) {}
         
         throw new Error(errorMessage);
       }
 
-      // Parse response
       const data = await response.json();
-      console.log('Response received from API');
       
-      // Process the response data
       let imageDataUriString = '';
       if (data.image.type === 'base64') {
         imageDataUriString = `data:image/png;base64,${data.image.data}`;
@@ -496,19 +394,15 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
         throw new Error('No image data received in the expected format');
       }
       
-      // Save the logo to IndexedDB with revision tracking
       const parameters = collectParameters();
       const logoId = await saveLogo(
         imageDataUriString, 
         parameters,
         isRevision ? originalLogoId : undefined,
-        companyName // Use company name for the logo name
+        companyName
       );
       
-      // Show success message
       setImageDataUri(imageDataUriString);
-      
-      // Optionally navigate to the logo view page
       router.push(`/logos/${logoId}`);
       
     } catch (error) {
@@ -524,7 +418,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     isRevision, originalLogoId, companyName, canRevise, canCreateLogo
   ]);
 
-  // Function to create dropdown 
   const renderDropdown = useCallback((
     id: string,
     label: string,
@@ -534,13 +427,13 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     required: boolean = false
   ) => {
     return (
-      <div className="mb-4">
+      <div className="mb-md">
         <label htmlFor={id} className="form-label">
-          {label} {required && <span className="text-red-500">*</span>}
+          {label} {required && <span style={{ color: 'var(--color-error)' }}>*</span>}
         </label>
         <select
           id={id}
-          className="form-input"
+          className="form-select"
           value={value}
           onChange={onChange}
           required={required}
@@ -560,22 +453,21 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   return (
     <div className="card">
       {authLoading && (
-        <div className="text-center my-4">
+        <div className="text-center" style={{ padding: 'var(--space-lg)' }}>
           <div className="spinner inline-block"></div>
-          <p className="mt-2 text-gray-600">Checking authentication...</p>
+          <p className="mt-sm" style={{ color: 'var(--color-gray-600)' }}>Checking authentication...</p>
         </div>
       )}
       
-      <form ref={formRef} onSubmit={(e) => e.preventDefault()} className="space-y-2">
-        <div className="mb-2 sm:mb-3">
-          <h3 className="text-lg font-medium mb-2">
+      {!authLoading && (
+        <div>
+          <h3 style={{ fontSize: 'var(--text-lg)', fontWeight: '500', marginBottom: 'var(--space-md)' }}>
             {isRevision ? 'Revise Logo' : 'Create New Logo'}
           </h3>
 
-          {/* Company Name Input */}
-          <div className="mb-2">
+          <div className="mb-md">
             <label htmlFor="company-name" className="form-label">
-              Company Name <span className="text-red-500">*</span>
+              Company Name <span style={{ color: 'var(--color-error)' }}>*</span>
             </label>
             <input
               id="company-name"
@@ -590,46 +482,72 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
             />
           </div>
 
-          {/* Reference Image Upload - Mobile-friendly version */}
-          <div className="mb-2">
+          <div className="mb-md">
             <label htmlFor="reference-image" className="form-label">
               Reference Image {isRevision ? '(Current Logo)' : '(Optional)'}
             </label>
-            <div className="relative">
-              <label 
-                className="w-full flex items-center justify-center p-2 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-indigo-300 transition text-gray-500 hover:text-indigo-500"
-                style={{ minHeight: '40px' }}
-              >
-                <span className="text-center">
-                  {referenceImage ? referenceImage.name : 'Tap to upload an image'}
-                </span>
-                <input
-                  id="reference-image"
-                  type="file"
-                  accept="image/*"
-                  className="sr-only"
-                  onChange={handleReferenceImageChange}
-                  disabled={isGenerating}
-                />
-              </label>
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
+            <label 
+              className="block"
+              style={{
+                padding: 'var(--space-sm)',
+                border: '2px dashed var(--color-gray-300)',
+                borderRadius: 'var(--radius-md)',
+                textAlign: 'center',
+                cursor: 'pointer',
+                transition: 'all var(--transition-base)',
+                minHeight: 'var(--touch-target)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'var(--color-primary)';
+                e.currentTarget.style.color = 'var(--color-primary)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'var(--color-gray-300)';
+                e.currentTarget.style.color = 'inherit';
+              }}
+            >
+              <span style={{ color: 'var(--color-gray-500)' }}>
+                {referenceImage ? referenceImage.name : 'Tap to upload an image'}
+              </span>
+              <input
+                id="reference-image"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleReferenceImageChange}
+                disabled={isGenerating}
+                style={{ display: 'none' }}
+              />
+            </label>
+            <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-gray-500)', marginTop: 'var(--space-xs)' }}>
               {isRevision 
                 ? 'The current logo is used as a reference for the revision'
                 : 'Upload an image for inspiration'}
             </p>
             
             {referenceImagePreview && (
-              <div className="mt-4 text-center">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
+              <div className="text-center mt-md">
                 <img
                   src={referenceImagePreview}
                   alt="Reference image preview"
-                  className="image-preview"
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '10rem',
+                    borderRadius: 'var(--radius-md)',
+                    boxShadow: 'var(--shadow-sm)',
+                    margin: '0 auto'
+                  }}
                 />
                 <button
                   type="button"
-                  className="mt-2 text-red-500 text-sm"
+                  className="mt-sm"
+                  style={{
+                    color: 'var(--color-error)',
+                    fontSize: 'var(--text-sm)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
                   onClick={() => {
                     setReferenceImage(null);
                     setReferenceImagePreview(null);
@@ -641,8 +559,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
             )}
           </div>
 
-          {/* Required dropdowns - Made more mobile-friendly */}
-          <div className="grid grid-cols-1 gap-4">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 'var(--space-xs)' }}>
             {renderDropdown(
               "overall-style",
               'Overall Style',
@@ -688,129 +605,212 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               true
             )}
           </div>
-        </div>
 
-        {/* Advanced Options Toggle - Mobile friendly with larger touch target */}
-        <div className="mb-2 sm:mb-3">
+          <div className="mb-md">
+            <button
+              type="button"
+              onClick={toggleAdvancedOptions}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--color-primary)',
+                fontWeight: '500',
+                cursor: 'pointer',
+                padding: 'var(--space-sm)',
+                marginLeft: '-var(--space-sm)',
+                borderRadius: 'var(--radius-md)',
+                minHeight: 'var(--touch-target)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 'var(--space-sm)'
+              }}
+            >
+              <span>{showAdvanced ? '−' : '+'}</span>
+              {showAdvanced ? 'Hide Advanced Options' : 'Show Advanced Options'}
+            </button>
+          </div>
+
+          {showAdvanced && (
+            <div style={{ 
+              animation: 'slideDown var(--transition-slow) ease-out',
+              marginBottom: 'var(--space-md)' 
+            }}>
+              <style jsx>{`
+                @keyframes slideDown {
+                  from {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                  }
+                  to {
+                    opacity: 1;
+                    transform: translateY(0);
+                  }
+                }
+              `}</style>
+              
+              <h3 style={{ 
+                fontSize: 'var(--text-lg)', 
+                fontWeight: '500', 
+                marginBottom: 'var(--space-md)' 
+              }}>
+                Advanced Options
+              </h3>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 'var(--space-xs)' }}>
+                {renderDropdown(
+                  "typography",
+                  'Typography Style',
+                  typographyStyle,
+                  (e) => setTypographyStyle(e.target.value),
+                  typographyStyleOptions
+                )}
+                
+                {renderDropdown(
+                  "line-style",
+                  'Line & Stroke Style',
+                  lineStyle,
+                  (e) => setLineStyle(e.target.value),
+                  lineStyleOptions
+                )}
+                
+                {renderDropdown(
+                  "composition",
+                  'Composition/Layout',
+                  composition,
+                  (e) => setComposition(e.target.value),
+                  compositionOptions
+                )}
+                
+                {renderDropdown(
+                  "shape",
+                  'Shape Emphasis',
+                  shapeEmphasis,
+                  (e) => setShapeEmphasis(e.target.value),
+                  shapeEmphasisOptions
+                )}
+                
+                {renderDropdown(
+                  "texture",
+                  'Texture & Finish',
+                  texture,
+                  (e) => setTexture(e.target.value),
+                  textureOptions
+                )}
+                
+                {renderDropdown(
+                  "complexity",
+                  'Complexity Level',
+                  complexityLevel,
+                  (e) => setComplexityLevel(e.target.value),
+                  complexityLevelOptions
+                )}
+                
+                {renderDropdown(
+                  "application",
+                  'Application Context',
+                  applicationContext,
+                  (e) => setApplicationContext(e.target.value),
+                  applicationContextOptions
+                )}
+              </div>
+            </div>
+          )}
+
+          {isRevision && (
+            <div style={{ 
+              fontSize: 'var(--text-sm)', 
+              color: 'var(--color-gray-600)', 
+              marginBottom: 'var(--space-md)' 
+            }}>
+              <p>This will count as a revision of your original logo.</p>
+              <p>You are allowed up to 3 free revisions per logo.</p>
+            </div>
+          )}
+
           <button
             type="button"
-            onClick={toggleAdvancedOptions}
-            className="text-indigo-600 hover:text-indigo-800 font-medium inline-flex items-center p-2 -ml-2 rounded-md transition"
-            style={{ minHeight: '44px' }}
+            className="btn btn-primary"
+            style={{ width: '100%' }}
+            disabled={
+              isGenerating || 
+              !areRequiredFieldsFilled() || 
+              !isLoggedIn
+            }
+            onClick={handleGenerateLogo}
           >
-            <span className="mr-2">{showAdvanced ? '−' : '+'}</span>
-            {showAdvanced ? 'Hide Advanced Options' : 'Show Advanced Options'}
+            {isGenerating ? 'Generating Logo...' : 
+             !isLoggedIn ? 'Login to Generate' :
+             isRevision ? 'Generate Revision' : 
+             'Generate Logo'}
           </button>
-        </div>
 
-        {/* Advanced Options Section with Animation */}
-        <div 
-          className={`advanced-options-container ${showAdvanced ? 'expanded' : ''}`}
-          ref={advancedSectionRef}
-        >
-          <div className="mb-2 sm:mb-3">
-            <h3 className="text-lg font-medium mb-2">Advanced Options</h3>
+          {isGenerating && (
+            <p className="text-center mt-sm" style={{ 
+              fontSize: 'var(--text-sm)', 
+              color: 'var(--color-gray-500)' 
+            }}>
+              Logo generation can take 15-30 seconds. Please be patient...
+            </p>
+          )}
+        </div>
+      )}
+
+      {showLimitModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 100,
+          padding: 'var(--space-md)'
+        }}>
+          <div className="card" style={{
+            maxWidth: '28rem',
+            width: '100%',
+            padding: 'var(--space-lg)'
+          }}>
+            <div className="text-center mb-md">
+              <svg xmlns="http://www.w3.org/2000/svg" style={{ width: '3rem', height: '3rem', margin: '0 auto', color: '#eab308' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <h3 style={{ fontSize: 'var(--text-xl)', fontWeight: '600', marginTop: 'var(--space-sm)' }}>
+                {isRevision 
+                  ? "Maximum Revisions Reached" 
+                  : "Logo Limit Reached"}
+              </h3>
+            </div>
             
-            <div className="grid grid-cols-1 gap-4">
-              {renderDropdown(
-                "typography",
-                'Typography Style',
-                typographyStyle,
-                (e) => setTypographyStyle(e.target.value),
-                typographyStyleOptions
-              )}
+            <p style={{ color: 'var(--color-gray-600)', marginBottom: 'var(--space-lg)' }}>
+              {isRevision 
+                ? "You've reached the maximum of 3 revisions for this logo." 
+                : "You've reached your logo creation limit. Please purchase more logos."}
+            </p>
+            
+            <div className="flex gap-sm" style={{ justifyContent: 'center' }}>
+              <button
+                onClick={() => setShowLimitModal(false)}
+                className="btn"
+                style={{
+                  backgroundColor: 'white',
+                  color: 'var(--color-gray-700)',
+                  border: '1px solid var(--color-gray-300)'
+                }}
+              >
+                Close
+              </button>
               
-              {renderDropdown(
-                "line-style",
-                'Line & Stroke Style',
-                lineStyle,
-                (e) => setLineStyle(e.target.value),
-                lineStyleOptions
-              )}
-              
-              {renderDropdown(
-                "composition",
-                'Composition/Layout',
-                composition,
-                (e) => setComposition(e.target.value),
-                compositionOptions
-              )}
-              
-              {renderDropdown(
-                "shape",
-                'Shape Emphasis',
-                shapeEmphasis,
-                (e) => setShapeEmphasis(e.target.value),
-                shapeEmphasisOptions
-              )}
-              
-              {renderDropdown(
-                "texture",
-                'Texture & Finish',
-                texture,
-                (e) => setTexture(e.target.value),
-                textureOptions
-              )}
-              
-              {renderDropdown(
-                "complexity",
-                'Complexity Level',
-                complexityLevel,
-                (e) => setComplexityLevel(e.target.value),
-                complexityLevelOptions
-              )}
-              
-              {renderDropdown(
-                "application",
-                'Application Context',
-                applicationContext,
-                (e) => setApplicationContext(e.target.value),
-                applicationContextOptions
-              )}
+              <Link
+                href="/account"
+                className="btn btn-primary"
+              >
+                Go to Account
+              </Link>
             </div>
           </div>
         </div>
-
-        {/* Usage Limits Information - only show for standard informational purposes */}
-        {isRevision && (
-          <div className="text-sm text-gray-600 mb-4">
-            <p>This will count as a revision of your original logo.</p>
-            <p>You are allowed up to 3 free revisions per logo.</p>
-          </div>
-        )}
-
-        {/* Generate Button - Mobile optimized size */}
-        <button
-          type="button"
-          className="btn-primary w-full"
-          disabled={
-            isGenerating || 
-            !areRequiredFieldsFilled() || 
-            !isLoggedIn
-          }
-          onClick={handleGenerateLogo}
-          style={{ minHeight: '48px' }}
-        >
-          {isGenerating ? 'Generating Logo...' : 
-           !isLoggedIn ? 'Login to Generate' :
-           isRevision ? 'Generate Revision' : 
-           'Generate Logo'}
-        </button>
-
-        {/* Loading indicator text */}
-        {isGenerating && (
-          <p className="text-sm text-gray-500 mt-2 text-center">
-            Logo generation can take 15-30 seconds. Please be patient...
-          </p>
-        )}
-      </form>
-
-      {/* The modal needs to be rendered at the document root level to ensure proper z-index and positioning */}
-      <LimitReachedModal 
-        isOpen={showLimitModal} 
-        onClose={() => setShowLimitModal(false)} 
-        isRevision={isRevision}
-      />
+      )}
     </div>
   );
 }
