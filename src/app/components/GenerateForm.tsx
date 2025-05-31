@@ -90,6 +90,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   const [complexityLevel, setComplexityLevel] = useState('');
   const [applicationContext, setApplicationContext] = useState('');
   
+  const [isAnimating, setIsAnimating] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [canCreateLogo, setCanCreateLogo] = useState(true);
@@ -111,6 +112,29 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     
     checkUsageLimits();
   }, [editLogoId]);
+
+  useEffect(() => {
+  // Add/remove classes to control scrolling on the main content
+  const mainContent = document.querySelector('.main-content');
+  const generatorPage = document.querySelector('.generator-page');
+  
+  if (mainContent && generatorPage) {
+    if (showAdvanced) {
+      // Allow scrolling when advanced options are shown
+      generatorPage.classList.add('allow-scroll');
+    } else {
+      // Fixed layout when advanced options are hidden
+      generatorPage.classList.remove('allow-scroll');
+    }
+  }
+  
+  return () => {
+    // Cleanup - ensure scrolling is enabled when component unmounts
+    if (generatorPage) {
+      generatorPage.classList.add('allow-scroll');
+    }
+  };
+}, [showAdvanced]);
 
   // Load logo data if editing
   useEffect(() => {
@@ -271,8 +295,16 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   ];
 
   const toggleAdvancedOptions = useCallback(() => {
-    setShowAdvanced(prev => !prev);
-  }, []);
+  if (showAdvanced) {
+    setIsAnimating(true);
+    setTimeout(() => {
+      setShowAdvanced(false);
+      setIsAnimating(false);
+    }, 300); // Match animation duration
+  } else {
+    setShowAdvanced(true);
+  }
+}, [showAdvanced]);
 
   const buildPrompt = useCallback(() => {
     let prompt = `Create a logo with the following characteristics:\n`;
@@ -451,7 +483,8 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   }, [isGenerating]);
 
   return (
-    <div className="card">
+    <div className="generator-form-container">
+      <div className={`card generator-form ${showAdvanced ? '' : 'fixed'}`}></div>
       {authLoading && (
         <div className="text-center" style={{ padding: 'var(--space-lg)' }}>
           <div className="spinner inline-block"></div>
@@ -631,23 +664,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
           </div>
 
           {showAdvanced && (
-            <div style={{ 
-              animation: 'slideDown var(--transition-slow) ease-out',
-              marginBottom: 'var(--space-md)' 
-            }}>
-              <style jsx>{`
-                @keyframes slideDown {
-                  from {
-                    opacity: 0;
-                    transform: translateY(-10px);
-                  }
-                  to {
-                    opacity: 1;
-                    transform: translateY(0);
-                  }
-                }
-              `}</style>
-              
+            <div className={`advanced-options ${isAnimating ? 'hiding' : ''}`}>
               <h3 style={{ 
                 fontSize: 'var(--text-lg)', 
                 fontWeight: '500', 

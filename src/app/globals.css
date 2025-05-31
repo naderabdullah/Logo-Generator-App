@@ -15,9 +15,11 @@
   --sab: env(safe-area-inset-bottom, 0px);
   --sal: env(safe-area-inset-left, 0px);
   
-  /* Single header height */
-  --header-height: 64px;
-  
+  /* Header heights for different screen sizes */
+  --header-height-mobile: 80px; /* Taller for stacked layout */
+  --header-height-desktop: 64px;
+  --header-height: var(--header-height-mobile); /* Default to mobile */
+
   /* Total top offset including safe area */
   --header-offset: calc(var(--header-height) + var(--sat));
   
@@ -167,6 +169,27 @@ body {
   padding-bottom: env(safe-area-inset-bottom, 20px);
 }
 
+.generator-page {
+  overflow: hidden;
+  height: calc(100vh - var(--header-offset));
+}
+
+.generator-page.allow-scroll {
+  overflow-y: auto;
+  height: auto;
+  min-height: calc(100vh - var(--header-offset));
+}
+
+.generator-form-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.generator-form-container.allow-scroll {
+  height: auto;
+}
+
 /* For iOS standalone mode (PWA) */
 @media all and (display-mode: standalone) {
   body {
@@ -191,7 +214,7 @@ body {
 /* Handle landscape orientation */
 @media screen and (orientation: landscape) {
   :root {
-    --header-height: 56px;
+    --header-height: var(--header-height-desktop);
   }
   
   /* Extra padding for notch in landscape */
@@ -265,6 +288,18 @@ body {
   padding-right: var(--space-xl);
 }
 
+.generator-form {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding-bottom: var(--space-md);
+}
+
+.generator-form.fixed {
+  overflow-y: hidden;
+}
+
 /* Button Styles */
 .btn {
   display: inline-flex;
@@ -315,6 +350,41 @@ body {
   to { transform: rotate(360deg); }
 }
 
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    max-height: 1000px; /* Large enough to accommodate content */
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 1;
+    max-height: 1000px;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    max-height: 0;
+    transform: translateY(-10px);
+  }
+}
+
+.advanced-options {
+  overflow: hidden;
+  animation: slideDown 0.3s ease-out forwards;
+}
+
+.advanced-options.hiding {
+  animation: slideUp 0.3s ease-out forwards;
+}
+
 /* Utility Classes */
 .text-center { text-align: center; }
 .text-left { text-align: left; }
@@ -359,7 +429,7 @@ body[data-page="auth"] {
 /* Tablet (768px+) */
 @media (min-width: 768px) {
   :root {
-    --header-height: 64px;
+    --header-height: var(--header-height-desktop);
   }
   
   .container {
@@ -414,6 +484,13 @@ body[data-page="auth"] {
   }
 }
 
+/* Extra small screens (below 375px) */
+@media (min-width: 375px) {
+  .xs\:inline {
+    display: inline;
+  }
+}
+
 /* Print Styles */
 @media print {
   .ios-unified-header,
@@ -429,5 +506,19 @@ body[data-page="auth"] {
   .card {
     box-shadow: none;
     border: 1px solid var(--color-gray-300);
+  }
+}
+
+/* Hide footer-wrapper elements to prevent invisible footer issue */
+.footer-wrapper {
+  display: none;
+}
+
+@media (max-width: 767px) and (max-height: 700px) {
+  /* On small screens, always allow scroll to prevent form cutoff */
+  .generator-page {
+    overflow-y: auto !important;
+    height: auto !important;
+    min-height: calc(100vh - var(--header-offset));
   }
 }

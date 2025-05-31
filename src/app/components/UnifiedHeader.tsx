@@ -48,7 +48,70 @@ export default function UnifiedHeader() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm border-b border-gray-200 ios-unified-header">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        {/* Mobile Layout - Stacked */}
+        <div className="md:hidden">
+          {/* Top row - Logo and User Info */}
+          <div className="flex items-center justify-between h-12 pt-2">
+            <Link href="/" className="text-lg font-bold text-indigo-600">
+              AI Logo Generator
+            </Link>
+            <div className="flex items-center text-xs font-medium text-gray-700">
+              <div className="mr-2 text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                <span className="font-medium">{user.logosCreated || 0}</span>/<span className="font-medium">{user.logosLimit || 0}</span>
+              </div>
+              <span className="hidden xs:inline">{user.email.split('@')[0]}</span>
+            </div>
+          </div>
+          
+          {/* Bottom row - Navigation */}
+          <nav className="flex justify-center pb-2">
+            <div className="flex space-x-6">
+              <Link 
+                href="/history" 
+                className={`py-1 text-sm font-medium ${
+                  pathname === '/history' 
+                    ? 'text-indigo-600' 
+                    : 'text-gray-500'
+                }`}
+              >
+                History
+              </Link>
+              <Link 
+                href="/" 
+                className={`py-1 text-sm font-medium ${
+                  pathname === '/' 
+                    ? 'text-indigo-600' 
+                    : 'text-gray-500'
+                }`}
+              >
+                Generator
+              </Link>
+              <Link 
+                href="/account" 
+                className={`py-1 text-sm font-medium ${
+                  pathname === '/account' 
+                    ? 'text-indigo-600' 
+                    : 'text-gray-500'
+                }`}
+              >
+                Account
+              </Link>
+              <Link 
+                href="/purchase" 
+                className={`py-1 text-sm font-medium ${
+                  pathname === '/purchase' 
+                    ? 'text-indigo-600' 
+                    : 'text-gray-500'
+                }`}
+              >
+                Purchase
+              </Link>
+            </div>
+          </nav>
+        </div>
+        
+        {/* Desktop Layout - Original */}
+        <div className="hidden md:flex items-center justify-between h-16">
           {/* Logo - Left side */}
           <div className="flex-shrink-0">
             <Link href="/" className="text-xl font-bold text-indigo-600">
@@ -57,7 +120,7 @@ export default function UnifiedHeader() {
           </div>
           
           {/* Navigation - Center */}
-          <nav className="hidden md:flex absolute left-1/2 transform -translate-x-1/2">
+          <nav className="flex absolute left-1/2 transform -translate-x-1/2">
             <div className="flex space-x-8">
               <Link 
                 href="/history" 
@@ -102,56 +165,12 @@ export default function UnifiedHeader() {
             </div>
           </nav>
           
-          {/* Mobile Navigation - Hamburger Menu */}
-          <nav className="md:hidden flex space-x-4">
-            <Link 
-              href="/history" 
-              className={`text-sm font-medium ${
-                pathname === '/history' 
-                  ? 'text-indigo-600' 
-                  : 'text-gray-500'
-              }`}
-            >
-              History
-            </Link>
-            <Link 
-              href="/" 
-              className={`text-sm font-medium ${
-                pathname === '/' 
-                  ? 'text-indigo-600' 
-                  : 'text-gray-500'
-              }`}
-            >
-              Generator
-            </Link>
-            <Link 
-              href="/account" 
-              className={`text-sm font-medium ${
-                pathname === '/account' 
-                  ? 'text-indigo-600' 
-                  : 'text-gray-500'
-              }`}
-            >
-              Account
-            </Link>
-            <Link 
-              href="/purchase" 
-              className={`text-sm font-medium ${
-                pathname === '/purchase' 
-                  ? 'text-indigo-600' 
-                  : 'text-gray-500'
-              }`}
-            >
-              Purchase
-            </Link>
-          </nav>
-          
           {/* User Info - Right side */}
           <div className="flex items-center text-sm font-medium text-gray-700">
             <div className="mr-2 text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
               <span className="font-medium">{user.logosCreated || 0}</span>/<span className="font-medium">{user.logosLimit || 0}</span>
             </div>
-            <span className="hidden sm:inline">{user.email.split('@')[0]}</span>
+            <span>{user.email.split('@')[0]}</span>
           </div>
         </div>
       </div>
