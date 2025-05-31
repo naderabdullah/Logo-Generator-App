@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef, ChangeEvent, useEffect } from 'react';
+import { useState, useCallback, ChangeEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -13,13 +13,11 @@ import {
   syncUserUsageWithDynamoDB
 } from '@/app/utils/indexedDBUtils';
 
-// Helper hook to get edit param
 function useEditParam() {
   const searchParams = useSearchParams();
   return searchParams.get('edit');
 }
 
-// Simple hook to check authentication status
 function useAuthCheck() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   const [userInfo, setUserInfo] = useState<any>(null);
@@ -64,14 +62,13 @@ interface GenerateFormProps {
 }
 
 export default function GenerateForm({ setLoading, setImageDataUri, setError }: GenerateFormProps) {
-  const { isLoggedIn, userInfo, loading: authLoading } = useAuthCheck();
+  const { isLoggedIn, loading: authLoading } = useAuthCheck();
   const router = useRouter();
   const editLogoId = useEditParam();
   
   const [isRevision, setIsRevision] = useState(false);
   const [originalLogoId, setOriginalLogoId] = useState<string | undefined>(undefined);
   
-  // Required options state
   const [companyName, setCompanyName] = useState('');
   const [referenceImage, setReferenceImage] = useState<File | null>(null);
   const [referenceImagePreview, setReferenceImagePreview] = useState<string | null>(null);
@@ -81,7 +78,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   const [brandPersonality, setBrandPersonality] = useState('');
   const [industry, setIndustry] = useState('');
   
-  // Advanced options state
   const [typographyStyle, setTypographyStyle] = useState('');
   const [lineStyle, setLineStyle] = useState('');
   const [composition, setComposition] = useState('');
@@ -97,7 +93,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   const [canRevise, setCanRevise] = useState(true);
   const [showLimitModal, setShowLimitModal] = useState(false);
 
-  // Check usage limits when component loads
   useEffect(() => {
     const checkUsageLimits = async () => {
       try {
@@ -114,29 +109,24 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   }, [editLogoId]);
 
   useEffect(() => {
-  // Add/remove classes to control scrolling on the main content
-  const mainContent = document.querySelector('.main-content');
-  const generatorPage = document.querySelector('.generator-page');
-  
-  if (mainContent && generatorPage) {
-    if (showAdvanced) {
-      // Allow scrolling when advanced options are shown
-      generatorPage.classList.add('allow-scroll');
-    } else {
-      // Fixed layout when advanced options are hidden
-      generatorPage.classList.remove('allow-scroll');
+    const mainContent = document.querySelector('.main-content');
+    const generatorPage = document.querySelector('.generator-page');
+    
+    if (mainContent && generatorPage) {
+      if (showAdvanced || referenceImage) {
+        generatorPage.classList.add('allow-scroll');
+      } else {
+        generatorPage.classList.remove('allow-scroll');
+      }
     }
-  }
-  
-  return () => {
-    // Cleanup - ensure scrolling is enabled when component unmounts
-    if (generatorPage) {
-      generatorPage.classList.add('allow-scroll');
-    }
-  };
-}, [showAdvanced]);
+    
+    return () => {
+      if (generatorPage) {
+        generatorPage.classList.add('allow-scroll');
+      }
+    };
+  }, [showAdvanced, referenceImage]);
 
-  // Load logo data if editing
   useEffect(() => {
     if (editLogoId) {
       const loadLogoData = async () => {
@@ -153,9 +143,15 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
             setBrandPersonality(params.brandPersonality || '');
             setIndustry(params.industry || '');
             
-            if (params.typographyStyle || params.lineStyle || params.composition || 
-                params.shapeEmphasis || params.texture || params.complexityLevel || 
-                params.applicationContext) {
+            if (
+              params.typographyStyle || 
+              params.lineStyle || 
+              params.composition || 
+              params.shapeEmphasis || 
+              params.texture || 
+              params.complexityLevel || 
+              params.applicationContext
+            ) {
               setShowAdvanced(true);
             }
             
@@ -219,7 +215,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     }
   };
 
-  // Options data
   const overallStyleOptions = [
     'Modern', 'Contemporary', 'Abstract', 'Classical', 
     'Hi-Tech', 'Minimalist', 'Vintage', 'Geometric', 'Hand-Drawn'
@@ -295,16 +290,16 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   ];
 
   const toggleAdvancedOptions = useCallback(() => {
-  if (showAdvanced) {
-    setIsAnimating(true);
-    setTimeout(() => {
-      setShowAdvanced(false);
-      setIsAnimating(false);
-    }, 300); // Match animation duration
-  } else {
-    setShowAdvanced(true);
-  }
-}, [showAdvanced]);
+    if (showAdvanced) {
+      setIsAnimating(true);
+      setTimeout(() => {
+        setShowAdvanced(false);
+        setIsAnimating(false);
+      }, 300);
+    } else {
+      setShowAdvanced(true);
+    }
+  }, [showAdvanced]);
 
   const buildPrompt = useCallback(() => {
     let prompt = `Create a logo with the following characteristics:\n`;
@@ -357,8 +352,22 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   ]);
 
   const areRequiredFieldsFilled = useCallback(() => {
-    return companyName && overallStyle && colorScheme && symbolFocus && brandPersonality && industry;
-  }, [companyName, overallStyle, colorScheme, symbolFocus, brandPersonality, industry]);
+    return (
+      companyName &&
+      overallStyle &&
+      colorScheme &&
+      symbolFocus &&
+      brandPersonality &&
+      industry
+    );
+  }, [
+    companyName,
+    overallStyle,
+    colorScheme,
+    symbolFocus,
+    brandPersonality,
+    industry
+  ]);
 
   const handleGenerateLogo = useCallback(async () => {
     if (!isLoggedIn) {
@@ -410,7 +419,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
         try {
           const errorData = JSON.parse(errorText);
           errorMessage = errorData.error || errorMessage;
-        } catch (e) {}
+        } catch {}
         
         throw new Error(errorMessage);
       }
@@ -445,9 +454,21 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       setIsGenerating(false);
     }
   }, [
-    isLoggedIn, isGenerating, areRequiredFieldsFilled, buildPrompt, collectParameters,
-    setLoading, setError, setImageDataUri, referenceImage, router,
-    isRevision, originalLogoId, companyName, canRevise, canCreateLogo
+    isLoggedIn,
+    isGenerating,
+    areRequiredFieldsFilled,
+    buildPrompt,
+    collectParameters,
+    setLoading,
+    setError,
+    setImageDataUri,
+    referenceImage,
+    router,
+    isRevision,
+    originalLogoId,
+    companyName,
+    canRevise,
+    canCreateLogo
   ]);
 
   const renderDropdown = useCallback((
@@ -483,351 +504,370 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   }, [isGenerating]);
 
   return (
-    <div className="generator-form-container">
-      <div className={`card generator-form ${showAdvanced ? '' : 'fixed'}`}></div>
-      {authLoading && (
-        <div className="text-center" style={{ padding: 'var(--space-lg)' }}>
-          <div className="spinner inline-block"></div>
-          <p className="mt-sm" style={{ color: 'var(--color-gray-600)' }}>Checking authentication...</p>
-        </div>
-      )}
-      
-      {!authLoading && (
-        <div>
-          <h3 style={{ fontSize: 'var(--text-lg)', fontWeight: '500', marginBottom: 'var(--space-md)' }}>
-            {isRevision ? 'Revise Logo' : 'Create New Logo'}
-          </h3>
-
-          <div className="mb-md">
-            <label htmlFor="company-name" className="form-label">
-              Company Name <span style={{ color: 'var(--color-error)' }}>*</span>
-            </label>
-            <input
-              id="company-name"
-              type="text"
-              className="form-input"
-              placeholder="Enter your company name"
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
-              required
-              disabled={isGenerating}
-              autoComplete="off"
-            />
+    <div
+      className="generator-form-container"
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 'var(--space-lg)'
+      }}
+    >
+      <div className={`card generator-form text-center ${showAdvanced ? '' : 'fixed'}`}>
+        {authLoading && (
+          <div className="text-center" style={{ padding: 'var(--space-lg)' }}>
+            <div className="spinner inline-block"></div>
+            <p className="mt-sm" style={{ color: 'var(--color-gray-600)' }}>
+              Checking authentication...
+            </p>
           </div>
+        )}
+        
+        {!authLoading && (
+          <div>
+            <h3 style={{ fontSize: 'var(--text-lg)', fontWeight: '500', marginBottom: 'var(--space-md)' }}>
+              {isRevision ? 'Revise Logo' : 'Create New Logo'}
+            </h3>
 
-          <div className="mb-md">
-            <label htmlFor="reference-image" className="form-label">
-              Reference Image {isRevision ? '(Current Logo)' : '(Optional)'}
-            </label>
-            <label 
-              className="block"
-              style={{
-                padding: 'var(--space-sm)',
-                border: '2px dashed var(--color-gray-300)',
-                borderRadius: 'var(--radius-md)',
-                textAlign: 'center',
-                cursor: 'pointer',
-                transition: 'all var(--transition-base)',
-                minHeight: 'var(--touch-target)'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = 'var(--color-primary)';
-                e.currentTarget.style.color = 'var(--color-primary)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = 'var(--color-gray-300)';
-                e.currentTarget.style.color = 'inherit';
-              }}
-            >
-              <span style={{ color: 'var(--color-gray-500)' }}>
-                {referenceImage ? referenceImage.name : 'Tap to upload an image'}
-              </span>
+            <div className="mb-md">
+              <label htmlFor="company-name" className="form-label">
+                Company Name <span style={{ color: 'var(--color-error)' }}>*</span>
+              </label>
               <input
-                id="reference-image"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleReferenceImageChange}
+                id="company-name"
+                type="text"
+                className="form-input"
+                placeholder="Enter your company name"
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                required
                 disabled={isGenerating}
-                style={{ display: 'none' }}
+                autoComplete="off"
+                style={{ margin: '0 auto', display: 'block' }}
               />
-            </label>
-            <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-gray-500)', marginTop: 'var(--space-xs)' }}>
-              {isRevision 
-                ? 'The current logo is used as a reference for the revision'
-                : 'Upload an image for inspiration'}
-            </p>
-            
-            {referenceImagePreview && (
-              <div className="text-center mt-md">
-                <img
-                  src={referenceImagePreview}
-                  alt="Reference image preview"
-                  style={{
-                    maxWidth: '100%',
-                    maxHeight: '10rem',
-                    borderRadius: 'var(--radius-md)',
-                    boxShadow: 'var(--shadow-sm)',
-                    margin: '0 auto'
-                  }}
-                />
-                <button
-                  type="button"
-                  className="mt-sm"
-                  style={{
-                    color: 'var(--color-error)',
-                    fontSize: 'var(--text-sm)',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer'
-                  }}
-                  onClick={() => {
-                    setReferenceImage(null);
-                    setReferenceImagePreview(null);
-                  }}
-                >
-                  Remove image
-                </button>
-              </div>
-            )}
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 'var(--space-xs)' }}>
-            {renderDropdown(
-              "overall-style",
-              'Overall Style',
-              overallStyle,
-              (e) => setOverallStyle(e.target.value),
-              overallStyleOptions,
-              true
-            )}
-            
-            {renderDropdown(
-              "color-scheme",
-              'Color Scheme',
-              colorScheme,
-              (e) => setColorScheme(e.target.value),
-              colorSchemeOptions,
-              true
-            )}
-            
-            {renderDropdown(
-              "symbol-focus",
-              'Symbol or Icon Focus',
-              symbolFocus,
-              (e) => setSymbolFocus(e.target.value),
-              symbolFocusOptions,
-              true
-            )}
-            
-            {renderDropdown(
-              "brand-personality",
-              'Brand Personality',
-              brandPersonality,
-              (e) => setBrandPersonality(e.target.value),
-              brandPersonalityOptions,
-              true
-            )}
-            
-            {renderDropdown(
-              "industry",
-              'Industry/Niche',
-              industry,
-              (e) => setIndustry(e.target.value),
-              industryOptions,
-              true
-            )}
-          </div>
-
-          <div className="mb-md">
-            <button
-              type="button"
-              onClick={toggleAdvancedOptions}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--color-primary)',
-                fontWeight: '500',
-                cursor: 'pointer',
-                padding: 'var(--space-sm)',
-                marginLeft: '-var(--space-sm)',
-                borderRadius: 'var(--radius-md)',
-                minHeight: 'var(--touch-target)',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 'var(--space-sm)'
-              }}
-            >
-              <span>{showAdvanced ? '−' : '+'}</span>
-              {showAdvanced ? 'Hide Advanced Options' : 'Show Advanced Options'}
-            </button>
-          </div>
-
-          {showAdvanced && (
-            <div className={`advanced-options ${isAnimating ? 'hiding' : ''}`}>
-              <h3 style={{ 
-                fontSize: 'var(--text-lg)', 
-                fontWeight: '500', 
-                marginBottom: 'var(--space-md)' 
-              }}>
-                Advanced Options
-              </h3>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 'var(--space-xs)' }}>
-                {renderDropdown(
-                  "typography",
-                  'Typography Style',
-                  typographyStyle,
-                  (e) => setTypographyStyle(e.target.value),
-                  typographyStyleOptions
-                )}
-                
-                {renderDropdown(
-                  "line-style",
-                  'Line & Stroke Style',
-                  lineStyle,
-                  (e) => setLineStyle(e.target.value),
-                  lineStyleOptions
-                )}
-                
-                {renderDropdown(
-                  "composition",
-                  'Composition/Layout',
-                  composition,
-                  (e) => setComposition(e.target.value),
-                  compositionOptions
-                )}
-                
-                {renderDropdown(
-                  "shape",
-                  'Shape Emphasis',
-                  shapeEmphasis,
-                  (e) => setShapeEmphasis(e.target.value),
-                  shapeEmphasisOptions
-                )}
-                
-                {renderDropdown(
-                  "texture",
-                  'Texture & Finish',
-                  texture,
-                  (e) => setTexture(e.target.value),
-                  textureOptions
-                )}
-                
-                {renderDropdown(
-                  "complexity",
-                  'Complexity Level',
-                  complexityLevel,
-                  (e) => setComplexityLevel(e.target.value),
-                  complexityLevelOptions
-                )}
-                
-                {renderDropdown(
-                  "application",
-                  'Application Context',
-                  applicationContext,
-                  (e) => setApplicationContext(e.target.value),
-                  applicationContextOptions
-                )}
-              </div>
             </div>
-          )}
 
-          {isRevision && (
-            <div style={{ 
-              fontSize: 'var(--text-sm)', 
-              color: 'var(--color-gray-600)', 
-              marginBottom: 'var(--space-md)' 
-            }}>
-              <p>This will count as a revision of your original logo.</p>
-              <p>You are allowed up to 3 free revisions per logo.</p>
-            </div>
-          )}
-
-          <button
-            type="button"
-            className="btn btn-primary"
-            style={{ width: '100%' }}
-            disabled={
-              isGenerating || 
-              !areRequiredFieldsFilled() || 
-              !isLoggedIn
-            }
-            onClick={handleGenerateLogo}
-          >
-            {isGenerating ? 'Generating Logo...' : 
-             !isLoggedIn ? 'Login to Generate' :
-             isRevision ? 'Generate Revision' : 
-             'Generate Logo'}
-          </button>
-
-          {isGenerating && (
-            <p className="text-center mt-sm" style={{ 
-              fontSize: 'var(--text-sm)', 
-              color: 'var(--color-gray-500)' 
-            }}>
-              Logo generation can take 15-30 seconds. Please be patient...
-            </p>
-          )}
-        </div>
-      )}
-
-      {showLimitModal && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 100,
-          padding: 'var(--space-md)'
-        }}>
-          <div className="card" style={{
-            maxWidth: '28rem',
-            width: '100%',
-            padding: 'var(--space-lg)'
-          }}>
-            <div className="text-center mb-md">
-              <svg xmlns="http://www.w3.org/2000/svg" style={{ width: '3rem', height: '3rem', margin: '0 auto', color: '#eab308' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              <h3 style={{ fontSize: 'var(--text-xl)', fontWeight: '600', marginTop: 'var(--space-sm)' }}>
-                {isRevision 
-                  ? "Maximum Revisions Reached" 
-                  : "Logo Limit Reached"}
-              </h3>
-            </div>
-            
-            <p style={{ color: 'var(--color-gray-600)', marginBottom: 'var(--space-lg)' }}>
-              {isRevision 
-                ? "You've reached the maximum of 3 revisions for this logo." 
-                : "You've reached your logo creation limit. Please purchase more logos."}
-            </p>
-            
-            <div className="flex gap-sm" style={{ justifyContent: 'center' }}>
-              <button
-                onClick={() => setShowLimitModal(false)}
-                className="btn"
+            <div className="mb-md">
+              <label htmlFor="reference-image" className="form-label">
+                Reference Image {isRevision ? '(Current Logo)' : '(Optional)'}
+              </label>
+              <label 
+                className="block"
                 style={{
-                  backgroundColor: 'white',
-                  color: 'var(--color-gray-700)',
-                  border: '1px solid var(--color-gray-300)'
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  padding: 'var(--space-sm)',
+                  border: '2px dashed var(--color-gray-300)',
+                  borderRadius: 'var(--radius-md)',
+                  cursor: 'pointer',
+                  transition: 'all var(--transition-base)',
+                  width: '100%',
+                  maxWidth: '20rem',
+                  height: '2.5rem',
+                  margin: '0 auto'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--color-primary)';
+                  e.currentTarget.style.color = 'var(--color-primary)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--color-gray-300)';
+                  e.currentTarget.style.color = 'inherit';
                 }}
               >
-                Close
-              </button>
+                <span style={{ color: 'var(--color-gray-500)' }}>
+                  {referenceImage ? referenceImage.name : 'Tap to upload an image'}
+                </span>
+                <input
+                  id="reference-image"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleReferenceImageChange}
+                  disabled={isGenerating}
+                  style={{ display: 'none' }}
+                />
+              </label>
+              <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-gray-500)', marginTop: 'var(--space-xs)' }}>
+                {isRevision 
+                  ? 'The current logo is used as a reference for the revision'
+                  : 'Upload an image for inspiration'}
+              </p>
               
-              <Link
-                href="/account"
-                className="btn btn-primary"
+              {referenceImagePreview && (
+                <div className="text-center mt-md">
+                  <img
+                    src={referenceImagePreview}
+                    alt="Reference image preview"
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '10rem',
+                      borderRadius: 'var(--radius-md)',
+                      boxShadow: 'var(--shadow-sm)',
+                      margin: '0 auto'
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="mt-sm"
+                    style={{
+                      color: 'var(--color-error)',
+                      fontSize: 'var(--text-sm)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => {
+                      setReferenceImage(null);
+                      setReferenceImagePreview(null);
+                    }}
+                  >
+                    Remove image
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 'var(--space-xs)', margin: '0 auto', maxWidth: '20rem' }}>
+              {renderDropdown(
+                "overall-style",
+                'Overall Style',
+                overallStyle,
+                (e) => setOverallStyle(e.target.value),
+                overallStyleOptions,
+                true
+              )}
+              
+              {renderDropdown(
+                "color-scheme",
+                'Color Scheme',
+                colorScheme,
+                (e) => setColorScheme(e.target.value),
+                colorSchemeOptions,
+                true
+              )}
+              
+              {renderDropdown(
+                "symbol-focus",
+                'Symbol or Icon Focus',
+                symbolFocus,
+                (e) => setSymbolFocus(e.target.value),
+                symbolFocusOptions,
+                true
+              )}
+              
+              {renderDropdown(
+                "brand-personality",
+                'Brand Personality',
+                brandPersonality,
+                (e) => setBrandPersonality(e.target.value),
+                brandPersonalityOptions,
+                true
+              )}
+              
+              {renderDropdown(
+                "industry",
+                'Industry/Niche',
+                industry,
+                (e) => setIndustry(e.target.value),
+                industryOptions,
+                true
+              )}
+            </div>
+
+            <div className="mb-md">
+              <button
+                type="button"
+                onClick={toggleAdvancedOptions}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--color-primary)',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  padding: 'var(--space-sm)',
+                  borderRadius: 'var(--radius-md)',
+                  minHeight: 'var(--touch-target)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 'var(--space-sm)'
+                }}
               >
-                Go to Account
-              </Link>
+                <span>{showAdvanced ? '−' : '+'}</span>
+                {showAdvanced ? 'Hide Advanced Options' : 'Show Advanced Options'}
+              </button>
+            </div>
+
+            {showAdvanced && (
+              <div className={`advanced-options ${isAnimating ? 'hiding' : ''}`}>
+                <h3 style={{ 
+                  fontSize: 'var(--text-lg)', 
+                  fontWeight: '500', 
+                  marginBottom: 'var(--space-md)' 
+                }}>
+                  Advanced Options
+                </h3>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 'var(--space-xs)', margin: '0 auto', maxWidth: '20rem' }}>
+                  {renderDropdown(
+                    "typography",
+                    'Typography Style',
+                    typographyStyle,
+                    (e) => setTypographyStyle(e.target.value),
+                    typographyStyleOptions
+                  )}
+                  
+                  {renderDropdown(
+                    "line-style",
+                    'Line & Stroke Style',
+                    lineStyle,
+                    (e) => setLineStyle(e.target.value),
+                    lineStyleOptions
+                  )}
+                  
+                  {renderDropdown(
+                    "composition",
+                    'Composition/Layout',
+                    composition,
+                    (e) => setComposition(e.target.value),
+                    compositionOptions
+                  )}
+                  
+                  {renderDropdown(
+                    "shape",
+                    'Shape Emphasis',
+                    shapeEmphasis,
+                    (e) => setShapeEmphasis(e.target.value),
+                    shapeEmphasisOptions
+                  )}
+                  
+                  {renderDropdown(
+                    "texture",
+                    'Texture & Finish',
+                    texture,
+                    (e) => setTexture(e.target.value),
+                    textureOptions
+                  )}
+                  
+                  {renderDropdown(
+                    "complexity",
+                    'Complexity Level',
+                    complexityLevel,
+                    (e) => setComplexityLevel(e.target.value),
+                    complexityLevelOptions
+                  )}
+                  
+                  {renderDropdown(
+                    "application",
+                    'Application Context',
+                    applicationContext,
+                    (e) => setApplicationContext(e.target.value),
+                    applicationContextOptions
+                  )}
+                </div>
+              </div>
+            )}
+
+            {isRevision && (
+              <div style={{ 
+                fontSize: 'var(--text-sm)', 
+                color: 'var(--color-gray-600)', 
+                marginBottom: 'var(--space-md)' 
+              }}>
+                <p>This will count as a revision of your original logo.</p>
+                <p>You are allowed up to 3 free revisions per logo.</p>
+              </div>
+            )}
+
+            <button
+              type="button"
+              className="btn btn-primary"
+              style={{ width: '100%' }}
+              disabled={
+                isGenerating || 
+                !areRequiredFieldsFilled() || 
+                !isLoggedIn
+              }
+              onClick={handleGenerateLogo}
+            >
+              {isGenerating 
+                ? 'Generating Logo...' 
+                : !isLoggedIn 
+                  ? 'Login to Generate' 
+                  : isRevision 
+                    ? 'Generate Revision' 
+                    : 'Generate Logo'}
+            </button>
+
+            {isGenerating && (
+              <p className="text-center mt-sm" style={{ 
+                fontSize: 'var(--text-sm)', 
+                color: 'var(--color-gray-500)' 
+              }}>
+                Logo generation can take 15-30 seconds. Please be patient...
+              </p>
+            )}
+          </div>
+        )}
+
+        {showLimitModal && (
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 100,
+            padding: 'var(--space-md)'
+          }}>
+            <div className="card text-center" style={{
+              maxWidth: '28rem',
+              width: '100%',
+              padding: 'var(--space-lg)'
+            }}>
+              <div className="text-center mb-md">
+                <svg xmlns="http://www.w3.org/2000/svg" style={{ width: '3rem', height: '3rem', margin: '0 auto', color: '#eab308' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <h3 style={{ fontSize: 'var(--text-xl)', fontWeight: '600', marginTop: 'var(--space-sm)' }}>
+                  {isRevision 
+                    ? "Maximum Revisions Reached" 
+                    : "Logo Limit Reached"}
+                </h3>
+              </div>
+              
+              <p style={{ color: 'var(--color-gray-600)', marginBottom: 'var(--space-lg)' }}>
+                {isRevision 
+                  ? "You've reached the maximum of 3 revisions for this logo." 
+                  : "You've reached your logo creation limit. Please purchase more logos."}
+              </p>
+              
+              <div className="flex gap-sm" style={{ justifyContent: 'center' }}>
+                <button
+                  onClick={() => setShowLimitModal(false)}
+                  className="btn"
+                  style={{
+                    backgroundColor: 'white',
+                    color: 'var(--color-gray-700)',
+                    border: '1px solid var(--color-gray-300)'
+                  }}
+                >
+                  Close
+                </button>
+                
+                <Link
+                  href="/account"
+                  className="btn btn-primary"
+                >
+                  Go to Account
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

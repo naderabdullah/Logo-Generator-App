@@ -25,51 +25,45 @@ export default function HistoryView() {
   const router = useRouter();
   
   useEffect(() => {
-  const fetchLogos = async () => {
-    try {
-      setLoading(true);
-      
-      // First, fetch usage information from DynamoDB via API
-      const userResponse = await fetch('/api/user');
-      
-      if (userResponse.ok) {
-        const userData = await userResponse.json();
+    const fetchLogos = async () => {
+      try {
+        setLoading(true);
         
-        // Sync the DynamoDB usage with IndexedDB
-        await syncUserUsageWithDynamoDB({
-          logosCreated: userData.logosCreated,
-          logosLimit: userData.logosLimit
-        });
+        const userResponse = await fetch('/api/user');
         
-        setUsage({
-          used: userData.logosCreated,
-          limit: userData.logosLimit
-        });
-      } else if (userResponse.status === 401) {
-        // If unauthorized, redirect to login
-        router.push('/login?redirect=/history');
-        return;
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          
+          await syncUserUsageWithDynamoDB({
+            logosCreated: userData.logosCreated,
+            logosLimit: userData.logosLimit
+          });
+          
+          setUsage({
+            used: userData.logosCreated,
+            limit: userData.logosLimit
+          });
+        } else if (userResponse.status === 401) {
+          router.push('/login?redirect=/history');
+          return;
+        }
+        
+        const allLogosWithRevisions = await getAllLogosWithRevisions();
+        setLogosWithRevisions(allLogosWithRevisions);
+        
+      } catch (err) {
+        console.error('Error fetching logos:', err);
+        setError('Failed to load logo history');
+      } finally {
+        setLoading(false);
       }
-      
-      const allLogosWithRevisions = await getAllLogosWithRevisions();
-      setLogosWithRevisions(allLogosWithRevisions);
-      
-    } catch (err) {
-      console.error('Error fetching logos:', err);
-      setError('Failed to load logo history');
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  fetchLogos();
-}, [router]);
+    };
+    
+    fetchLogos();
+  }, [router]);
 
-  // Helper function to get the latest revision
   const getLatestRevision = (revisions: StoredLogo[]): StoredLogo | null => {
     if (revisions.length === 0) return null;
-    
-    // Sort by revision number and return the highest one
     return [...revisions].sort((a, b) => 
       (b.revisionNumber || 0) - (a.revisionNumber || 0)
     )[0];
@@ -92,7 +86,6 @@ export default function HistoryView() {
     
     try {
       await deleteLogo(selectedLogo);
-      // Refresh the list after deletion
       const allLogosWithRevisions = await getAllLogosWithRevisions();
       setLogosWithRevisions(allLogosWithRevisions);
       setSelectedLogo(null);
@@ -109,9 +102,8 @@ export default function HistoryView() {
   return (
     <main className="container mx-auto px-4 pb-6 max-w-4xl history-page">
       <div className="mt-4 card">
-        <h2 className="text-xl font-semibold mb-4">Logo History</h2>
+        <h2 className="text-xl font-semibold mb-4 text-center">Logo History</h2>
         
-        {/* Usage information */}
         {usage && (
           <div className="mb-6 p-3 bg-indigo-50 rounded-lg">
             <h3 className="font-medium text-indigo-700">Your Logo Usage</h3>
@@ -159,9 +151,7 @@ export default function HistoryView() {
           <div className="space-y-6">
             {logosWithRevisions.map(({ original, revisions }) => {
               const latestRevision = getLatestRevision(revisions);
-              // Determine which logo to display - the latest revision if it exists, otherwise the original
               const displayedLogo = latestRevision || original;
-              // Use the latest revision ID to view the latest version by default
               const idToView = latestRevision ? latestRevision.id : original.id;
               
               return (
@@ -238,7 +228,6 @@ export default function HistoryView() {
         </p>
       </div>
 
-      {/* Delete Confirmation Modal */}
       {selectedLogo && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
