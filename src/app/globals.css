@@ -16,7 +16,7 @@
   --sal: env(safe-area-inset-left, 0px);
   
   /* Header heights for different screen sizes */
-  --header-height-mobile: 70px; /* Taller for stacked layout */
+  --header-height-mobile: 80px; /* Taller for stacked layout */
   --header-height-desktop: 64px;
   --header-height: var(--header-height-mobile); /* Default to mobile */
 
@@ -187,6 +187,7 @@ body {
   max-width: 400px;
   display: flex;
   justify-content: center;
+  padding: 0 var(--space-xs);
 }
 
 /* For iOS standalone mode (PWA) */
