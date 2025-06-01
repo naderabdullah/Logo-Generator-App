@@ -499,7 +499,7 @@ body[data-page="auth"] {
   
   /* Enhanced bottom padding for mobile */
   .generator-page {
-    padding-bottom: max(var(--space-2xl), calc(env(safe-area-inset-bottom, 20px) + var(--space-xl)));
+    padding-bottom: max(var(--space-3xl), calc(env(safe-area-inset-bottom, 20px) + var(--space-xl)));
   }
   
   .generator-page.allow-scroll {
