@@ -471,9 +471,20 @@ body[data-page="auth"] {
     max-width: 100%;
   }
   
-  /* MOBILE: Pull form much closer to header */
+  /* MOBILE: Move entire generator page up */
+  .generator-page {
+    transform: translateY(-20px) !important;
+    padding-bottom: max(var(--space-2xl), calc(env(safe-area-inset-bottom, 20px) + var(--space-xl) + 40px)) !important;
+  }
+  
+  .generator-page.allow-scroll {
+    transform: translateY(-40px) !important;
+    padding-bottom: max(var(--space-3xl), calc(env(safe-area-inset-bottom, 20px) + var(--space-2xl) + 40px)) !important;
+  }
+  
+  /* Reset form container margin on mobile */
   .generator-form-container {
-    margin-top: -var(--space-2xl) !important; /* Pull up 48px on mobile */
+    margin-top: 0 !important;
   }
   
   /* Mobile-optimized form spacing */
@@ -495,15 +506,6 @@ body[data-page="auth"] {
   /* Mobile navigation adjustments */
   .ios-unified-header nav {
     font-size: 0.875rem;
-  }
-  
-  /* Enhanced bottom padding for mobile */
-  .generator-page {
-    padding-bottom: max(var(--space-3xl), calc(env(safe-area-inset-bottom, 20px) + var(--space-xl)));
-  }
-  
-  .generator-page.allow-scroll {
-    padding-bottom: max(var(--space-3xl), calc(env(safe-area-inset-bottom, 20px) + var(--space-2xl)));
   }
 }
 
