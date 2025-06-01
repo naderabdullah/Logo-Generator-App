@@ -108,12 +108,16 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     checkUsageLimits();
   }, [editLogoId]);
 
+  // Simple scrolling logic - allow scrolling if there's a reference image
   useEffect(() => {
     const mainContent = document.querySelector('.main-content');
     const generatorPage = document.querySelector('.generator-page');
     
     if (mainContent && generatorPage) {
-      if (showAdvanced || referenceImage) {
+      // Allow scrolling if there's a reference image (file or preview)
+      const shouldAllowScroll = showAdvanced || referenceImage || referenceImagePreview;
+      
+      if (shouldAllowScroll) {
         generatorPage.classList.add('allow-scroll');
       } else {
         generatorPage.classList.remove('allow-scroll');
@@ -125,7 +129,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
         generatorPage.classList.add('allow-scroll');
       }
     };
-  }, [showAdvanced, referenceImage]);
+  }, [showAdvanced, referenceImage, referenceImagePreview]);
 
   useEffect(() => {
     if (editLogoId) {
@@ -408,7 +412,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
         formData.append('originalLogoId', originalLogoId);
       }
 
-      const response = await fetch('/logos', {
+      const response = await fetch('/api/generate', {
         method: 'POST',
         body: formData
       });
@@ -427,10 +431,10 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       const data = await response.json();
       
       let imageDataUriString = '';
-      if (data.image.type === 'base64') {
-        imageDataUriString = `data:image/png;base64,${data.image.data}`;
-      } else if (data.image.type === 'url') {
-        imageDataUriString = data.image.data;
+      if (data?.data?.[0]?.b64_json) {
+        imageDataUriString = `data:image/png;base64,${data.data[0].b64_json}`;
+      } else if (data?.data?.[0]?.url) {
+        imageDataUriString = data.data[0].url;
       } else {
         throw new Error('No image data received in the expected format');
       }
@@ -510,10 +514,11 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        padding: 'var(--space-lg)'
+        padding: 'var(--space-lg)',
+        paddingBottom: 'max(var(--space-2xl), env(safe-area-inset-bottom, 20px))'
       }}
     >
-      <div className={`card generator-form text-center ${showAdvanced ? '' : 'fixed'}`}>
+      <div className={`card generator-form text-center ${showAdvanced || referenceImagePreview ? '' : 'fixed'}`}>
         {authLoading && (
           <div className="text-center" style={{ padding: 'var(--space-lg)' }}>
             <div className="spinner inline-block"></div>
@@ -783,7 +788,10 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
             <button
               type="button"
               className="btn btn-primary"
-              style={{ width: '100%' }}
+              style={{ 
+                width: '100%',
+                marginBottom: 'max(var(--space-lg), env(safe-area-inset-bottom, 20px))'
+              }}
               disabled={
                 isGenerating || 
                 !areRequiredFieldsFilled() || 
