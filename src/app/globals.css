@@ -168,30 +168,25 @@ body {
 .generator-page {
   overflow: hidden;
   height: calc(100vh - var(--header-offset));
-  /* Ensure proper bottom padding that accounts for safe area */
-  padding-bottom: max(var(--space-xl), env(safe-area-inset-bottom, 20px));
+  padding: var(--space-md) var(--space-sm) var(--space-sm);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
 }
 
 .generator-page.allow-scroll {
   overflow-y: auto;
   height: auto;
   min-height: calc(100vh - var(--header-offset));
-  /* Extra padding when scrolling for better button access */
-  padding-bottom: max(var(--space-3xl), calc(env(safe-area-inset-bottom, 20px) + var(--space-xl)));
+  align-items: flex-start;
+  padding: var(--space-md) var(--space-sm) max(var(--space-2xl), calc(env(safe-area-inset-bottom, 20px) + var(--space-lg)));
 }
 
 .generator-form-container {
-  height: 100%;
+  width: 100%;
+  max-width: 400px;
   display: flex;
-  flex-direction: column;
-  /* Ensure the form container has proper bottom padding */
-  padding-bottom: max(var(--space-xl), env(safe-area-inset-bottom, 20px));
-}
-
-.generator-form-container.allow-scroll {
-  height: auto;
-  /* Extra padding when scrolling */
-  padding-bottom: max(var(--space-3xl), calc(env(safe-area-inset-bottom, 20px) + var(--space-xl)));
+  justify-content: center;
 }
 
 /* For iOS standalone mode (PWA) */

@@ -484,8 +484,8 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     required: boolean = false
   ) => {
     return (
-      <div className="mb-md">
-        <label htmlFor={id} className="form-label">
+      <div style={{ marginBottom: 'var(--space-sm)' }}>
+        <label htmlFor={id} className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
           {label} {required && <span style={{ color: 'var(--color-error)' }}>*</span>}
         </label>
         <select
@@ -508,21 +508,12 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   }, [isGenerating]);
 
   return (
-    <div
-      className="generator-form-container"
-      style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 'var(--space-lg)',
-        paddingBottom: 'max(var(--space-2xl), env(safe-area-inset-bottom, 20px))'
-      }}
-    >
+    <div className="generator-form-container">
       <div className={`card generator-form text-center ${showAdvanced || referenceImagePreview ? '' : 'fixed'}`}>
         {authLoading && (
-          <div className="text-center" style={{ padding: 'var(--space-lg)' }}>
+          <div className="text-center" style={{ padding: 'var(--space-md)' }}>
             <div className="spinner inline-block"></div>
-            <p className="mt-sm" style={{ color: 'var(--color-gray-600)' }}>
+            <p className="mt-sm" style={{ color: 'var(--color-gray-600)', fontSize: 'var(--text-sm)' }}>
               Checking authentication...
             </p>
           </div>
@@ -530,12 +521,17 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
         
         {!authLoading && (
           <div>
-            <h3 style={{ fontSize: 'var(--text-lg)', fontWeight: '500', marginBottom: 'var(--space-md)' }}>
+            <h3 style={{ 
+              fontSize: 'var(--text-lg)', 
+              fontWeight: '500', 
+              marginBottom: 'var(--space-sm)',
+              marginTop: '0'
+            }}>
               {isRevision ? 'Revise Logo' : 'Create New Logo'}
             </h3>
 
-            <div className="mb-md">
-              <label htmlFor="company-name" className="form-label">
+            <div className="mb-sm">
+              <label htmlFor="company-name" className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
                 Company Name <span style={{ color: 'var(--color-error)' }}>*</span>
               </label>
               <input
@@ -552,8 +548,8 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               />
             </div>
 
-            <div className="mb-md">
-              <label htmlFor="reference-image" className="form-label">
+            <div className="mb-sm">
+              <label htmlFor="reference-image" className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
                 Reference Image {isRevision ? '(Current Logo)' : '(Optional)'}
               </label>
               <label 
@@ -562,15 +558,15 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                   display: 'flex',
                   justifyContent: 'center',
                   alignItems: 'center',
-                  padding: 'var(--space-sm)',
+                  padding: 'var(--space-xs)',
                   border: '2px dashed var(--color-gray-300)',
                   borderRadius: 'var(--radius-md)',
                   cursor: 'pointer',
                   transition: 'all var(--transition-base)',
                   width: '100%',
-                  maxWidth: '20rem',
-                  height: '2.5rem',
-                  margin: '0 auto'
+                  height: '2rem',
+                  margin: '0 auto',
+                  fontSize: 'var(--text-sm)'
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.borderColor = 'var(--color-primary)';
@@ -594,20 +590,15 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                   style={{ display: 'none' }}
                 />
               </label>
-              <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-gray-500)', marginTop: 'var(--space-xs)' }}>
-                {isRevision 
-                  ? 'The current logo is used as a reference for the revision'
-                  : 'Upload an image for inspiration'}
-              </p>
               
               {referenceImagePreview && (
-                <div className="text-center mt-md">
+                <div className="text-center" style={{ marginTop: 'var(--space-sm)' }}>
                   <img
                     src={referenceImagePreview}
                     alt="Reference image preview"
                     style={{
                       maxWidth: '100%',
-                      maxHeight: '10rem',
+                      maxHeight: '6rem',
                       borderRadius: 'var(--radius-md)',
                       boxShadow: 'var(--shadow-sm)',
                       margin: '0 auto'
@@ -615,13 +606,13 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                   />
                   <button
                     type="button"
-                    className="mt-sm"
                     style={{
                       color: 'var(--color-error)',
-                      fontSize: 'var(--text-sm)',
+                      fontSize: 'var(--text-xs)',
                       background: 'none',
                       border: 'none',
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      marginTop: 'var(--space-xs)'
                     }}
                     onClick={() => {
                       setReferenceImage(null);
@@ -634,7 +625,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               )}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 'var(--space-xs)', margin: '0 auto', maxWidth: '20rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0', margin: '0 auto' }}>
               {renderDropdown(
                 "overall-style",
                 'Overall Style',
@@ -681,7 +672,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               )}
             </div>
 
-            <div className="mb-md">
+            <div style={{ marginBottom: 'var(--space-sm)' }}>
               <button
                 type="button"
                 onClick={toggleAdvancedOptions}
@@ -691,12 +682,13 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                   color: 'var(--color-primary)',
                   fontWeight: '500',
                   cursor: 'pointer',
-                  padding: 'var(--space-sm)',
+                  padding: 'var(--space-xs)',
                   borderRadius: 'var(--radius-md)',
-                  minHeight: 'var(--touch-target)',
+                  minHeight: '36px',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 'var(--space-sm)'
+                  gap: 'var(--space-xs)',
+                  fontSize: 'var(--text-sm)'
                 }}
               >
                 <span>{showAdvanced ? '−' : '+'}</span>
@@ -709,12 +701,12 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                 <h3 style={{ 
                   fontSize: 'var(--text-lg)', 
                   fontWeight: '500', 
-                  marginBottom: 'var(--space-md)' 
+                  marginBottom: 'var(--space-sm)' 
                 }}>
                   Advanced Options
                 </h3>
                 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 'var(--space-xs)', margin: '0 auto', maxWidth: '20rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0', margin: '0 auto' }}>
                   {renderDropdown(
                     "typography",
                     'Typography Style',
@@ -776,9 +768,10 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
 
             {isRevision && (
               <div style={{ 
-                fontSize: 'var(--text-sm)', 
+                fontSize: 'var(--text-xs)', 
                 color: 'var(--color-gray-600)', 
-                marginBottom: 'var(--space-md)' 
+                marginBottom: 'var(--space-sm)',
+                lineHeight: '1.3'
               }}>
                 <p>This will count as a revision of your original logo.</p>
                 <p>You are allowed up to 3 free revisions per logo.</p>
@@ -790,7 +783,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               className="btn btn-primary"
               style={{ 
                 width: '100%',
-                marginBottom: 'max(var(--space-lg), env(safe-area-inset-bottom, 20px))'
+                marginBottom: '0'
               }}
               disabled={
                 isGenerating || 
@@ -809,9 +802,11 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
             </button>
 
             {isGenerating && (
-              <p className="text-center mt-sm" style={{ 
-                fontSize: 'var(--text-sm)', 
-                color: 'var(--color-gray-500)' 
+              <p className="text-center" style={{ 
+                fontSize: 'var(--text-xs)', 
+                color: 'var(--color-gray-500)',
+                marginTop: 'var(--space-xs)',
+                marginBottom: '0'
               }}>
                 Logo generation can take 15-30 seconds. Please be patient...
               </p>
