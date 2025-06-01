@@ -168,7 +168,7 @@ body {
 .generator-page {
   overflow: hidden;
   height: calc(100vh - var(--header-offset));
-  padding: 0 var(--space-sm) var(--space-sm);
+  padding: var(--space-sm) var(--space-sm) var(--space-sm);
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -187,7 +187,7 @@ body {
   max-width: 400px;
   display: flex;
   justify-content: center;
-  padding: 0 var(--space-xs);
+  margin-top: -var(--space-md); /* Pull the form UP */
 }
 
 /* For iOS standalone mode (PWA) */
@@ -471,6 +471,11 @@ body[data-page="auth"] {
     max-width: 100%;
   }
   
+  /* MOBILE: Pull form much closer to header */
+  .generator-form-container {
+    margin-top: -var(--space-2xl) !important; /* Pull up 48px on mobile */
+  }
+  
   /* Mobile-optimized form spacing */
   .form-group {
     margin-bottom: var(--space-sm);
@@ -513,7 +518,7 @@ body[data-page="auth"] {
 @media screen and (max-width: 430px) and (max-height: 932px) {
   .generator-page {
     /* Extra padding for iPhone 15 Pro Max */
-    padding-bottom: max(60px, calc(env(safe-area-inset-bottom, 34px) + 60px));
+    padding-bottom: max(60px, calc(env(safe-area-inset-bottom, 34px) + 40px));
   }
   
   .generator-page.allow-scroll {
