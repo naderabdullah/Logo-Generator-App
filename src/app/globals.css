@@ -16,7 +16,7 @@
   --sal: env(safe-area-inset-left, 0px);
   
   /* Header heights for different screen sizes */
-  --header-height-mobile: 80px; /* Taller for stacked layout */
+  --header-height-mobile: 64px; /* Reduced from 80px */
   --header-height-desktop: 64px;
   --header-height: var(--header-height-mobile); /* Default to mobile */
 
@@ -168,7 +168,7 @@ body {
 .generator-page {
   overflow: hidden;
   height: calc(100vh - var(--header-offset));
-  padding: var(--space-xs) var(--space-xs) var(--space-xs);
+  padding: 0 var(--space-sm) var(--space-sm);
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -179,7 +179,7 @@ body {
   height: auto;
   min-height: calc(100vh - var(--header-offset));
   align-items: flex-start;
-  padding: var(--space-sm) var(--space-sm) max(var(--space-2xl), calc(env(safe-area-inset-bottom, 20px) + var(--space-lg)));
+  padding: 0 var(--space-sm) max(var(--space-2xl), calc(env(safe-area-inset-bottom, 20px) + var(--space-lg)));
 }
 
 .generator-form-container {
