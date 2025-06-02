@@ -581,3 +581,189 @@ body[data-page="auth"] {
 .footer-wrapper {
   display: none !important;
 }
+
+/* ========================================
+   MOBILE DEVICE SPECIFIC STYLES
+   Based on actual viewport dimensions
+   ======================================== */
+
+/* iPhone 14 Standard (390x844) */
+@media screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) {
+  .generator-page {
+    transform: translateY(-40px) !important;
+    padding-bottom: max(55px, calc(env(safe-area-inset-bottom, 34px) + 35px)) !important;
+  }
+  
+  .generator-page.allow-scroll {
+    padding-bottom: max(75px, calc(env(safe-area-inset-bottom, 34px) + 55px)) !important;
+  }
+}
+
+/* iPhone 14 Pro / iPhone 15 Pro / iPhone 16 (393x852) */
+@media screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) {
+  .generator-page {
+    transform: translateY(-45px) !important;
+    padding-bottom: max(60px, calc(env(safe-area-inset-bottom, 34px) + 40px)) !important;
+  }
+  
+  .generator-page.allow-scroll {
+    padding-bottom: max(80px, calc(env(safe-area-inset-bottom, 34px) + 60px)) !important;
+  }
+}
+
+/* iPhone 16 Pro Max (440x956) */
+@media screen and (device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) {
+  .generator-page {
+    transform: translateY(-50px) !important;
+    padding-bottom: max(65px, calc(env(safe-area-inset-bottom, 34px) + 45px)) !important;
+  }
+  
+  .generator-page.allow-scroll {
+    padding-bottom: max(85px, calc(env(safe-area-inset-bottom, 34px) + 65px)) !important;
+  }
+}
+
+/* Samsung Galaxy S23/S24 (360x780) */
+@media screen and (device-width: 360px) and (device-height: 780px) and (-webkit-device-pixel-ratio: 3) {
+  .generator-page {
+    transform: translateY(-35px) !important;
+    padding-bottom: max(50px, calc(env(safe-area-inset-bottom, 20px) + 30px)) !important;
+  }
+  
+  .generator-page.allow-scroll {
+    padding-bottom: max(70px, calc(env(safe-area-inset-bottom, 20px) + 50px)) !important;
+  }
+}
+
+/* Samsung Galaxy S23 Plus (384x832) */
+@media screen and (device-width: 384px) and (device-height: 832px) and (-webkit-device-pixel-ratio: 2.8125) {
+  .generator-page {
+    transform: translateY(-40px) !important;
+    padding-bottom: max(55px, calc(env(safe-area-inset-bottom, 20px) + 35px)) !important;
+  }
+  
+  .generator-page.allow-scroll {
+    padding-bottom: max(75px, calc(env(safe-area-inset-bottom, 20px) + 55px)) !important;
+  }
+}
+
+/* Samsung Galaxy S23 Ultra/S24 Ultra (384x824) */
+@media screen and (device-width: 384px) and (device-height: 824px) and (-webkit-device-pixel-ratio: 3.75) {
+  .generator-page {
+    transform: translateY(-40px) !important;
+    padding-bottom: max(55px, calc(env(safe-area-inset-bottom, 20px) + 35px)) !important;
+  }
+  
+  .generator-page.allow-scroll {
+    padding-bottom: max(75px, calc(env(safe-area-inset-bottom, 20px) + 55px)) !important;
+  }
+}
+
+/* Google Pixel 7/8/9 (412x915) */
+@media screen and (device-width: 412px) and (device-height: 915px) and (-webkit-device-pixel-ratio: 2.625) {
+  .generator-page {
+    transform: translateY(-45px) !important;
+    padding-bottom: max(60px, calc(env(safe-area-inset-bottom, 20px) + 40px)) !important;
+  }
+  
+  .generator-page.allow-scroll {
+    padding-bottom: max(80px, calc(env(safe-area-inset-bottom, 20px) + 60px)) !important;
+  }
+}
+
+/* Google Pixel 7 Pro (412x892) */
+@media screen and (device-width: 412px) and (device-height: 892px) and (-webkit-device-pixel-ratio: 3.5) {
+  .generator-page {
+    transform: translateY(-45px) !important;
+    padding-bottom: max(60px, calc(env(safe-area-inset-bottom, 20px) + 40px)) !important;
+  }
+  
+  .generator-page.allow-scroll {
+    padding-bottom: max(80px, calc(env(safe-area-inset-bottom, 20px) + 60px)) !important;
+  }
+}
+
+/* Google Pixel 8 Pro/9 Pro XL (448x998) */
+@media screen and (device-width: 448px) and (device-height: 998px) and (-webkit-device-pixel-ratio: 3) {
+  .generator-page {
+    transform: translateY(-50px) !important;
+    padding-bottom: max(65px, calc(env(safe-area-inset-bottom, 20px) + 45px)) !important;
+  }
+  
+  .generator-page.allow-scroll {
+    padding-bottom: max(85px, calc(env(safe-area-inset-bottom, 20px) + 65px)) !important;
+  }
+}
+
+/* Generic fallback for common viewport widths */
+/* Small phones (360px width) */
+@media screen and (min-width: 360px) and (max-width: 375px) and (max-height: 812px) {
+  .generator-page {
+    transform: translateY(-35px) !important;
+  }
+}
+
+/* Medium phones (375-393px width) */
+@media screen and (min-width: 375px) and (max-width: 393px) and (max-height: 852px) {
+  .generator-page {
+    transform: translateY(-40px) !important;
+  }
+}
+
+/* Larger phones (393-414px width) */
+@media screen and (min-width: 393px) and (max-width: 414px) and (max-height: 915px) {
+  .generator-page {
+    transform: translateY(-45px) !important;
+  }
+}
+
+/* XL phones (414px+ width) */
+@media screen and (min-width: 414px) and (max-width: 448px) and (max-height: 1000px) {
+  .generator-page {
+    transform: translateY(-50px) !important;
+  }
+}
+
+/* Add this at the end of your existing globals.css file */
+
+/* Safe area adjustments for different device categories */
+@supports (padding: max(0px)) {
+  /* iPhones with notch/Dynamic Island */
+  @media screen and (device-width: 390px), 
+         screen and (device-width: 393px), 
+         screen and (device-width: 430px),
+         screen and (device-width: 440px) {
+    .main-content {
+      padding-top: max(var(--header-offset), calc(var(--header-height) + 44px));
+    }
+  }
+  
+  /* Android devices with punch-hole cameras */
+  @media screen and (device-width: 360px), 
+         screen and (device-width: 384px), 
+         screen and (device-width: 412px),
+         screen and (device-width: 448px) {
+    .main-content {
+      padding-top: max(var(--header-offset), calc(var(--header-height) + 24px));
+    }
+  }
+}
+
+/* Landscape orientation adjustments for specific devices */
+@media screen and (orientation: landscape) {
+  /* iPhone Pro models in landscape */
+  @media (device-height: 393px), (device-height: 430px), (device-height: 440px) {
+    .main-content {
+      padding-left: max(env(safe-area-inset-left, 0px), 44px);
+      padding-right: max(env(safe-area-inset-right, 0px), 44px);
+    }
+  }
+  
+  /* Android flagships in landscape */
+  @media (device-height: 360px), (device-height: 384px), (device-height: 412px) {
+    .main-content {
+      padding-left: max(env(safe-area-inset-left, 0px), 24px);
+      padding-right: max(env(safe-area-inset-right, 0px), 24px);
+    }
+  }
+}
