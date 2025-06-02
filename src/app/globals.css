@@ -767,3 +767,251 @@ body[data-page="auth"] {
     }
   }
 }
+
+/* ========================================
+   COMPLETE CSS FIXES
+   Add to the end of globals.css
+   ======================================== */
+
+/* ========================================
+   AUTH PAGES FIXES
+   ======================================== */
+
+/* Override existing auth page styles to ensure proper centering */
+body[data-page="login"],
+body[data-page="signup"],
+body[data-page="auth"] {
+  position: fixed !important;
+  height: 100vh !important;
+  width: 100% !important;
+  overflow: hidden !important;
+  margin: 0;
+  padding: 0;
+}
+
+/* Hide header on auth pages */
+body[data-page="login"] .ios-unified-header,
+body[data-page="signup"] .ios-unified-header,
+body[data-page="auth"] .ios-unified-header {
+  display: none !important;
+}
+
+/* Fix main content on auth pages */
+body[data-page="login"] .main-content,
+body[data-page="signup"] .main-content,
+body[data-page="auth"] .main-content {
+  overflow: hidden !important;
+  height: 100vh !important;
+  padding: 0 !important;
+}
+
+/* Properly center auth containers */
+.auth-page-container,
+.login-page-container,
+.signup-page-container {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+  background-color: var(--color-gray-50);
+  overflow: hidden !important;
+}
+
+/* Ensure form cards are properly sized and centered */
+.auth-page-container > div,
+.login-page-container > div,
+.signup-page-container > div {
+  width: 100%;
+  max-width: 28rem;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* Mobile adjustments for auth pages */
+@media (max-width: 767px) {
+  .auth-page-container,
+  .login-page-container,
+  .signup-page-container {
+    padding: var(--space-sm);
+  }
+  
+  /* Ensure no transform on auth pages */
+  body[data-page="login"] .generator-page,
+  body[data-page="signup"] .generator-page,
+  body[data-page="auth"] .generator-page {
+    transform: none !important;
+  }
+}
+
+/* ========================================
+   REVISION BUTTONS STYLING
+   ======================================== */
+
+/* Revision switcher container */
+.revision-switcher {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--color-gray-200);
+  margin-bottom: var(--space-md);
+}
+
+/* Revision button styles */
+.logo-revision-btn {
+  padding: 6px 16px;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  border: 1px solid var(--color-gray-300);
+  border-radius: 9999px; /* Full rounded */
+  background-color: white;
+  color: var(--color-gray-700);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  white-space: nowrap;
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-revision-btn:hover {
+  background-color: var(--color-gray-50);
+  border-color: var(--color-gray-400);
+  color: var(--color-gray-900);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.logo-revision-btn.active {
+  background-color: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+  font-weight: 600;
+}
+
+.logo-revision-btn.active:hover {
+  background-color: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(99, 102, 241, 0.3);
+}
+
+/* Revision count indicator */
+.revision-switcher .text-sm {
+  margin-left: auto;
+  color: var(--color-gray-600);
+}
+
+/* ========================================
+   HISTORY PAGE BUTTON STYLES
+   ======================================== */
+
+/* Action buttons in history page */
+.history-page .flex.gap-2 button {
+  padding: 6px 14px;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-base);
+  cursor: pointer;
+  border: 1px solid transparent;
+  text-decoration: none;
+  white-space: nowrap;
+  flex: 1;
+  max-width: 120px;
+  text-align: center;
+  min-height: 32px;
+}
+
+/* View button */
+.history-page button[class*="bg-indigo-100"] {
+  background-color: var(--color-primary) !important;
+  color: white !important;
+  border-color: var(--color-primary) !important;
+}
+
+.history-page button[class*="bg-indigo-100"]:hover {
+  background-color: var(--color-primary-hover) !important;
+  border-color: var(--color-primary-hover) !important;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Revise button */
+.history-page button[class*="bg-blue-100"] {
+  background-color: #3b82f6 !important;
+  color: white !important;
+  border-color: #3b82f6 !important;
+}
+
+.history-page button[class*="bg-blue-100"]:hover {
+  background-color: #2563eb !important;
+  border-color: #2563eb !important;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.history-page button[class*="bg-blue-100"]:disabled {
+  background-color: var(--color-gray-300) !important;
+  color: var(--color-gray-500) !important;
+  border-color: var(--color-gray-300) !important;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Delete button */
+.history-page button[class*="bg-red-100"] {
+  background-color: #ef4444 !important;
+  color: white !important;
+  border-color: #ef4444 !important;
+}
+
+.history-page button[class*="bg-red-100"]:hover {
+  background-color: #dc2626 !important;
+  border-color: #dc2626 !important;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* History page card improvements */
+.history-page .border.rounded-lg {
+  border-radius: var(--radius-lg) !important;
+  border-color: var(--color-gray-200) !important;
+  transition: box-shadow var(--transition-base);
+}
+
+.history-page .border.rounded-lg:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.history-page .bg-indigo-50 {
+  background-color: #eef2ff !important;
+}
+
+.history-page .bg-gray-50 {
+  background-color: var(--color-gray-50) !important;
+  border: 1px solid var(--color-gray-200) !important;
+  border-radius: var(--radius-md) !important;
+}
+
+/* Ensure proper spacing in mobile */
+@media (max-width: 640px) {
+  .history-page .flex.gap-2 {
+    gap: 8px !important;
+  }
+  
+  .history-page .flex.gap-2 button {
+    padding: 6px 10px;
+    font-size: 12px;
+    max-width: 100px;
+  }
+}

@@ -221,38 +221,38 @@ export default function LogoViewClient({ logoId }: LogoViewClientProps) {
             <p className="text-sm text-gray-500 mb-4">
               {logo.parameters.companyName} • Generated on {formatDate(logo.createdAt)}
             </p>
-            
+
             {/* Revision switching buttons */}
             {(originalLogo || revisions.length > 0) && (
-              <div className="mb-4 border-b pb-3 revision-switcher">
-                <div className="flex flex-wrap">
-                  {originalLogo && (
-                    <button
-                      onClick={() => switchLogoVersion(originalLogo.id)}
-                      className={`logo-revision-btn ${
-                        activeLogoId === originalLogo.id ? 'active' : ''
-                      }`}
-                    >
-                      Original
-                    </button>
-                  )}
-                  
-                  {revisions.map((revision) => (
-                    <button
-                      key={revision.id}
-                      onClick={() => switchLogoVersion(revision.id)}
-                      className={`logo-revision-btn ${
-                        activeLogoId === revision.id ? 'active' : ''
-                      }`}
-                    >
-                      Revision {revision.revisionNumber}
-                    </button>
-                  ))}
-                </div>
+              <div className="revision-switcher">
+                {originalLogo && (
+                  <button
+                    onClick={() => switchLogoVersion(originalLogo.id)}
+                    className={`logo-revision-btn ${
+                      activeLogoId === originalLogo.id ? 'active' : ''
+                    }`}
+                  >
+                    Original
+                  </button>
+                )}
+                
+                {revisions.map((revision) => (
+                  <button
+                    key={revision.id}
+                    onClick={() => switchLogoVersion(revision.id)}
+                    className={`logo-revision-btn ${
+                      activeLogoId === revision.id ? 'active' : ''
+                    }`}
+                  >
+                    Revision {revision.revisionNumber}
+                  </button>
+                ))}
                 
                 {originalLogo && revisions.length < 3 && (
-                  <div className="text-sm text-gray-600 mt-1">
-                    <span className="font-medium">{revisions.length}</span> of <span className="font-medium">3</span> revisions used
+                  <div className="flex items-center ml-auto">
+                    <span className="text-sm text-gray-600 font-medium">
+                      {revisions.length}/3 revisions used
+                    </span>
                   </div>
                 )}
               </div>

@@ -189,18 +189,18 @@ export default function HistoryView() {
                           <span className="font-medium">Original Logo</span>
                         )}
                       </div>
-                      
+
                       <div className="flex gap-2 justify-center w-full">
                         <button
                           onClick={() => handleViewLogo(idToView)}
-                          className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition-colors text-sm flex-1 max-w-32"
+                          className="btn-action btn-primary-outline"
                         >
-                          {revisions.length > 0 ? "View Logo" : "View Logo"}
+                          {revisions.length > 0 ? "View All" : "View Logo"}
                         </button>
                         
                         <button
                           onClick={() => handleEditLogo(displayedLogo.id)}
-                          className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors text-sm flex-1 max-w-24"
+                          className="btn-action btn-secondary"
                           disabled={revisions.length >= 3}
                         >
                           {revisions.length >= 3 ? 'Max Revisions' : 'Revise'}
@@ -208,7 +208,7 @@ export default function HistoryView() {
                         
                         <button
                           onClick={() => confirmDeleteLogo(original.id)}
-                          className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors text-sm flex-1 max-w-24"
+                          className="btn-action btn-danger"
                         >
                           Delete
                         </button>
