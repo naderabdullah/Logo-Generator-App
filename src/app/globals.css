@@ -1258,3 +1258,30 @@ body[data-page="auth"] .main-content {
     margin-top: 0;
   }
 }
+
+/* Ensure btn-primary displays properly */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-primary);
+  color: white;
+  padding: var(--space-sm) var(--space-xl);
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-primary:hover {
+  background-color: var(--color-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Fix for Link components with btn-primary class */
+a.btn-primary {
+  display: inline-flex;
+  text-decoration: none;
+}
