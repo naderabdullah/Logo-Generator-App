@@ -1001,3 +1001,260 @@ body[data-page="auth"] .main-content {
     border: 1px solid var(--color-gray-300);
   }
 }
+
+/* Image Display Buttons Container */
+.logo-view-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+}
+
+.logo-view-buttons .btn-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  width: 100%;
+  max-width: 320px;
+}
+
+/* Download and Share buttons */
+.btn-download,
+.btn-share {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  min-height: 48px;
+  padding: var(--space-sm) var(--space-lg);
+  font-size: var(--text-base);
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-base);
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  width: 100%;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-download {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.btn-download:hover:not(:disabled) {
+  background-color: var(--color-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-download:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-download:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-share {
+  background-color: #10b981;
+  color: white;
+}
+
+.btn-share:hover {
+  background-color: #059669;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-share:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Format selector buttons */
+.format-selector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.format-selector-label {
+  font-size: var(--text-sm);
+  color: var(--color-gray-700);
+  margin-bottom: var(--space-xs);
+  font-weight: 500;
+}
+
+.format-button-group {
+  display: flex;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--color-gray-300);
+  width: 100%;
+  max-width: 280px;
+  box-shadow: var(--shadow-sm);
+}
+
+.format-button {
+  flex: 1;
+  padding: var(--space-xs) var(--space-md);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  border: none;
+  background-color: white;
+  color: var(--color-gray-700);
+  position: relative;
+}
+
+.format-button:not(:last-child) {
+  border-right: 1px solid var(--color-gray-300);
+}
+
+.format-button:hover:not(.active) {
+  background-color: var(--color-gray-50);
+}
+
+.format-button.active {
+  background-color: var(--color-primary);
+  color: white;
+  z-index: 1;
+}
+
+/* SVG Quality selector */
+.svg-quality-selector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  margin-top: var(--space-sm);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.svg-quality-button-group {
+  display: flex;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--color-gray-300);
+  width: 100%;
+  max-width: 280px;
+  box-shadow: var(--shadow-sm);
+}
+
+.svg-quality-button {
+  flex: 1;
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  border: none;
+  background-color: white;
+  color: var(--color-gray-700);
+}
+
+.svg-quality-button:not(:last-child) {
+  border-right: 1px solid var(--color-gray-300);
+}
+
+.svg-quality-button:hover:not(.active) {
+  background-color: var(--color-gray-50);
+}
+
+.svg-quality-button.active {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+/* Revise Logo Button */
+.btn-revise-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  min-height: 48px;
+  padding: var(--space-sm) var(--space-xl);
+  font-size: var(--text-base);
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  background-color: var(--color-primary);
+  color: white;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-md);
+  margin-top: var(--space-lg);
+}
+
+.btn-revise-logo:hover {
+  background-color: var(--color-primary-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.btn-revise-logo:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Icon styling for buttons */
+.btn-icon {
+  width: 20px;
+  height: 20px;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive adjustments */
+@media (min-width: 640px) {
+  .logo-view-buttons .btn-group {
+    flex-direction: row;
+    justify-content: center;
+    max-width: none;
+    width: auto;
+  }
+  
+  .btn-download,
+  .btn-share {
+    width: auto;
+    min-width: 160px;
+  }
+  
+  .format-selector {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+  
+  .format-selector-label {
+    margin-bottom: 0;
+  }
+  
+  .svg-quality-selector {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-top: 0;
+  }
+}

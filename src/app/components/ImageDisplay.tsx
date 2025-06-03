@@ -186,120 +186,96 @@ export default function ImageDisplay({ imageDataUri }: ImageDisplayProps) {
         />
       </div>
 
-      <div className="text-center mt-4 pb-2 sm:pb-4">
-        <div className="flex flex-col items-center space-y-4 mb-4">
-          <div className="flex flex-col items-center w-full sm:w-auto">
-            <span className="text-gray-700 mb-2">Format:</span>
-            <div className="flex rounded-md overflow-hidden border border-gray-300 w-full sm:w-auto">
+      <div className="logo-view-buttons">
+        <div className="format-selector">
+          <span className="format-selector-label">Format:</span>
+          <div className="format-button-group">
+            <button
+              onClick={() => setSelectedFormat('png')}
+              className={`format-button ${selectedFormat === 'png' ? 'active' : ''}`}
+            >
+              PNG
+            </button>
+            <button
+              onClick={() => setSelectedFormat('jpeg')}
+              className={`format-button ${selectedFormat === 'jpeg' ? 'active' : ''}`}
+            >
+              JPEG
+            </button>
+            <button
+              onClick={() => setSelectedFormat('svg')}
+              className={`format-button ${selectedFormat === 'svg' ? 'active' : ''}`}
+            >
+              SVG
+            </button>
+          </div>
+        </div>
+        
+        {/* SVG Quality options - Only show when SVG is selected */}
+        {selectedFormat === 'svg' && (
+          <div className="svg-quality-selector">
+            <span className="format-selector-label">SVG Quality:</span>
+            <div className="svg-quality-button-group">
               <button
-                onClick={() => setSelectedFormat('png')}
-                className={`px-4 py-2 text-sm transition flex-1 sm:flex-none ${
-                  selectedFormat === 'png' 
-                    ? 'bg-indigo-500 text-white' 
-                    : 'bg-white text-gray-700 hover:bg-gray-100'
-                }`}
+                onClick={() => handleSvgQualityChange('icon')}
+                className={`svg-quality-button ${svgQuality === 'icon' ? 'active' : ''}`}
               >
-                PNG
+                Simple
               </button>
               <button
-                onClick={() => setSelectedFormat('jpeg')}
-                className={`px-4 py-2 text-sm transition flex-1 sm:flex-none ${
-                  selectedFormat === 'jpeg' 
-                    ? 'bg-indigo-500 text-white' 
-                    : 'bg-white text-gray-700 hover:bg-gray-100'
-                }`}
+                onClick={() => handleSvgQualityChange('logo')}
+                className={`svg-quality-button ${svgQuality === 'logo' ? 'active' : ''}`}
               >
-                JPEG
+                Standard
               </button>
               <button
-                onClick={() => setSelectedFormat('svg')}
-                className={`px-4 py-2 text-sm transition flex-1 sm:flex-none ${
-                  selectedFormat === 'svg' 
-                    ? 'bg-indigo-500 text-white' 
-                    : 'bg-white text-gray-700 hover:bg-gray-100'
-                }`}
+                onClick={() => handleSvgQualityChange('highQuality')}
+                className={`svg-quality-button ${svgQuality === 'highQuality' ? 'active' : ''}`}
               >
-                SVG
+                Detailed
               </button>
             </div>
           </div>
-          
-          {/* SVG Quality options - Only show when SVG is selected */}
-          {selectedFormat === 'svg' && (
-            <div className="flex flex-col items-center w-full sm:w-auto">
-              <span className="text-gray-700 mb-2">SVG Quality:</span>
-              <div className="flex rounded-md overflow-hidden border border-gray-300 w-full sm:w-auto">
-                <button
-                  onClick={() => handleSvgQualityChange('icon')}
-                  className={`px-3 py-2 text-sm transition flex-1 sm:flex-none ${
-                    svgQuality === 'icon' 
-                      ? 'bg-indigo-500 text-white' 
-                      : 'bg-white text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  Simple
-                </button>
-                <button
-                  onClick={() => handleSvgQualityChange('logo')}
-                  className={`px-3 py-2 text-sm transition flex-1 sm:flex-none ${
-                    svgQuality === 'logo' 
-                      ? 'bg-indigo-500 text-white' 
-                      : 'bg-white text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  Standard
-                </button>
-                <button
-                  onClick={() => handleSvgQualityChange('highQuality')}
-                  className={`px-3 py-2 text-sm transition flex-1 sm:flex-none ${
-                    svgQuality === 'highQuality' 
-                      ? 'bg-indigo-500 text-white' 
-                      : 'bg-white text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  Detailed
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+        )}
         
-        <div className="flex flex-col sm:flex-row justify-center items-center gap-3">
+        <div className="btn-group">
           <button 
             onClick={handleDownload}
-            className="btn-primary w-full sm:w-auto"
+            className="btn-download"
             disabled={selectedFormat === 'svg' && conversionStatus === 'converting'}
-            style={{ minHeight: '48px' }}
           >
+            <svg className="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+            </svg>
             {selectedFormat === 'svg' && conversionStatus === 'converting' 
-              ? 'Converting to SVG...' 
-              : `Download as ${selectedFormat.toUpperCase()}`}
+              ? 'Converting...' 
+              : `Download ${selectedFormat.toUpperCase()}`}
           </button>
           
           {/* Mobile Share button - only visible on devices that support Web Share API */}
           {canShare && (
             <button
               onClick={handleShare}
-              className="btn-primary bg-green-600 hover:bg-green-700 w-full sm:w-auto"
-              style={{ minHeight: '48px' }}
+              className="btn-share"
             >
+              <svg className="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m9.032 4.026a3 3 0 10-4.148-4.342m0 0a3 3 0 00-4.148 0m4.148 0a3 3 0 01-4.148 4.342M3 20h18" />
+              </svg>
               Share Logo
             </button>
           )}
         </div>
         
         {selectedFormat === 'svg' && (
-          <div className="mt-2 text-sm text-gray-600">
+          <div className="mt-2 text-sm text-gray-600 text-center">
             {conversionStatus === 'converting' && (
               <p>Converting image to SVG, please wait...</p>
             )}
             {conversionStatus === 'error' && (
               <p className="text-red-500">Failed to convert to SVG. Try a different quality setting or format.</p>
             )}
-            {conversionStatus !== 'error' && (
-              <p>
-                SVG conversion creates vector graphics that can be scaled to any size without losing quality.
-              </p>
+            {conversionStatus !== 'error' && conversionStatus !== 'converting' && (
+              <p>SVG creates scalable vector graphics perfect for any size.</p>
             )}
           </div>
         )}
