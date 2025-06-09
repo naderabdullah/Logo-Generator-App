@@ -548,7 +548,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
 
   return (
     <div className="generator-form-container">
-      <div className={`card generator-form text-center ${showAdvanced || referenceImagePreview ? '' : 'fixed'}`}>
+      <div className={`card generator-form text-center ${showAdvanced || referenceImagePreview || colorScheme === 'Custom Colors' ? '' : 'fixed'}`}>
         {authLoading && (
           <div className="text-center" style={{ padding: 'var(--space-md)' }}>
             <div className="spinner inline-block"></div>
