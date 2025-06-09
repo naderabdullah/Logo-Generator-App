@@ -118,7 +118,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     
     if (mainContent && generatorPage) {
       // Allow scrolling if there's a reference image (file or preview)
-      const shouldAllowScroll = showAdvanced || referenceImage || referenceImagePreview;
+      const shouldAllowScroll = showAdvanced || referenceImage || referenceImagePreview || colorScheme === 'Custom Colors';
       
       if (shouldAllowScroll) {
         generatorPage.classList.add('allow-scroll');
@@ -132,7 +132,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
         generatorPage.classList.add('allow-scroll');
       }
     };
-  }, [showAdvanced, referenceImage, referenceImagePreview]);
+  }, [showAdvanced, referenceImage, referenceImagePreview, colorScheme]);
 
   useEffect(() => {
     if (editLogoId) {
@@ -664,7 +664,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               )}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0', margin: '0 auto' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0', width: '100%', margin: '0' }}>
               {renderDropdown(
                 "overall-style",
                 'Overall Style',
@@ -861,7 +861,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                   Advanced Options
                 </h3>
                 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0', margin: '0 auto' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0', width: '100%', margin: '0' }}>
                   {renderDropdown(
                     "typography",
                     'Typography Style',
@@ -937,7 +937,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               type="button"
               className="btn btn-primary"
               style={{ 
-                width: '100%',
+                width: 'auto',
                 marginBottom: '0'
               }}
               disabled={
