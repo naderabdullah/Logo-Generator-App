@@ -11,10 +11,12 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectPath = searchParams.get('redirect') || '/';
+  const message = searchParams.get('message');
   
   // Get the refreshAuth function from the auth context
   const { refreshAuth } = useAuth();
@@ -23,11 +25,16 @@ export default function LoginPage() {
   useEffect(() => {
     document.body.setAttribute('data-page', 'login');
     
+    // Check for messages
+    if (message === 'account-deleted') {
+      setSuccessMessage('Your account has been successfully deleted.');
+    }
+    
     // Clean up function to remove the attribute when component unmounts
     return () => {
       document.body.removeAttribute('data-page');
     };
-  }, []);
+  }, [message]);
   
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -75,6 +82,12 @@ export default function LoginPage() {
           <h1 className="text-2xl font-bold text-indigo-600">AI Logo Generator</h1>
           <h2 className="mt-2 text-xl font-semibold text-gray-900">Log in to your account</h2>
         </div>
+        
+        {successMessage && (
+          <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded-lg">
+            {successMessage}
+          </div>
+        )}
         
         {error && (
           <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg">

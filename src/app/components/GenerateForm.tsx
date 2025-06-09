@@ -92,6 +92,9 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   const [canCreateLogo, setCanCreateLogo] = useState(true);
   const [canRevise, setCanRevise] = useState(true);
   const [showLimitModal, setShowLimitModal] = useState(false);
+  
+  // Custom color state
+  const [customColors, setCustomColors] = useState<string[]>(['#6366f1']);
 
   useEffect(() => {
     const checkUsageLimits = async () => {
@@ -146,6 +149,16 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
             setSymbolFocus(params.symbolFocus || '');
             setBrandPersonality(params.brandPersonality || '');
             setIndustry(params.industry || '');
+            
+            // Check if color scheme contains custom colors
+            if (params.colorScheme && params.colorScheme.includes('Use these specific colors')) {
+              setColorScheme('Custom Colors');
+              // Extract colors from the saved prompt
+              const colorMatch = params.colorScheme.match(/#[0-9A-F]{6}/gi);
+              if (colorMatch) {
+                setCustomColors(colorMatch);
+              }
+            }
             
             if (
               params.typographyStyle || 
@@ -226,7 +239,8 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   
   const colorSchemeOptions = [
     'Pastels', 'Primary Colors', 'Neon', 'Grey Tones', 
-    'Monochrome', 'Metallics', 'Earthy Tones', 'Black & White', 'Gradient Blends'
+    'Monochrome', 'Metallics', 'Earthy Tones', 'Black & White', 'Gradient Blends',
+    'Custom Colors'
   ];
   
   const symbolFocusOptions = [
@@ -305,11 +319,34 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     }
   }, [showAdvanced]);
 
+  const addCustomColor = useCallback(() => {
+    if (customColors.length < 3) {
+      setCustomColors([...customColors, '#000000']);
+    }
+  }, [customColors]);
+
+  const removeCustomColor = useCallback((index: number) => {
+    setCustomColors(customColors.filter((_, i) => i !== index));
+  }, [customColors]);
+
+  const updateCustomColor = useCallback((index: number, color: string) => {
+    const newColors = [...customColors];
+    newColors[index] = color;
+    setCustomColors(newColors);
+  }, [customColors]);
+
   const buildPrompt = useCallback(() => {
     let prompt = `Create a logo with the following characteristics:\n`;
     prompt += `Company Name: ${companyName}\n`;
     prompt += `Style: ${overallStyle}\n`;
-    prompt += `Colors: ${colorScheme}\n`;
+    
+    // Handle custom colors
+    if (colorScheme === 'Custom Colors' && customColors.length > 0) {
+      prompt += `Colors: Use these specific colors - ${customColors.join(', ')}\n`;
+    } else {
+      prompt += `Colors: ${colorScheme}\n`;
+    }
+    
     prompt += `Symbol Type: ${symbolFocus}\n`;
     prompt += `Brand Personality: ${brandPersonality}\n`;
     prompt += `Industry: ${industry}\n`;
@@ -329,14 +366,16 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     companyName, overallStyle, colorScheme, symbolFocus, 
     brandPersonality, industry, typographyStyle, lineStyle,
     composition, shapeEmphasis, texture, complexityLevel, 
-    applicationContext
+    applicationContext, customColors
   ]);
 
   const collectParameters = useCallback((): LogoParameters => {
     return {
       companyName,
       overallStyle,
-      colorScheme,
+      colorScheme: colorScheme === 'Custom Colors' && customColors.length > 0 
+        ? `Use these specific colors - ${customColors.join(', ')}`
+        : colorScheme,
       symbolFocus,
       brandPersonality,
       industry,
@@ -352,7 +391,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     companyName, overallStyle, colorScheme, symbolFocus, 
     brandPersonality, industry, typographyStyle, lineStyle,
     composition, shapeEmphasis, texture, complexityLevel, 
-    applicationContext
+    applicationContext, customColors
   ]);
 
   const areRequiredFieldsFilled = useCallback(() => {
@@ -644,6 +683,122 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                 true
               )}
               
+              {/* Custom Color Picker - Only shown when Custom Colors is selected */}
+              {colorScheme === 'Custom Colors' && (
+                <div style={{ 
+                  marginBottom: 'var(--space-sm)',
+                  padding: 'var(--space-sm)',
+                  backgroundColor: 'var(--color-gray-50)',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--color-gray-200)'
+                }}>
+                  <label className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
+                    Select Your Colors
+                  </label>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
+                    {customColors.map((color, index) => (
+                      <div key={index} style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 'var(--space-xs)'
+                      }}>
+                        <input
+                          type="color"
+                          value={color}
+                          onChange={(e) => updateCustomColor(index, e.target.value)}
+                          disabled={isGenerating}
+                          style={{
+                            width: '50px',
+                            height: '40px',
+                            border: '1px solid var(--color-gray-300)',
+                            borderRadius: 'var(--radius-sm)',
+                            cursor: 'pointer',
+                            padding: '2px'
+                          }}
+                        />
+                        <input
+                          type="text"
+                          value={color}
+                          onChange={(e) => {
+                            const newColor = e.target.value;
+                            if (/^#[0-9A-F]{6}$/i.test(newColor) || newColor.length < 7) {
+                              updateCustomColor(index, newColor);
+                            }
+                          }}
+                          placeholder="#000000"
+                          disabled={isGenerating}
+                          style={{
+                            flex: 1,
+                            padding: 'var(--space-xs) var(--space-sm)',
+                            border: '1px solid var(--color-gray-300)',
+                            borderRadius: 'var(--radius-sm)',
+                            fontSize: 'var(--text-sm)',
+                            fontFamily: 'monospace'
+                          }}
+                        />
+                        {customColors.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeCustomColor(index)}
+                            disabled={isGenerating}
+                            style={{
+                              padding: 'var(--space-xs)',
+                              color: 'var(--color-error)',
+                              backgroundColor: 'white',
+                              border: '1px solid var(--color-gray-300)',
+                              borderRadius: 'var(--radius-sm)',
+                              cursor: 'pointer',
+                              fontSize: 'var(--text-sm)',
+                              minWidth: '30px',
+                              height: '30px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    
+                    {customColors.length < 3 && (
+                      <button
+                        type="button"
+                        onClick={addCustomColor}
+                        disabled={isGenerating}
+                        style={{
+                          marginTop: 'var(--space-xs)',
+                          padding: 'var(--space-xs) var(--space-sm)',
+                          color: 'var(--color-primary)',
+                          backgroundColor: 'white',
+                          border: '1px dashed var(--color-primary)',
+                          borderRadius: 'var(--radius-sm)',
+                          cursor: 'pointer',
+                          fontSize: 'var(--text-sm)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 'var(--space-xs)'
+                        }}
+                      >
+                        <span style={{ fontSize: '1.2em' }}>+</span> Add Color ({customColors.length}/3)
+                      </button>
+                    )}
+                  </div>
+                  
+                  <p style={{ 
+                    fontSize: 'var(--text-xs)', 
+                    color: 'var(--color-gray-600)', 
+                    marginTop: 'var(--space-xs)',
+                    marginBottom: 0
+                  }}>
+                    Select up to 3 colors for your logo design
+                  </p>
+                </div>
+              )}
+              
               {renderDropdown(
                 "symbol-focus",
                 'Symbol or Icon Focus',
@@ -861,10 +1016,10 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                 </button>
                 
                 <Link
-                  href="/account"
+                  href="/purchase"
                   className="btn btn-primary"
                 >
-                  Go to Account
+                  Purchase Logos
                 </Link>
               </div>
             </div>

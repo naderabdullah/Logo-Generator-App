@@ -10,6 +10,8 @@ export default function AccountPage() {
   const [error, setError] = useState<string | null>(null);
   const [processingQuantity, setProcessingQuantity] = useState<number | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   const router = useRouter();
   
@@ -53,6 +55,33 @@ export default function AccountPage() {
       }
     } catch (err) {
       console.error('Logout failed:', err);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    try {
+      const response = await fetch('/api/user/delete', {
+        method: 'DELETE',
+      });
+      
+      if (response.ok) {
+        // Clear local storage and IndexedDB if needed
+        localStorage.clear();
+        
+        // Redirect to login page with a message
+        router.push('/login?message=account-deleted');
+      } else {
+        const data = await response.json();
+        setError(data.error || 'Failed to delete account');
+        setShowDeleteModal(false);
+      }
+    } catch (err) {
+      console.error('Delete account failed:', err);
+      setError('Failed to delete account');
+      setShowDeleteModal(false);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -211,12 +240,66 @@ export default function AccountPage() {
                 View My Logos
               </Link>
               
+              <Link 
+                href="/purchase" 
+                className="px-4 py-2 bg-indigo-600 text-white rounded-md text-center hover:bg-indigo-700"
+              >
+                Purchase Logos
+              </Link>
+              
               <button
                 onClick={handleLogout}
                 className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
               >
                 Log Out
               </button>
+              
+              <div className="border-t pt-3 mt-3">
+                <button
+                  onClick={() => setShowDeleteModal(true)}
+                  className="px-4 py-2 bg-gray-200 text-red-600 rounded-md hover:bg-red-100 w-full font-medium"
+                >
+                  Delete Account
+                </button>
+                <p className="text-xs text-gray-500 mt-1 text-center">
+                  This action cannot be undone
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Delete Account Confirmation Modal */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
+              <h3 className="text-lg font-semibold mb-4 text-red-600">Delete Account</h3>
+              <p className="mb-4 text-gray-700">
+                Are you sure you want to delete your account? This action is permanent and cannot be undone.
+              </p>
+              <p className="mb-6 text-sm text-gray-600">
+                • All your account data will be permanently deleted<br/>
+                • Your logo creation history will be removed<br/>
+                • Any remaining logo credits will be lost<br/>
+                • You will not be able to recover your account
+              </p>
+              
+              <div className="flex justify-end gap-3">
+                <button
+                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
+                  onClick={() => setShowDeleteModal(false)}
+                  disabled={isDeleting}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                  onClick={handleDeleteAccount}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? 'Deleting...' : 'Delete My Account'}
+                </button>
+              </div>
             </div>
           </div>
         )}
