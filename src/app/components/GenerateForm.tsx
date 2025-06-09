@@ -664,7 +664,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               )}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0', width: '100%', margin: '0' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0', margin: '0 auto' }}>
               {renderDropdown(
                 "overall-style",
                 'Overall Style',
@@ -861,7 +861,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                   Advanced Options
                 </h3>
                 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0', width: '100%', margin: '0' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0', margin: '0 auto' }}>
                   {renderDropdown(
                     "typography",
                     'Typography Style',
@@ -937,7 +937,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               type="button"
               className="btn btn-primary"
               style={{ 
-                width: 'auto',
+                width: '100%',
                 marginBottom: '0'
               }}
               disabled={
