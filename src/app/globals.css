@@ -209,7 +209,7 @@ body {
 }
 
 .generator-page.allow-scroll .generator-form {
-  padding-bottom: var(--space-xl);
+  padding-bottom: var(--space-3xl);
 }
 
 .generator-page .container {
@@ -232,10 +232,9 @@ body {
 .form-input,
 .form-select {
   width: 100%;
-  /*
   height: var(--touch-target);
   min-height: var(--touch-target);
-  max-height: var(--touch-target); */
+  max-height: var(--touch-target);
   padding: var(--space-sm) var(--space-md);
   font-size: var(--text-base);
   border: 1px solid var(--color-gray-300);
@@ -265,9 +264,9 @@ body {
 .generator-form .form-select,
 .advanced-options .form-input,
 .advanced-options .form-select {
-  /* height: var(--touch-target) !important;
+  height: var(--touch-target) !important;
   min-height: var(--touch-target) !important;
-  max-height: var(--touch-target) !important; */
+  max-height: var(--touch-target) !important;
   box-sizing: border-box !important;
 }
 
@@ -315,8 +314,8 @@ body {
 }
 
 .generator-form .btn-primary {
-  margin-top: var(--space-md);
-  margin-bottom: var(--space-md);
+  margin-top: var(--space-lg);
+  margin-bottom: var(--space-2xl);
 }
 
 .btn-action {
@@ -1007,7 +1006,7 @@ body[data-page="auth"] .main-content {
     transform: translateY(-50px) !important;
     overflow-y: auto !important;
     height: auto !important;
-    padding-bottom: max(var(--space-3xl), calc(env(safe-area-inset-bottom, 20px) + var(--space-2xl) + 50px)) !important;
+    padding-bottom: max(var(--space-3xl), calc(env(safe-area-inset-bottom, 20px) + var(--space-3xl) + 50px)) !important;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
   }
@@ -1027,7 +1026,7 @@ body[data-page="auth"] .main-content {
   }
   
   .btn-group .btn {
-    width: auto;
+    width: 100%;
   }
   
   .ios-unified-header nav {
@@ -1376,7 +1375,6 @@ a.btn-primary {
   body {
     background: white;
   }
-  
   
   .card {
     box-shadow: none;
