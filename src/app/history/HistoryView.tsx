@@ -140,10 +140,40 @@ export default function HistoryView() {
         
         {!loading && !error && logosWithRevisions.length === 0 && (
           <div className="text-center py-8">
-            <p className="text-gray-600 mb-4">You haven't generated any logos yet.</p>
-            <Link href="/" className="btn-primary inline-block">
-              Generate Your First Logo
-            </Link>
+            <p className="text-gray-600 mb-4">You don't have any stored logos.</p>
+            <button
+              onClick={() => router.push('/')}
+              className="btn btn-primary"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '48px',
+                padding: '12px 24px',
+                fontSize: '16px',
+                fontWeight: '500',
+                borderRadius: '8px',
+                backgroundColor: '#6366f1',
+                color: 'white',
+                border: 'none',
+                cursor: 'pointer',
+                textDecoration: 'none',
+                boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#4f46e5';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 4px 6px -1px rgb(0 0 0 / 0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#6366f1';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 1px 2px 0 rgb(0 0 0 / 0.05)';
+              }}
+            >
+              Create a Logo
+            </button>
           </div>
         )}
         

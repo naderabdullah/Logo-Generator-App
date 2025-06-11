@@ -17,6 +17,7 @@ export interface StoredLogo {
 // Interface for logo generation parameters
 export interface LogoParameters {
   companyName: string;
+  slogan?: string;
   overallStyle: string;
   colorScheme: string;
   symbolFocus: string;

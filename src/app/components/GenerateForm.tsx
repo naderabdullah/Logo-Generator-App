@@ -70,6 +70,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   const [originalLogoId, setOriginalLogoId] = useState<string | undefined>(undefined);
   
   const [companyName, setCompanyName] = useState('');
+  const [slogan, setSlogan] = useState('');
   const [referenceImage, setReferenceImage] = useState<File | null>(null);
   const [referenceImagePreview, setReferenceImagePreview] = useState<string | null>(null);
   const [overallStyle, setOverallStyle] = useState('');
@@ -144,6 +145,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
           if (logoData) {
             const params = logoData.parameters;
             setCompanyName(params.companyName || '');
+            setSlogan(params.slogan || '');
             setOverallStyle(params.overallStyle || '');
             setColorScheme(params.colorScheme || '');
             setSymbolFocus(params.symbolFocus || '');
@@ -338,6 +340,9 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   const buildPrompt = useCallback(() => {
     let prompt = `Create a logo with the following characteristics:\n`;
     prompt += `Company Name: ${companyName}\n`;
+    if (slogan) {
+      prompt += `Slogan/Subtitle: ${slogan}\n`;
+    }
     prompt += `Style: ${overallStyle}\n`;
     
     // Handle custom colors
@@ -363,7 +368,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     
     return prompt;
   }, [
-    companyName, overallStyle, colorScheme, symbolFocus, 
+    companyName, slogan, overallStyle, colorScheme, symbolFocus, 
     brandPersonality, industry, typographyStyle, lineStyle,
     composition, shapeEmphasis, texture, complexityLevel, 
     applicationContext, customColors
@@ -372,6 +377,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   const collectParameters = useCallback((): LogoParameters => {
     return {
       companyName,
+      slogan: slogan || undefined,
       overallStyle,
       colorScheme: colorScheme === 'Custom Colors' && customColors.length > 0 
         ? `Use these specific colors - ${customColors.join(', ')}`
@@ -388,7 +394,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       applicationContext: applicationContext || undefined
     };
   }, [
-    companyName, overallStyle, colorScheme, symbolFocus, 
+    companyName, slogan, overallStyle, colorScheme, symbolFocus, 
     brandPersonality, industry, typographyStyle, lineStyle,
     composition, shapeEmphasis, texture, complexityLevel, 
     applicationContext, customColors
@@ -581,6 +587,23 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
                 required
+                disabled={isGenerating}
+                autoComplete="off"
+                style={{ margin: '0 auto', display: 'block' }}
+              />
+            </div>
+
+            <div className="mb-sm">
+              <label htmlFor="slogan" className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
+                Slogan/Subtitle (Optional)
+              </label>
+              <input
+                id="slogan"
+                type="text"
+                className="form-input"
+                placeholder="Enter your slogan or subtitle"
+                value={slogan}
+                onChange={(e) => setSlogan(e.target.value)}
                 disabled={isGenerating}
                 autoComplete="off"
                 style={{ margin: '0 auto', display: 'block' }}
@@ -1005,11 +1028,22 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               <div className="flex gap-sm" style={{ justifyContent: 'center' }}>
                 <button
                   onClick={() => setShowLimitModal(false)}
-                  className="btn"
                   style={{
+                    padding: '8px 16px',
+                    fontSize: '14px',
+                    fontWeight: '500',
                     backgroundColor: 'white',
                     color: 'var(--color-gray-700)',
-                    border: '1px solid var(--color-gray-300)'
+                    border: '1px solid var(--color-gray-300)',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--color-gray-50)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'white';
                   }}
                 >
                   Close
