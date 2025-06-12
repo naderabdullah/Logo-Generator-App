@@ -182,7 +182,7 @@ export default function AccountPage() {
   }
   
   return (
-    <div className="bg-white py-4 px-4 sm:px-6 lg:px-8 min-h-screen flex items-center">
+    <div className="bg-white pt-20 pb-4 px-4 sm:px-6 lg:px-8 min-h-screen">
       <div className="max-w-md mx-auto w-full">
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold text-indigo-600">My Account</h1>
