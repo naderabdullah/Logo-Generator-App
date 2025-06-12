@@ -182,24 +182,24 @@ export default function AccountPage() {
   }
   
   return (
-    <div className="bg-white py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md mx-auto">
-        <div className="text-center mb-8">
+    <div className="bg-white py-4 px-4 sm:px-6 lg:px-8 min-h-screen flex items-center">
+      <div className="max-w-md mx-auto w-full">
+        <div className="text-center mb-6">
           <h1 className="text-2xl font-bold text-indigo-600">My Account</h1>
-          <p className="mt-2 text-gray-600">Manage your logo generator account</p>
+          <p className="mt-1 text-gray-600">Manage your logo generator account</p>
         </div>
         
         {successMessage && (
-          <div className="bg-green-50 p-4 rounded-lg mb-6 text-center">
+          <div className="bg-green-50 p-3 rounded-lg mb-4 text-center">
             <p className="text-green-700 font-medium">{successMessage}</p>
           </div>
         )}
         
         {userData && (
-          <div className="space-y-6">
-            <div className="bg-indigo-50 p-4 rounded-lg">
-              <h2 className="text-lg font-semibold text-indigo-800 mb-2">User Information</h2>
-              <div className="space-y-2">
+          <div className="space-y-4">
+            <div className="bg-indigo-50 p-3 rounded-lg">
+              <h2 className="text-lg font-semibold text-indigo-800 mb-1">User Information</h2>
+              <div className="space-y-1">
                 <p className="flex justify-between">
                   <span className="text-gray-600">Email:</span>
                   <span className="font-medium">{userData.email}</span>
@@ -207,9 +207,9 @@ export default function AccountPage() {
               </div>
             </div>
             
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h2 className="text-lg font-semibold text-blue-800 mb-2">Logo Usage</h2>
-              <div className="space-y-2">
+            <div className="bg-blue-50 p-3 rounded-lg">
+              <h2 className="text-lg font-semibold text-blue-800 mb-1">Logo Usage</h2>
+              <div className="space-y-1">
                 <p className="flex justify-between">
                   <span className="text-gray-600">Logos Created:</span>
                   <span className="font-medium">{userData.logosCreated}</span>
@@ -232,7 +232,7 @@ export default function AccountPage() {
               </div>
             </div>
             
-            <div className="flex flex-col space-y-3">
+            <div className="flex flex-col space-y-2">
               <Link 
                 href="/history" 
                 className="px-4 py-2 bg-indigo-600 text-white rounded-md text-center hover:bg-indigo-700"
@@ -254,7 +254,7 @@ export default function AccountPage() {
                 Log Out
               </button>
               
-              <div className="border-t pt-3 mt-3">
+              <div className="border-t pt-2 mt-2">
                 <button
                   onClick={() => setShowDeleteModal(true)}
                   className="px-4 py-2 bg-gray-200 text-red-600 rounded-md hover:bg-red-100 w-full font-medium"
