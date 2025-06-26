@@ -1,11 +1,12 @@
+// src/app/page.tsx (UPDATED - Redirect to App Manager Registration)
 'use client';
 
 import { useState, useCallback, useEffect, Suspense } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import GenerateForm from './components/GenerateForm';
 import LoadingSpinner from './components/LoadingSpinner';
-import InstallBanner from './components/InstallBanner';
 import OfflineIndicator from './components/OfflineIndicator';
+import { redirectToAppManagerRegistration, isAppManagerRegistrationUrl } from '../lib/appManagerUtils';
 
 // Separate component that uses searchParams
 function GenerateFormWithParams() {
@@ -53,13 +54,41 @@ function GenerateFormWithParams() {
 export default function Home() {
   const [appReady, setAppReady] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
+  // Function to redirect to App Manager registration
+  const handleRedirectToRegistration = () => {
+    redirectToAppManagerRegistration(router);
+  };
+  
+  // Check if current path is a public route that shouldn't require authentication
+  const isPublicRoute = () => {
+    const publicRoutes = [
+      '/login',
+      '/signup', 
+      '/auth'
+    ];
+    
+    // Also check if it's an App Manager registration URL
+    return publicRoutes.some(route => pathname.startsWith(route)) || 
+           isAppManagerRegistrationUrl(pathname);
+  };
   
   // Check auth status and redirect to auth page if not authenticated
   useEffect(() => {
     const checkAuth = async () => {
       setIsCheckingAuth(true);
+      
+      // Skip auth check for public routes
+      if (isPublicRoute()) {
+        console.log("Public route detected, skipping auth check:", pathname);
+        setIsCheckingAuth(false);
+        setIsAuthenticated(true); // Allow access to public routes
+        return;
+      }
+      
       try {
         // Try different API endpoints to see which one works
         let response = null;
@@ -81,10 +110,10 @@ export default function Home() {
         }
         
         if (!response || response.status === 401) {
-          // User is not authenticated, redirect to auth page
-          console.log("User not authenticated, redirecting to auth page");
+          // User is not authenticated, redirect to App Manager registration
+          console.log("User not authenticated, redirecting to App Manager registration");
           setIsAuthenticated(false);
-          router.push('/auth');
+          handleRedirectToRegistration();
         } else if (response.ok) {
           // User is authenticated
           console.log("User is authenticated");
@@ -92,16 +121,16 @@ export default function Home() {
         }
       } catch (err) {
         console.error('Error checking auth status:', err);
-        // If there's an error, still redirect to auth page to be safe
+        // If there's an error, redirect to App Manager registration
         setIsAuthenticated(false);
-        router.push('/auth');
+        handleRedirectToRegistration();
       } finally {
         setIsCheckingAuth(false);
       }
     };
     
     checkAuth();
-  }, [router]);
+  }, [router, pathname]); // Added pathname as dependency
   
   // Initialize PWA functionality
   useEffect(() => {
