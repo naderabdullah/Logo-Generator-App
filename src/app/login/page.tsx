@@ -1,4 +1,4 @@
-// src/app/login/page.tsx (Updated)
+// src/app/login/page.tsx (Updated with App Manager Registration Link)
 'use client';
 
 import { useState, useEffect, FormEvent } from 'react';
@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useAuth } from '../context/AuthContext';
 import { appManagerApiService } from '../../lib/apiService';
 import { APP_ID } from '../../lib/appManagerConfig';
+import { getAppManagerRegistrationUrl } from '../../lib/appManagerUtils';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -73,140 +74,153 @@ export default function LoginPage() {
         return;
       }
       
-      // If existing API fails, try app manager API
-      console.log('Existing API failed, trying app manager API');
-      
-      try {
-        if (!APP_ID) {
-          throw new Error('App ID not configured');
-        }
+      // If existing API fails, try App Manager login
+      if (response.status === 401 || response.status === 404) {
+        console.log('Trying App Manager login...');
         
-        const appManagerResponse = await appManagerApiService.login(APP_ID, email, password);
-        
-        if (appManagerResponse.token) {
-          console.log('Login successful with app manager API');
+        try {
+          const appManagerResponse = await appManagerApiService.login(APP_ID, email, password);
           
-          // Store the token (you might need to create a cookie or integrate with your existing auth)
-          // For now, we'll try to create a session similar to your existing system
-          
-          // Create a login request to your existing system using the app manager token
-          // This might require creating a new API endpoint that accepts app manager tokens
-          const integrationResponse = await fetch('/api/auth/app-manager-login', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ 
-              email, 
-              appManagerToken: appManagerResponse.token,
-              appManagerData: appManagerResponse 
-            }),
-          });
-          
-          if (integrationResponse.ok) {
-            // Refresh auth context to get user data
-            await refreshAuth();
+          if (appManagerResponse.token) {
+            console.log('App Manager login successful');
             
-            // Redirect to the desired page
-            router.push(redirectPath);
-            return;
-          } else {
-            throw new Error('Failed to integrate app manager login with existing system');
+            // Send the app manager data to our backend for processing
+            const localResponse = await fetch('/api/auth/app-manager-login', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                email,
+                appManagerToken: appManagerResponse.token,
+                appManagerData: appManagerResponse
+              }),
+            });
+            
+            if (localResponse.ok) {
+              console.log('Local auth processing successful');
+              
+              // Refresh auth context to get user data
+              await refreshAuth();
+              
+              // Redirect to the desired page
+              router.push(redirectPath);
+              return;
+            } else {
+              const localData = await localResponse.json();
+              throw new Error(localData.error || 'Authentication processing failed');
+            }
           }
+        } catch (appManagerError: any) {
+          console.error('App Manager login failed:', appManagerError);
+          throw new Error(appManagerError.message || 'Login failed');
         }
-      } catch (appManagerError) {
-        console.error('App manager login failed:', appManagerError);
-        // Fall through to show login error
+      } else {
+        const data = await response.json();
+        throw new Error(data.error || 'Login failed');
       }
-      
-      // If both methods fail, show error
-      const errorData = await response.json().catch(() => ({}));
-      setError(errorData.error || 'Invalid email or password');
-      
-    } catch (err) {
+    } catch (err: any) {
       console.error('Login error:', err);
-      setError('An error occurred. Please try again.');
+      setError(err.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
   };
-  
+
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full">
-        <h1 className="text-2xl font-bold text-center text-gray-900 mb-6">
-          Sign In
-        </h1>
-
-        {/* Success message from registration */}
-        {message && (
-          <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-green-800 text-sm">{message}</p>
-          </div>
-        )}
-
-        {/* Error message */}
-        {error && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-800 text-sm">{error}</p>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email Address
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={loading}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Enter your email"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={loading}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Enter your password"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Signing In...' : 'Sign In'}
-          </button>
-        </form>
-
-        <div className="mt-6 pt-6 border-t border-gray-200">
-          <p className="text-center text-sm text-gray-600">
-            Don't have an account?{' '}
-            <Link
-              href="/signup"
-              className="text-blue-500 hover:text-blue-700 underline"
-            >
-              Sign up here
-            </Link>
-          </p>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Sign in to your account
+          </h2>
         </div>
+        
+        {message && (
+          <div className="rounded-md bg-green-50 p-4">
+            <div className="flex">
+              <div className="ml-3">
+                <p className="text-sm font-medium text-green-800">
+                  {message}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {error && (
+          <div className="rounded-md bg-red-50 p-4">
+            <div className="flex">
+              <div className="ml-3">
+                <p className="text-sm font-medium text-red-800">
+                  {error}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <div className="rounded-md shadow-sm -space-y-px">
+            <div>
+              <label htmlFor="email" className="sr-only">
+                Email address
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                placeholder="Email address"
+                disabled={loading}
+              />
+            </div>
+            <div>
+              <label htmlFor="password" className="sr-only">
+                Password
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                placeholder="Password"
+                disabled={loading}
+              />
+            </div>
+          </div>
+
+          <div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Signing in...' : 'Sign in'}
+            </button>
+          </div>
+
+          {/* App Manager Registration Link */}
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <p className="text-center text-sm text-gray-600">
+              Don't have an account?{' '}
+              <Link
+                href={getAppManagerRegistrationUrl()}
+                className="text-blue-500 hover:text-blue-700 underline"
+              >
+                Sign up here
+              </Link>
+            </p>
+          </div>
+        </form>
       </div>
     </div>
   );

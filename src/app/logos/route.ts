@@ -1,15 +1,8 @@
-// src/app/api/logos/route.ts
+// src/app/logos/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI, { toFile } from 'openai';
-import { DynamoDB } from 'aws-sdk';
 import jwt from 'jsonwebtoken';
-
-// Initialize DynamoDB client
-const dynamoDB = new DynamoDB.DocumentClient({
-  region: process.env.AWS_REGION || 'us-east-1',
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-});
+import { supabaseAdmin } from '../../lib/supabase';
 
 // Function to get current user from request
 async function getCurrentUser(request: NextRequest) {
@@ -25,45 +18,155 @@ async function getCurrentUser(request: NextRequest) {
     const decoded = jwt.verify(
       accessToken, 
       process.env.JWT_ACCESS_TOKEN_SECRET || 'access-token-secret'
-    ) as { id: number };
+    ) as { id: string, email: string };
     
-    // Get user from DynamoDB
-    const result = await dynamoDB.get({
-      TableName: process.env.DYNAMODB_USERS_TABLE || 'users',
-      Key: { id: decoded.id }
-    }).promise();
+    // Get or create user in Supabase
+    const { data: user, error } = await supabaseAdmin
+      .from('user_credits')
+      .select('*')
+      .eq('user_id', decoded.id)
+      .single();
     
-    return result.Item;
+    if (error && error.code === 'PGRST116') {
+      // User doesn't exist, create them
+      const { data: newUser, error: createError } = await supabaseAdmin
+        .from('user_credits')
+        .insert({
+          user_id: decoded.id,
+          email: decoded.email,
+          logos_created: 0,
+          logos_limit: 10,
+          subscription_type: 'premium'
+        })
+        .select()
+        .single();
+      
+      if (createError) {
+        console.error('Error creating user:', createError);
+        return null;
+      }
+      
+      return newUser;
+    }
+    
+    if (error) {
+      console.error('Error getting user:', error);
+      return null;
+    }
+    
+    return user;
   } catch (error) {
     console.error('Error getting current user:', error);
     return null;
   }
 }
 
-// Function to update user's logo count
-async function updateUserLogoCount(userId: number, increment: number = 1) {
+// Function to check revision count for a logo
+async function getRevisionCount(userId: string, originalLogoId: number): Promise<number> {
   try {
-    const result = await dynamoDB.update({
-      TableName: process.env.DYNAMODB_USERS_TABLE || 'users',
-      Key: { id: userId },
-      UpdateExpression: 'SET logosCreated = logosCreated + :inc',
-      ExpressionAttributeValues: {
-        ':inc': increment
-      },
-      ReturnValues: 'ALL_NEW'
-    }).promise();
+    const { data, error } = await supabaseAdmin
+      .from('logo_revisions')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('original_logo_id', originalLogoId);
     
-    return result.Attributes;
+    if (error) {
+      console.error('Error checking revision count:', error);
+      return 0;
+    }
+    
+    return data?.length || 0;
+  } catch (error) {
+    console.error('Error checking revision count:', error);
+    return 0;
+  }
+}
+
+// Function to update user's logo count
+async function updateUserLogoCount(userId: string, increment: number = 1) {
+  try {
+    // First get current count
+    const { data: currentUser, error: fetchError } = await supabaseAdmin
+      .from('user_credits')
+      .select('logos_created')
+      .eq('user_id', userId)
+      .single();
+    
+    if (fetchError) {
+      console.error('Error fetching user count:', fetchError);
+      throw fetchError;
+    }
+    
+    // Then update with incremented value
+    const newCount = (currentUser.logos_created || 0) + increment;
+    
+    const { data, error } = await supabaseAdmin
+      .from('user_credits')
+      .update({ logos_created: newCount })
+      .eq('user_id', userId)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error updating user logo count:', error);
+      throw error;
+    }
+    
+    return data;
   } catch (error) {
     console.error('Error updating user logo count:', error);
     throw error;
   }
 }
 
+// Function to log logo generation
+async function logLogoGeneration(userId: string, prompt: string, isRevision: boolean, originalLogoId?: number) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('logo_generations')
+      .insert({
+        user_id: userId,
+        prompt: prompt,
+        model_used: 'gpt-image-1',
+        is_revision: isRevision,
+        original_logo_id: originalLogoId,
+        success: true
+      })
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error logging logo generation:', error);
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error logging logo generation:', error);
+  }
+}
+
+// Function to log revision
+async function logRevision(userId: string, originalLogoId: number, prompt: string) {
+  try {
+    const { error } = await supabaseAdmin
+      .from('logo_revisions')
+      .insert({
+        original_logo_id: originalLogoId,
+        user_id: userId,
+        revision_prompt: prompt
+      });
+    
+    if (error) {
+      console.error('Error logging revision:', error);
+    }
+  } catch (error) {
+    console.error('Error logging revision:', error);
+  }
+}
+
 // GET endpoint - Return user's logo usage statistics
 export async function GET(request: NextRequest) {
   try {
-    // Get current user
     const user = await getCurrentUser(request);
     
     if (!user) {
@@ -73,44 +176,30 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // Return usage statistics (not the actual logos since they're in IndexedDB)
     return NextResponse.json({
       usage: {
-        logosCreated: user.logosCreated || 0,
-        logosLimit: user.logosLimit || 10,
-        remainingLogos: Math.max(0, (user.logosLimit || 10) - (user.logosCreated || 0))
+        logosCreated: user.logos_created || 0,
+        logosLimit: user.logos_limit || 10,
+        remainingLogos: Math.max(0, (user.logos_limit || 10) - (user.logos_created || 0))
       }
     });
   } catch (error) {
     console.error('Error fetching logo usage:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch logo usage statistics' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
 }
 
-// POST endpoint - Generate logo and update usage count
+// POST endpoint - Generate logo and update credits
 export async function POST(request: NextRequest) {
   try {
-    // Get current user
-    const user = await getCurrentUser(request);
-    
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-    
-    // Parse the form data first to determine if this is a revision
     const formData = await request.formData();
-    
-    // Extract parameters for logo generation
     const prompt = formData.get('prompt') as string;
     const referenceImage = formData.get('referenceImage') as File | null;
-    const originalLogoId = formData.get('originalLogoId') as string | null;
-    const isRevision = originalLogoId !== null;
+    const isRevision = formData.get('isRevision') === 'true';
+    const originalLogoId = formData.get('originalLogoId') ? parseInt(formData.get('originalLogoId') as string) : undefined;
     
     if (!prompt) {
       return NextResponse.json(
@@ -118,47 +207,33 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const user = await getCurrentUser(request);
     
-    // Check limits based on whether this is a revision or original logo
-    if (!isRevision) {
-      // For original logos, check the global limit
-      if ((user.logosLimit || 0) <= 0) {
-        return NextResponse.json(
-          { error: 'Your account does not have any logo credits. Please upgrade your plan.' },
-          { status: 403 }
-        );
-      }
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Check if user has remaining credits (only for new logos, not revisions)
+    if (!isRevision && user.logos_created >= user.logos_limit) {
+      return NextResponse.json(
+        { error: 'You have reached your logo generation limit.' },
+        { status: 403 }
+      );
+    }
+
+    // Check revision limit (max 3 revisions per logo)
+    if (isRevision && originalLogoId) {
+      const revisionCount = await getRevisionCount(user.user_id, originalLogoId);
       
-      if ((user.logosCreated || 0) >= (user.logosLimit || 0)) {
+      if (revisionCount >= 3) {
         return NextResponse.json(
-          { error: 'You have reached your logo creation limit. Please upgrade your plan.' },
+          { error: 'You have reached the maximum of 3 revisions for this logo.' },
           { status: 403 }
         );
-      }
-    } else if (originalLogoId) {
-      // For revisions, check if already reached 3 revisions for this logo
-      try {
-        // Get all logos with this originalLogoId from DynamoDB
-        const revisions = await dynamoDB.query({
-          TableName: process.env.DYNAMODB_LOGOS_TABLE || 'logos',
-          IndexName: 'originalLogoId-index',
-          KeyConditionExpression: 'originalLogoId = :originalId',
-          ExpressionAttributeValues: {
-            ':originalId': originalLogoId
-          }
-        }).promise();
-        
-        const revisionCount = revisions.Items ? revisions.Items.length : 0;
-        
-        if (revisionCount >= 3) {
-          return NextResponse.json(
-            { error: 'You have reached the maximum of 3 revisions for this logo.' },
-            { status: 403 }
-          );
-        }
-      } catch (error) {
-        console.error('Error checking revision count:', error);
-        // If we can't check, we'll proceed - better UX than blocking
       }
     }
 
@@ -226,24 +301,39 @@ export async function POST(request: NextRequest) {
       throw new Error('No image data received in the expected format');
     }
     
-    // Update the user's logo count in DynamoDB if this is not a revision
+    // Log the generation and update credits
+    const logoGeneration = await logLogoGeneration(user.user_id, prompt, isRevision, originalLogoId);
+    
+    // Update the user's logo count if this is not a revision
     if (!isRevision) {
-      // Only increment count for original logos, not revisions
-      await updateUserLogoCount(user.id);
+      await updateUserLogoCount(user.user_id);
     }
     
+    // Log revision if applicable
+    if (isRevision && originalLogoId) {
+      await logRevision(user.user_id, originalLogoId, prompt);
+    }
+    
+    // Get updated user data
+    const { data: updatedUser } = await supabaseAdmin
+      .from('user_credits')
+      .select('*')
+      .eq('user_id', user.user_id)
+      .single();
+    
     // Return success with the image data
-    // The client will handle saving to IndexedDB
     return NextResponse.json({
       success: true,
       message: 'Logo generated successfully',
       image: imageData,
+      logoId: logoGeneration?.id,
       usage: {
-        logosCreated: (user.logosCreated || 0) + (isRevision ? 0 : 1),
-        logosLimit: user.logosLimit || 0,
-        remainingLogos: Math.max(0, (user.logosLimit || 0) - ((user.logosCreated || 0) + (isRevision ? 0 : 1)))
+        logosCreated: updatedUser?.logos_created || user.logos_created,
+        logosLimit: updatedUser?.logos_limit || user.logos_limit,
+        remainingLogos: Math.max(0, (updatedUser?.logos_limit || user.logos_limit) - (updatedUser?.logos_created || user.logos_created))
       }
     });
+    
   } catch (error: any) {
     console.error('Error generating logo:', error);
     
