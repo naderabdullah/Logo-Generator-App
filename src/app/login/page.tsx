@@ -1,9 +1,7 @@
-// src/app/login/page.tsx (Updated with App Manager Registration Link)
+// src/app/login/page.tsx (Fixed for Next.js 15)
 'use client';
 
-export const dynamic = 'force-dynamic'; // Ensure this page is always server-rendered
-
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect, FormEvent, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '../context/AuthContext';
@@ -11,7 +9,8 @@ import { appManagerApiService } from '../../lib/apiService';
 import { APP_ID } from '../../lib/appManagerConfig';
 import { getAppManagerRegistrationUrl } from '../../lib/appManagerUtils';
 
-export default function LoginPage() {
+// Separate component that uses useSearchParams
+function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -225,5 +224,32 @@ export default function LoginPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+// Loading component for Suspense fallback
+function LoginPageLoading() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="max-w-md w-full space-y-8">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-300 rounded w-3/4 mx-auto mb-6"></div>
+          <div className="space-y-4">
+            <div className="h-10 bg-gray-300 rounded"></div>
+            <div className="h-10 bg-gray-300 rounded"></div>
+            <div className="h-10 bg-gray-300 rounded"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Main component with Suspense boundary
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginPageLoading />}>
+      <LoginForm />
+    </Suspense>
   );
 }
