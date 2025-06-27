@@ -1,6 +1,8 @@
 // src/app/login/page.tsx (Updated with App Manager Registration Link)
 'use client';
 
+export const dynamic = 'force-dynamic'; // Ensure this page is always server-rendered
+
 import { useState, useEffect, FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
