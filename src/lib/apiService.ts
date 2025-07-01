@@ -54,7 +54,13 @@ const createApiCall = async (url: string, data: any, params?: Record<string, str
 
   clearTimeout(timeoutId);
 
+  // Log response for debugging
+  console.log('API Response Status:', response.status);
+  console.log('API Response Headers:', Object.fromEntries(response.headers.entries()));
+
   if (!response.ok) {
+    const errorText = await response.text();
+    console.error('API Error Response:', errorText);
     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
   }
 
