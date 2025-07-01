@@ -1,24 +1,14 @@
+// src/app/api/debug/route.ts - Add this temporarily to test config
 import { NextRequest, NextResponse } from 'next/server';
 
-// Test endpoint to check environment variables
 export async function GET(request: NextRequest) {
-  // Check if the API key exists and mask it for security
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  const maskedApiKey = apiKey ? 
-    `${apiKey.substring(0, 4)}...${apiKey.slice(-4)}` : 
-    'Not set';
-  
-  const envVars = {
-    apiKeyExists: !!apiKey,
-    apiKeyFirstFourChars: apiKey ? apiKey.substring(0, 4) : 'None',
-    maskedApiKey,
-    siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'Not set',
-    appName: process.env.NEXT_PUBLIC_APP_NAME || 'Not set',
-    nodeEnv: process.env.NODE_ENV || 'Not set',
-    // List all environment variables (excluding their values for security)
-    availableEnvVars: Object.keys(process.env)
-      .filter(key => !key.includes('SECRET') && !key.includes('KEY'))
-  };
-  
-  return NextResponse.json(envVars);
+  return NextResponse.json({
+    hasApiEndpoint: !!process.env.NEXT_PUBLIC_API_ENDPOINT,
+    hasApiKey: !!process.env.NEXT_PUBLIC_API_KEY,
+    endpoint: process.env.NEXT_PUBLIC_API_ENDPOINT ? 'configured' : 'missing',
+    apiKey: process.env.NEXT_PUBLIC_API_KEY ? 'configured' : 'missing',
+    // Add other relevant env vars
+    hasOpenAiKey: !!process.env.OPENAI_API_KEY,
+    hasAwsConfig: !!(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY)
+  });
 }

@@ -72,6 +72,8 @@ export const appManagerApiService = {
   async verifyRegistration(registrationData: RegistrationData): Promise<ApiResponse> {
     try {
       console.log('Sending registration request:', registrationData);
+      console.log('API Endpoint:', API_ENDPOINT);
+      console.log('API Key configured:', !!API_KEY);
       
       const response = await createApiCall('/app-manager', registrationData, {
         action: 'verifyAppPurchase'
