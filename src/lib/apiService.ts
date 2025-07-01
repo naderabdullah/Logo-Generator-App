@@ -33,14 +33,26 @@ const createApiCall = async (url: string, data: any, params?: Record<string, str
 
   const fullUrl = `${API_ENDPOINT}?${searchParams.toString()}`;
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
   const response = await fetch(fullUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Api-Key': API_KEY
+      'X-Api-Key': API_KEY,
+      'Accept': 'application/json',
+      // Add CORS headers if needed
+      'Origin': typeof window !== 'undefined' ? window.location.origin : '',
     },
-    body: JSON.stringify(data)
+    body: JSON.stringify(data),
+    signal: controller.signal,
+    // Add mode if CORS issues
+    mode: 'cors',
+    credentials: 'omit'
   });
+
+  clearTimeout(timeoutId);
 
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
