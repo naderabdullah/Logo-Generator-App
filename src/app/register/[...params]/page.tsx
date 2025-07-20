@@ -174,53 +174,52 @@ export default function AppManagerRegistration({ params }: RegistrationPageProps
       }
 
       // Prepare registration data exactly as Lambda expects
-      const registrationData: any = {
+      const registrationData = {
         email: formData.email,
         password: formData.password,
-        token,
-        appId,
-        linkType
+        token: token,
+        appId: appId,
+        linkType: linkType,
+        ...(subappId && { subappId }),
+        ...(linkType === 'generic' && { orderNumber: formData.orderNumber })
       };
 
-      // Add optional fields
-      if (subappId) {
-        registrationData.subappId = subappId;
-      }
-      if (linkType === 'generic' && formData.orderNumber.trim()) {
-        registrationData.orderNumber = formData.orderNumber.trim();
-      }
-
       console.log('Sending registration data:', registrationData);
+      
       const response = await appManagerApiService.verifyRegistration(registrationData);
-
-      // Check response format from Lambda
-      if (response.message) {
-        setStatus({
-          loading: false,
-          error: '',
-          success: true
-        });
-
-        // Store success info for login page
-        sessionStorage.setItem('registrationSuccess', JSON.stringify({
-          email: formData.email,
-          message: response.message,
-          status: response.status,
-          subAppId: response.subAppId
-        }));
-
-        // Redirect to login after delay
-        setTimeout(() => {
-          router.push('/login');
-        }, 2000);
-      } else {
-        throw new Error('Registration failed - please try again');
-      }
-    } catch (error: any) {
-      console.error('Registration error:', error);
+      
+      console.log('Registration successful:', response);
+      
       setStatus({
         loading: false,
-        error: error.message,
+        error: '',
+        success: true
+      });
+
+      // Redirect to login after 2 seconds
+      setTimeout(() => {
+        router.push('/login?registered=true');
+      }, 2000);
+      
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      
+      // Handle specific error codes from the API
+      let errorMessage = 'Registration failed. Please try again.';
+      
+      if (error.message?.includes('TOKEN_EXPIRED')) {
+        errorMessage = 'This registration link has expired. Please request a new one.';
+      } else if (error.message?.includes('EMAIL_EXISTS')) {
+        errorMessage = 'This email is already registered. Please login instead.';
+      } else if (error.message?.includes('INVALID_TOKEN')) {
+        errorMessage = 'Invalid registration link. Please check your link and try again.';
+      } else if (error.message?.includes('ORDER_ALREADY_USED')) {
+        errorMessage = 'This order number has already been used for registration.';
+      }
+      
+      setStatus({
+        loading: false,
+        error: errorMessage,
         success: false
       });
     }

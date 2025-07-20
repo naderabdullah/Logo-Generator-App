@@ -20,8 +20,14 @@ interface ApiResponse {
 
 // Create axios-like client using fetch
 const createApiCall = async (url: string, data: any, params?: Record<string, string>) => {
-  if (!API_ENDPOINT || !API_KEY) {
-    throw new Error('App Manager API configuration missing. Please check your environment variables.');
+  // Use proxy in development to avoid CORS
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  const baseUrl = isDevelopment 
+    ? '/api/app-manager'  // Use local proxy
+    : process.env.NEXT_PUBLIC_API_ENDPOINT;  // Use direct API in production
+  
+  if (!isDevelopment && (!process.env.NEXT_PUBLIC_API_ENDPOINT || !process.env.NEXT_PUBLIC_API_KEY)) {
+    throw new Error('App Manager API configuration missing.');
   }
 
   const searchParams = new URLSearchParams();
@@ -31,37 +37,37 @@ const createApiCall = async (url: string, data: any, params?: Record<string, str
     });
   }
 
-  const fullUrl = `${API_ENDPOINT}?${searchParams.toString()}`;
+  const fullUrl = `${baseUrl}?${searchParams.toString()}`;
+  console.log('Making API call to:', fullUrl);
+  console.log('Using proxy:', isDevelopment);
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json'
+  };
+
+  // Only add X-Api-Key header when not using proxy
+  // if (!isDevelopment) {
+    headers['X-Api-Key'] = process.env.NEXT_PUBLIC_API_KEY!;
+  // }
 
   const response = await fetch(fullUrl, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Api-Key': API_KEY,
-      'Accept': 'application/json',
-      // Add CORS headers if needed
-      'Origin': typeof window !== 'undefined' ? window.location.origin : '',
-    },
-    body: JSON.stringify(data),
-    signal: controller.signal,
-    // Add mode if CORS issues
-    mode: 'cors',
-    credentials: 'omit'
+    headers,
+    body: JSON.stringify(data)
   });
-
-  clearTimeout(timeoutId);
-
-  // Log response for debugging
-  console.log('API Response Status:', response.status);
-  console.log('API Response Headers:', Object.fromEntries(response.headers.entries()));
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('API Error Response:', errorText);
-    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    console.error('API Response Error:', response.status, errorText);
+    
+    let errorData;
+    try {
+      errorData = JSON.parse(errorText);
+    } catch {
+      errorData = { message: errorText };
+    }
+    
+    throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
   }
 
   return response.json();
@@ -72,12 +78,13 @@ export const appManagerApiService = {
   async verifyRegistration(registrationData: RegistrationData): Promise<ApiResponse> {
     try {
       console.log('Sending registration request:', registrationData);
-      console.log('API Endpoint:', API_ENDPOINT);
-      console.log('API Key configured:', !!API_KEY);
+      console.log('Environment:', process.env.NODE_ENV);
       
-      const response = await createApiCall('/app-manager', registrationData, {
-        action: 'verifyAppPurchase'
-      });
+      const response = await createApiCall(
+        '', // URL path handled by createApiCall
+        registrationData, 
+        { action: 'verifyAppPurchase' }
+      );
 
       console.log('Registration response:', response);
       return response;
@@ -90,12 +97,11 @@ export const appManagerApiService = {
   // Get subapp info - matches Lambda getPublicSubappInfo action
   async getSubappInfo(appId: string, subappId: string): Promise<any> {
     try {
-      const response = await createApiCall('/app-manager', {
-        appId,
-        subappId
-      }, {
-        action: 'getPublicSubappInfo'
-      });
+      const response = await createApiCall(
+        '',
+        { appId, subappId }, 
+        { action: 'getPublicSubappInfo' }
+      );
 
       return response;
     } catch (error) {
@@ -107,13 +113,11 @@ export const appManagerApiService = {
   // Login API - for app manager authentication
   async login(appId: string, email: string, password: string): Promise<ApiResponse> {
     try {
-      const response = await createApiCall('/app-manager', {
-        appId,
-        email,
-        password
-      }, {
-        action: 'appLogin'
-      });
+      const response = await createApiCall(
+        '',
+        { appId, email, password }, 
+        { action: 'appLogin' }
+      );
 
       return response;
     } catch (error) {
@@ -125,35 +129,17 @@ export const appManagerApiService = {
   // Error handler matching Lambda error responses
   handleApiError(error: any): Error {
     if (error instanceof Response) {
-      // Handle fetch Response errors
       return new Error(`Server error: ${error.status} ${error.statusText}`);
     }
     
-    if (error.response) {
-      const { status, data } = error.response;
-      // Handle specific error codes from Lambda
-      switch (data?.code) {
-        case 'INVALID_TOKEN':
-          return new Error('Registration link is invalid or expired');
-        case 'EMAIL_EXISTS':
-          return new Error('This email is already registered');
-        case 'TOKEN_EXPIRED':
-          return new Error('Registration link has expired');
-        case 'MISSING_REQUIRED_FIELDS':
-          return new Error('Missing required information');
-        case 'ORDER_ALREADY_USED':
-          return new Error('Order number has already been used');
-        case 'INVALID_SUBAPP_ID':
-          return new Error('Invalid app configuration');
-        case 'APP_NOT_AVAILABLE':
-          return new Error('App is not currently available');
-        default:
-          return new Error(data?.message || `Server error: ${status}`);
+    if (error instanceof Error) {
+      // Check for specific error types
+      if (error.message.includes('Failed to fetch')) {
+        return new Error('Network error - please check your connection');
       }
-    } else if (error.message && error.message.includes('fetch')) {
-      return new Error('Network error - please check your connection');
-    } else {
-      return new Error(error.message || 'An unexpected error occurred');
+      return error;
     }
+    
+    return new Error('An unexpected error occurred');
   }
 };
