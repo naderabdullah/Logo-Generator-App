@@ -22,9 +22,9 @@ interface ApiResponse {
 const createApiCall = async (url: string, data: any, params?: Record<string, string>) => {
   // Use proxy in development to avoid CORS
   const isDevelopment = process.env.NODE_ENV === 'development';
-  const baseUrl = isDevelopment 
-    ? '/api/app-manager'  // Use local proxy
-    : process.env.NEXT_PUBLIC_API_ENDPOINT;  // Use direct API in production
+  const baseUrl = '/api/app-manager' //isDevelopment 
+    // ? '/api/app-manager'  // Use local proxy
+    // : process.env.NEXT_PUBLIC_API_ENDPOINT;  // Use direct API in production
   
   if (!isDevelopment && (!process.env.NEXT_PUBLIC_API_ENDPOINT || !process.env.NEXT_PUBLIC_API_KEY)) {
     throw new Error('App Manager API configuration missing.');
