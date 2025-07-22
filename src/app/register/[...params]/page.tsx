@@ -264,7 +264,7 @@ export default function AppManagerRegistration({ params }: RegistrationPageProps
           Create Your Account
         </h1>
 
-        {/* Registration Info Display */}
+        {/* Registration Info Display
         <div className="mb-6 p-4 bg-blue-50 rounded-lg">
           <h3 className="font-semibold text-blue-900 mb-2">Registration Details</h3>
           <div className="text-sm text-blue-800">
@@ -277,7 +277,7 @@ export default function AppManagerRegistration({ params }: RegistrationPageProps
             )}
             <div>Link Type: {linkType}</div>
           </div>
-        </div>
+        </div> */}
 
         {/* Development Mode Notice 
         <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
