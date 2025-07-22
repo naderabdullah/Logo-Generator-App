@@ -103,7 +103,7 @@ async function createSupabaseUserFromAppManager(
     console.log('Creating user in Supabase from App Manager registration...');
     
     // Determine logo limits and subscription type based on registration
-    const logoLimit = determineLogoLimit(registrationData.linkType, registrationData.subappId);
+    const logoLimit = 5;
     const subscriptionType = determineSubscriptionType(registrationData.linkType, registrationData.subappId);
     
     console.log(`Logo limit: ${logoLimit}, Subscription: ${subscriptionType}`);
