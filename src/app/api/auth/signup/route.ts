@@ -1,48 +1,14 @@
-// src/app/api/auth/signup/route.ts
+// src/app/api/auth/signup/route.ts - UPDATED for Supabase
 import { NextRequest, NextResponse } from 'next/server';
-import { DynamoDB } from 'aws-sdk';
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-
-// Initialize DynamoDB client
-const dynamoDB = new DynamoDB.DocumentClient({
-  region: process.env.AWS_REGION || 'us-east-1',
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-});
-
-// Function to check if email already exists
-async function emailExists(email: string): Promise<boolean> {
-  try {
-    // Use a query with a GSI on the email field
-    const result = await dynamoDB.query({
-      TableName: process.env.DYNAMODB_USERS_TABLE || 'users',
-      IndexName: 'email-index',
-      KeyConditionExpression: 'email = :email',
-      ExpressionAttributeValues: {
-        ':email': email.toLowerCase()
-      }
-    }).promise();
-    
-    return (result.Items || []).length > 0;
-  } catch (error) {
-    console.error('Error checking if email exists:', error);
-    throw error;
-  }
-}
-
-// Function to hash password
-async function hashPassword(password: string): Promise<string> {
-  const salt = await bcrypt.genSalt(10);
-  return bcrypt.hash(password, salt);
-}
+import { supabaseAuth } from '../../../../lib/supabaseAuth';
 
 // Function to generate JWT tokens
 function generateToken(userId: number, email: string): string {
   return jwt.sign(
     { id: userId, email },
     process.env.JWT_ACCESS_TOKEN_SECRET || 'access-token-secret',
-    { expiresIn: '7d' } // Longer expiry for simplicity
+    { expiresIn: '7d' }
   );
 }
 
@@ -63,6 +29,8 @@ function setAuthCookie(response: NextResponse, token: string): NextResponse {
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('=== SIGNUP API CALLED (Supabase) ===');
+    
     // Parse request body
     const { email, password } = await request.json();
     
@@ -82,7 +50,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Check if email already exists
-    const exists = await emailExists(email);
+    const exists = await supabaseAuth.emailExists(email);
     if (exists) {
       return NextResponse.json(
         { error: 'Email already registered' },
@@ -90,28 +58,18 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Hash password
-    const hashedPassword = await hashPassword(password);
+    // Create user in Supabase
+    const user = await supabaseAuth.createUser({
+      email,
+      password,
+      logosLimit: 10, // Default for direct signups
+      subscription_type: 'standard'
+    });
     
-    // Create user in DynamoDB
-    // Generate a numeric ID based on current timestamp
-    const userId = Date.now();
-    const user = {
-      id: userId,
-      email: email.toLowerCase(),
-      password: hashedPassword,
-      logosCreated: 0,
-      logosLimit: 0  // Explicitly set to 0 to fix the issue
-    };
-    
-    await dynamoDB.put({
-      TableName: process.env.DYNAMODB_USERS_TABLE || 'users',
-      Item: user,
-      ConditionExpression: 'attribute_not_exists(id)'
-    }).promise();
+    console.log(`✅ Created Supabase user: ${email} with ${user.logosLimit} logo credits`);
     
     // Generate JWT token
-    const token = generateToken(userId, email);
+    const token = generateToken(user.id, user.email);
     
     // Create response
     const response = NextResponse.json(
@@ -128,10 +86,13 @@ export async function POST(request: NextRequest) {
     
     // Set auth cookie
     return setAuthCookie(response, token);
-  } catch (error) {
-    console.error('Error signing up:', error);
+    
+  } catch (error: any) {
+    console.error('=== SIGNUP API ERROR ===');
+    console.error('Error details:', error);
+    
     return NextResponse.json(
-      { error: 'Failed to register user' },
+      { error: 'Failed to register user: ' + (error.message || 'Unknown error') },
       { status: 500 }
     );
   }

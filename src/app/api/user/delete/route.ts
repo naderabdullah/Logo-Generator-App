@@ -1,14 +1,7 @@
-// src/app/api/user/delete/route.ts
+// src/app/api/user/delete/route.ts - UPDATED for Supabase
 import { NextRequest, NextResponse } from 'next/server';
-import { DynamoDB } from 'aws-sdk';
 import jwt from 'jsonwebtoken';
-
-// Initialize DynamoDB client
-const dynamoDB = new DynamoDB.DocumentClient({
-  region: process.env.AWS_REGION || 'us-east-1',
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-});
+import { supabaseAuth } from '../../../../lib/supabaseAuth';
 
 // Function to get current user from request
 async function getCurrentUser(request: NextRequest) {
@@ -26,13 +19,10 @@ async function getCurrentUser(request: NextRequest) {
       process.env.JWT_ACCESS_TOKEN_SECRET || 'access-token-secret'
     ) as { id: number };
     
-    // Get user from DynamoDB
-    const result = await dynamoDB.get({
-      TableName: process.env.DYNAMODB_USERS_TABLE || 'users',
-      Key: { id: decoded.id }
-    }).promise();
+    // Get user from Supabase
+    const user = await supabaseAuth.getUserById(decoded.id);
     
-    return result.Item;
+    return user;
   } catch (error) {
     console.error('Error getting current user:', error);
     return null;
@@ -52,11 +42,8 @@ export async function DELETE(request: NextRequest) {
       );
     }
     
-    // Delete user from DynamoDB
-    await dynamoDB.delete({
-      TableName: process.env.DYNAMODB_USERS_TABLE || 'users',
-      Key: { id: user.id }
-    }).promise();
+    // Delete user from Supabase
+    await supabaseAuth.deleteUser(user.id);
     
     console.log(`User account deleted: ${user.email}`);
     
@@ -74,10 +61,10 @@ export async function DELETE(request: NextRequest) {
     });
     
     return response;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error deleting user account:', error);
     return NextResponse.json(
-      { error: 'Failed to delete account' },
+      { error: 'Failed to delete account: ' + (error.message || 'Unknown error') },
       { status: 500 }
     );
   }
