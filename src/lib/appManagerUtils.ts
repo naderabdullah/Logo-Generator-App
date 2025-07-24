@@ -6,17 +6,19 @@ import { APP_ID } from './appManagerConfig';
  * For production, you would get the token from your admin or API
  */
 export const getAppManagerRegistrationUrl = (token?: string): string => {
-  // Use the provided token or fall back to your test token
-  const registrationToken = token || 'bed9a478d27d898aecb5b0b102097d15';
-  
-  // Build the registration URL with the proper structure
-  // /register/[appId]/[subappId]/[linkType]/[token]
+  const registrationToken = token || process.env.NEXT_PUBLIC_APP_MANAGER_REGISTRATION_TOKEN;
+
+  if (!registrationToken) {
+    throw new Error('Registration token is missing. Make sure APP_MANAGER_REGISTRATION_TOKEN is set.');
+  }
+
   const appId = APP_ID || 'logo-generator';
-  const subappId = 'premium';  // Set to premium as requested
-  const linkType = 'generic';  // Generic requires order number
-  
+  const subappId = 'premium';
+  const linkType = 'generic';
+
   return `/register/${appId}/${subappId}/${linkType}/${registrationToken}`;
 };
+
 
 /**
  * Check if the current URL is an App Manager registration URL
@@ -47,7 +49,7 @@ export const parseRegistrationUrl = (pathname: string) => {
  * Redirect to App Manager registration (for use in components)
  */
 export const redirectToAppManagerRegistration = (router: any, token?: string) => {
-  const registrationUrl = getAppManagerRegistrationUrl(token);
+  const registrationUrl = getAppManagerRegistrationUrl(token || process.env.NEXT_PUBLIC_APP_MANAGER_REGISTRATION_TOKEN);
   console.log("Redirecting to App Manager registration:", registrationUrl);
   router.push(registrationUrl);
 };
