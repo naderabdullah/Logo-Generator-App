@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { getLogo, getRevisionsForLogo, StoredLogo, renameLogo } from '@/app/utils/indexedDBUtils';
-import Header from '@/app/components/AppHeader';
 import ImageDisplay from '@/app/components/ImageDisplay';
 
 interface LogoViewClientProps {
