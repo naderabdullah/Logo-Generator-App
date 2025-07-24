@@ -765,24 +765,3 @@ body {
 .to-teal-500 {
   --tw-gradient-to: #14b8a6;
 }
-
-/* Mobile specific - force scrolling regardless of allow-scroll class */
-@media (max-width: 767px) {
-  .generator-page {
-    overflow-y: auto !important;
-    height: auto !important;
-    min-height: calc(100vh - var(--header-offset));
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-    padding-bottom: max(120px, calc(env(safe-area-inset-bottom, 20px) + 100px)) !important;
-  }
-}
-
-/* Specific fix for iPhone 15 Pro Max */
-@media screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) {
-  .generator-page {
-    overflow-y: auto !important;
-    height: auto !important;
-    padding-bottom: max(120px, calc(env(safe-area-inset-bottom, 34px) + 86px)) !important;
-  }
-}

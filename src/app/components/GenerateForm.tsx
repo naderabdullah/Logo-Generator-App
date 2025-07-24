@@ -120,8 +120,16 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     const generatorPage = document.querySelector('.generator-page');
     
     if (mainContent && generatorPage) {
-      // Allow scrolling if there's a reference image (file or preview)
-      const shouldAllowScroll = showAdvanced || referenceImage || referenceImagePreview || colorScheme === 'Custom Colors';
+      // Check if we're on mobile (viewport width < 768px)
+      const isMobile = window.innerWidth < 768;
+      
+      // On mobile, always allow scrolling if the form is tall
+      // On desktop, use the original logic
+      const shouldAllowScroll = isMobile || 
+        showAdvanced || 
+        referenceImage || 
+        referenceImagePreview || 
+        colorScheme === 'Custom Colors';
       
       if (shouldAllowScroll) {
         generatorPage.classList.add('allow-scroll');
@@ -136,6 +144,26 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       }
     };
   }, [showAdvanced, referenceImage, referenceImagePreview, colorScheme]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const generatorPage = document.querySelector('.generator-page');
+      const isMobile = window.innerWidth < 768;
+      
+      if (generatorPage && isMobile) {
+        generatorPage.classList.add('allow-scroll');
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    
+    // Call it immediately to set initial state
+    handleResize();
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
 
   useEffect(() => {
     if (editLogoId) {
