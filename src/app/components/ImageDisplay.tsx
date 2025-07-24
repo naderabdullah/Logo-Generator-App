@@ -1,4 +1,4 @@
-// src/app/components/ImageDisplay.tsx
+// src/app/components/ImageDisplay.tsx - BEAUTIFUL VERSION
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -40,7 +40,7 @@ export default function ImageDisplay({ imageDataUri }: ImageDisplayProps) {
     } else {
       console.log("ImageDisplay: No image data URI received");
     }
-  }, [imageDataUri]);
+  }, []);
 
   // If no URI is provided, render nothing
   if (!imageDataUri) {
@@ -174,108 +174,149 @@ export default function ImageDisplay({ imageDataUri }: ImageDisplayProps) {
   };
 
   return (
-    <div className="mt-4 sm:mt-8 card">
-      <h3 className="text-lg font-semibold mb-4 text-center">Your Generated Logo</h3>
-      <div className="flex justify-center items-center p-2 sm:p-4">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={imageDataUri}
-          alt="Generated logo"
-          className="result-image max-w-full h-auto rounded-lg shadow-md block"
-          style={{ maxWidth: 'min(100%, 512px)' }} 
-        />
-      </div>
+    <div className="mt-4 sm:mt-8">
+      <div className="card" style={{ background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)' }}>
+        <h3 className="text-lg font-semibold mb-6 text-center text-gray-800">Your Generated Logo</h3>
+        
+        {/* Logo Display */}
+        <div className="flex justify-center items-center p-4 mb-6 bg-white rounded-xl shadow-inner border-2 border-gray-100">
+          <img
+            src={imageDataUri}
+            alt="Generated logo"
+            className="max-w-full h-auto rounded-lg shadow-lg"
+            style={{ maxWidth: 'min(100%, 400px)' }} 
+          />
+        </div>
 
-      <div className="logo-view-buttons">
-        <div className="format-selector">
-          <span className="format-selector-label">Format:</span>
-          <div className="format-button-group">
-            <button
-              onClick={() => setSelectedFormat('png')}
-              className={`format-button ${selectedFormat === 'png' ? 'active' : ''}`}
-            >
-              PNG
-            </button>
-            <button
-              onClick={() => setSelectedFormat('jpeg')}
-              className={`format-button ${selectedFormat === 'jpeg' ? 'active' : ''}`}
-            >
-              JPEG
-            </button>
-            <button
-              onClick={() => setSelectedFormat('svg')}
-              className={`format-button ${selectedFormat === 'svg' ? 'active' : ''}`}
-            >
-              SVG
-            </button>
+        {/* Format Selection - Redesigned */}
+        <div className="mb-6">
+          <div className="text-center mb-4">
+            <span className="text-sm font-semibold text-gray-700 bg-white px-3 py-1 rounded-full border border-gray-200 shadow-sm">
+              Choose Format
+            </span>
+          </div>
+          
+          <div className="flex justify-center">
+            <div className="inline-flex bg-white rounded-xl p-1 shadow-md border border-gray-200">
+              {[
+                { key: 'png', label: 'PNG', desc: 'Best quality' },
+                { key: 'jpeg', label: 'JPEG', desc: 'Smaller size' },
+                { key: 'svg', label: 'SVG', desc: 'Scalable' }
+              ].map((format) => (
+                <button
+                  key={format.key}
+                  onClick={() => setSelectedFormat(format.key as 'png' | 'jpeg' | 'svg')}
+                  className={`relative px-4 py-3 rounded-lg font-medium text-sm transition-all duration-200 min-w-[80px] ${
+                    selectedFormat === format.key
+                      ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg transform scale-105'
+                      : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="text-xs font-bold">{format.label}</div>
+                  <div className="text-xs opacity-80">{format.desc}</div>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
         
         {/* SVG Quality options - Only show when SVG is selected */}
         {selectedFormat === 'svg' && (
-          <div className="svg-quality-selector">
-            <span className="format-selector-label">SVG Quality:</span>
-            <div className="svg-quality-button-group">
-              <button
-                onClick={() => handleSvgQualityChange('icon')}
-                className={`svg-quality-button ${svgQuality === 'icon' ? 'active' : ''}`}
-              >
-                Simple
-              </button>
-              <button
-                onClick={() => handleSvgQualityChange('logo')}
-                className={`svg-quality-button ${svgQuality === 'logo' ? 'active' : ''}`}
-              >
-                Standard
-              </button>
-              <button
-                onClick={() => handleSvgQualityChange('highQuality')}
-                className={`svg-quality-button ${svgQuality === 'highQuality' ? 'active' : ''}`}
-              >
-                Detailed
-              </button>
+          <div className="mb-6 animate-fadeIn">
+            <div className="text-center mb-3">
+              <span className="text-xs font-medium text-gray-600 bg-purple-50 px-3 py-1 rounded-full border border-purple-200">
+                SVG Quality
+              </span>
+            </div>
+            <div className="flex justify-center">
+              <div className="inline-flex bg-purple-50 rounded-lg p-1 border border-purple-200">
+                {[
+                  { key: 'icon', label: 'Simple' },
+                  { key: 'logo', label: 'Standard' },
+                  { key: 'highQuality', label: 'Detailed' }
+                ].map((quality) => (
+                  <button
+                    key={quality.key}
+                    onClick={() => handleSvgQualityChange(quality.key as keyof typeof PRESET_OPTIONS)}
+                    className={`px-3 py-2 rounded-md text-xs font-medium transition-all duration-200 ${
+                      svgQuality === quality.key
+                        ? 'bg-purple-500 text-white shadow-md'
+                        : 'text-purple-700 hover:bg-purple-100'
+                    }`}
+                  >
+                    {quality.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}
         
-        <div className="btn-group">
+        {/* Download and Share Buttons - Completely Redesigned */}
+        <div className="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto">
+          {/* Download Button */}
           <button 
             onClick={handleDownload}
-            className="btn-download"
             disabled={selectedFormat === 'svg' && conversionStatus === 'converting'}
+            className="group relative overflow-hidden bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-semibold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none flex-1 min-w-[160px]"
           >
-            <svg className="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-            </svg>
-            {selectedFormat === 'svg' && conversionStatus === 'converting' 
-              ? 'Converting...' 
-              : `Download ${selectedFormat.toUpperCase()}`}
+            <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="relative flex items-center justify-center gap-2">
+              {selectedFormat === 'svg' && conversionStatus === 'converting' ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Converting...</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                  </svg>
+                  <span>Download {selectedFormat.toUpperCase()}</span>
+                </>
+              )}
+            </div>
           </button>
           
-          {/* Mobile Share button - only visible on devices that support Web Share API */}
+          {/* Share Button - Only show on supported devices */}
           {canShare && (
             <button
               onClick={handleShare}
-              className="btn-share"
+              className="group relative overflow-hidden bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex-1 min-w-[160px]"
             >
-              <svg className="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m9.032 4.026a3 3 0 10-4.148-4.342m0 0a3 3 0 00-4.148 0m4.148 0a3 3 0 01-4.148 4.342M3 20h18" />
-              </svg>
-              Share Logo
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="relative flex items-center justify-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m9.032 4.026a3 3 0 10-4.148-4.342m0 0a3 3 0 00-4.148 0m4.148 0a3 3 0 01-4.148 4.342M3 20h18" />
+                </svg>
+                <span>Share Logo</span>
+              </div>
             </button>
           )}
         </div>
         
+        {/* Status Messages */}
         {selectedFormat === 'svg' && (
-          <div className="mt-2 text-sm text-gray-600 text-center">
+          <div className="mt-4 text-center">
             {conversionStatus === 'converting' && (
-              <p>Converting image to SVG, please wait...</p>
+              <p className="text-sm text-purple-600 bg-purple-50 px-3 py-2 rounded-lg inline-block">
+                🔄 Converting image to SVG, please wait...
+              </p>
             )}
             {conversionStatus === 'error' && (
-              <p className="text-red-500">Failed to convert to SVG. Try a different quality setting or format.</p>
+              <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg inline-block">
+                ❌ Failed to convert to SVG. Try a different quality setting or format.
+              </p>
             )}
-            {conversionStatus !== 'error' && conversionStatus !== 'converting' && (
-              <p>SVG creates scalable vector graphics perfect for any size.</p>
+            {conversionStatus === 'success' && (
+              <p className="text-sm text-green-600 bg-green-50 px-3 py-2 rounded-lg inline-block">
+                ✅ SVG ready for download!
+              </p>
+            )}
+            {conversionStatus === 'idle' && (
+              <p className="text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-lg inline-block">
+                💡 SVG creates scalable vector graphics perfect for any size
+              </p>
             )}
           </div>
         )}

@@ -4,6 +4,7 @@ import { useState, useCallback, ChangeEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '@/app/context/AuthContext'; // ADDED: Import useAuth
 import { 
   saveLogo, 
   getLogo, 
@@ -63,6 +64,7 @@ interface GenerateFormProps {
 
 export default function GenerateForm({ setLoading, setImageDataUri, setError }: GenerateFormProps) {
   const { isLoggedIn, loading: authLoading } = useAuthCheck();
+  const { updateUser } = useAuth(); // ADDED: Get updateUser from context
   const router = useRouter();
   const editLogoId = useEditParam();
   
@@ -418,6 +420,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     industry
   ]);
 
+  // FIXED: Updated handleGenerateLogo function
   const handleGenerateLogo = useCallback(async () => {
     if (!isLoggedIn) {
       router.push('/login?redirect=/');
@@ -453,11 +456,15 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
         formData.append('referenceImage', referenceImage);
       }
 
+      // FIXED: Add isRevision flag for proper credit handling
+      formData.append('isRevision', isRevision.toString());
+      
       if (isRevision && originalLogoId) {
         formData.append('originalLogoId', originalLogoId);
       }
 
-      const response = await fetch('/api/generate', {
+      // FIXED: Use /logos endpoint instead of /api/generate
+      const response = await fetch('/logos', {
         method: 'POST',
         body: formData
       });
@@ -475,10 +482,17 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
 
       const data = await response.json();
       
+      // FIXED: Handle the new response format from /logos endpoint
       let imageDataUriString = '';
-      if (data?.data?.[0]?.b64_json) {
+      if (data?.image?.type === 'base64') {
+        imageDataUriString = `data:image/png;base64,${data.image.data}`;
+      } else if (data?.image?.type === 'url') {
+        imageDataUriString = data.image.data;
+      } else if (data?.data?.[0]?.b64_json) {
+        // Fallback for old format
         imageDataUriString = `data:image/png;base64,${data.data[0].b64_json}`;
       } else if (data?.data?.[0]?.url) {
+        // Fallback for old format
         imageDataUriString = data.data[0].url;
       } else {
         throw new Error('No image data received in the expected format');
@@ -493,6 +507,16 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       );
       
       setImageDataUri(imageDataUriString);
+      
+      // FIXED: Update user context with new usage data from API response
+      if (data.usage && updateUser) {
+        updateUser({
+          logosCreated: data.usage.logosCreated,
+          logosLimit: data.usage.logosLimit,
+          remainingLogos: data.usage.remainingLogos
+        });
+      }
+      
       router.push(`/logos/${logoId}`);
       
     } catch (error) {
@@ -517,9 +541,11 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     originalLogoId,
     companyName,
     canRevise,
-    canCreateLogo
+    canCreateLogo,
+    updateUser // Now properly imported from useAuth
   ]);
 
+  // Rest of the component remains the same...
   const renderDropdown = useCallback((
     id: string,
     label: string,

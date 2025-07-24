@@ -1,10 +1,9 @@
-// src/app/page.tsx (UPDATED - Redirect to App Manager Registration)
+// src/app/page.tsx (FIXED - Remove conflicting Tailwind classes)
 'use client';
 
 import { useState, useCallback, useEffect, Suspense } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import GenerateForm from './components/GenerateForm';
-import LoadingSpinner from './components/LoadingSpinner';
 import OfflineIndicator from './components/OfflineIndicator';
 import { redirectToAppManagerRegistration, isAppManagerRegistrationUrl } from '../lib/appManagerUtils';
 
@@ -37,12 +36,9 @@ function GenerateFormWithParams() {
         setImageDataUri={handleSetImageDataUri}
         setError={handleSetError}
       />
-      
-      {/* Remove the spinner */}
-      {/* {loading && <LoadingSpinner />} */}
 
       {error && !loading && (
-        <div className="mt-4 sm:mt-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg text-center">
+        <div className="mt-md p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg text-center">
           <p className="font-bold">Error</p>
           <p>{error}</p>
         </div>
@@ -130,23 +126,10 @@ export default function Home() {
     };
     
     checkAuth();
-  }, [router, pathname]); // Added pathname as dependency
+  }, [router, pathname]);
   
-  // Initialize PWA functionality
+  // Initialize app
   useEffect(() => {
-    // Register service worker
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-          .then(registration => {
-            console.log('Service Worker registered with scope:', registration.scope);
-          })
-          .catch(error => {
-            console.error('Service Worker registration failed:', error);
-          });
-      });
-    }
-
     // Mark app as ready with a slight delay for smoother animation
     const timer = setTimeout(() => {
       setAppReady(true);
@@ -158,21 +141,21 @@ export default function Home() {
   // If still checking auth, show loading
   if (isCheckingAuth) {
     return (
-      <div className="container mx-auto px-4 pt-6 pb-0 max-w-4xl">
-        <div className="text-center my-8">
+      <div className="container">
+        <div className="text-center mt-lg">
           <div className="spinner"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <p className="mt-md text-gray-600">Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`container mx-auto px-4 pt-0 pb-0 max-w-4xl generator-page ${appReady ? 'app-loading' : 'opacity-0'}`}>
+    // FIXED: Removed conflicting Tailwind classes that were overriding proper spacing
+    <div className={`generator-page ${appReady ? 'app-loading' : 'opacity-0'}`}>
       <OfflineIndicator />
-      {/* <InstallBanner /> */}
       
-      <Suspense fallback={<div className="p-4 text-center">Loading form...</div>}>
+      <Suspense fallback={<div className="text-center p-4">Loading form...</div>}>
         <GenerateFormWithParams />
       </Suspense>
     </div>

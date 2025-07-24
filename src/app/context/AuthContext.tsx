@@ -1,7 +1,7 @@
-// src/app/context/AuthContext.tsx
+// src/app/context/AuthContext.tsx - FIXED
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 
 // Define the shape of our user object
 interface User {
@@ -16,7 +16,9 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   refreshAuth: () => Promise<void>;
-  logout: () => Promise<void>; // Added logout method
+  logout: () => Promise<void>;
+  login: (email: string, password: string) => Promise<void>; // Added login
+  updateUser: (updates: Partial<User>) => void; // Added updateUser
 }
 
 // Create the context with a default value
@@ -24,7 +26,9 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   refreshAuth: async () => {},
-  logout: async () => {} // Added default implementation
+  logout: async () => {},
+  login: async () => {}, // Added default
+  updateUser: () => {} // Added default
 });
 
 // Custom hook to use the auth context
@@ -36,7 +40,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   // Function to check authentication status
-  const refreshAuth = async () => {
+  const refreshAuth = useCallback(async () => {
     try {
       setLoading(true);
       console.log("AuthContext: Refreshing auth state");
@@ -84,10 +88,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Function to handle login
+  const login = useCallback(async (email: string, password: string) => {
+    try {
+      console.log("AuthContext: Login attempt for:", email);
+      
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Login failed');
+      }
+
+      const userData = await response.json();
+      setUser(userData.user);
+      console.log("AuthContext: Login successful");
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    }
+  }, []);
 
   // Function to handle logout
-  const logout = async () => {
+  const logout = useCallback(async () => {
     console.log("AuthContext: Logout called");
     
     try {
@@ -123,19 +154,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Still clear user state even if error
       setUser(null);
     }
-  };
+  }, []);
+
+  // Function to update user data (for credit updates)
+  const updateUser = useCallback((updates: Partial<User>) => {
+    setUser(prevUser => {
+      if (!prevUser) return null;
+      const updatedUser = { ...prevUser, ...updates };
+      console.log('AuthContext: User updated:', updatedUser);
+      return updatedUser;
+    });
+  }, []);
 
   // Check auth status when the component mounts
   useEffect(() => {
     refreshAuth();
-  }, []);
+  }, [refreshAuth]);
 
   // The context value that will be provided
   const value = {
     user,
     loading,
     refreshAuth,
-    logout
+    logout,
+    login,
+    updateUser
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
