@@ -705,3 +705,30 @@ body {
 .to-pink-500 { --tw-gradient-to: #ec4899; }
 .from-emerald-500 { --tw-gradient-from: #10b981; }
 .to-teal-500 { --tw-gradient-to: #14b8a6; }
+
+/* DEBUG: Add to the END of globals.css temporarily */
+@media (max-width: 767px) {
+  /* Force everything to be scrollable */
+  * {
+    position: static !important;
+    transform: none !important;
+    touch-action: auto !important;
+  }
+  
+  /* Ensure fixed header stays fixed */
+  .ios-unified-header {
+    position: fixed !important;
+  }
+  
+  /* Visual debug - add red border to scrolling container */
+  .generator-page {
+    border: 3px solid red !important;
+  }
+  
+  /* Force body to be scrollable */
+  body {
+    position: relative !important;
+    transform: none !important;
+    touch-action: auto !important;
+  }
+}
