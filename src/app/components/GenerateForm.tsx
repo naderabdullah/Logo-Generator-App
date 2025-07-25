@@ -129,7 +129,8 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
         showAdvanced || 
         referenceImage || 
         referenceImagePreview || 
-        colorScheme === 'Custom Colors';
+        colorScheme === 'Custom Colors' ||
+        true;
       
       if (shouldAllowScroll) {
         generatorPage.classList.add('allow-scroll');
@@ -150,7 +151,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       const generatorPage = document.querySelector('.generator-page');
       const isMobile = window.innerWidth < 768;
       
-      if (generatorPage && isMobile) {
+      if (generatorPage) {
         generatorPage.classList.add('allow-scroll');
       }
     };
