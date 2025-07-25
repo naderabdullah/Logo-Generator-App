@@ -134,7 +134,8 @@ body {
    ======================================== */
 .main-content {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: visible !important;
+  height: auto !important;
   -webkit-overflow-scrolling: touch;
   padding-top: calc(var(--header-offset) + var(--content-top-spacing)); /* FIXED: Added proper spacing */
   padding-left: env(safe-area-inset-left, 0px);
@@ -151,13 +152,6 @@ body {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-}
-
-.generator-page.allow-scroll {
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-  padding-bottom: max(120px, calc(env(safe-area-inset-bottom, 20px) + 100px));
 }
 
 /* FIXED: Removed negative margin-top that was causing the issue */

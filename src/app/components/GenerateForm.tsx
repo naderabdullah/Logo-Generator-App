@@ -147,24 +147,29 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   }, [showAdvanced, referenceImage, referenceImagePreview, colorScheme]);
 
   useEffect(() => {
-    const handleResize = () => {
-      const generatorPage = document.querySelector('.generator-page');
-      const isMobile = window.innerWidth < 768;
-      
-      if (generatorPage) {
+    const generatorPage = document.querySelector('.generator-page');
+    const isMobile = window.innerWidth < 768;
+    
+    if (generatorPage) {
+      // Always add allow-scroll class on mobile
+      if (isMobile) {
         generatorPage.classList.add('allow-scroll');
+      } else {
+        // Desktop logic remains the same
+        const shouldAllowScroll = 
+          showAdvanced || 
+          referenceImage || 
+          referenceImagePreview || 
+          colorScheme === 'Custom Colors';
+        
+        if (shouldAllowScroll) {
+          generatorPage.classList.add('allow-scroll');
+        } else {
+          generatorPage.classList.remove('allow-scroll');
+        }
       }
-    };
-    
-    window.addEventListener('resize', handleResize);
-    
-    // Call it immediately to set initial state
-    handleResize();
-    
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
+    }
+  }, [showAdvanced, referenceImage, referenceImagePreview, colorScheme]);
 
   useEffect(() => {
     if (editLogoId) {
