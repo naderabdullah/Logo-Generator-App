@@ -1,8 +1,8 @@
-// src/app/api/auth/app-manager-register/route.ts
+// src/app/api/auth/app-manager-register/route.ts - Updated without subscription types
 import { NextRequest, NextResponse } from 'next/server';
 import { DynamoDB } from 'aws-sdk';
 import bcrypt from 'bcryptjs';
-import { supabaseAdmin } from '../../../../lib/supabase';
+import { supabaseAdmin } from '../../../lib/supabase';
 
 // Initialize DynamoDB client
 const dynamoDB = new DynamoDB.DocumentClient({
@@ -76,23 +76,22 @@ async function generateNewUserId(): Promise<number> {
   }
 }
 
-// Interface for user object returned from DynamoDB
-interface DynamoUser {
-  id: number;
-  email: string;
-  password: string;
-  logosCreated: number;  
-  logosLimit: number;
-  createdAt: string;
-  lastLogin: string;
-  appManagerData: any;
+// Function to determine logo limits based on registration type
+function determineLogoLimit(linkType: string, subappId?: string): number {
+  if (subappId === 'premium' || linkType === 'premium') {
+    return 100;
+  }
+  if (linkType === 'generic') {
+    return 25;
+  }
+  return 10; // specific or default
 }
 
 // Function to save user credentials to DynamoDB
 async function saveToDynamoDB(
   registrationData: AppManagerRegistrationData, 
   appManagerResponse: any
-): Promise<DynamoUser> {
+) {
   try {
     console.log('Saving user to DynamoDB...');
     
@@ -113,6 +112,8 @@ async function saveToDynamoDB(
       const existingUser = existingUserResult.Items[0];
       console.log(`Updating existing DynamoDB user: ${registrationData.email}`);
       
+      const logoLimit = determineLogoLimit(registrationData.linkType, registrationData.subappId);
+      
       await dynamoDB.update({
         TableName: process.env.DYNAMODB_USERS_TABLE || 'users',
         Key: { id: existingUser.id },
@@ -122,37 +123,26 @@ async function saveToDynamoDB(
         },
         ExpressionAttributeValues: {
           ':password': hashedPassword,
-          ':logosLimit': 5, // Everyone gets 5 logos
+          ':logosLimit': logoLimit,
           ':lastLogin': new Date().toISOString(),
           ':appManagerData': appManagerResponse
         }
       }).promise();
       
-      // Return the updated user object with all properties
-      const updatedUser: DynamoUser = {
-        id: existingUser.id,
-        email: existingUser.email,
-        password: hashedPassword,
-        logosCreated: existingUser.logosCreated || 0,
-        logosLimit: 5,
-        createdAt: existingUser.createdAt || new Date().toISOString(),
-        lastLogin: new Date().toISOString(),
-        appManagerData: appManagerResponse
-      };
-      
-      return updatedUser;
+      return existingUser;
     } else {
       // Create new user
       console.log(`Creating new DynamoDB user: ${registrationData.email}`);
       
       const newUserId = await generateNewUserId();
+      const logoLimit = determineLogoLimit(registrationData.linkType, registrationData.subappId);
       
-      const newUser: DynamoUser = {
+      const newUser = {
         id: newUserId,
         email: registrationData.email.toLowerCase(),
         password: hashedPassword,
         logosCreated: 0,
-        logosLimit: 5, // Everyone gets 5 free logos
+        logosLimit: logoLimit,
         createdAt: new Date().toISOString(),
         lastLogin: new Date().toISOString(),
         appManagerData: appManagerResponse
@@ -163,7 +153,7 @@ async function saveToDynamoDB(
         Item: newUser
       }).promise();
       
-      console.log(`✅ Successfully created DynamoDB user: ${registrationData.email} (5 free logos)`);
+      console.log(`✅ Successfully created DynamoDB user: ${registrationData.email} (${logoLimit} logo credits)`);
       return newUser;
     }
   } catch (error) {
@@ -194,7 +184,7 @@ async function saveToSupabaseForCredits(
         .from('users')
         .update({
           logosCreated: dynamoUser.logosCreated,
-          logosLimit: 5, // Everyone gets 5 logos
+          logosLimit: dynamoUser.logosLimit,
           updated_at: new Date().toISOString()
         })
         .eq('id', existingUser.id)
@@ -214,8 +204,8 @@ async function saveToSupabaseForCredits(
         .insert({
           email: email.toLowerCase(),
           // Note: No password stored in Supabase - only for logo credits tracking
-          logosCreated: 0,
-          logosLimit: 5, // Everyone gets 5 free logos
+          logosCreated: dynamoUser.logosCreated,
+          logosLimit: dynamoUser.logosLimit,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
@@ -226,7 +216,7 @@ async function saveToSupabaseForCredits(
         throw new Error(`Failed to create Supabase credits tracking: ${createError.message}`);
       }
       
-      console.log(`✅ Successfully created Supabase credits tracking: ${email} (5 free logos)`);
+      console.log(`✅ Successfully created Supabase credits tracking: ${email}`);
       return newUser;
     }
   } catch (error) {
@@ -240,7 +230,7 @@ export async function POST(request: NextRequest) {
     const registrationData: AppManagerRegistrationData = await request.json();
     
     console.log('Processing app manager registration for:', registrationData.email);
-    console.log('App Manager type:', registrationData.linkType, registrationData.subappId);
+    console.log('Registration type:', registrationData.linkType, registrationData.subappId);
     
     // Validate required fields
     if (!registrationData.email || !registrationData.password || !registrationData.token) {
@@ -299,7 +289,7 @@ export async function POST(request: NextRequest) {
     // Step 4: Return success response
     return NextResponse.json({
       success: true,
-      message: 'Registration completed successfully - 5 free logos included!',
+      message: 'Registration completed successfully',
       appManager: {
         status: 'registered',
         response: appManagerResponse
@@ -307,8 +297,8 @@ export async function POST(request: NextRequest) {
       user: {
         id: dynamoUser.id,
         email: dynamoUser.email,
-        logosCreated: 0,
-        logosLimit: 5 // Everyone gets 5 free logos
+        logosCreated: dynamoUser.logosCreated,
+        logosLimit: dynamoUser.logosLimit
       }
     });
     

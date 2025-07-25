@@ -1,12 +1,10 @@
-// src/app/login/page.tsx (Fixed for Next.js 15)
+// src/app/login/page.tsx
 'use client';
 
 import { useState, useEffect, FormEvent, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '../context/AuthContext';
-import { appManagerApiService } from '../../lib/apiService';
-import { APP_ID } from '../../lib/appManagerConfig';
 import { getAppManagerRegistrationUrl } from '../../lib/appManagerUtils';
 
 // Separate component that uses useSearchParams
@@ -50,22 +48,27 @@ function LoginForm() {
       setError('All fields are required');
       return;
     }
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
-      // First try the existing login API
-      let response = await fetch('/api/auth/login', {
+      console.log('Attempting DynamoDB authentication...');
+      
+      // Authenticate directly against DynamoDB (our primary auth database)
+      const response = await fetch('/api/auth/dynamo-login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({
+          email,
+          password
+        }),
       });
       
       if (response.ok) {
-        console.log('Login successful with existing API');
+        console.log('DynamoDB authentication successful');
         
         // Refresh auth context to get user data
         await refreshAuth();
@@ -73,53 +76,11 @@ function LoginForm() {
         // Redirect to the desired page
         router.push(redirectPath);
         return;
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Invalid credentials');
       }
       
-      // If existing API fails, try App Manager login
-      if (response.status === 401 || response.status === 404) {
-        console.log('Trying App Manager login...');
-        
-        try {
-          const appManagerResponse = await appManagerApiService.login(APP_ID, email, password);
-          
-          if (appManagerResponse.token) {
-            console.log('App Manager login successful');
-            
-            // Send the app manager data to our backend for processing
-            const localResponse = await fetch('/api/auth/app-manager-login', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                email,
-                appManagerToken: appManagerResponse.token,
-                appManagerData: appManagerResponse
-              }),
-            });
-            
-            if (localResponse.ok) {
-              console.log('Local auth processing successful');
-              
-              // Refresh auth context to get user data
-              await refreshAuth();
-              
-              // Redirect to the desired page
-              router.push(redirectPath);
-              return;
-            } else {
-              const localData = await localResponse.json();
-              throw new Error(localData.error || 'Authentication processing failed');
-            }
-          }
-        } catch (appManagerError: any) {
-          console.error('App Manager login failed:', appManagerError);
-          throw new Error(appManagerError.message || 'Login failed');
-        }
-      } else {
-        const data = await response.json();
-        throw new Error(data.error || 'Login failed');
-      }
     } catch (err: any) {
       console.error('Login error:', err);
       setError(err.message || 'Login failed. Please check your credentials.');
@@ -135,6 +96,9 @@ function LoginForm() {
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Sign in to your account
           </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            Authentication powered by App Manager
+          </p>
         </div>
         
         {message && (

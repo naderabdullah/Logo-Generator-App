@@ -1,7 +1,15 @@
-// src/app/api/auth/login/route.ts - UPDATED for Supabase
+// src/app/api/auth/dynamo-login/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { DynamoDB } from 'aws-sdk';
 import jwt from 'jsonwebtoken';
-import { supabaseAuth } from '../../../../lib/supabaseAuth';
+import bcrypt from 'bcryptjs';
+
+// Initialize DynamoDB client
+const dynamoDB = new DynamoDB.DocumentClient({
+  region: process.env.AWS_REGION || 'us-east-1',
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+});
 
 // Function to generate JWT token
 function generateToken(userId: number, email: string): string {
@@ -29,7 +37,7 @@ function setAuthCookie(response: NextResponse, token: string): NextResponse {
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('=== LOGIN API CALLED (Supabase) ===');
+    console.log('=== DYNAMODB LOGIN API CALLED ===');
     
     // Parse request body
     const body = await request.json();
@@ -46,9 +54,17 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Get user by email from Supabase
-    const user = await supabaseAuth.getUserByEmail(email);
-    if (!user) {
+    // Find user by email in DynamoDB
+    console.log('Searching for user in DynamoDB...');
+    const result = await dynamoDB.scan({
+      TableName: process.env.DYNAMODB_USERS_TABLE || 'users',
+      FilterExpression: 'email = :email',
+      ExpressionAttributeValues: {
+        ':email': email.toLowerCase()
+      }
+    }).promise();
+    
+    if (!result.Items || result.Items.length === 0) {
       console.log('User not found:', email);
       return NextResponse.json(
         { error: 'Invalid credentials' },
@@ -56,10 +72,11 @@ export async function POST(request: NextRequest) {
       );
     }
     
+    const user = result.Items[0];
     console.log('User found, checking password...');
     
     // Compare passwords
-    const isMatch = await supabaseAuth.comparePasswords(password, user.password);
+    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       console.log('Password mismatch for:', email);
       return NextResponse.json(
@@ -69,6 +86,16 @@ export async function POST(request: NextRequest) {
     }
     
     console.log('Login successful for:', email);
+    
+    // Update last login time
+    await dynamoDB.update({
+      TableName: process.env.DYNAMODB_USERS_TABLE || 'users',
+      Key: { id: user.id },
+      UpdateExpression: 'SET lastLogin = :lastLogin',
+      ExpressionAttributeValues: {
+        ':lastLogin': new Date().toISOString()
+      }
+    }).promise();
     
     // Generate JWT token
     const token = generateToken(user.id, user.email);
@@ -88,7 +115,7 @@ export async function POST(request: NextRequest) {
     return setAuthCookie(response, token);
     
   } catch (error: any) {
-    console.error('=== LOGIN API ERROR ===');
+    console.error('=== DYNAMODB LOGIN API ERROR ===');
     console.error('Error details:', error);
     
     return NextResponse.json(
@@ -101,7 +128,7 @@ export async function POST(request: NextRequest) {
 // Handle other HTTP methods
 export async function GET() {
   return NextResponse.json(
-    { message: 'Login API endpoint. Use POST to authenticate.' },
+    { message: 'DynamoDB Login API endpoint. Use POST to authenticate.' },
     { status: 200 }
   );
 }

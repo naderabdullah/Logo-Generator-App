@@ -1,4 +1,4 @@
-// src/lib/supabaseAuth.ts - New authentication service
+// src/lib/supabaseAuth.ts
 import { createClient } from '@supabase/supabase-js';
 import bcrypt from 'bcryptjs';
 
@@ -19,8 +19,7 @@ export interface User {
   email: string;
   logosCreated: number;
   logosLimit: number;
-  password: string;
-  subscription_type?: string;
+  password?: string;  // Optional since it's not always returned
   created_at?: string;
   updated_at?: string;
 }
@@ -73,23 +72,18 @@ export class SupabaseAuthService {
     return bcrypt.compare(password, hashedPassword);
   }
 
-  // Create new user
+  // Create new user (for logo credits tracking only)
   async createUser(userData: {
     email: string;
-    password: string;
+    logosCreated?: number;
     logosLimit?: number;
-    subscription_type?: string;
   }): Promise<User> {
-    const hashedPassword = await this.hashPassword(userData.password);
-    
     const { data, error } = await supabaseAdmin
       .from('users')
       .insert({
         email: userData.email.toLowerCase(),
-        password: hashedPassword,
-        logosCreated: 0,
-        logosLimit: userData.logosLimit || 10,
-        subscription_type: userData.subscription_type || 'standard',
+        logosCreated: userData.logosCreated || 0,
+        logosLimit: userData.logosLimit || 5, // Everyone gets 5 free logos
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
@@ -147,28 +141,6 @@ export class SupabaseAuthService {
     return this.updateUser(id, { 
       logosCreated: newCount 
     });
-  }
-
-  // Determine logo limit based on registration type
-  determineLogoLimit(linkType: string, subappId?: string): number {
-    if (subappId === 'premium' || linkType === 'premium') {
-      return 100;
-    }
-    if (linkType === 'generic') {
-      return 25;
-    }
-    return 10; // specific or default
-  }
-
-  // Determine subscription type
-  determineSubscriptionType(linkType: string, subappId?: string): string {
-    if (subappId === 'premium' || linkType === 'premium') {
-      return 'premium';
-    }
-    if (linkType === 'generic') {
-      return 'standard';
-    }
-    return 'basic';
   }
 }
 

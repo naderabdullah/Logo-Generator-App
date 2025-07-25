@@ -1,4 +1,4 @@
-// src/app/api/user/route.ts - UPDATED for Supabase
+// src/app/api/user/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { supabaseAuth } from '../../../lib/supabaseAuth';
@@ -45,8 +45,7 @@ export async function GET(request: NextRequest) {
       email: user.email,
       logosCreated: user.logosCreated,
       logosLimit: user.logosLimit,
-      remainingLogos: Math.max(0, user.logosLimit - user.logosCreated),
-      subscription_type: user.subscription_type
+      remainingLogos: Math.max(0, user.logosLimit - user.logosCreated)
     });
   } catch (error) {
     console.error('Error fetching user data:', error);
@@ -57,7 +56,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// PATCH endpoint - Update user data (e.g., after upgrading plan)
+// PATCH endpoint - Update user data (e.g., after logo limit changes)
 export async function PATCH(request: NextRequest) {
   try {
     // Get current user
@@ -71,7 +70,7 @@ export async function PATCH(request: NextRequest) {
     }
     
     // Parse request body
-    const { logosLimit, subscription_type } = await request.json();
+    const { logosLimit } = await request.json();
     
     // Validate input
     if (logosLimit !== undefined && (logosLimit < 0 || !Number.isInteger(logosLimit))) {
@@ -81,10 +80,9 @@ export async function PATCH(request: NextRequest) {
       );
     }
     
-    // Update user in Supabase
+    // Update user in Supabase (only logo limit can be updated)
     const updates: any = {};
     if (logosLimit !== undefined) updates.logosLimit = logosLimit;
-    if (subscription_type !== undefined) updates.subscription_type = subscription_type;
     
     const updatedUser = await supabaseAuth.updateUser(user.id, updates);
     
@@ -94,8 +92,7 @@ export async function PATCH(request: NextRequest) {
         email: updatedUser.email,
         logosCreated: updatedUser.logosCreated,
         logosLimit: updatedUser.logosLimit,
-        remainingLogos: Math.max(0, updatedUser.logosLimit - updatedUser.logosCreated),
-        subscription_type: updatedUser.subscription_type
+        remainingLogos: Math.max(0, updatedUser.logosLimit - updatedUser.logosCreated)
       }
     });
   } catch (error: any) {
