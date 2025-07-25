@@ -114,38 +114,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     checkUsageLimits();
   }, [editLogoId]);
 
-  // Simple scrolling logic - allow scrolling if there's a reference image
-  useEffect(() => {
-    const mainContent = document.querySelector('.main-content');
-    const generatorPage = document.querySelector('.generator-page');
-    
-    if (mainContent && generatorPage) {
-      // Check if we're on mobile (viewport width < 768px)
-      const isMobile = window.innerWidth < 768;
-      
-      // On mobile, always allow scrolling if the form is tall
-      // On desktop, use the original logic
-      const shouldAllowScroll = isMobile || 
-        showAdvanced || 
-        referenceImage || 
-        referenceImagePreview || 
-        colorScheme === 'Custom Colors' ||
-        true;
-      
-      if (shouldAllowScroll) {
-        generatorPage.classList.add('allow-scroll');
-      } else {
-        generatorPage.classList.remove('allow-scroll');
-      }
-    }
-    
-    return () => {
-      if (generatorPage) {
-        generatorPage.classList.add('allow-scroll');
-      }
-    };
-  }, [showAdvanced, referenceImage, referenceImagePreview, colorScheme]);
-
   // Simple mobile check for other features
   useEffect(() => {
     const generatorPage = document.querySelector('.generator-page');
