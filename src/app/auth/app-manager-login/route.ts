@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
         id: user.id,
         email: user.email,
         logosCreated: user.logosCreated || 0,
-        logosLimit: user.logosLimit || 10
+        logosLimit: user.logosLimit || 5
       }
     });
     
