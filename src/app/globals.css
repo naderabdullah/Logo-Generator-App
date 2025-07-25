@@ -809,3 +809,16 @@ body {
     overscroll-behavior: auto !important;
   }
 }
+
+/* FIX: Always enable scrolling on generator page for mobile */
+@media (max-width: 767px) {
+  .generator-page {
+    overflow-y: auto !important;  /* ALWAYS allow scrolling */
+    -webkit-overflow-scrolling: touch !important;
+  }
+  
+  /* Remove the conditional behavior on mobile */
+  .generator-page.allow-scroll {
+    /* These properties are now on the base class for mobile */
+  }
+}
