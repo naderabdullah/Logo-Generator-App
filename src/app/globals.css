@@ -6,14 +6,12 @@
    CSS VARIABLES & ROOT CONFIGURATION
    ======================================== */
 :root {
-  /* Header configuration - FIXED VALUES */
+  /* Header configuration */
   --header-height-mobile: 80px;
   --header-height-desktop: 64px;
   --header-height: var(--header-height-mobile);
   --header-offset: calc(var(--header-height) + env(safe-area-inset-top, 0px));
-  
-  /* PROPER CONTENT SPACING - This is what was missing! */
-  --content-top-spacing: var(--space-lg); /* Add space below header */
+  --content-top-spacing: var(--space-lg);
   
   /* Color system */
   --color-primary: #6366f1;
@@ -63,7 +61,7 @@
 }
 
 /* ========================================
-   RESET & BASE STYLES
+   RESET & BASE STYLES - SIMPLIFIED
    ======================================== */
 * {
   box-sizing: border-box;
@@ -71,7 +69,8 @@
 }
 
 html {
-  height: 100%;
+  /* NO HEIGHT CONSTRAINTS - This is key! */
+  min-height: 100vh;
   width: 100%;
   -webkit-text-size-adjust: 100%;
   -webkit-font-smoothing: antialiased;
@@ -79,7 +78,8 @@ html {
 }
 
 body {
-  height: 100%;
+  /* NO HEIGHT CONSTRAINTS - Let content flow! */
+  min-height: 100vh;
   width: 100%;
   margin: 0;
   padding: 0;
@@ -88,16 +88,20 @@ body {
   line-height: 1.5;
   color: var(--color-gray-900);
   background-color: var(--color-gray-50);
+  /* Safe area padding */
   padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
-  overscroll-behavior: none;
+  /* Allow natural scrolling */
+  overflow-x: hidden;
+  overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
 
 /* ========================================
-   LAYOUT STRUCTURE
+   LAYOUT STRUCTURE - CLEAN & SIMPLE
    ======================================== */
 .app-container {
-  height: 100%;
+  /* No height constraints! */
+  min-height: 100vh;
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -130,37 +134,47 @@ body {
 }
 
 /* ========================================
-   MAIN CONTENT AREA - FIXED SPACING
+   MAIN CONTENT AREA - CLEAN
    ======================================== */
 .main-content {
+  /* Flex grow to fill space */
   flex: 1;
-  overflow-y: visible !important;
-  height: auto !important;
-  -webkit-overflow-scrolling: touch;
-  padding-top: calc(var(--header-offset) + var(--content-top-spacing)); /* FIXED: Added proper spacing */
+  /* Proper spacing from header */
+  padding-top: calc(var(--header-offset) + var(--content-top-spacing));
   padding-left: env(safe-area-inset-left, 0px);
   padding-right: env(safe-area-inset-right, 0px);
   padding-bottom: 0;
+  /* No overflow restrictions */
+  min-height: 0;
 }
 
 /* ========================================
-   GENERATOR PAGE LAYOUT - SIMPLIFIED & FIXED
+   GENERATOR PAGE - ALWAYS SCROLLABLE
    ======================================== */
 .generator-page {
+  /* Content-based height */
   min-height: calc(100vh - var(--header-offset) - var(--content-top-spacing));
   padding: var(--space-md);
   display: flex;
   align-items: flex-start;
   justify-content: center;
+  /* ALWAYS allow scrolling on mobile */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* FIXED: Removed negative margin-top that was causing the issue */
+/* No more conditional scrolling - it always scrolls! */
+.generator-page.allow-scroll {
+  /* Inherits from base .generator-page */
+  padding-bottom: max(120px, calc(env(safe-area-inset-bottom, 20px) + 100px));
+}
+
 .generator-form-container {
   width: 100%;
   max-width: 400px;
   display: flex;
   justify-content: center;
-  margin-top: 0; /* FIXED: Was -var(--space-md) - this was pulling form into header! */
+  margin-top: 0;
 }
 
 .generator-form {
@@ -170,12 +184,8 @@ body {
   padding-bottom: var(--space-2xl);
 }
 
-.generator-form.fixed {
-  overflow-y: hidden;
-}
-
 /* ========================================
-   FORM ELEMENTS
+   FORM ELEMENTS (Unchanged)
    ======================================== */
 .form-label {
   display: block;
@@ -219,7 +229,7 @@ body {
 }
 
 /* ========================================
-   BUTTONS
+   BUTTONS (Unchanged)
    ======================================== */
 .btn {
   display: inline-flex;
@@ -279,7 +289,7 @@ body {
 }
 
 /* ========================================
-   CARDS & COMPONENTS
+   CARDS & COMPONENTS (Unchanged)
    ======================================== */
 .card {
   background-color: white;
@@ -304,7 +314,7 @@ body {
 }
 
 /* ========================================
-   CUSTOM COLOR PICKER
+   CUSTOM COLOR PICKER (Unchanged)
    ======================================== */
 .custom-color-picker {
   margin-bottom: var(--space-sm);
@@ -364,7 +374,7 @@ body {
 }
 
 /* ========================================
-   LOGO VIEW COMPONENTS
+   LOGO VIEW COMPONENTS (Unchanged)
    ======================================== */
 .logo-view-buttons {
   display: flex;
@@ -457,7 +467,7 @@ body {
 }
 
 /* ========================================
-   HISTORY PAGE OVERRIDES
+   HISTORY PAGE OVERRIDES (Unchanged)
    ======================================== */
 .history-page button {
   padding: 6px 14px;
@@ -494,7 +504,7 @@ body {
 }
 
 /* ========================================
-   UTILITY CLASSES
+   UTILITY CLASSES (Unchanged)
    ======================================== */
 .text-center { text-align: center; }
 .text-left { text-align: left; }
@@ -517,13 +527,19 @@ body {
 .gap-lg { gap: var(--space-lg); }
 
 /* ========================================
-   RESPONSIVE BREAKPOINTS - SIMPLIFIED
+   RESPONSIVE BREAKPOINTS - CLEAN
    ======================================== */
 
-/* Mobile adjustments */
+/* Mobile - SIMPLE AND WORKING */
 @media (max-width: 767px) {
-  html, body {
+  :root {
+    --header-height: var(--header-height-mobile);
+  }
+  
+  /* Ensure proper scrolling */
+  body {
     overflow-x: hidden;
+    overflow-y: auto;
   }
   
   .container {
@@ -531,15 +547,18 @@ body {
     padding: 0 var(--space-sm);
   }
   
-  /* FIXED: Removed all the complex transforms and device-specific overrides */
-  /* The form now has proper spacing from the header automatically */
+  /* Generator page always scrolls on mobile */
+  .generator-page {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
 }
 
-/* Desktop adjustments */
+/* Desktop */
 @media (min-width: 768px) {
   :root {
     --header-height: var(--header-height-desktop);
-    --content-top-spacing: var(--space-xl); /* More space on desktop */
+    --content-top-spacing: var(--space-xl);
   }
   
   .container {
@@ -567,6 +586,15 @@ body {
     align-items: center;
     gap: var(--space-sm);
   }
+  
+  /* Desktop can have conditional scrolling */
+  .generator-page {
+    overflow-y: hidden;
+  }
+  
+  .generator-page.allow-scroll {
+    overflow-y: auto;
+  }
 }
 
 /* Large screens */
@@ -591,7 +619,7 @@ body {
   }
 }
 
-/* Landscape orientation adjustments for phones */
+/* Landscape orientation for phones */
 @media (max-width: 767px) and (orientation: landscape) {
   :root {
     --header-height: var(--header-height-desktop);
@@ -599,15 +627,15 @@ body {
   }
 }
 
-/* Footer elements - completely hidden */
+/* Footer elements - hidden */
 .footer-wrapper,
 .form-container {
   display: none !important;
 }
 
-/* Add these CSS animations and styles to your globals.css */
-
-/* Fade in animation for SVG quality selector */
+/* ========================================
+   ANIMATIONS (Unchanged)
+   ======================================== */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -623,30 +651,19 @@ body {
   animation: fadeIn 0.3s ease-out;
 }
 
-/* Enhanced button hover effects */
-.group:hover .absolute {
-  transition: all 0.3s ease;
-}
-
-/* Gradient button enhancements */
+/* Gradient animations */
 .bg-gradient-to-r {
   background-size: 200% 200%;
   animation: gradientShift 3s ease infinite;
 }
 
 @keyframes gradientShift {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
-/* Button scale and shadow effects */
+/* Transform utilities */
 .transform {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -659,166 +676,32 @@ body {
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
-/* Enhanced card styling for logo display */
+/* Card enhancements */
 .shadow-inner {
   box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
 }
 
-/* Button group responsive improvements */
-@media (max-width: 640px) {
-  .flex-col {
-    flex-direction: column;
-  }
-  
-  .sm\:flex-row {
-    flex-direction: column;
-  }
-  
-  .min-w-\[160px\] {
-    min-width: 100%;
-  }
-}
-
-/* Improved format button styling */
-.inline-flex {
-  display: inline-flex;
-}
-
-/* Loading spinner for SVG conversion */
+/* Loading spinner */
 .animate-spin {
   animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
+/* Status messages */
+.bg-purple-50 { background-color: #faf5ff; }
+.bg-green-50 { background-color: #f0fdf4; }
+.bg-red-50 { background-color: #fef2f2; }
 
-/* Status message styling */
-.bg-purple-50 {
-  background-color: #faf5ff;
-}
+.border-purple-200 { border-color: #e9d5ff; }
+.border-green-200 { border-color: #bbf7d0; }
+.border-red-200 { border-color: #fecaca; }
 
-.bg-green-50 {
-  background-color: #f0fdf4;
-}
+.text-purple-600 { color: #9333ea; }
+.text-green-600 { color: #16a34a; }
+.text-red-600 { color: #dc2626; }
 
-.bg-red-50 {
-  background-color: #fef2f2;
-}
-
-.border-purple-200 {
-  border-color: #e9d5ff;
-}
-
-.border-green-200 {
-  border-color: #bbf7d0;
-}
-
-.border-red-200 {
-  border-color: #fecaca;
-}
-
-.text-purple-600 {
-  color: #9333ea;
-}
-
-.text-green-600 {
-  color: #16a34a;
-}
-
-.text-red-600 {
-  color: #dc2626;
-}
-
-/* Enhanced gradient backgrounds */
-.from-indigo-500 {
-  --tw-gradient-from: #6366f1;
-}
-
-.via-purple-500 {
-  --tw-gradient-via: #a855f7;
-}
-
-.to-pink-500 {
-  --tw-gradient-to: #ec4899;
-}
-
-.from-emerald-500 {
-  --tw-gradient-from: #10b981;
-}
-
-.to-teal-500 {
-  --tw-gradient-to: #14b8a6;
-}
-
-/* MOBILE SCROLL FIX - Add to globals.css */
-@media (max-width: 767px) {
-  /* Fix 1: Remove height constraints */
-  html, body {
-    height: auto !important;
-    min-height: 100vh !important;
-    overflow-x: hidden;
-    overflow-y: visible !important; /* CRITICAL: Allow Y scrolling */
-  }
-  
-  /* Fix 2: Remove scroll blocking */
-  body {
-    overscroll-behavior: auto !important; /* CRITICAL: Was 'none' */
-    position: relative !important;
-  }
-  
-  /* Fix 3: Fix container heights */
-  .app-container {
-    height: auto !important;
-    min-height: 100vh !important;
-  }
-  
-  /* Fix 4: Let main content flow */
-  .main-content {
-    height: auto !important;
-    overflow-y: visible !important; /* Let content flow naturally */
-    overflow-x: hidden !important;
-  }
-  
-  /* Fix 5: Generator page should scroll */
-  .generator-page,
-  .generator-page.allow-scroll {
-    height: auto !important;
-    min-height: auto !important;
-    overflow: visible !important;
-  }
-}
-
-/* EMERGENCY MOBILE SCROLL OVERRIDE */
-@media (max-width: 767px) {
-  * {
-    max-height: none !important;
-  }
-  
-  html, body, .app-container, .main-content, .generator-page {
-    height: auto !important;
-    overflow-y: visible !important;
-  }
-  
-  body {
-    overscroll-behavior: auto !important;
-  }
-}
-
-/* FIX: Always enable scrolling on generator page for mobile */
-@media (max-width: 767px) {
-  .generator-page {
-    overflow-y: auto !important;  /* ALWAYS allow scrolling */
-    -webkit-overflow-scrolling: touch !important;
-  }
-  
-  /* Remove the conditional behavior on mobile */
-  .generator-page.allow-scroll {
-    /* These properties are now on the base class for mobile */
-  }
-}
+/* Gradient colors */
+.from-indigo-500 { --tw-gradient-from: #6366f1; }
+.via-purple-500 { --tw-gradient-via: #a855f7; }
+.to-pink-500 { --tw-gradient-to: #ec4899; }
+.from-emerald-500 { --tw-gradient-from: #10b981; }
+.to-teal-500 { --tw-gradient-to: #14b8a6; }
