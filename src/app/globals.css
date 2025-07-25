@@ -755,3 +755,57 @@ body {
 .to-teal-500 {
   --tw-gradient-to: #14b8a6;
 }
+
+/* MOBILE SCROLL FIX - Add to globals.css */
+@media (max-width: 767px) {
+  /* Fix 1: Remove height constraints */
+  html, body {
+    height: auto !important;
+    min-height: 100vh !important;
+    overflow-x: hidden;
+    overflow-y: visible !important; /* CRITICAL: Allow Y scrolling */
+  }
+  
+  /* Fix 2: Remove scroll blocking */
+  body {
+    overscroll-behavior: auto !important; /* CRITICAL: Was 'none' */
+    position: relative !important;
+  }
+  
+  /* Fix 3: Fix container heights */
+  .app-container {
+    height: auto !important;
+    min-height: 100vh !important;
+  }
+  
+  /* Fix 4: Let main content flow */
+  .main-content {
+    height: auto !important;
+    overflow-y: visible !important; /* Let content flow naturally */
+    overflow-x: hidden !important;
+  }
+  
+  /* Fix 5: Generator page should scroll */
+  .generator-page,
+  .generator-page.allow-scroll {
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+  }
+}
+
+/* EMERGENCY MOBILE SCROLL OVERRIDE */
+@media (max-width: 767px) {
+  * {
+    max-height: none !important;
+  }
+  
+  html, body, .app-container, .main-content, .generator-page {
+    height: auto !important;
+    overflow-y: visible !important;
+  }
+  
+  body {
+    overscroll-behavior: auto !important;
+  }
+}
