@@ -1,4 +1,4 @@
-// src/app/login/LoginForm.tsx (Updated)
+// src/app/login/LoginForm.tsx - Fixed to use correct endpoint
 'use client';
 
 import { useState, FormEvent, useEffect } from 'react';
@@ -49,7 +49,8 @@ export default function LoginPage() {
     setError(null);
     
     try {
-      const response = await fetch('/api/auth/login', {
+      // Use the correct DynamoDB login endpoint
+      const response = await fetch('/api/auth/dynamo-login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -76,40 +77,36 @@ export default function LoginPage() {
   };
   
   return (
-    <div className="login-page-container min-h-screen flex flex-col justify-center items-center px-4">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-md p-6 sm:p-8">
-        <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-indigo-600">AI Logo Generator</h1>
-          <h2 className="mt-2 text-xl font-semibold text-gray-900">Log in to your account</h2>
-        </div>
+    <div className="login-page-container min-h-screen flex flex-col justify-center items-center">
+      <div className="w-full max-w-md">
+        <h2 className="text-2xl font-bold text-center mb-6">Login</h2>
         
         {successMessage && (
-          <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded-lg">
+          <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
             {successMessage}
           </div>
         )}
         
         {error && (
-          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+          <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
             {error}
           </div>
         )}
         
-        <form className="space-y-4" onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email address
+              Email
             </label>
             <input
-              id="email"
-              name="email"
               type="email"
-              autoComplete="email"
-              required
+              id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              required
               disabled={loading}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="Enter your email"
             />
           </div>
           
@@ -118,39 +115,24 @@ export default function LoginPage() {
               Password
             </label>
             <input
-              id="password"
-              name="password"
               type="password"
-              autoComplete="current-password"
-              required
+              id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              required
               disabled={loading}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="Enter your password"
             />
           </div>
           
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              {loading ? 'Logging in...' : 'Log in'}
-            </button>
-          </div>
-          
-          <div className="text-center">
-            <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
-              <Link 
-                href={`/signup${redirectPath !== '/' ? `?redirect=${encodeURIComponent(redirectPath)}` : ''}`}
-                className="font-medium text-indigo-600 hover:text-indigo-500"
-              >
-                Sign up
-              </Link>
-            </p>
-          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+          >
+            {loading ? 'Signing in...' : 'Sign in'}
+          </button>
         </form>
       </div>
     </div>

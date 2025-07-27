@@ -95,7 +95,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       console.log("AuthContext: Login attempt for:", email);
       
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch('/api/auth/dynamo-login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -122,10 +122,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     console.log("AuthContext: Logout called");
     
     try {
-      // Try different API endpoints for logout
+      // Try to call logout endpoint
       const endpointsToTry = ['/api/auth/logout'];
       let logoutSuccessful = false;
-      let foundEndpoint = '';
       
       for (const endpoint of endpointsToTry) {
         try {
@@ -134,10 +133,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             method: 'POST',
           });
           
-          // If we get a successful response, mark logout as successful
           if (response.ok) {
             logoutSuccessful = true;
-            foundEndpoint = endpoint;
             break;
           }
         } catch (err) {
@@ -145,14 +142,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       }
       
-      console.log(`Using logout endpoint: ${foundEndpoint}, success: ${logoutSuccessful}`);
+      console.log(`Logout API success: ${logoutSuccessful}`);
       
-      // Clear user state regardless of API response
-      setUser(null);
     } catch (error) {
-      console.error('Logout failed:', error);
-      // Still clear user state even if error
+      console.error('Logout API failed:', error);
+    } finally {
+      // ALWAYS clear user state regardless of API response
+      console.log("Clearing user state...");
       setUser(null);
+      setLoading(false);
+      
+      // Clear any cached data
+      try {
+        localStorage.removeItem('user');
+        sessionStorage.removeItem('user');
+      } catch (err) {
+        console.error('Error clearing storage:', err);
+      }
     }
   }, []);
 

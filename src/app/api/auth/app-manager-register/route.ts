@@ -76,13 +76,11 @@ async function generateNewUserId(): Promise<number> {
   }
 }
 
-// Interface for user object returned from DynamoDB
+// Interface for user object returned from DynamoDB (no logo fields)
 interface DynamoUser {
   id: number;
   email: string;
   password: string;
-  logosCreated: number;  
-  logosLimit: number;
   createdAt: string;
   lastLogin: string;
   appManagerData: any;
@@ -116,25 +114,22 @@ async function saveToDynamoDB(
       await dynamoDB.update({
         TableName: process.env.DYNAMODB_USERS_TABLE || 'users',
         Key: { id: existingUser.id },
-        UpdateExpression: 'SET #pwd = :password, logosLimit = :logosLimit, lastLogin = :lastLogin, appManagerData = :appManagerData',
+        UpdateExpression: 'SET #pwd = :password, lastLogin = :lastLogin, appManagerData = :appManagerData',
         ExpressionAttributeNames: {
           '#pwd': 'password'
         },
         ExpressionAttributeValues: {
           ':password': hashedPassword,
-          ':logosLimit': 5, // Everyone gets 5 logos
           ':lastLogin': new Date().toISOString(),
           ':appManagerData': appManagerResponse
         }
       }).promise();
       
-      // Return the updated user object with all properties
+      // Return the updated user object (no logo fields)
       const updatedUser: DynamoUser = {
         id: existingUser.id,
         email: existingUser.email,
         password: hashedPassword,
-        logosCreated: existingUser.logosCreated || 0,
-        logosLimit: 5,
         createdAt: existingUser.createdAt || new Date().toISOString(),
         lastLogin: new Date().toISOString(),
         appManagerData: appManagerResponse
@@ -151,8 +146,6 @@ async function saveToDynamoDB(
         id: newUserId,
         email: registrationData.email.toLowerCase(),
         password: hashedPassword,
-        logosCreated: 0,
-        logosLimit: 5, // Everyone gets 5 free logos
         createdAt: new Date().toISOString(),
         lastLogin: new Date().toISOString(),
         appManagerData: appManagerResponse
@@ -175,7 +168,7 @@ async function saveToDynamoDB(
 // Function to save logo credits tracking to Supabase only
 async function saveToSupabaseForCredits(
   email: string,
-  dynamoUser: any
+  dynamoUserId: number
 ) {
   try {
     console.log('Saving logo credits tracking to Supabase...');
@@ -193,7 +186,7 @@ async function saveToSupabaseForCredits(
       const { data: updatedUser, error: updateError } = await supabaseAdmin
         .from('users')
         .update({
-          logosCreated: dynamoUser.logosCreated,
+          logosCreated: 0, // Reset to 0 for new registration
           logosLimit: 5, // Everyone gets 5 logos
           updated_at: new Date().toISOString()
         })
@@ -285,15 +278,22 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Step 3: Create logo credits tracking in Supabase (optional - for logo management only)
+    // Step 3: Create logo credits tracking in Supabase (required - for logo management)
     console.log('Step 3: Setting up logo credits tracking in Supabase...');
+    let supabaseUser;
     try {
-      await saveToSupabaseForCredits(registrationData.email, dynamoUser);
+      supabaseUser = await saveToSupabaseForCredits(registrationData.email, dynamoUser.id);
       console.log('✅ Supabase credits tracking setup successful');
     } catch (supabaseError: any) {
       console.error('Supabase credits tracking setup failed:', supabaseError);
-      // This is non-critical - user can still function without Supabase tracking
-      console.log('⚠️ Continuing without Supabase credits tracking');
+      // This is critical since we need logo tracking
+      return NextResponse.json(
+        { 
+          error: 'Registration partially completed. Please contact support.',
+          details: 'User credentials saved but logo tracking setup failed.'
+        },
+        { status: 500 }
+      );
     }
     
     // Step 4: Return success response
@@ -307,8 +307,8 @@ export async function POST(request: NextRequest) {
       user: {
         id: dynamoUser.id,
         email: dynamoUser.email,
-        logosCreated: 0,
-        logosLimit: 5 // Everyone gets 5 free logos
+        logosCreated: supabaseUser.logosCreated,
+        logosLimit: supabaseUser.logosLimit // Logo data from Supabase
       }
     });
     

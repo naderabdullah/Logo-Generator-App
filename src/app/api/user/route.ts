@@ -1,7 +1,15 @@
 // src/app/api/user/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
+import { DynamoDB } from 'aws-sdk';
 import { supabaseAuth } from '../../../lib/supabaseAuth';
+
+// Initialize DynamoDB client
+const dynamoDB = new DynamoDB.DocumentClient({
+  region: process.env.AWS_REGION || 'us-east-1',
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+});
 
 // Function to get current user from request
 async function getCurrentUser(request: NextRequest) {
@@ -19,10 +27,30 @@ async function getCurrentUser(request: NextRequest) {
       process.env.JWT_ACCESS_TOKEN_SECRET || 'access-token-secret'
     ) as { id: number, email: string };
     
-    // Get user from Supabase
-    const user = await supabaseAuth.getUserById(decoded.id);
+    // Get user auth data from DynamoDB
+    const dynamoResult = await dynamoDB.get({
+      TableName: process.env.DYNAMODB_USERS_TABLE || 'users',
+      Key: { id: decoded.id }
+    }).promise();
     
-    return user;
+    if (!dynamoResult.Item) {
+      return null;
+    }
+    
+    // Get user logo credits from Supabase
+    const supabaseUser = await supabaseAuth.getUserByEmail(dynamoResult.Item.email);
+    
+    if (!supabaseUser) {
+      return null;
+    }
+    
+    // Combine auth data from DynamoDB with logo data from Supabase
+    return {
+      id: dynamoResult.Item.id,
+      email: dynamoResult.Item.email,
+      logosCreated: supabaseUser.logosCreated,
+      logosLimit: supabaseUser.logosLimit
+    };
   } catch (error) {
     console.error('Error getting current user:', error);
     return null;
@@ -80,16 +108,25 @@ export async function PATCH(request: NextRequest) {
       );
     }
     
-    // Update user in Supabase (only logo limit can be updated)
+    // Update user logo data in Supabase (not DynamoDB)
     const updates: any = {};
     if (logosLimit !== undefined) updates.logosLimit = logosLimit;
     
-    const updatedUser = await supabaseAuth.updateUser(user.id, updates);
+    // Find the Supabase user by email and update
+    const supabaseUser = await supabaseAuth.getUserByEmail(user.email);
+    if (!supabaseUser) {
+      return NextResponse.json(
+        { error: 'User logo credits not found' },
+        { status: 404 }
+      );
+    }
+    
+    const updatedUser = await supabaseAuth.updateUser(supabaseUser.id, updates);
     
     return NextResponse.json({
       message: 'User updated successfully',
       user: {
-        email: updatedUser.email,
+        email: user.email,
         logosCreated: updatedUser.logosCreated,
         logosLimit: updatedUser.logosLimit,
         remainingLogos: Math.max(0, updatedUser.logosLimit - updatedUser.logosCreated)

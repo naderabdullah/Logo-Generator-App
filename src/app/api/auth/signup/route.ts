@@ -61,9 +61,8 @@ export async function POST(request: NextRequest) {
     // Create user in Supabase
     const user = await supabaseAuth.createUser({
       email,
-      password,
-      logosLimit: 10, // Default for direct signups
-      subscription_type: 'standard'
+      logosCreated: 0, // Initial logos created
+      logosLimit: 5, 
     });
     
     console.log(`✅ Created Supabase user: ${email} with ${user.logosLimit} logo credits`);

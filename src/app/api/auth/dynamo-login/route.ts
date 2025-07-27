@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { DynamoDB } from 'aws-sdk';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import { supabaseAuth } from '../../../../lib/supabaseAuth';
 
 // Initialize DynamoDB client
 const dynamoDB = new DynamoDB.DocumentClient({
@@ -87,7 +88,7 @@ export async function POST(request: NextRequest) {
     
     console.log('Login successful for:', email);
     
-    // Update last login time
+    // Update last login time in DynamoDB
     await dynamoDB.update({
       TableName: process.env.DYNAMODB_USERS_TABLE || 'users',
       Key: { id: user.id },
@@ -97,17 +98,48 @@ export async function POST(request: NextRequest) {
       }
     }).promise();
     
+    // Get logo credits from Supabase
+    const supabaseUser = await supabaseAuth.getUserByEmail(user.email);
+    if (!supabaseUser) {
+      console.log('No logo credits found for user, creating default...');
+      // Create default logo credits if they don't exist
+      await supabaseAuth.createUser({
+        email: user.email,
+        logosCreated: 0,
+        logosLimit: 5
+      });
+      // Fetch the newly created user
+      const newSupabaseUser = await supabaseAuth.getUserByEmail(user.email);
+      
+      // Generate JWT token
+      const token = generateToken(user.id, user.email);
+      
+      // Create response with user data from both databases
+      const response = NextResponse.json({
+        message: 'Login successful',
+        user: {
+          email: user.email,
+          logosCreated: newSupabaseUser?.logosCreated || 0,
+          logosLimit: newSupabaseUser?.logosLimit || 5,
+          remainingLogos: Math.max(0, (newSupabaseUser?.logosLimit || 5) - (newSupabaseUser?.logosCreated || 0))
+        }
+      });
+      
+      // Set auth cookie
+      return setAuthCookie(response, token);
+    }
+    
     // Generate JWT token
     const token = generateToken(user.id, user.email);
     
-    // Create response with user data
+    // Create response with user data from both databases
     const response = NextResponse.json({
       message: 'Login successful',
       user: {
         email: user.email,
-        logosCreated: user.logosCreated,
-        logosLimit: user.logosLimit,
-        remainingLogos: Math.max(0, user.logosLimit - user.logosCreated)
+        logosCreated: supabaseUser.logosCreated,
+        logosLimit: supabaseUser.logosLimit,
+        remainingLogos: Math.max(0, supabaseUser.logosLimit - supabaseUser.logosCreated)
       }
     });
     

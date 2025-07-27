@@ -11,9 +11,19 @@ export default function UnifiedHeader() {
   const pathname = usePathname();
   const router = useRouter();
   
-  // Don't show on auth pages
-  if (pathname === '/login' || pathname === '/signup' || pathname === '/auth') {
-    return null;
+  // Show basic header on auth pages (including register pages)
+  if (pathname === '/login' || pathname === '/signup' || pathname === '/auth' || pathname.startsWith('/register')) {
+    return (
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm border-b border-gray-200 ios-unified-header">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-center items-center h-16">
+            <Link href="/" className="text-xl font-bold text-indigo-600">
+              AI Logo Generator
+            </Link>
+          </div>
+        </div>
+      </header>
+    );
   }
   
   if (loading) {
