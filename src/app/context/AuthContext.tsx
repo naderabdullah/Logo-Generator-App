@@ -1,4 +1,4 @@
-// src/app/context/AuthContext.tsx - FIXED
+// src/app/context/AuthContext.tsx - UPDATED for DynamoDB + Supabase
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
@@ -17,8 +17,8 @@ interface AuthContextType {
   loading: boolean;
   refreshAuth: () => Promise<void>;
   logout: () => Promise<void>;
-  login: (email: string, password: string) => Promise<void>; // Added login
-  updateUser: (updates: Partial<User>) => void; // Added updateUser
+  login: (email: string, password: string) => Promise<void>;
+  updateUser: (updates: Partial<User>) => void;
 }
 
 // Create the context with a default value
@@ -27,8 +27,8 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   refreshAuth: async () => {},
   logout: async () => {},
-  login: async () => {}, // Added default
-  updateUser: () => {} // Added default
+  login: async () => {},
+  updateUser: () => {}
 });
 
 // Custom hook to use the auth context
@@ -45,45 +45,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(true);
       console.log("AuthContext: Refreshing auth state");
       
-      // Try different API endpoints to see which one works
-      let response = null;
-      const endpointsToTry = ['/api/user'];
-      let foundEndpoint = '';
+      const response = await fetch('/api/user', {
+        method: 'GET',
+        credentials: 'include', // Important for cookies
+      });
       
-      for (const endpoint of endpointsToTry) {
-        try {
-          console.log(`AuthContext trying user endpoint: ${endpoint}`);
-          const tempResponse = await fetch(endpoint);
-          
-          // If we get a non-404 response, use it
-          if (tempResponse.status !== 404) {
-            response = tempResponse;
-            foundEndpoint = endpoint;
-            break;
-          }
-        } catch (err) {
-          console.error(`Error with user endpoint ${endpoint}:`, err);
-        }
-      }
+      console.log(`AuthContext: /api/user response status: ${response.status}`);
       
-      console.log(`AuthContext using endpoint: ${foundEndpoint} with status: ${response?.status}`);
-      
-      if (!response || response.status === 401) {
+      if (response.status === 401) {
         console.log("AuthContext: User not authenticated");
         setUser(null);
         return;
       }
       
       if (response.ok) {
-        console.log("AuthContext: User authenticated");
         const userData = await response.json();
-        setUser(userData);
+        console.log("AuthContext: User authenticated:", userData);
+        
+        // Ensure we have all required fields with defaults
+        const normalizedUser: User = {
+          email: userData.email,
+          logosCreated: userData.logosCreated || 0,
+          logosLimit: userData.logosLimit || 5,
+          remainingLogos: Math.max(0, (userData.logosLimit || 5) - (userData.logosCreated || 0))
+        };
+        
+        setUser(normalizedUser);
       } else {
         console.log("AuthContext: User response not OK:", response.status);
         setUser(null);
       }
     } catch (error) {
-      console.error('Error checking auth status:', error);
+      console.error('AuthContext: Error checking auth status:', error);
       setUser(null);
     } finally {
       setLoading(false);
@@ -100,6 +93,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Important for cookies
         body: JSON.stringify({ email, password }),
       });
 
@@ -108,56 +102,62 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error(errorData.error || 'Login failed');
       }
 
-      const userData = await response.json();
-      setUser(userData.user);
-      console.log("AuthContext: Login successful");
+      const loginData = await response.json();
+      console.log("AuthContext: Login response:", loginData);
+      
+      // The API returns user data in loginData.user
+      if (loginData.user) {
+        const normalizedUser: User = {
+          email: loginData.user.email,
+          logosCreated: loginData.user.logosCreated || 0,
+          logosLimit: loginData.user.logosLimit || 5,
+          remainingLogos: loginData.user.remainingLogos || Math.max(0, (loginData.user.logosLimit || 5) - (loginData.user.logosCreated || 0))
+        };
+        
+        setUser(normalizedUser);
+        console.log("AuthContext: Login successful, user set:", normalizedUser);
+      } else {
+        console.warn("AuthContext: Login response missing user data");
+        // Fallback to refreshAuth to get user data
+        await refreshAuth();
+      }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('AuthContext: Login error:', error);
       throw error;
     }
-  }, []);
+  }, [refreshAuth]);
 
   // Function to handle logout
   const logout = useCallback(async () => {
     console.log("AuthContext: Logout called");
     
     try {
-      // Try to call logout endpoint
-      const endpointsToTry = ['/api/auth/logout'];
-      let logoutSuccessful = false;
+      // Call logout endpoint to clear server-side session/cookies
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
       
-      for (const endpoint of endpointsToTry) {
-        try {
-          console.log(`Trying logout endpoint: ${endpoint}`);
-          const response = await fetch(endpoint, {
-            method: 'POST',
-          });
-          
-          if (response.ok) {
-            logoutSuccessful = true;
-            break;
-          }
-        } catch (err) {
-          console.error(`Error with logout endpoint ${endpoint}:`, err);
-        }
+      if (response.ok) {
+        console.log("AuthContext: Logout API successful");
+      } else {
+        console.log("AuthContext: Logout API failed, but continuing with local cleanup");
       }
-      
-      console.log(`Logout API success: ${logoutSuccessful}`);
-      
     } catch (error) {
-      console.error('Logout API failed:', error);
+      console.error('AuthContext: Logout API error:', error);
     } finally {
       // ALWAYS clear user state regardless of API response
-      console.log("Clearing user state...");
+      console.log("AuthContext: Clearing user state...");
       setUser(null);
-      setLoading(false);
       
       // Clear any cached data
       try {
-        localStorage.removeItem('user');
-        sessionStorage.removeItem('user');
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('user');
+          sessionStorage.removeItem('user');
+        }
       } catch (err) {
-        console.error('Error clearing storage:', err);
+        console.error('AuthContext: Error clearing storage:', err);
       }
     }
   }, []);
@@ -166,7 +166,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const updateUser = useCallback((updates: Partial<User>) => {
     setUser(prevUser => {
       if (!prevUser) return null;
+      
       const updatedUser = { ...prevUser, ...updates };
+      
+      // Recalculate remainingLogos if logosCreated or logosLimit changed
+      if ('logosCreated' in updates || 'logosLimit' in updates) {
+        updatedUser.remainingLogos = Math.max(0, updatedUser.logosLimit - updatedUser.logosCreated);
+      }
+      
       console.log('AuthContext: User updated:', updatedUser);
       return updatedUser;
     });

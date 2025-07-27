@@ -259,45 +259,44 @@ export default function AccountPage() {
                   onClick={() => setShowDeleteModal(true)}
                   className="px-4 py-2 bg-gray-200 text-red-600 rounded-md hover:bg-red-100 w-full font-medium"
                 >
-                  Delete Account
+                  Deactivate Account
                 </button>
                 <p className="text-xs text-gray-500 mt-1 text-center">
-                  This action cannot be undone
+                  This will deactivate your account and log you out
                 </p>
               </div>
             </div>
           </div>
         )}
         
-        {/* Delete Account Confirmation Modal */}
+        {/* Deactivate Account Confirmation Modal */}
         {showDeleteModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
-              <h3 className="text-lg font-semibold mb-4 text-red-600">Delete Account</h3>
+              <h3 className="text-lg font-semibold mb-4 text-red-600">Deactivate Account</h3>
               <p className="mb-4 text-gray-700">
-                Are you sure you want to delete your account? This action is permanent and cannot be undone.
+                Are you sure you want to deactivate your account? This will:
               </p>
-              <p className="mb-6 text-sm text-gray-600">
-                • All your account data will be permanently deleted<br/>
-                • Your logo creation history will be removed<br/>
-                • Any remaining logo credits will be lost<br/>
-                • You will not be able to recover your account
-              </p>
-              
-              <div className="flex justify-end gap-3">
+              <ul className="mb-4 text-sm text-gray-600 list-disc list-inside space-y-1">
+                <li>Log you out immediately</li>
+                <li>Prevent future logins</li>
+                <li>Preserve your logo history and credits</li>
+                <li>Allow account reactivation by contacting support</li>
+              </ul>
+              <div className="flex space-x-3">
                 <button
-                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
                   onClick={() => setShowDeleteModal(false)}
+                  className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
                   disabled={isDeleting}
                 >
                   Cancel
                 </button>
                 <button
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
                   onClick={handleDeleteAccount}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
                   disabled={isDeleting}
                 >
-                  {isDeleting ? 'Deleting...' : 'Delete My Account'}
+                  {isDeleting ? 'Deactivating...' : 'Deactivate Account'}
                 </button>
               </div>
             </div>

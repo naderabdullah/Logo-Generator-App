@@ -1,8 +1,7 @@
-// src/app/api/user/delete/route.ts - Updated to delete from both DynamoDB and Supabase
+// src/app/api/user/delete/route.ts - Updated for soft delete (Status = 'inactive')
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { DynamoDB } from 'aws-sdk';
-import { supabaseAuth } from '../../../../lib/supabaseAuth';
 
 // Initialize DynamoDB client
 const dynamoDB = new DynamoDB.DocumentClient({
@@ -39,7 +38,8 @@ async function getCurrentUser(request: NextRequest) {
     
     return {
       id: dynamoResult.Item.id,
-      email: dynamoResult.Item.email
+      email: dynamoResult.Item.email,
+      status: dynamoResult.Item.Status || dynamoResult.Item.status // Handle both cases
     };
   } catch (error) {
     console.error('Error getting current user:', error);
@@ -47,7 +47,7 @@ async function getCurrentUser(request: NextRequest) {
   }
 }
 
-// DELETE endpoint - Delete user account from both databases
+// DELETE endpoint - Soft delete user account (change Status to 'inactive')
 export async function DELETE(request: NextRequest) {
   try {
     // Get current user
@@ -60,41 +60,48 @@ export async function DELETE(request: NextRequest) {
       );
     }
     
-    console.log(`Starting account deletion for user: ${user.email}`);
+    // Check if user is already inactive
+    if (user.status === 'inactive') {
+      return NextResponse.json(
+        { error: 'Account is already deactivated' },
+        { status: 400 }
+      );
+    }
     
-    // Step 1: Delete user from DynamoDB (authentication data)
+    console.log(`Starting account deactivation for user: ${user.email}`);
+    
+    // Update user status to 'inactive' in DynamoDB (soft delete)
     try {
-      await dynamoDB.delete({
+      await dynamoDB.update({
         TableName: process.env.DYNAMODB_USERS_TABLE || 'users',
-        Key: { id: user.id }
+        Key: { id: user.id },
+        UpdateExpression: 'SET #status = :status, #deactivatedAt = :deactivatedAt',
+        ExpressionAttributeNames: {
+          '#status': 'Status',
+          '#deactivatedAt': 'deactivatedAt'
+        },
+        ExpressionAttributeValues: {
+          ':status': 'inactive',
+          ':deactivatedAt': new Date().toISOString()
+        }
       }).promise();
       
-      console.log(`✅ Deleted user from DynamoDB: ${user.email}`);
+      console.log(`✅ Account deactivated in DynamoDB: ${user.email}`);
     } catch (dynamoError) {
-      console.error('Failed to delete user from DynamoDB:', dynamoError);
-      // Continue with Supabase deletion even if DynamoDB fails
+      console.error('Failed to deactivate user in DynamoDB:', dynamoError);
+      return NextResponse.json(
+        { error: 'Failed to deactivate account' },
+        { status: 500 }
+      );
     }
     
-    // Step 2: Delete user from Supabase (logo credits data)
-    try {
-      const supabaseUser = await supabaseAuth.getUserByEmail(user.email);
-      if (supabaseUser) {
-        await supabaseAuth.deleteUser(supabaseUser.id);
-        console.log(`✅ Deleted user from Supabase: ${user.email}`);
-      } else {
-        console.log(`⚠️ User not found in Supabase: ${user.email}`);
-      }
-    } catch (supabaseError) {
-      console.error('Failed to delete user from Supabase:', supabaseError);
-      // Don't fail the entire operation if Supabase deletion fails
-    }
+    // Note: We're NOT deleting from Supabase - logo credits data is preserved
+    console.log(`🎉 Account deactivation completed for: ${user.email}`);
     
-    console.log(`🎉 Account deletion completed for: ${user.email}`);
-    
-    // Create response and clear auth cookie
+    // Create response and clear auth cookie to log user out
     const response = NextResponse.json({
-      message: 'Account deleted successfully',
-      details: 'User data removed from all systems'
+      message: 'Account deactivated successfully',
+      details: 'Your account has been deactivated. You have been logged out.'
     });
     
     // Clear all auth cookies
@@ -102,21 +109,27 @@ export async function DELETE(request: NextRequest) {
       name: 'access_token',
       value: '',
       expires: new Date(0),
-      path: '/'
+      path: '/',
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict'
     });
     
     response.cookies.set({
       name: 'refresh_token',
       value: '',
       expires: new Date(0),
-      path: '/'
+      path: '/',
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict'
     });
     
     return response;
   } catch (error: any) {
-    console.error('Error deleting user account:', error);
+    console.error('Error deactivating user account:', error);
     return NextResponse.json(
-      { error: 'Failed to delete account: ' + (error.message || 'Unknown error') },
+      { error: 'Failed to deactivate account: ' + (error.message || 'Unknown error') },
       { status: 500 }
     );
   }

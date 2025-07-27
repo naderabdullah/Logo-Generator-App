@@ -26,6 +26,12 @@ function LoginForm() {
   useEffect(() => {
     document.body.setAttribute('data-page', 'login');
     
+    // Check for messages from URL params
+    const message = searchParams.get('message');
+    if (message === 'account-deleted') {
+      setMessage('Your account has been successfully deactivated.');
+    }
+    
     // Check for registration success message from app manager
     const registrationSuccess = sessionStorage.getItem('registrationSuccess');
     if (registrationSuccess) {
@@ -38,7 +44,7 @@ function LoginForm() {
     return () => {
       document.body.removeAttribute('data-page');
     };
-  }, []);
+  }, [searchParams]);
   
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();

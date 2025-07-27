@@ -1,4 +1,4 @@
-// src/app/api/auth/dynamo-login/route.ts
+// src/app/api/auth/dynamo-login/route.ts - Updated to check for inactive users
 import { NextRequest, NextResponse } from 'next/server';
 import { DynamoDB } from 'aws-sdk';
 import jwt from 'jsonwebtoken';
@@ -74,7 +74,17 @@ export async function POST(request: NextRequest) {
     }
     
     const user = result.Items[0];
-    console.log('User found, checking password...');
+    console.log('User found, checking status and password...');
+    
+    // Check if user account is inactive (soft deleted)
+    const userStatus = user.Status || user.status; // Handle both uppercase and lowercase
+    if (userStatus === 'inactive') {
+      console.log('User account is inactive:', email);
+      return NextResponse.json(
+        { error: 'This account has been deactivated. Please contact support if you need to reactivate your account.' },
+        { status: 403 }
+      );
+    }
     
     // Compare passwords
     const isMatch = await bcrypt.compare(password, user.password);
@@ -108,6 +118,7 @@ export async function POST(request: NextRequest) {
         logosCreated: 0,
         logosLimit: 5
       });
+      
       // Fetch the newly created user
       const newSupabaseUser = await supabaseAuth.getUserByEmail(user.email);
       

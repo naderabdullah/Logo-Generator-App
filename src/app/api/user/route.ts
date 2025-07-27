@@ -1,4 +1,4 @@
-// src/app/api/user/route.ts
+// src/app/api/user/route.ts - Updated to check for inactive users
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { DynamoDB } from 'aws-sdk';
@@ -37,6 +37,13 @@ async function getCurrentUser(request: NextRequest) {
       return null;
     }
     
+    // Check if user account is inactive (soft deleted)
+    const userStatus = dynamoResult.Item.Status || dynamoResult.Item.status;
+    if (userStatus === 'inactive') {
+      console.log('User account is inactive during auth check:', dynamoResult.Item.email);
+      return 'inactive'; // Return a special value to distinguish from not found
+    }
+    
     // Get user logo credits from Supabase
     const supabaseUser = await supabaseAuth.getUserByEmail(dynamoResult.Item.email);
     
@@ -69,6 +76,14 @@ export async function GET(request: NextRequest) {
       );
     }
     
+    // Check if user is inactive
+    if (user === 'inactive') {
+      return NextResponse.json(
+        { error: 'Account deactivated' },
+        { status: 401 }
+      );
+    }
+    
     return NextResponse.json({
       email: user.email,
       logosCreated: user.logosCreated,
@@ -97,45 +112,50 @@ export async function PATCH(request: NextRequest) {
       );
     }
     
-    // Parse request body
-    const { logosLimit } = await request.json();
-    
-    // Validate input
-    if (logosLimit !== undefined && (logosLimit < 0 || !Number.isInteger(logosLimit))) {
+    // Check if user is inactive
+    if (user === 'inactive') {
       return NextResponse.json(
-        { error: 'Invalid logos limit' },
-        { status: 400 }
+        { error: 'Account deactivated' },
+        { status: 401 }
       );
     }
     
-    // Update user logo data in Supabase (not DynamoDB)
-    const updates: any = {};
-    if (logosLimit !== undefined) updates.logosLimit = logosLimit;
+    // Parse request body
+    const body = await request.json();
+    const { logosCreated, logosLimit } = body;
     
-    // Find the Supabase user by email and update
+    // Update user data in Supabase
     const supabaseUser = await supabaseAuth.getUserByEmail(user.email);
     if (!supabaseUser) {
       return NextResponse.json(
-        { error: 'User logo credits not found' },
+        { error: 'User not found in Supabase' },
         { status: 404 }
+      );
+    }
+    
+    const updates: any = {};
+    if (typeof logosCreated === 'number') updates.logosCreated = logosCreated;
+    if (typeof logosLimit === 'number') updates.logosLimit = logosLimit;
+    
+    if (Object.keys(updates).length === 0) {
+      return NextResponse.json(
+        { error: 'No valid updates provided' },
+        { status: 400 }
       );
     }
     
     const updatedUser = await supabaseAuth.updateUser(supabaseUser.id, updates);
     
     return NextResponse.json({
-      message: 'User updated successfully',
-      user: {
-        email: user.email,
-        logosCreated: updatedUser.logosCreated,
-        logosLimit: updatedUser.logosLimit,
-        remainingLogos: Math.max(0, updatedUser.logosLimit - updatedUser.logosCreated)
-      }
+      email: updatedUser.email,
+      logosCreated: updatedUser.logosCreated,
+      logosLimit: updatedUser.logosLimit,
+      remainingLogos: Math.max(0, updatedUser.logosLimit - updatedUser.logosCreated)
     });
-  } catch (error: any) {
-    console.error('Error updating user:', error);
+  } catch (error) {
+    console.error('Error updating user data:', error);
     return NextResponse.json(
-      { error: 'Failed to update user: ' + (error.message || 'Unknown error') },
+      { error: 'Failed to update user data' },
       { status: 500 }
     );
   }
