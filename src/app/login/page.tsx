@@ -1,4 +1,4 @@
-// src/app/login/page.tsx
+// src/app/login/page.tsx - Simple fix for Vercel deployment
 'use client';
 
 import { useState, useEffect, FormEvent, Suspense } from 'react';
@@ -7,7 +7,16 @@ import Link from 'next/link';
 import { useAuth } from '../context/AuthContext';
 import { getAppManagerRegistrationUrl } from '../../lib/appManagerUtils';
 
-// Separate component that uses useSearchParams
+// Loading fallback for Suspense
+function LoginLoading() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="w-6 h-6 animate-spin rounded-full border-2 border-gray-300 border-t-indigo-600"></div>
+    </div>
+  );
+}
+
+// Login form component that uses useSearchParams
 function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -17,30 +26,31 @@ function LoginForm() {
   
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectPath = searchParams.get('redirect') || '/';
+  const redirectPath = searchParams?.get('redirect') || '/';
   
-  // Get refreshAuth from auth context
   const { refreshAuth } = useAuth();
   
-  // Set body data attribute for styling
   useEffect(() => {
     document.body.setAttribute('data-page', 'login');
     
     // Check for messages from URL params
-    const message = searchParams.get('message');
+    const message = searchParams?.get('message');
     if (message === 'account-deleted') {
       setMessage('Your account has been successfully deactivated.');
     }
     
     // Check for registration success message from app manager
-    const registrationSuccess = sessionStorage.getItem('registrationSuccess');
-    if (registrationSuccess) {
-      const data = JSON.parse(registrationSuccess);
-      setMessage(`Registration successful! Welcome ${data.email}. You can now log in with your credentials.`);
-      sessionStorage.removeItem('registrationSuccess');
+    try {
+      const registrationSuccess = sessionStorage.getItem('registrationSuccess');
+      if (registrationSuccess) {
+        const data = JSON.parse(registrationSuccess);
+        setMessage(`Registration successful! Welcome ${data.email}. You can now log in with your credentials.`);
+        sessionStorage.removeItem('registrationSuccess');
+      }
+    } catch (err) {
+      // Ignore sessionStorage errors
     }
     
-    // Clean up function to remove the attribute when component unmounts
     return () => {
       document.body.removeAttribute('data-page');
     };
@@ -49,7 +59,6 @@ function LoginForm() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     
-    // Basic validation
     if (!email || !password) {
       setError('All fields are required');
       return;
@@ -61,7 +70,6 @@ function LoginForm() {
     try {
       console.log('Attempting DynamoDB authentication...');
       
-      // Authenticate directly against DynamoDB (our primary auth database)
       const response = await fetch('/api/auth/dynamo-login', {
         method: 'POST',
         headers: {
@@ -75,11 +83,7 @@ function LoginForm() {
       
       if (response.ok) {
         console.log('DynamoDB authentication successful');
-        
-        // Refresh auth context to get user data
         await refreshAuth();
-        
-        // Redirect to the desired page
         router.push(redirectPath);
         return;
       } else {
@@ -103,28 +107,16 @@ function LoginForm() {
             Sign in to your account
           </h2>
         </div>
-        
+
         {message && (
           <div className="rounded-md bg-green-50 p-4">
-            <div className="flex">
-              <div className="ml-3">
-                <p className="text-sm font-medium text-green-800">
-                  {message}
-                </p>
-              </div>
-            </div>
+            <div className="text-sm text-green-800">{message}</div>
           </div>
         )}
-        
+
         {error && (
           <div className="rounded-md bg-red-50 p-4">
-            <div className="flex">
-              <div className="ml-3">
-                <p className="text-sm font-medium text-red-800">
-                  {error}
-                </p>
-              </div>
-            </div>
+            <div className="text-sm text-red-800">{error}</div>
           </div>
         )}
 
@@ -140,10 +132,10 @@ function LoginForm() {
                 type="email"
                 autoComplete="email"
                 required
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                placeholder="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
                 disabled={loading}
               />
             </div>
@@ -157,10 +149,10 @@ function LoginForm() {
                 type="password"
                 autoComplete="current-password"
                 required
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
                 disabled={loading}
               />
             </div>
@@ -175,47 +167,16 @@ function LoginForm() {
               {loading ? 'Signing in...' : 'Sign in'}
             </button>
           </div>
-
-          {/* App Manager Registration Link */}
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <p className="text-center text-sm text-gray-600">
-              Don't have an account?{' '}
-              <Link
-                href={getAppManagerRegistrationUrl()}
-                className="text-blue-500 hover:text-blue-700 underline"
-              >
-                Sign up here
-              </Link>
-            </p>
-          </div>
         </form>
       </div>
     </div>
   );
 }
 
-// Loading component for Suspense fallback
-function LoginPageLoading() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-300 rounded w-3/4 mx-auto mb-6"></div>
-          <div className="space-y-4">
-            <div className="h-10 bg-gray-300 rounded"></div>
-            <div className="h-10 bg-gray-300 rounded"></div>
-            <div className="h-10 bg-gray-300 rounded"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Main component with Suspense boundary
+// Main page component with Suspense wrapper to fix the Vercel error
 export default function LoginPage() {
   return (
-    <Suspense fallback={<LoginPageLoading />}>
+    <Suspense fallback={<LoginLoading />}>
       <LoginForm />
     </Suspense>
   );
