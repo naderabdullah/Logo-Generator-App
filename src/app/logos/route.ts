@@ -157,33 +157,34 @@ export async function POST(request: NextRequest) {
       apiKey: process.env.OPENAI_API_KEY,
     });
 
-    // Prepare the image generation request
-    const imageRequest: any = {
-      model: 'gpt-image-1',
-      prompt: prompt,
-      n: 1,
-      size: '1024x1024',
-      quality: 'standard',
-      response_format: 'b64_json'
-    };
-
-    // Add reference image if provided
-    if (referenceImage) {
-      // Convert file to buffer for OpenAI
-      const buffer = Buffer.from(await referenceImage.arrayBuffer());
-      const file = await toFile(buffer, referenceImage.name, {
-        type: referenceImage.type
-      });
-      
-      // Note: DALL-E 3 doesn't support reference images directly
-      // You might need to modify the prompt instead or use a different approach
-      imageRequest.prompt += ` (style reference provided)`;
-    }
-
-    console.log('Generating image with OpenAI...');
+    let response;
     
-    // Generate the image
-    const response = await openai.images.generate(imageRequest);
+    if (referenceImage) {
+      // If a reference image is provided, use the images.edit endpoint
+      console.log('Using images.edit with reference image');
+      
+      // Convert the reference image to the proper format using toFile
+      const bytes = await referenceImage.arrayBuffer();
+      const imageFile = await toFile(
+        new Uint8Array(bytes),
+        referenceImage.name,
+        { type: referenceImage.type }
+      );
+      
+      // Use images.edit with ONLY model and prompt parameters as requested
+      response = await openai.images.edit({
+        model: "gpt-image-1",
+        image: imageFile,
+        prompt: prompt
+      });
+    } else {
+      // If no reference image, use images.generate with ONLY model and prompt
+      console.log('Using images.generate (no reference image)');
+      response = await openai.images.generate({
+        model: "gpt-image-1",
+        prompt: prompt
+      });
+    }
     
     if (!response.data || response.data.length === 0) {
       throw new Error('No image generated');
@@ -228,21 +229,6 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Error generating logo:', error);
-    
-    // Handle specific OpenAI errors
-    if (error.code === 'content_policy_violation') {
-      return NextResponse.json(
-        { error: 'The image prompt violates OpenAI content policy. Please try a different description.' },
-        { status: 400 }
-      );
-    }
-    
-    if (error.code === 'rate_limit_exceeded') {
-      return NextResponse.json(
-        { error: 'Rate limit exceeded. Please try again in a moment.' },
-        { status: 429 }
-      );
-    }
     
     return NextResponse.json(
       { error: error.message || 'Failed to generate logo' },
