@@ -728,3 +728,37 @@ body {
     position: relative;
   }
 }
+
+/* Add this to your src/app/globals.css file */
+
+/* Fix loading spinner centering when switching tabs */
+.container .text-center.mt-lg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh; /* Give it some height to center in */
+}
+
+/* Alternative: If the above doesn't work, use this more specific fix */
+.generator-page .container .text-center.mt-lg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+}
+
+/* Or simplest fix - just center the container content */
+.container .text-center {
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Make sure spinner itself is centered */
+.spinner {
+  margin: 0 auto !important;
+}

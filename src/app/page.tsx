@@ -1,4 +1,4 @@
-// src/app/page.tsx (FIXED - Remove conflicting Tailwind classes)
+// src/app/page.tsx (FIXED - Keep original structure but redirect to login)
 'use client';
 
 import { useState, useCallback, useEffect, Suspense } from 'react';
@@ -54,11 +54,6 @@ export default function Home() {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   
-  // Function to redirect to App Manager registration
-  const handleRedirectToRegistration = () => {
-    redirectToAppManagerRegistration(router);
-  };
-  
   // Check if current path is a public route that shouldn't require authentication
   const isPublicRoute = () => {
     const publicRoutes = [
@@ -72,7 +67,7 @@ export default function Home() {
            isAppManagerRegistrationUrl(pathname);
   };
   
-  // Check auth status and redirect to auth page if not authenticated
+  // Check auth status and redirect to login if not authenticated
   useEffect(() => {
     const checkAuth = async () => {
       setIsCheckingAuth(true);
@@ -106,10 +101,10 @@ export default function Home() {
         }
         
         if (!response || response.status === 401) {
-          // User is not authenticated, redirect to App Manager registration
-          console.log("User not authenticated, redirecting to App Manager registration");
+          // User is not authenticated, redirect to login instead of App Manager
+          console.log("User not authenticated, redirecting to login");
           setIsAuthenticated(false);
-          handleRedirectToRegistration();
+          router.push('/login');
         } else if (response.ok) {
           // User is authenticated
           console.log("User is authenticated");
@@ -117,9 +112,9 @@ export default function Home() {
         }
       } catch (err) {
         console.error('Error checking auth status:', err);
-        // If there's an error, redirect to App Manager registration
+        // If there's an error, redirect to login
         setIsAuthenticated(false);
-        handleRedirectToRegistration();
+        router.push('/login');
       } finally {
         setIsCheckingAuth(false);
       }
@@ -141,8 +136,8 @@ export default function Home() {
   // If still checking auth, show loading
   if (isCheckingAuth) {
     return (
-      <div className="container">
-        <div className="text-center mt-lg">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
           <div className="spinner"></div>
           <p className="mt-md text-gray-600">Loading...</p>
         </div>
@@ -151,7 +146,7 @@ export default function Home() {
   }
 
   return (
-    // FIXED: Removed conflicting Tailwind classes that were overriding proper spacing
+    // FIXED: Keep original classes and structure
     <div className={`generator-page ${appReady ? 'app-loading' : 'opacity-0'}`}>
       <OfflineIndicator />
       
