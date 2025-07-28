@@ -221,42 +221,125 @@ export default function LogoViewClient({ logoId }: LogoViewClientProps) {
               {logo.parameters.companyName} • Generated on {formatDate(logo.createdAt)}
             </p>
 
-            {/* Revision switching buttons */}
+            {/* Beautiful Revision Switching Buttons */}
             {(originalLogo || revisions.length > 0) && (
-              <div className="revision-switcher">
-                {originalLogo && (
-                  <button
-                    onClick={() => switchLogoVersion(originalLogo.id)}
-                    className={`logo-revision-btn ${
-                      activeLogoId === originalLogo.id ? 'active' : ''
-                    }`}
-                  >
-                    Original
-                  </button>
-                )}
+              <div className="mb-6">
+                {/* Section Header */}
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                    Logo Versions
+                  </h3>
+                  {originalLogo && revisions.length < 3 && (
+                    <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-1">
+                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                        <span className="text-xs text-gray-600 font-medium">
+                          {revisions.length}/3 revisions
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
                 
-                {revisions.map((revision) => (
-                  <button
-                    key={revision.id}
-                    onClick={() => switchLogoVersion(revision.id)}
-                    className={`logo-revision-btn ${
-                      activeLogoId === revision.id ? 'active' : ''
-                    }`}
-                  >
-                    Revision {revision.revisionNumber}
-                  </button>
-                ))}
+                {/* Revision Buttons */}
+                <div className="bg-gray-50 p-2 rounded-xl border border-gray-200">
+                  <div className="flex flex-wrap gap-2">
+                    {/* Original Button */}
+                    {originalLogo && (
+                      <button
+                        onClick={() => switchLogoVersion(originalLogo.id)}
+                        className={`relative px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 shadow-sm border ${
+                          activeLogoId === originalLogo.id
+                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-md transform scale-105'
+                            : 'bg-white text-gray-700 border-gray-200 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-700'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-2">
+                          <svg 
+                            className="w-4 h-4" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            viewBox="0 0 24 24"
+                          >
+                            <path 
+                              strokeLinecap="round" 
+                              strokeLinejoin="round" 
+                              strokeWidth={2} 
+                              d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" 
+                            />
+                          </svg>
+                          <span>Original</span>
+                        </div>
+                        {activeLogoId === originalLogo.id && (
+                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></div>
+                        )}
+                      </button>
+                    )}
+                    
+                    {/* Revision Buttons */}
+                    {revisions.map((revision, index) => (
+                      <button
+                        key={revision.id}
+                        onClick={() => switchLogoVersion(revision.id)}
+                        className={`relative px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 shadow-sm border ${
+                          activeLogoId === revision.id
+                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-md transform scale-105'
+                            : 'bg-white text-gray-700 border-gray-200 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-700'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-2">
+                          <svg 
+                            className="w-4 h-4" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            viewBox="0 0 24 24"
+                          >
+                            <path 
+                              strokeLinecap="round" 
+                              strokeLinejoin="round" 
+                              strokeWidth={2} 
+                              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" 
+                            />
+                          </svg>
+                          <span>Rev {revision.revisionNumber}</span>
+                        </div>
+                        {activeLogoId === revision.id && (
+                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></div>
+                        )}
+                      </button>
+                    ))}
+                    
+                    {/* Add Revision Hint (when not at limit) */}
+                    {originalLogo && revisions.length < 3 && (
+                      <div className="flex items-center px-3 py-2.5 rounded-lg border-2 border-dashed border-gray-300 text-gray-500">
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        <span className="text-xs font-medium">Create revision</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
                 
-                {originalLogo && revisions.length < 3 && (
-                  <div className="flex items-center ml-auto">
-                    <span className="text-sm text-gray-600 font-medium">
-                      {revisions.length}/3 revisions used
+                {/* Current Version Info */}
+                <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                    <span className="text-sm font-medium text-blue-800">
+                      Currently viewing: {' '}
+                      {activeLogoId === originalLogo?.id 
+                        ? 'Original Logo' 
+                        : `Revision ${revisions.find(r => r.id === activeLogoId)?.revisionNumber}`
+                      }
                     </span>
                   </div>
-                )}
+                  <p className="text-xs text-blue-600 mt-1">
+                    Generated on {formatDate(logo.createdAt)}
+                  </p>
+                </div>
               </div>
             )}
-            
+
             <ImageDisplay imageDataUri={logo.imageDataUri} />
             
             <div className="mt-8 flex justify-center">

@@ -762,3 +762,137 @@ body {
 .spinner {
   margin: 0 auto !important;
 }
+
+/* Add this to your globals.css file for enhanced revision switcher styling */
+
+/* Revision Switcher Animations and Enhancements */
+.revision-switcher-container {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+}
+
+/* Smooth scaling animation for active buttons */
+@keyframes buttonActivate {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1.05); }
+}
+
+/* Active revision button animation */
+.revision-btn-active {
+  animation: buttonActivate 0.3s ease-out;
+}
+
+/* Hover effect for non-active buttons */
+.revision-btn:not(.revision-btn-active):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -1px rgb(0 0 0 / 0.06);
+}
+
+/* Pulse animation for the status indicator */
+@keyframes statusPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.status-pulse {
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+/* Gradient border effect for active buttons */
+.revision-btn-active::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  padding: 1px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6, #06b6d4);
+  border-radius: inherit;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: xor;
+  -webkit-mask-composite: xor;
+  z-index: -1;
+}
+
+/* Subtle glow effect for active buttons */
+.revision-btn-active {
+  box-shadow: 
+    0 4px 6px -1px rgb(99 102 241 / 0.3), 
+    0 2px 4px -1px rgb(99 102 241 / 0.06),
+    0 0 0 1px rgb(99 102 241 / 0.1);
+}
+
+/* Loading state for buttons */
+.revision-btn-loading {
+  opacity: 0.7;
+  cursor: not-allowed;
+  position: relative;
+}
+
+.revision-btn-loading::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  margin: auto;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  border-right-color: transparent;
+  animation: spin 0.8s linear infinite;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Enhanced version counter styling */
+.version-counter {
+  background: linear-gradient(135deg, #10b981, #059669);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 600;
+}
+
+/* Responsive design for mobile */
+@media (max-width: 640px) {
+  .revision-switcher-container {
+    padding: 12px;
+  }
+  
+  .revision-btn {
+    padding: 8px 12px !important;
+    font-size: 12px !important;
+  }
+  
+  .revision-btn svg {
+    width: 14px !important;
+    height: 14px !important;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .revision-switcher-container {
+    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+    border-color: #374151;
+  }
+  
+  .revision-btn:not(.revision-btn-active) {
+    background-color: #374151;
+    color: #d1d5db;
+    border-color: #4b5563;
+  }
+  
+  .revision-btn:not(.revision-btn-active):hover {
+    background-color: #4b5563;
+    border-color: #6366f1;
+    color: #a5b4fc;
+  }
+}
