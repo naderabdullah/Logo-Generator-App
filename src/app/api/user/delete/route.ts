@@ -75,14 +75,12 @@ export async function DELETE(request: NextRequest) {
       await dynamoDB.update({
         TableName: process.env.DYNAMODB_USERS_TABLE || 'users',
         Key: { id: user.id },
-        UpdateExpression: 'SET #status = :status, #deactivatedAt = :deactivatedAt',
+        UpdateExpression: 'SET #status = :status',
         ExpressionAttributeNames: {
-          '#status': 'Status',
-          '#deactivatedAt': 'deactivatedAt'
+          '#status': 'Status'
         },
         ExpressionAttributeValues: {
-          ':status': 'inactive',
-          ':deactivatedAt': new Date().toISOString()
+          ':status': 'inactive'
         }
       }).promise();
       

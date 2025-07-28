@@ -68,6 +68,7 @@ export default function AccountPage() {
       if (response.ok) {
         // Clear local storage and IndexedDB if needed
         localStorage.clear();
+        sessionStorage.clear();
         
         // Redirect to login page with a message
         router.push('/login?message=account-deleted');

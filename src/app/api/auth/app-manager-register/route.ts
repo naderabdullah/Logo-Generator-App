@@ -84,6 +84,7 @@ interface DynamoUser {
   createdAt: string;
   lastLogin: string;
   appManagerData: any;
+  Status?: string;
 }
 
 // Function to save user credentials to DynamoDB
@@ -114,25 +115,28 @@ async function saveToDynamoDB(
       await dynamoDB.update({
         TableName: process.env.DYNAMODB_USERS_TABLE || 'users',
         Key: { id: existingUser.id },
-        UpdateExpression: 'SET #pwd = :password, lastLogin = :lastLogin, appManagerData = :appManagerData',
+        UpdateExpression: 'SET #pwd = :password, lastLogin = :lastLogin, appManagerData = :appManagerData, #status = :status',
         ExpressionAttributeNames: {
-          '#pwd': 'password'
+          '#pwd': 'password',
+          '#status': 'Status'
         },
         ExpressionAttributeValues: {
           ':password': hashedPassword,
           ':lastLogin': new Date().toISOString(),
-          ':appManagerData': appManagerResponse
+          ':appManagerData': appManagerResponse,
+          ':status': 'active'
         }
       }).promise();
       
-      // Return the updated user object (no logo fields)
+      // Return the updated user object
       const updatedUser: DynamoUser = {
         id: existingUser.id,
         email: existingUser.email,
         password: hashedPassword,
         createdAt: existingUser.createdAt || new Date().toISOString(),
         lastLogin: new Date().toISOString(),
-        appManagerData: appManagerResponse
+        appManagerData: appManagerResponse,
+        Status: 'active'
       };
       
       return updatedUser;
@@ -148,7 +152,8 @@ async function saveToDynamoDB(
         password: hashedPassword,
         createdAt: new Date().toISOString(),
         lastLogin: new Date().toISOString(),
-        appManagerData: appManagerResponse
+        appManagerData: appManagerResponse,
+        Status: 'active'
       };
       
       await dynamoDB.put({
@@ -156,7 +161,7 @@ async function saveToDynamoDB(
         Item: newUser
       }).promise();
       
-      console.log(`✅ Successfully created DynamoDB user: ${registrationData.email} (5 free logos)`);
+      console.log(`✅ Successfully created DynamoDB user: ${registrationData.email} with active status`);
       return newUser;
     }
   } catch (error) {

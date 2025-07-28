@@ -76,14 +76,23 @@ export async function POST(request: NextRequest) {
     const user = result.Items[0];
     console.log('User found, checking status and password...');
     
-    // Check if user account is inactive (soft deleted)
+    // Check if user account is active (explicit active status required)
     const userStatus = user.Status || user.status; // Handle both uppercase and lowercase
-    if (userStatus === 'inactive') {
-      console.log('User account is inactive:', email);
-      return NextResponse.json(
-        { error: 'This account has been deactivated. Please contact support if you need to reactivate your account.' },
-        { status: 403 }
-      );
+    if (userStatus !== 'active') {
+      console.log('User account is not active, status:', userStatus, 'for email:', email);
+      
+      // Provide specific error messages based on status
+      if (userStatus === 'inactive') {
+        return NextResponse.json(
+          { error: 'This account has been deactivated. Please contact support if you need to reactivate your account.' },
+          { status: 403 }
+        );
+      } else {
+        return NextResponse.json(
+          { error: 'Account is not active. Please contact support to activate your account.' },
+          { status: 403 }
+        );
+      }
     }
     
     // Compare passwords

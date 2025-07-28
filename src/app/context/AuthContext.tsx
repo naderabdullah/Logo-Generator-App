@@ -155,9 +155,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (typeof window !== 'undefined') {
           localStorage.removeItem('user');
           sessionStorage.removeItem('user');
+          
+          // Also clear IndexedDB to prevent stale data
+          const { resetDatabase } = await import('../utils/indexedDBUtils');
+          await resetDatabase();
+          console.log('AuthContext: IndexedDB cleared on logout');
         }
       } catch (err) {
         console.error('AuthContext: Error clearing storage:', err);
+        // Don't block logout if clearing fails
       }
     }
   }, []);

@@ -1,4 +1,4 @@
-// src/app/api/user/route.ts - Updated to check for inactive users
+// src/app/api/user/route.ts - Updated to check for active/pending users only
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { DynamoDB } from 'aws-sdk';
@@ -11,8 +11,16 @@ const dynamoDB = new DynamoDB.DocumentClient({
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
 });
 
+// Define user type
+interface User {
+  id: number;
+  email: string;
+  logosCreated: number;
+  logosLimit: number;
+}
+
 // Function to get current user from request
-async function getCurrentUser(request: NextRequest) {
+async function getCurrentUser(request: NextRequest): Promise<User | null | 'not_allowed'> {
   try {
     // Get access token from cookies
     const accessToken = request.cookies.get('access_token')?.value;
@@ -37,11 +45,11 @@ async function getCurrentUser(request: NextRequest) {
       return null;
     }
     
-    // Check if user account is inactive (soft deleted)
+    // Check if user account status allows access ('active' or 'pending' only)
     const userStatus = dynamoResult.Item.Status || dynamoResult.Item.status;
-    if (userStatus === 'inactive') {
-      console.log('User account is inactive during auth check:', dynamoResult.Item.email);
-      return 'inactive'; // Return a special value to distinguish from not found
+    if (userStatus !== 'active' && userStatus !== 'pending') {
+      console.log('User account status does not allow access, status:', userStatus, 'for email:', dynamoResult.Item.email);
+      return 'not_allowed'; // Return a special value to distinguish from not found
     }
     
     // Get user logo credits from Supabase
@@ -76,10 +84,10 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // Check if user is inactive
-    if (user === 'inactive') {
+    // Check if user is not allowed
+    if (user === 'not_allowed') {
       return NextResponse.json(
-        { error: 'Account deactivated' },
+        { error: 'Account not active' },
         { status: 401 }
       );
     }
@@ -112,10 +120,10 @@ export async function PATCH(request: NextRequest) {
       );
     }
     
-    // Check if user is inactive
-    if (user === 'inactive') {
+    // Check if user is not allowed
+    if (user === 'not_allowed') {
       return NextResponse.json(
-        { error: 'Account deactivated' },
+        { error: 'Account not active' },
         { status: 401 }
       );
     }
