@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
 
     // Prepare the image generation request
     const imageRequest: any = {
-      model: 'dall-e-3',
+      model: 'gpt-image-1',
       prompt: prompt,
       n: 1,
       size: '1024x1024',
