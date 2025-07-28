@@ -1,8 +1,8 @@
-// src/app/api/stripe/webhook/route.ts
+// src/app/api/stripe/webhook/route.ts - FIXED VERSION
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { DynamoDB } from 'aws-sdk';
-import { buffer } from 'micro';
+import { supabaseAuth } from '../../../../lib/supabaseAuth';
 
 // Initialize Stripe only if the API key is available
 let stripe: Stripe | undefined;
@@ -12,7 +12,7 @@ if (process.env.STRIPE_SECRET_KEY) {
   });
 }
 
-// Initialize DynamoDB client
+// Initialize DynamoDB client (still needed to get user email from ID)
 const dynamoDB = new DynamoDB.DocumentClient({
   region: process.env.AWS_REGION || 'us-east-1',
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -25,41 +25,58 @@ async function getRawBody(request: NextRequest): Promise<Buffer> {
   return Buffer.from(text);
 }
 
-// Function to update user's logo limit
+// FIXED: Function to update user's logo limit in SUPABASE (not DynamoDB)
 async function updateUserLogoLimit(userId: string, quantity: number) {
   try {
-    // Get current user data
+    console.log(`Starting credit update for user ${userId}, adding ${quantity} credits`);
+    
+    // Step 1: Get user email from DynamoDB using their ID
     const result = await dynamoDB.get({
       TableName: process.env.DYNAMODB_USERS_TABLE || 'users',
       Key: { id: parseInt(userId) }
     }).promise();
     
-    const user = result.Item;
+    const dynamoUser = result.Item;
     
-    if (!user) {
-      throw new Error(`User with ID ${userId} not found`);
+    if (!dynamoUser) {
+      throw new Error(`User with ID ${userId} not found in DynamoDB`);
     }
     
-    // Calculate new limit - ALWAYS add to existing limit
-    const currentLimit = user.logosLimit || 0;
+    console.log(`Found user in DynamoDB: ${dynamoUser.email}`);
+    
+    // Step 2: Get current user data from Supabase
+    const supabaseUser = await supabaseAuth.getUserByEmail(dynamoUser.email);
+    
+    if (!supabaseUser) {
+      // If user doesn't exist in Supabase, create them with the purchased credits
+      console.log(`User ${dynamoUser.email} not found in Supabase, creating with ${quantity} credits`);
+      
+      const newUser = await supabaseAuth.createUser({
+        email: dynamoUser.email,
+        logosCreated: 0,
+        logosLimit: quantity // Start with the purchased amount
+      });
+      
+      console.log(`Created new Supabase user: ${dynamoUser.email} with ${quantity} logo credits`);
+      return { success: true, newLimit: quantity };
+    }
+    
+    // Step 3: Calculate new limit - ALWAYS add to existing limit
+    const currentLimit = supabaseUser.logosLimit || 0;
     const newLimit = currentLimit + quantity;
     
-    console.log(`Updating user ${userId} logo limit: ${currentLimit} + ${quantity} = ${newLimit}`);
+    console.log(`Updating Supabase user ${dynamoUser.email} logo limit: ${currentLimit} + ${quantity} = ${newLimit}`);
     
-    // Update the user's logo limit
-    await dynamoDB.update({
-      TableName: process.env.DYNAMODB_USERS_TABLE || 'users',
-      Key: { id: parseInt(userId) },
-      UpdateExpression: 'SET logosLimit = :newLimit',
-      ExpressionAttributeValues: {
-        ':newLimit': newLimit
-      }
-    }).promise();
+    // Step 4: Update the user's logo limit in SUPABASE
+    const updatedUser = await supabaseAuth.updateUser(supabaseUser.id, {
+      logosLimit: newLimit
+    });
     
-    console.log(`User ${userId} logo limit updated from ${currentLimit} to ${newLimit}`);
-    return { success: true, newLimit };
+    console.log(`✅ User ${dynamoUser.email} logo limit updated from ${currentLimit} to ${newLimit} in Supabase`);
+    return { success: true, newLimit, updatedUser };
+    
   } catch (error) {
-    console.error('Error updating user logo limit:', error);
+    console.error('❌ Error updating user logo limit:', error);
     throw error;
   }
 }
@@ -80,6 +97,7 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+    
     // Get the raw body for signature verification
     const rawBody = await getRawBody(request);
     
@@ -127,11 +145,11 @@ export async function POST(request: NextRequest) {
           );
         }
         
-        // Update user's logo limit
+        // FIXED: Update user's logo limit in SUPABASE (not DynamoDB)
         await updateUserLogoLimit(userId, quantity);
         
         // Log successful payment
-        console.log(`Payment successful for user ${userId}, added ${quantity} logo credits`);
+        console.log(`✅ Payment successful for user ${userId}, added ${quantity} logo credits to Supabase`);
       }
     }
     
