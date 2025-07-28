@@ -896,3 +896,28 @@ body {
     color: #a5b4fc;
   }
 }
+
+/* Add this to your src/app/globals.css file */
+
+/* Lock scrolling specifically for login page */
+body[data-page="login"],
+html:has(body[data-page="login"]) {
+  overflow: hidden !important;
+  height: 100% !important;
+}
+
+/* Optional: Add smooth transitions for better UX */
+.login-container {
+  transition: all 0.3s ease-in-out;
+}
+
+/* Ensure the login form is always centered and responsive */
+@media (max-height: 600px) {
+  .login-container {
+    padding: 1rem;
+  }
+  
+  .login-container .bg-white {
+    padding: 1.5rem;
+  }
+}
