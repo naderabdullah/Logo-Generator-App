@@ -1,11 +1,28 @@
-// src/app/logos/route.ts - UPDATED for Supabase users table
+// src/app/logos/route.ts - FIXED VERSION with proper authentication
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI, { toFile } from 'openai';
 import jwt from 'jsonwebtoken';
+import { DynamoDB } from 'aws-sdk';
 import { supabaseAuth } from '../../lib/supabaseAuth';
 
-// Function to get current user from request
-async function getCurrentUser(request: NextRequest) {
+// Initialize DynamoDB client (needed to get user email from ID)
+const dynamoDB = new DynamoDB.DocumentClient({
+  region: process.env.AWS_REGION || 'us-east-1',
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+});
+
+// User interface for the combined user data
+interface AuthenticatedUser {
+  id: number; // DynamoDB ID
+  supabaseId: number; // Supabase ID
+  email: string;
+  logosCreated: number;
+  logosLimit: number;
+}
+
+// FIXED: Function to get current user from request (matches /api/user/route.ts pattern)
+async function getCurrentUser(request: NextRequest): Promise<AuthenticatedUser | null | 'not_allowed'> {
   try {
     // Get access token from cookies
     const accessToken = request.cookies.get('access_token')?.value;
@@ -20,10 +37,38 @@ async function getCurrentUser(request: NextRequest) {
       process.env.JWT_ACCESS_TOKEN_SECRET || 'access-token-secret'
     ) as { id: number, email: string };
     
-    // Get user from Supabase
-    const user = await supabaseAuth.getUserById(decoded.id);
+    // FIXED: Get user auth data from DynamoDB first
+    const dynamoResult = await dynamoDB.get({
+      TableName: process.env.DYNAMODB_USERS_TABLE || 'users',
+      Key: { id: decoded.id }
+    }).promise();
     
-    return user;
+    if (!dynamoResult.Item) {
+      return null;
+    }
+    
+    // Check if user account status allows access ('active' or 'pending' only)
+    const userStatus = dynamoResult.Item.Status || dynamoResult.Item.status;
+    if (userStatus !== 'active' && userStatus !== 'pending') {
+      console.log('User account status does not allow access, status:', userStatus, 'for email:', dynamoResult.Item.email);
+      return 'not_allowed'; // Return a special value to distinguish from not found
+    }
+    
+    // FIXED: Get user logo credits from Supabase using EMAIL (not ID)
+    const supabaseUser = await supabaseAuth.getUserByEmail(dynamoResult.Item.email);
+    
+    if (!supabaseUser) {
+      return null;
+    }
+    
+    // FIXED: Combine auth data from DynamoDB with logo data from Supabase
+    return {
+      id: dynamoResult.Item.id, // Keep DynamoDB ID for compatibility
+      supabaseId: supabaseUser.id, // Add Supabase ID for logo updates
+      email: dynamoResult.Item.email,
+      logosCreated: supabaseUser.logosCreated,
+      logosLimit: supabaseUser.logosLimit
+    };
   } catch (error) {
     console.error('Error getting current user:', error);
     return null;
@@ -38,6 +83,14 @@ export async function GET(request: NextRequest) {
     if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
+    // Check if user is not allowed
+    if (user === 'not_allowed') {
+      return NextResponse.json(
+        { error: 'Account not active' },
         { status: 401 }
       );
     }
@@ -83,6 +136,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if user is not allowed
+    if (user === 'not_allowed') {
+      return NextResponse.json(
+        { error: 'Account not active' },
+        { status: 401 }
+      );
+    }
+
     // Check if user has remaining credits (only for new logos, not revisions)
     if (!isRevision && user.logosCreated >= user.logosLimit) {
       return NextResponse.json(
@@ -96,74 +157,95 @@ export async function POST(request: NextRequest) {
       apiKey: process.env.OPENAI_API_KEY,
     });
 
-    // Build the image generation request
-    let imageRequest: any = {
-      model: "dall-e-3",
+    // Prepare the image generation request
+    const imageRequest: any = {
+      model: 'dall-e-3',
       prompt: prompt,
       n: 1,
-      size: "1024x1024",
-      quality: "standard",
-      response_format: "b64_json",
+      size: '1024x1024',
+      quality: 'standard',
+      response_format: 'b64_json'
     };
 
-    // Handle reference image if provided
+    // Add reference image if provided
     if (referenceImage) {
-      const imageBuffer = Buffer.from(await referenceImage.arrayBuffer());
-      const imageFile = await toFile(imageBuffer, referenceImage.name, { type: referenceImage.type });
+      // Convert file to buffer for OpenAI
+      const buffer = Buffer.from(await referenceImage.arrayBuffer());
+      const file = await toFile(buffer, referenceImage.name, {
+        type: referenceImage.type
+      });
       
-      // Note: This example uses DALL-E 3. For image-to-image generation,
-      // you might want to use a different approach or model
-      imageRequest.prompt = `Based on this reference image, ${prompt}`;
+      // Note: DALL-E 3 doesn't support reference images directly
+      // You might need to modify the prompt instead or use a different approach
+      imageRequest.prompt += ` (style reference provided)`;
     }
 
-    console.log(`Generating logo for user ${user.email}: ${prompt.substring(0, 50)}...`);
-
+    console.log('Generating image with OpenAI...');
+    
     // Generate the image
     const response = await openai.images.generate(imageRequest);
+    
+    if (!response.data || response.data.length === 0) {
+      throw new Error('No image generated');
+    }
 
-    // Process the response
-    let imageData: any;
-    if (response?.data?.[0]?.b64_json) {
-      imageData = {
-        type: 'base64',
-        data: response.data[0].b64_json
-      };
-    } else if (response?.data?.[0]?.url) {
-      imageData = {
-        type: 'url',
-        data: response.data[0].url
-      };
-    } else {
-      throw new Error('No image data received in the expected format');
-    }
+    const imageData = response.data[0];
+    const base64Image = imageData.b64_json;
     
-    // Update the user's logo count if this is not a revision
-    let updatedUser = user;
+    if (!base64Image) {
+      throw new Error('No image data received');
+    }
+
+    // Update user's logo count in Supabase (only for new logos, not revisions)
+    let finalLogosCreated = user.logosCreated;
+    let finalLogosLimit = user.logosLimit;
+    
     if (!isRevision) {
-      updatedUser = await supabaseAuth.updateLogoCount(user.id, 1);
-      console.log(`Updated logo count for ${user.email}: ${updatedUser.logosCreated}/${updatedUser.logosLimit}`);
+      const supabaseUpdatedUser = await supabaseAuth.updateLogoCount(user.supabaseId, 1);
+      console.log(`Updated logo count for user ${user.email}: ${supabaseUpdatedUser.logosCreated}/${supabaseUpdatedUser.logosLimit}`);
+      
+      // Update our counts with the new values
+      finalLogosCreated = supabaseUpdatedUser.logosCreated;
+      finalLogosLimit = supabaseUpdatedUser.logosLimit;
     }
-    
-    // Return success with the image data
+
+    // Return the generated image and updated usage statistics
     return NextResponse.json({
-      success: true,
-      message: 'Logo generated successfully',
-      image: imageData,
+      image: {
+        type: 'base64',
+        data: base64Image
+      },
       usage: {
-        logosCreated: updatedUser.logosCreated,
-        logosLimit: updatedUser.logosLimit,
-        remainingLogos: Math.max(0, updatedUser.logosLimit - updatedUser.logosCreated)
-      }
+        logosCreated: finalLogosCreated,
+        logosLimit: finalLogosLimit,
+        remainingLogos: Math.max(0, finalLogosLimit - finalLogosCreated)
+      },
+      isRevision: isRevision,
+      message: isRevision 
+        ? 'Logo revision generated successfully' 
+        : 'Logo generated successfully'
     });
-    
+
   } catch (error: any) {
     console.error('Error generating logo:', error);
     
+    // Handle specific OpenAI errors
+    if (error.code === 'content_policy_violation') {
+      return NextResponse.json(
+        { error: 'The image prompt violates OpenAI content policy. Please try a different description.' },
+        { status: 400 }
+      );
+    }
+    
+    if (error.code === 'rate_limit_exceeded') {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Please try again in a moment.' },
+        { status: 429 }
+      );
+    }
+    
     return NextResponse.json(
-      { 
-        error: 'Failed to generate logo', 
-        details: error.message
-      },
+      { error: error.message || 'Failed to generate logo' },
       { status: 500 }
     );
   }
