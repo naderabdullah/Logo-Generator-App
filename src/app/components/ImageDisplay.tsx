@@ -172,10 +172,77 @@ export default function ImageDisplay({ imageDataUri }: ImageDisplayProps) {
     if (!navigator.share) return;
 
     try {
-      const response = await fetch(imageDataUri);
-      const blob = await response.blob();
-      const file = new File([blob], `logo-${Date.now()}.png`, { type: 'image/png' });
+      let file: File;
       
+      if (selectedFormat === 'svg') {
+        // Handle SVG sharing
+        let svgToShare = svgContent;
+        
+        // If SVG content doesn't exist yet, convert it
+        if (!svgToShare) {
+          try {
+            setConversionStatus('converting');
+            setConversionProgress('Converting to SVG for sharing...');
+            svgToShare = await convertToSVGServerSide();
+            setSvgContent(svgToShare);
+            setConversionStatus('success');
+          } catch (error: any) {
+            console.error('SVG conversion for sharing failed:', error);
+            setConversionStatus('idle');
+            setConversionProgress('');
+            alert('SVG conversion failed. Sharing as PNG instead.');
+            svgToShare = null; // Ensure it's null so we fall back to PNG
+          }
+        }
+        
+        // Create SVG file if conversion was successful, otherwise fall back to PNG
+        if (svgToShare) {
+          const svgBlob = new Blob([svgToShare], { type: 'image/svg+xml' });
+          file = new File([svgBlob], `logo-${Date.now()}.svg`, { type: 'image/svg+xml' });
+        } else {
+          // Fall back to PNG sharing
+          const response = await fetch(imageDataUri);
+          const blob = await response.blob();
+          file = new File([blob], `logo-${Date.now()}.png`, { type: 'image/png' });
+        }
+      } else if (selectedFormat === 'jpeg') {
+        // Convert to JPEG for sharing
+        file = await new Promise<File>((resolve, reject) => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
+          
+          img.onload = () => {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            if (ctx) {
+              ctx.drawImage(img, 0, 0);
+              canvas.toBlob((blob) => {
+                if (blob) {
+                  resolve(new File([blob], `logo-${Date.now()}.jpg`, { type: 'image/jpeg' }));
+                } else {
+                  reject(new Error('Failed to create JPEG blob'));
+                }
+              }, 'image/jpeg', 0.9);
+            } else {
+              reject(new Error('Canvas context not available'));
+            }
+          };
+          img.onerror = () => reject(new Error('Failed to load image'));
+          img.src = imageDataUri;
+        });
+      } else {
+        // Default to PNG (or if selectedFormat is 'png')
+        const response = await fetch(imageDataUri);
+        const blob = await response.blob();
+        file = new File([blob], `logo-${Date.now()}.png`, { type: 'image/png' });
+      }
+      
+      // Reset conversion status and progress after successful conversion
+      setConversionStatus('idle');
+      setConversionProgress('');
+      
+      // Share the file
       await navigator.share({
         title: 'My Generated Logo',
         text: 'Check out this logo I made with the AI Logo Generator!',
@@ -183,6 +250,9 @@ export default function ImageDisplay({ imageDataUri }: ImageDisplayProps) {
       });
     } catch (error) {
       console.error('Error sharing:', error);
+      setConversionStatus('idle');
+      setConversionProgress('');
+      alert('Failed to share logo. Please try again.');
     }
   };
 

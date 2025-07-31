@@ -99,6 +99,13 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   // Custom color state
   const [customColors, setCustomColors] = useState<string[]>(['#6366f1']);
 
+  const useReferenceParam = () => {
+    const searchParams = useSearchParams();
+    return searchParams?.get('reference') || undefined;
+  };
+
+  const referenceLogoId = useReferenceParam();
+
   useEffect(() => {
     const checkUsageLimits = async () => {
       try {
@@ -205,6 +212,45 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       loadLogoData();
     }
   }, [editLogoId, setLoading, setError]);
+
+  useEffect(() => {
+    if (referenceLogoId && !editLogoId) { // Only if not in edit mode
+      const loadReferenceLogoData = async () => {
+        try {
+          setLoading(true);
+          const logoData = await getLogo(referenceLogoId);
+          
+          if (logoData) {
+            // IMPORTANT: Only set the reference image, don't populate other fields
+            // This differs from edit mode which populates all form fields
+            if (logoData.imageDataUri) {
+              setReferenceImagePreview(logoData.imageDataUri);
+              
+              try {
+                const response = await fetch(logoData.imageDataUri);
+                const blob = await response.blob();
+                const file = new File([blob], 'reference-logo.png', { type: 'image/png' });
+                setReferenceImage(file);
+              } catch (err) {
+                console.error('Error converting data URI to File:', err);
+              }
+            }
+            
+            // Set this as a new logo creation (not revision)
+            setIsRevision(false);
+            setOriginalLogoId(undefined);
+          }
+        } catch (err) {
+          console.error('Error loading reference logo data:', err);
+          setError('Failed to load reference logo data');
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      loadReferenceLogoData();
+    }
+  }, [referenceLogoId, editLogoId, setLoading, setError]);
 
   const handleReferenceImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
@@ -393,16 +439,14 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       overallStyle &&
       colorScheme &&
       symbolFocus &&
-      brandPersonality &&
-      industry
+      brandPersonality
     );
   }, [
     companyName,
     overallStyle,
     colorScheme,
     symbolFocus,
-    brandPersonality,
-    industry
+    brandPersonality
   ]);
 
   // FIXED: Updated handleGenerateLogo function
@@ -595,7 +639,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               marginBottom: 'var(--space-sm)',
               marginTop: '0'
             }}>
-              {isRevision ? 'Revise Logo' : 'Create New Logo'}
+              {isRevision ? 'Revise Logo' : referenceLogoId ? 'Create New Logo (Using Reference)' : 'Create New Logo'}
             </h3>
 
             <div className="mb-sm">
@@ -635,7 +679,11 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
 
             <div className="mb-sm">
               <label htmlFor="reference-image" className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
-                Reference Image {isRevision ? '(Current Logo)' : '(Optional)'}
+                Reference Image {
+                  isRevision ? '(Current Logo)' : 
+                  referenceLogoId ? '(Using Selected Logo)' : 
+                  '(Optional)'
+                }
               </label>
               <label 
                 className="block"
@@ -862,15 +910,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                 brandPersonalityOptions,
                 true
               )}
-              
-              {renderDropdown(
-                "industry",
-                'Industry/Niche',
-                industry,
-                (e) => setIndustry(e.target.value),
-                industryOptions,
-                true
-              )}
             </div>
 
             <div style={{ marginBottom: 'var(--space-sm)' }}>
@@ -908,6 +947,15 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                 </h3>
                 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0', margin: '0 auto' }}>
+                  
+                  {renderDropdown(
+                    "industry",
+                    'Industry/Niche',
+                    industry,
+                    (e) => setIndustry(e.target.value),
+                    industryOptions
+                  )}
+
                   {renderDropdown(
                     "typography",
                     'Typography Style',

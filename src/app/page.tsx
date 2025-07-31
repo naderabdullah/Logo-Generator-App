@@ -30,19 +30,20 @@ function GenerateFormWithParams() {
 
   return (
     <>
+      {/* Error Display - Now shows ABOVE the form */}
+      {error && !loading && (
+        <div className="mt-md p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg text-center mb-md">
+          <p className="font-bold">Error</p>
+          <p>{error}</p>
+        </div>
+      )}
+
       <GenerateForm
         key="generate-form"
         setLoading={handleSetLoading}
         setImageDataUri={handleSetImageDataUri}
         setError={handleSetError}
       />
-
-      {error && !loading && (
-        <div className="mt-md p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg text-center">
-          <p className="font-bold">Error</p>
-          <p>{error}</p>
-        </div>
-      )}
     </>
   );
 }

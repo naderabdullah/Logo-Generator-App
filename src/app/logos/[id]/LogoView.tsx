@@ -43,22 +43,25 @@ export default function LogoViewClient({ logoId }: LogoViewClientProps) {
         // Set the logo name
         setLogoName(logoData.name || 'Untitled');
         
-        // Determine if this is an original or a revision
-        if (logoData.isRevision && logoData.originalLogoId) {
-          // If it's a revision, get the original
-          const originalData = await getLogo(logoData.originalLogoId);
-          if (originalData) {
-            setOriginalLogo(originalData);
-            // Get all revisions of the original
-            const allRevisions = await getRevisionsForLogo(logoData.originalLogoId);
-            setRevisions(allRevisions);
-          }
+        // Determine if this is an original logo or a revision
+        let originalId = logoData.originalLogoId || logoData.id;
+        
+        // If this logo has an originalLogoId, fetch the original
+        if (logoData.originalLogoId) {
+          const originalLogoData = await getLogo(logoData.originalLogoId);
+          setOriginalLogo(originalLogoData);
+          originalId = logoData.originalLogoId;
         } else {
-          // If it's an original, set it as the original and get its revisions
+          // This is the original logo
           setOriginalLogo(logoData);
-          const allRevisions = await getRevisionsForLogo(logoData.id);
-          setRevisions(allRevisions);
+          originalId = logoData.id;
         }
+        
+        // Fetch all revisions for the original logo
+        const allRevisions = await getRevisionsForLogo(originalId);
+        setRevisions(allRevisions);
+        
+        setError(null);
       } catch (err) {
         console.error('Error fetching logo:', err);
         setError('Failed to load logo');
@@ -67,31 +70,20 @@ export default function LogoViewClient({ logoId }: LogoViewClientProps) {
       }
     };
     
-    if (logoId) {
-      fetchLogo();
-    } else {
-      setError('Invalid logo ID');
-      setLoading(false);
-    }
+    fetchLogo();
   }, [logoId]);
   
-  // Handle switching to a different logo version
   const switchLogoVersion = async (id: string) => {
     try {
-      // If we're already displaying this logo, do nothing
-      if (id === activeLogoId) return;
-      
       setLoading(true);
       const logoData = await getLogo(id);
       
-      if (!logoData) {
-        setError('Logo version not found');
-      } else {
+      if (logoData) {
         setLogo(logoData);
         setActiveLogoId(id);
-        // Update the logo name
         setLogoName(logoData.name || 'Untitled');
-        // Update the URL without reloading the page
+        
+        // Update the URL without triggering a page reload
         window.history.pushState({}, '', `/logos/${id}`);
       }
     } catch (err) {
@@ -171,6 +163,38 @@ export default function LogoViewClient({ logoId }: LogoViewClientProps) {
     // Create a revision based on whatever version the user is currently viewing
     if (activeLogoId) {
       router.push(`/?edit=${activeLogoId}`);
+    }
+  };
+
+  const handleCreateNewLogo = async () => {
+    try {
+      // Check if user can create a new original logo
+      const canCreate = await canCreateOriginalLogo();
+      if (!canCreate) {
+        setShowLimitModal(true);
+        return;
+      }
+      // Navigate to a clean form for creating a new logo
+      router.push('/');
+    } catch (error) {
+      console.error('Error checking logo creation limit:', error);
+      setShowLimitModal(true);
+    }
+  };
+
+  const handleCreateNewLogoWithReference = async () => {
+    try {
+      // Check if user can create a new original logo
+      const canCreate = await canCreateOriginalLogo();
+      if (!canCreate) {
+        setShowLimitModal(true);
+        return;
+      }
+      // Navigate to generate form with current logo as reference
+      router.push(`/?reference=${activeLogoId}`);
+    } catch (error) {
+      console.error('Error checking logo creation limit:', error);
+      setShowLimitModal(true);
     }
   };
   
@@ -304,7 +328,7 @@ export default function LogoViewClient({ logoId }: LogoViewClientProps) {
                     )}
                     
                     {/* Revision Buttons */}
-                    {revisions.map((revision, index) => (
+                    {revisions.map((revision) => (
                       <button
                         key={revision.id}
                         onClick={() => switchLogoVersion(revision.id)}
@@ -390,15 +414,43 @@ export default function LogoViewClient({ logoId }: LogoViewClientProps) {
                 </div>
               )}
               
-              <button 
-                onClick={handleEdit}
-                className="btn-revise-logo"
-              >
-                <svg className="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                {revisions.length >= 3 ? 'Create New Logo' : 'Revise This Logo'}
-              </button>
+              {/* Button Container - Three buttons */}
+              <div className="flex flex-col sm:flex-row gap-3 w-full max-w-2xl">
+                {/* Revise This Logo Button - Only show if revisions available */}
+                {revisions.length < 3 && (
+                  <button 
+                    onClick={handleEdit}
+                    className="btn-revise-logo flex-1"
+                  >
+                    <svg className="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Revise This Logo
+                  </button>
+                )}
+                
+                {/* Create New Logo Button - Always show */}
+                <button 
+                  onClick={handleCreateNewLogo}
+                  className="btn-revise-logo flex-1"
+                >
+                  <svg className="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Create New Logo
+                </button>
+
+                {/* Create New Logo with Reference Button - Always show */}
+                <button 
+                  onClick={handleCreateNewLogoWithReference}
+                  className="btn-revise-logo flex-1"
+                >
+                  <svg className="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  Reference This Logo
+                </button>
+              </div>
             </div>
           </div>
           
@@ -480,83 +532,51 @@ export default function LogoViewClient({ logoId }: LogoViewClientProps) {
               
               {logo.parameters.applicationContext && (
                 <div>
-                  <h4 className="font-medium text-gray-700">Application Context</h4>
+                  <h4 className="font-medium text-gray-700">Application</h4>
                   <p>{logo.parameters.applicationContext}</p>
                 </div>
               )}
             </div>
           </div>
+          
+          <div className="mt-6 text-center">
+            <Link 
+              href="/history" 
+              className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+            >
+              ← Back to Logo History
+            </Link>
+          </div>
         </div>
       )}
+      
+      {/* Limit Modal */}
       {showLimitModal && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 100,
-          padding: '16px'
-        }}>
-          <div className="card text-center" style={{
-            maxWidth: '28rem',
-            width: '100%',
-            padding: '32px',
-            backgroundColor: 'white',
-            borderRadius: '8px',
-            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)'
-          }}>
-            <div className="text-center mb-6">
-              <svg xmlns="http://www.w3.org/2000/svg" style={{ width: '3rem', height: '3rem', margin: '0 auto', color: '#eab308' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
+            <div className="text-center mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 mx-auto text-yellow-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginTop: '12px', color: '#1f2937' }}>
-                Logo Limit Reached
-              </h3>
+              <h3 className="text-lg font-semibold mb-2">Logo Limit Reached</h3>
+              <p className="text-gray-600 text-sm mb-4">
+                You've reached your logo creation limit. Purchase more credits to continue creating logos.
+              </p>
             </div>
             
-            <p style={{ color: '#6b7280', marginBottom: '24px', lineHeight: '1.5' }}>
-              You've reached your logo creation limit. Please purchase more logos to continue creating new designs.
-            </p>
-            
-            <div className="flex gap-3" style={{ justifyContent: 'center' }}>
+            <div className="flex justify-center gap-3">
               <button
+                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
                 onClick={() => setShowLimitModal(false)}
-                style={{
-                  padding: '8px 16px',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  backgroundColor: 'white',
-                  color: '#374151',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
-                }}
               >
-                Close
+                Cancel
               </button>
-              
               <Link
                 href="/purchase"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '8px 16px',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  backgroundColor: '#6366f1',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  textDecoration: 'none',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
-                }}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                onClick={() => setShowLimitModal(false)}
               >
-                Purchase Logos
+                Purchase Credits
               </Link>
             </div>
           </div>
