@@ -1,3 +1,4 @@
+// src/app/account/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -8,7 +9,6 @@ export default function AccountPage() {
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [processingQuantity, setProcessingQuantity] = useState<number | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -86,40 +86,6 @@ export default function AccountPage() {
     }
   };
 
-  // Function to handle Stripe checkout
-  const handlePurchase = async (quantity: number, price: number) => {
-    try {
-      setProcessingQuantity(quantity);
-      setError(null);
-      
-      const response = await fetch('/api/stripe/create-checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          quantity,
-          priceUsd: price,
-          email: userData?.email
-        }),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create checkout session');
-      }
-      
-      const { url } = await response.json();
-      
-      // Redirect to Stripe Checkout
-      window.location.href = url;
-    } catch (err: any) {
-      console.error('Checkout error:', err);
-      setError(err.message || 'Failed to initiate checkout');
-      setProcessingQuantity(null);
-    }
-  };
-
   // Check for payment success query param
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -154,20 +120,22 @@ export default function AccountPage() {
   
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-700">Loading your account information...</p>
+      <main className="container mx-auto px-4 pb-6 max-w-2xl">
+        <div className="mt-4 card">
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600 mx-auto"></div>
+            <p className="mt-4 text-gray-700">Loading your account information...</p>
+          </div>
         </div>
-      </div>
+      </main>
     );
   }
   
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
-          <div className="text-center">
+      <main className="container mx-auto px-4 pb-6 max-w-2xl">
+        <div className="mt-4 card">
+          <div className="text-center py-8">
             <h2 className="text-xl font-semibold text-red-600 mb-4">Error</h2>
             <p className="text-gray-700 mb-6">{error}</p>
             <Link 
@@ -178,87 +146,106 @@ export default function AccountPage() {
             </Link>
           </div>
         </div>
-      </div>
+      </main>
     );
   }
   
   return (
-    <div className="bg-white pt-20 pb-4 px-4 sm:px-6 lg:px-8 min-h-screen">
-      <div className="max-w-md mx-auto w-full">
+          <main className="container mx-auto px-4 pb-6 max-w-2xl">
+      <div className="mt-4 card">
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold text-indigo-600">My Account</h1>
-          <p className="mt-1 text-gray-600">Manage your logo generator account</p>
+          <p className="text-gray-600 mt-2">Manage your account settings and view your logo usage</p>
         </div>
-        
+
+        {/* Success Message */}
         {successMessage && (
-          <div className="bg-green-50 p-3 rounded-lg mb-4 text-center">
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-center">
             <p className="text-green-700 font-medium">{successMessage}</p>
           </div>
         )}
-        
+
         {userData && (
-          <div className="space-y-4">
-            <div className="bg-indigo-50 p-3 rounded-lg">
-              <h2 className="text-lg font-semibold text-indigo-800 mb-1">User Information</h2>
-              <div className="space-y-1">
-                <p className="flex justify-between">
-                  <span className="text-gray-600">Email:</span>
-                  <span className="font-medium">{userData.email}</span>
-                </p>
-              </div>
-            </div>
-            
-            <div className="bg-blue-50 p-3 rounded-lg">
-              <h2 className="text-lg font-semibold text-blue-800 mb-1">Logo Usage</h2>
-              <div className="space-y-1">
-                <p className="flex justify-between">
-                  <span className="text-gray-600">Logos Created:</span>
-                  <span className="font-medium">{userData.logosCreated}</span>
-                </p>
-                <p className="flex justify-between">
-                  <span className="text-gray-600">Logo Limit:</span>
-                  <span className="font-medium">{userData.logosLimit}</span>
-                </p>
-                <p className="flex justify-between">
-                  <span className="text-gray-600">Remaining:</span>
-                  <span className="font-medium">{userData.remainingLogos}</span>
-                </p>
-                
-                <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-                  <div 
-                    className="bg-blue-600 h-2.5 rounded-full" 
-                    style={{ width: `${Math.min(100, (userData.logosCreated / Math.max(1, userData.logosLimit)) * 100)}%` }}
-                  ></div>
+          <div className="space-y-6">
+            {/* Account Information */}
+            <div className="bg-gray-50 p-6 rounded-lg">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Account Information</h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Email Address</label>
+                  <p className="text-gray-900">{userData.email}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Account Status</label>
+                  <p className="text-green-600 font-medium">Active</p>
                 </div>
               </div>
             </div>
+
+            {/* Usage Statistics */}
+            <div className="bg-indigo-50 p-6 rounded-lg border border-indigo-200">
+              <h3 className="text-lg font-semibold text-indigo-800 mb-4">Logo Usage</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-indigo-600">{userData.logosCreated || 0}</div>
+                  <div className="text-sm text-indigo-600">Logos Created</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-indigo-600">{userData.logosLimit || 0}</div>
+                  <div className="text-sm text-indigo-600">Total Credits</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">{userData.remainingLogos || 0}</div>
+                  <div className="text-sm text-green-600">Remaining</div>
+                </div>
+              </div>
+              
+              <div className="w-full bg-gray-200 rounded-full h-3">
+                <div 
+                  className="bg-indigo-600 h-3 rounded-full transition-all duration-300" 
+                  style={{ width: `${Math.min(100, ((userData.logosCreated || 0) / Math.max(1, userData.logosLimit || 1)) * 100)}%` }}
+                ></div>
+              </div>
+              
+              {userData.remainingLogos > 0 ? (
+                <p className="text-sm text-indigo-700 mt-2 text-center">
+                  You have {userData.remainingLogos} logo credit{userData.remainingLogos > 1 ? 's' : ''} remaining
+                </p>
+              ) : (
+                <p className="text-sm text-red-600 mt-2 font-medium text-center">
+                  You've used all your logo credits
+                </p>
+              )}
+            </div>
             
-            <div className="flex flex-col space-y-2">
+            {/* Action Buttons */}
+            <div className="flex flex-col space-y-3">
               <Link 
                 href="/history" 
-                className="px-4 py-2 bg-indigo-600 text-white rounded-md text-center hover:bg-indigo-700"
+                className="w-full px-4 py-3 bg-indigo-600 text-white rounded-lg text-center hover:bg-indigo-700 transition-colors font-medium"
               >
                 View My Logos
               </Link>
               
               <Link 
                 href="/purchase" 
-                className="px-4 py-2 bg-indigo-600 text-white rounded-md text-center hover:bg-indigo-700"
+                className="w-full px-4 py-3 bg-green-600 text-white rounded-lg text-center hover:bg-green-700 transition-colors font-medium"
               >
-                Purchase Logos
+                Purchase More Credits
               </Link>
               
               <button
                 onClick={handleLogout}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                className="w-full px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
               >
                 Log Out
               </button>
               
-              {/* <div className="border-t pt-2 mt-2">
+              {/* Uncomment if you want to enable account deletion */}
+              {/* <div className="border-t pt-3 mt-3">
                 <button
                   onClick={() => setShowDeleteModal(true)}
-                  className="px-4 py-2 bg-gray-200 text-red-600 rounded-md hover:bg-red-100 w-full font-medium"
+                  className="w-full px-4 py-2 bg-gray-200 text-red-600 rounded-lg hover:bg-red-100 font-medium text-sm"
                 >
                   Deactivate Account
                 </button>
@@ -269,41 +256,48 @@ export default function AccountPage() {
             </div>
           </div>
         )}
-        
-        {/* Deactivate Account Confirmation Modal */}
-        {showDeleteModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
-              <h3 className="text-lg font-semibold mb-4 text-red-600">Deactivate Account</h3>
-              <p className="mb-4 text-gray-700">
-                Are you sure you want to deactivate your account? This will:
-              </p>
-              <ul className="mb-4 text-sm text-gray-600 list-disc list-inside space-y-1">
-                <li>Log you out immediately</li>
-                <li>Prevent future logins</li>
-                <li>Preserve your logo history and credits</li>
-                <li>Allow account reactivation by contacting support</li>
-              </ul>
-              <div className="flex space-x-3">
-                <button
-                  onClick={() => setShowDeleteModal(false)}
-                  className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
-                  disabled={isDeleting}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleDeleteAccount}
-                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
-                  disabled={isDeleting}
-                >
-                  {isDeleting ? 'Deactivating...' : 'Deactivate Account'}
-                </button>
-              </div>
+      </div>
+      
+      {/* Footer */}
+      <div className="footer-wrapper mt-6">
+        <p className="text-center text-gray-500 text-sm">
+          Logo Generation Tool • Smarty Apps • {new Date().getFullYear()}
+        </p>
+      </div>
+
+      {/* Deactivate Account Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold mb-4 text-red-600">Deactivate Account</h3>
+            <p className="mb-4 text-gray-700">
+              Are you sure you want to deactivate your account? This will:
+            </p>
+            <ul className="mb-4 text-sm text-gray-600 list-disc list-inside space-y-1">
+              <li>Log you out immediately</li>
+              <li>Prevent future logins</li>
+              <li>Preserve your logo history and credits</li>
+              <li>Allow account reactivation by contacting support</li>
+            </ul>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Deactivating...' : 'Deactivate'}
+              </button>
             </div>
           </div>
-        )}
-      </div>
-    </div>
+        </div>
+      )}
+    </main>
   );
 }

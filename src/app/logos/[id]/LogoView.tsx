@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { getLogo, getRevisionsForLogo, StoredLogo, renameLogo } from '@/app/utils/indexedDBUtils';
+import Link from 'next/link';
+import { getLogo, getRevisionsForLogo, StoredLogo, renameLogo, canCreateOriginalLogo } from '@/app/utils/indexedDBUtils';
 import ImageDisplay from '@/app/components/ImageDisplay';
 
 interface LogoViewClientProps {
@@ -20,6 +21,7 @@ export default function LogoViewClient({ logoId }: LogoViewClientProps) {
   // New state for name editing
   const [isEditingName, setIsEditingName] = useState(false);
   const [logoName, setLogoName] = useState('Untitled');
+  const [showLimitModal, setShowLimitModal] = useState(false);
   const nameInputRef = useRef<HTMLInputElement>(null);
   
   const router = useRouter();
@@ -143,8 +145,33 @@ export default function LogoViewClient({ logoId }: LogoViewClientProps) {
     return new Date(timestamp).toLocaleString();
   };
   
-  const handleEdit = () => {
-    router.push(`/?edit=${activeLogoId}`);
+  const handleEdit = async () => {
+    // Check if we've reached the revision limit
+    if (revisions.length >= 3) {
+      // Check if user can create new logos before navigating
+      try {
+        const canCreate = await canCreateOriginalLogo();
+        if (!canCreate) {
+          setShowLimitModal(true);
+          return;
+        }
+        // Navigate to a clean form for creating a new logo
+        router.push('/');
+      } catch (error) {
+        console.error('Error checking logo creation limit:', error);
+        setShowLimitModal(true);
+      }
+    } else {
+      // Navigate to revision form with the current logo data
+      router.push(`/?edit=${activeLogoId}`);
+    }
+  };
+
+  const handleCreateRevision = () => {
+    // Create a revision based on whatever version the user is currently viewing
+    if (activeLogoId) {
+      router.push(`/?edit=${activeLogoId}`);
+    }
   };
   
   return (
@@ -309,14 +336,17 @@ export default function LogoViewClient({ logoId }: LogoViewClientProps) {
                       </button>
                     ))}
                     
-                    {/* Add Revision Hint (when not at limit) */}
+                    {/* Add Revision Button (when not at limit) */}
                     {originalLogo && revisions.length < 3 && (
-                      <div className="flex items-center px-3 py-2.5 rounded-lg border-2 border-dashed border-gray-300 text-gray-500">
+                      <button
+                        onClick={handleCreateRevision}
+                        className="flex items-center px-3 py-2.5 rounded-lg border-2 border-dashed border-indigo-300 text-indigo-600 hover:border-indigo-400 hover:bg-indigo-50 transition-all duration-200 cursor-pointer"
+                      >
                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>
                         <span className="text-xs font-medium">Create revision</span>
-                      </div>
+                      </button>
                     )}
                   </div>
                 </div>
@@ -342,7 +372,24 @@ export default function LogoViewClient({ logoId }: LogoViewClientProps) {
 
             <ImageDisplay imageDataUri={logo.imageDataUri} />
             
-            <div className="mt-8 flex justify-center">
+            <div className="mt-8 flex flex-col items-center">
+              {/* Show notification when all revisions are used up */}
+              {revisions.length >= 3 && (
+                <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-center max-w-md">
+                  <div className="flex items-center justify-center space-x-2 mb-1">
+                    <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    <span className="text-sm font-medium text-amber-800">
+                      All Revisions Used
+                    </span>
+                  </div>
+                  <p className="text-xs text-amber-700">
+                    You've used all 3 revisions for this logo. Create a new logo with fresh revision opportunities.
+                  </p>
+                </div>
+              )}
+              
               <button 
                 onClick={handleEdit}
                 className="btn-revise-logo"
@@ -437,6 +484,80 @@ export default function LogoViewClient({ logoId }: LogoViewClientProps) {
                   <p>{logo.parameters.applicationContext}</p>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+      {showLimitModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 100,
+          padding: '16px'
+        }}>
+          <div className="card text-center" style={{
+            maxWidth: '28rem',
+            width: '100%',
+            padding: '32px',
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)'
+          }}>
+            <div className="text-center mb-6">
+              <svg xmlns="http://www.w3.org/2000/svg" style={{ width: '3rem', height: '3rem', margin: '0 auto', color: '#eab308' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginTop: '12px', color: '#1f2937' }}>
+                Logo Limit Reached
+              </h3>
+            </div>
+            
+            <p style={{ color: '#6b7280', marginBottom: '24px', lineHeight: '1.5' }}>
+              You've reached your logo creation limit. Please purchase more logos to continue creating new designs.
+            </p>
+            
+            <div className="flex gap-3" style={{ justifyContent: 'center' }}>
+              <button
+                onClick={() => setShowLimitModal(false)}
+                style={{
+                  padding: '8px 16px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  backgroundColor: 'white',
+                  color: '#374151',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                Close
+              </button>
+              
+              <Link
+                href="/purchase"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '8px 16px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  backgroundColor: '#6366f1',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                Purchase Logos
+              </Link>
             </div>
           </div>
         </div>

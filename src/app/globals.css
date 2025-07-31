@@ -921,3 +921,55 @@ html:has(body[data-page="login"]) {
     padding: 1.5rem;
   }
 }
+
+/* Add this to your src/app/globals.css file (add to the existing login page styles) */
+
+/* Lock scrolling for login AND register pages */
+body[data-page="login"],
+body[data-page="register"],
+html:has(body[data-page="login"]),
+html:has(body[data-page="register"]) {
+  overflow: hidden !important;
+  height: 100% !important;
+}
+
+/* Smooth transitions for better UX on both login and register */
+.login-container,
+.register-container {
+  transition: all 0.3s ease-in-out;
+}
+
+/* Ensure forms are always centered and responsive on both pages */
+@media (max-height: 600px) {
+  .login-container,
+  .register-container {
+    padding: 1rem;
+  }
+  
+  .login-container .bg-white,
+  .register-container .bg-white {
+    padding: 1.5rem;
+  }
+}
+
+/* Add this to your src/app/globals.css if the .card class is not already fully defined */
+
+.card {
+  background-color: white;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  border: 1px solid rgb(229 231 235);
+  padding: var(--space-md);
+  transition: box-shadow var(--transition-base);
+}
+
+.card:hover {
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+/* Desktop card padding (already exists in your CSS) */
+@media (min-width: 768px) {
+  .card {
+    padding: var(--space-lg);
+  }
+}

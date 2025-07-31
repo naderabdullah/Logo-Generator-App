@@ -506,7 +506,19 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       
     } catch (error) {
       console.error('Error generating logo:', error);
-      setError(error instanceof Error ? error.message : 'An unknown error occurred');
+      
+      // Check if the error is about reaching the logo limit
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      
+      if (errorMessage.includes('reached your logo generation limit') || 
+          errorMessage.includes('Logo Limit Reached') ||
+          errorMessage.includes('Maximum logo limit reached')) {
+        // Show the modal instead of setting the error
+        setShowLimitModal(true);
+      } else {
+        // For other errors, show the regular error message
+        setError(errorMessage);
+      }
     } finally {
       setLoading(false);
       setIsGenerating(false);

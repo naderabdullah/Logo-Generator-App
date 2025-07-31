@@ -126,6 +126,21 @@ export default function AppManagerRegistration({ params }: RegistrationPageProps
     }
   }, [appId, subappId, linkType, token]);
 
+  // Add this new useEffect for scroll locking
+  useEffect(() => {
+    // Set page attribute and lock scrolling
+    document.body.setAttribute('data-page', 'register');
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    
+    // Cleanup function to restore scrolling when leaving the page
+    return () => {
+      document.body.removeAttribute('data-page');
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    };
+  }, []);
+
   // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -258,7 +273,7 @@ export default function AppManagerRegistration({ params }: RegistrationPageProps
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+    <div className="fixed inset-0 flex items-center justify-center bg-gray-50 overflow-hidden">
       <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full">
         <h1 className="text-2xl font-bold text-center text-gray-900 mb-6">
           Create Your Account

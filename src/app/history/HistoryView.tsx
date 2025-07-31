@@ -190,7 +190,7 @@ export default function HistoryView() {
                     <h3 className="font-medium text-indigo-800">
                       {displayedLogo.name || "Untitled"}
                       <span className="text-xs text-indigo-600 ml-2">
-                        ({revisions.length} revision{revisions.length !== 1 ? 's' : ''})
+                        ({3 - revisions.length} revision{(3 - revisions.length) !== 1 ? 's' : ''} remaining)
                       </span>
                     </h3>
                     <p className="text-xs text-gray-500">
@@ -233,7 +233,7 @@ export default function HistoryView() {
                           className="btn-action btn-secondary"
                           disabled={revisions.length >= 3}
                         >
-                          {revisions.length >= 3 ? 'Max Revisions' : 'Revise'}
+                          {revisions.length >= 3 ? 'Max Revisions' : `Revise (${3 - revisions.length} left)`}
                         </button>
                         
                         <button
