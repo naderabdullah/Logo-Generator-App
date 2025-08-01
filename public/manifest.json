@@ -1,6 +1,6 @@
 {
-  "name": "AI Logo Generator",
-  "short_name": "Logo Gen",
+  "name": "Smarty Apps AI Logo Generator",
+  "short_name": "Smarty Logo Gen",
   "description": "Generate professional logos using AI with customizable style options",
   "start_url": "/",
   "display": "standalone",
