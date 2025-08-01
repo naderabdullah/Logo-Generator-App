@@ -95,37 +95,21 @@ export default function AccountPage() {
     if (success === 'success' && quantity) {
       setSuccessMessage(`Successfully purchased ${quantity} logo credit${Number(quantity) > 1 ? 's' : ''}!`);
       
-      // Clear URL parameters after 5 seconds
-      setTimeout(() => {
-        window.history.replaceState({}, document.title, window.location.pathname);
-        setSuccessMessage(null);
-        
-        // Refresh user data to show updated limits
-        fetchUserData();
-      }, 5000);
-    }
-    
-    async function fetchUserData() {
-      try {
-        const response = await fetch('/api/user');
-        if (response.ok) {
-          const data = await response.json();
-          setUserData(data);
-        }
-      } catch (err) {
-        console.error('Error refreshing user data:', err);
-      }
+      // Clear URL params
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+      
+      // Clear message after 5 seconds
+      setTimeout(() => setSuccessMessage(null), 5000);
     }
   }, []);
   
   if (loading) {
     return (
       <main className="container mx-auto px-4 pb-6 max-w-2xl">
-        <div className="mt-4 card">
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600 mx-auto"></div>
-            <p className="mt-4 text-gray-700">Loading your account information...</p>
-          </div>
+        <div className="mt-4 text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+          <p className="mt-2 text-gray-600">Loading account information...</p>
         </div>
       </main>
     );
@@ -134,13 +118,18 @@ export default function AccountPage() {
   if (error) {
     return (
       <main className="container mx-auto px-4 pb-6 max-w-2xl">
-        <div className="mt-4 card">
-          <div className="text-center py-8">
-            <h2 className="text-xl font-semibold text-red-600 mb-4">Error</h2>
-            <p className="text-gray-700 mb-6">{error}</p>
+        <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <p className="text-red-700 mb-4">{error}</p>
+          <div className="space-y-2">
+            <Link 
+              href="/" 
+              className="block w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+            >
+              Back to Generator
+            </Link>
             <Link 
               href="/login" 
-              className="inline-block px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+              className="block w-full px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-indigo-700"
             >
               Back to Login
             </Link>
@@ -151,7 +140,7 @@ export default function AccountPage() {
   }
   
   return (
-          <main className="container mx-auto px-4 pb-6 max-w-2xl">
+    <main className="container mx-auto px-4 pb-6 max-w-2xl">
       <div className="mt-4 card">
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold text-indigo-600">My Account</h1>
@@ -181,7 +170,7 @@ export default function AccountPage() {
                 </div>
               </div>
             </div>
-
+            
             {/* Usage Statistics */}
             <div className="bg-indigo-50 p-6 rounded-lg border border-indigo-200">
               <h3 className="text-lg font-semibold text-indigo-800 mb-4">Logo Usage</h3>
@@ -240,20 +229,55 @@ export default function AccountPage() {
               >
                 Log Out
               </button>
-              
-              {/* Uncomment if you want to enable account deletion */}
-              {/* <div className="border-t pt-3 mt-3">
-                <button
-                  onClick={() => setShowDeleteModal(true)}
-                  className="w-full px-4 py-2 bg-gray-200 text-red-600 rounded-lg hover:bg-red-100 font-medium text-sm"
-                >
-                  Deactivate Account
-                </button>
-                <p className="text-xs text-gray-500 mt-1 text-center">
-                  This will deactivate your account and log you out
-                </p>
-              </div> */}
             </div>
+
+            {/* OpenAI Acknowledgement, Contact & Mission Section */}
+            <div className="border-t pt-6 mt-6">
+              <div className="space-y-4 text-sm text-gray-600">
+                {/* Mission Statement */}
+                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                  <h4 className="font-medium text-green-800 mb-2">Our Mission</h4>
+                  <p className="text-green-700 leading-relaxed">
+                    We believe in making AI-powered design accessible to everyone. Our mission is to eliminate the complexity of traditional design processes and remove the need for technical prompting or specialized knowledge. By providing an intuitive interface that transforms simple inputs into professional logos, we empower users to focus on their vision while our AI handles the technical execution. Everyone deserves beautiful, professional design - no expertise required.
+                  </p>
+                </div>
+                
+                {/* OpenAI Acknowledgement */}
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <h4 className="font-medium text-blue-800 mb-2">AI Technology Acknowledgement</h4>
+                  <p className="text-blue-700 leading-relaxed">
+                    This application uses OpenAI's GPT-4 and DALL-E models (OpenAI, <a href="https://openai.com" className="underline hover:text-blue-800" target="_blank" rel="noopener noreferrer">https://openai.com</a>) for generating logo designs and processing user inputs. The AI models assist in creating visual content and interpreting design requirements based on user specifications.
+                  </p>
+                </div>
+
+                {/* Contact Information */}
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <h4 className="font-medium text-gray-800 mb-2">Contact Us</h4>
+                  <p className="text-gray-700">
+                    For support, questions, or feedback, please reach out to us at{' '}
+                    <a 
+                      href="mailto:contact@fabfeelings.com" 
+                      className="text-indigo-600 hover:text-indigo-800 underline font-medium"
+                    >
+                      contact@fabfeelings.com
+                    </a>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Uncomment if you want to enable account deletion */}
+            {/* <div className="border-t pt-3 mt-3">
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                className="w-full px-4 py-2 bg-gray-200 text-red-600 rounded-lg hover:bg-red-100 font-medium text-sm"
+              >
+                Deactivate Account
+              </button>
+              <p className="text-xs text-gray-500 mt-1 text-center">
+                This will deactivate your account and log you out
+              </p>
+            </div> */}
           </div>
         )}
       </div>

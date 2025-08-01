@@ -3,6 +3,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 
@@ -17,8 +18,15 @@ export default function UnifiedHeader() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm border-b border-gray-200 ios-unified-header">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-center items-center h-16">
-            <Link href="/" className="text-xl font-bold text-indigo-600">
-              AI Logo Generator
+            <Link href="/" className="flex items-center space-x-2 text-xl font-bold text-indigo-600">
+              <Image 
+                src="/icons/smartyapps.png" 
+                alt="Smarty Apps Logo" 
+                width={64} 
+                height={64}
+                className="rounded"
+              />
+              <span>AI Logo Generator</span>
             </Link>
           </div>
         </div>
@@ -31,8 +39,15 @@ export default function UnifiedHeader() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm border-b border-gray-200 ios-unified-header">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <Link href="/" className="text-xl font-bold text-indigo-600">
-              AI Logo Generator
+            <Link href="/" className="flex items-center space-x-2 text-xl font-bold text-indigo-600">
+              <Image 
+                src="/icons/smartyapps.png" 
+                alt="Smarty Apps Logo" 
+                width={64} 
+                height={64}
+                className="rounded"
+              />
+              <span>AI Logo Generator</span>
             </Link>
             <div className="w-5 h-5 animate-spin rounded-full border-2 border-gray-300 border-t-indigo-600"></div>
           </div>
@@ -46,8 +61,15 @@ export default function UnifiedHeader() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm border-b border-gray-200 ios-unified-header">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-center items-center h-16">
-            <Link href="/" className="text-xl font-bold text-indigo-600">
-              AI Logo Generator
+            <Link href="/" className="flex items-center space-x-2 text-xl font-bold text-indigo-600">
+              <Image 
+                src="/icons/smartyapps.png" 
+                alt="Smarty Apps Logo" 
+                width={64} 
+                height={64}
+                className="rounded"
+              />
+              <span>AI Logo Generator</span>
             </Link>
           </div>
         </div>
@@ -62,8 +84,15 @@ export default function UnifiedHeader() {
         <div className="md:hidden">
           {/* Top row - Logo and User Info */}
           <div className="flex items-center justify-between h-12 pt-2">
-            <Link href="/" className="text-lg font-bold text-indigo-600">
-              AI Logo Generator
+            <Link href="/" className="flex items-center space-x-2 text-lg font-bold text-indigo-600">
+              <Image 
+                src="/icons/smartyapps.png" 
+                alt="Smarty Apps Logo" 
+                width={48} 
+                height={48}
+                className="rounded"
+              />
+              <span>AI Logo Generator</span>
             </Link>
             <div className="flex items-center text-xs font-medium text-gray-700">
               <div className="mr-2 text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
@@ -124,8 +153,15 @@ export default function UnifiedHeader() {
         <div className="hidden md:flex items-center justify-between h-16">
           {/* Logo - Left side */}
           <div className="flex-shrink-0">
-            <Link href="/" className="text-xl font-bold text-indigo-600">
-              AI Logo Generator
+            <Link href="/" className="flex items-center space-x-2 text-xl font-bold text-indigo-600">
+              <Image 
+                src="/icons/smartyapps.png" 
+                alt="Smarty Apps Logo" 
+                width={64} 
+                height={64}
+                className="rounded"
+              />
+              <span>AI Logo Generator</span>
             </Link>
           </div>
           
