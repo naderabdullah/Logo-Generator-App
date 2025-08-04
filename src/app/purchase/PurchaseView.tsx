@@ -189,28 +189,28 @@ export default function PurchaseView() {
         )}
         
         {/* Pricing Options */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-4 gap-3 mb-6">
           {/* 1 Logo Option */}
-          <div className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow p-6">
+          <div className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow p-4 flex flex-col min-h-[400px]">
             <h3 className="text-lg font-semibold text-gray-900">Starter</h3>
             <div className="mt-4">
-              <span className="text-4xl font-bold text-gray-900">$4.95</span>
+              <span className="text-3xl font-bold text-gray-900">$4.95</span>
             </div>
-            <ul className="mt-6 space-y-3">
+            <ul className="mt-6 space-y-3 flex-grow">
               <li className="flex items-start">
-                <svg className="h-5 w-5 text-green-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
                 <span className="ml-3 text-gray-700">1 Logo Credit</span>
               </li>
               <li className="flex items-start">
-                <svg className="h-5 w-5 text-green-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
                 <span className="ml-3 text-gray-700">3 Free Revisions</span>
               </li>
               <li className="flex items-start">
-                <svg className="h-5 w-5 text-green-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
                 <span className="ml-3 text-gray-700">High-quality AI generation</span>
@@ -219,34 +219,34 @@ export default function PurchaseView() {
             <button
               onClick={() => handlePurchase(1, 4.95)}
               disabled={processingQuantity !== null}
-              className="mt-8 w-full py-3 px-4 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition disabled:opacity-50"
+              className="mt-4 w-full py-3 px-4 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition disabled:opacity-50"
             >
               {processingQuantity === 1 ? 'Processing...' : 'Purchase'}
             </button>
           </div>
 
           {/* 3 Logo Option */}
-          <div className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow p-6">
+          <div className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow p-4 flex flex-col min-h-[400px]">
             <h3 className="text-lg font-semibold text-gray-900">Professional</h3>
             <div className="mt-4">
-              <span className="text-4xl font-bold text-gray-900">$9.95</span>
-              <span className="text-sm text-green-600 ml-2">Save $4.90</span>
+              <span className="text-3xl font-bold text-gray-900">$9.95</span>
+              <div className="text-xs text-green-600 mt-1">Save $4.90</div>
             </div>
-            <ul className="mt-6 space-y-3">
+            <ul className="mt-6 space-y-3 flex-grow">
               <li className="flex items-start">
-                <svg className="h-5 w-5 text-green-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
                 <span className="ml-3 text-gray-700">3 Logo Credits</span>
               </li>
               <li className="flex items-start">
-                <svg className="h-5 w-5 text-green-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
                 <span className="ml-3 text-gray-700">9 Free Revisions Total</span>
               </li>
               <li className="flex items-start">
-                <svg className="h-5 w-5 text-green-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
                 <span className="ml-3 text-gray-700">$3.32 per logo</span>
@@ -255,34 +255,34 @@ export default function PurchaseView() {
             <button
               onClick={() => handlePurchase(3, 9.95)}
               disabled={processingQuantity !== null}
-              className="mt-8 w-full py-3 px-4 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition disabled:opacity-50"
+              className="mt-4 w-full py-3 px-4 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition disabled:opacity-50"
             >
               {processingQuantity === 3 ? 'Processing...' : 'Purchase'}
             </button>
           </div>
           
           {/* 6 Logo Option */}
-          <div className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow p-6">
+          <div className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow p-4 flex flex-col min-h-[400px]">
             <h3 className="text-lg font-semibold text-gray-900">Business</h3>
             <div className="mt-4">
-              <span className="text-4xl font-bold text-gray-900">$14.95</span>
-              <span className="text-sm text-green-600 ml-2">Save $14.75</span>
+              <span className="text-3xl font-bold text-gray-900">$14.95</span>
+              <div className="text-xs text-green-600 mt-1">Save $14.75</div>
             </div>
-            <ul className="mt-6 space-y-3">
+            <ul className="mt-6 space-y-3 flex-grow">
               <li className="flex items-start">
-                <svg className="h-5 w-5 text-green-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
                 <span className="ml-3 text-gray-700">6 Logo Credits</span>
               </li>
               <li className="flex items-start">
-                <svg className="h-5 w-5 text-green-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
                 <span className="ml-3 text-gray-700">18 Free Revisions Total</span>
               </li>
               <li className="flex items-start">
-                <svg className="h-5 w-5 text-green-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
                 <span className="ml-3 text-gray-700">$2.49 per logo</span>
@@ -291,37 +291,37 @@ export default function PurchaseView() {
             <button
               onClick={() => handlePurchase(6, 14.95)}
               disabled={processingQuantity !== null}
-              className="mt-8 w-full py-3 px-4 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition disabled:opacity-50"
+              className="mt-4 w-full py-3 px-4 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition disabled:opacity-50"
             >
               {processingQuantity === 6 ? 'Processing...' : 'Purchase'}
             </button>
           </div>
 
           {/* 9 Logo Option - Best Value */}
-          <div className="bg-white border-2 border-indigo-500 rounded-lg shadow-md hover:shadow-lg transition-shadow relative p-6">
-            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-indigo-500 text-white text-sm px-4 py-1 rounded-full">
+          <div className="bg-white border-2 border-indigo-500 rounded-lg shadow-md hover:shadow-lg transition-shadow relative p-4 flex flex-col min-h-[400px]">
+            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-indigo-500 text-white text-xs px-3 py-1 rounded-full">
               Best Value
             </div>
-            <h3 className="text-lg font-semibold text-gray-900">Enterprise</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mt-2">Enterprise</h3>
             <div className="mt-4">
-              <span className="text-4xl font-bold text-gray-900">$19.95</span>
-              <span className="text-sm text-green-600 ml-2">Save $24.60</span>
+              <span className="text-3xl font-bold text-gray-900">$19.95</span>
+              <div className="text-xs text-green-600 mt-1">Save $24.60</div>
             </div>
-            <ul className="mt-6 space-y-3">
+            <ul className="mt-6 space-y-3 flex-grow">
               <li className="flex items-start">
-                <svg className="h-5 w-5 text-green-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
                 <span className="ml-3 text-gray-700">9 Logo Credits</span>
               </li>
               <li className="flex items-start">
-                <svg className="h-5 w-5 text-green-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
                 <span className="ml-3 text-gray-700">27 Free Revisions Total</span>
               </li>
               <li className="flex items-start">
-                <svg className="h-5 w-5 text-green-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
                 <span className="ml-3 text-gray-700">$2.22 per logo</span>
@@ -330,7 +330,7 @@ export default function PurchaseView() {
             <button
               onClick={() => handlePurchase(9, 19.95)}
               disabled={processingQuantity !== null}
-              className="mt-8 w-full py-3 px-4 bg-indigo-700 text-white font-medium rounded-lg hover:bg-indigo-800 transition disabled:opacity-50"
+              className="mt-4 w-full py-3 px-4 bg-indigo-700 text-white font-medium rounded-lg hover:bg-indigo-800 transition disabled:opacity-50"
             >
               {processingQuantity === 9 ? 'Processing...' : 'Purchase'}
             </button>
