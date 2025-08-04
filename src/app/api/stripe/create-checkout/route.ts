@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
     const priceInCents = Math.round(priceUsd * 100);
     
     // Get the domain URL for success/cancel URLs
-    const domainURL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    const domainURL = process.env.SITE_URL || 'http://localhost:3000';
     
     // Create a checkout session
     const session = await stripe.checkout.sessions.create({

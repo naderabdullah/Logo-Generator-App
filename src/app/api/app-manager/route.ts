@@ -5,7 +5,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const action = request.nextUrl.searchParams.get('action');
     
-    // Use server-side environment variables (without NEXT_PUBLIC_ prefix)
+    // Use server-side environment variables (without  prefix)
     const apiEndpoint = process.env.API_ENDPOINT;
     const apiKey = process.env.API_KEY;
     

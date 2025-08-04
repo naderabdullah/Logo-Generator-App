@@ -24,9 +24,9 @@ const createApiCall = async (url: string, data: any, params?: Record<string, str
   const isDevelopment = process.env.NODE_ENV === 'development';
   const baseUrl = '/api/app-manager' //isDevelopment 
     // ? '/api/app-manager'  // Use local proxy
-    // : process.env.NEXT_PUBLIC_API_ENDPOINT;  // Use direct API in production
+    // : process.env.API_ENDPOINT;  // Use direct API in production
   
-  if (!isDevelopment && (!process.env.NEXT_PUBLIC_API_ENDPOINT || !process.env.NEXT_PUBLIC_API_KEY)) {
+  if (!isDevelopment && (!process.env.API_ENDPOINT || !process.env.API_KEY)) {
     throw new Error('App Manager API configuration missing.');
   }
 
@@ -47,7 +47,7 @@ const createApiCall = async (url: string, data: any, params?: Record<string, str
 
   // Only add X-Api-Key header when not using proxy
   // if (!isDevelopment) {
-    headers['X-Api-Key'] = process.env.NEXT_PUBLIC_API_KEY!;
+    headers['X-Api-Key'] = process.env.API_KEY!;
   // }
 
   const response = await fetch(fullUrl, {

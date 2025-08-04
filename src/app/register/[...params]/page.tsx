@@ -159,8 +159,8 @@ export default function AppManagerRegistration({ params }: RegistrationPageProps
 
     try {
       // Check if API configuration is available before proceeding
-      const apiEndpoint = process.env.NEXT_PUBLIC_API_ENDPOINT;
-      const apiKey = process.env.NEXT_PUBLIC_API_KEY;
+      const apiEndpoint = process.env.API_ENDPOINT;
+      const apiKey = process.env.API_KEY;
       
       if (!apiEndpoint || !apiKey) {
         setStatus({

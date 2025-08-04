@@ -23,7 +23,7 @@ interface AppManagerRegistrationData {
 
 // Function to call App Manager API for registration verification
 async function callAppManagerAPI(registrationData: AppManagerRegistrationData) {
-  if (!process.env.NEXT_PUBLIC_API_ENDPOINT || !process.env.NEXT_PUBLIC_API_KEY) {
+  if (!process.env.API_ENDPOINT || !process.env.API_KEY) {
     throw new Error('App Manager API configuration missing');
   }
 
@@ -39,11 +39,11 @@ async function callAppManagerAPI(registrationData: AppManagerRegistrationData) {
 
   console.log('Calling App Manager API with:', { ...requestBody, password: '[REDACTED]' });
 
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/app-manager?action=verifyAppPurchase`, {
+  const response = await fetch(`${process.env.API_ENDPOINT}/app-manager?action=verifyAppPurchase`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Api-Key': process.env.NEXT_PUBLIC_API_KEY,
+      'X-Api-Key': process.env.API_KEY,
     },
     body: JSON.stringify(requestBody),
   });
