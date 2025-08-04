@@ -242,14 +242,6 @@ export default function AccountPage() {
                   </p>
                 </div>
                 
-                {/* OpenAI Acknowledgement */}
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                  <h4 className="font-medium text-blue-800 mb-2">AI Technology Acknowledgement</h4>
-                  <p className="text-blue-700 leading-relaxed">
-                    This application uses OpenAI's GPT Image 1 model (OpenAI, <a href="https://openai.com" className="underline hover:text-blue-800" target="_blank" rel="noopener noreferrer">https://openai.com</a>) for generating logo designs and processing user inputs. The AI models assist in creating visual content and interpreting design requirements based on user specifications.
-                  </p>
-                </div>
-
                 {/* Contact Information */}
                 <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                   <h4 className="font-medium text-gray-800 mb-2">Contact Us</h4>
@@ -261,6 +253,14 @@ export default function AccountPage() {
                     >
                       contact@fabfeelings.com
                     </a>
+                  </p>
+                </div>
+
+                {/* OpenAI Acknowledgement */}
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <h4 className="font-medium text-blue-800 mb-2">AI Technology Acknowledgement</h4>
+                  <p className="text-blue-700 leading-relaxed">
+                    This application uses OpenAI's GPT Image 1 model (OpenAI, <a href="https://openai.com" className="underline hover:text-blue-800" target="_blank" rel="noopener noreferrer">https://openai.com</a>) for generating logo designs and processing user inputs. The AI models assist in creating visual content and interpreting design requirements based on user specifications.
                   </p>
                 </div>
               </div>
