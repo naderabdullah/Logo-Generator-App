@@ -2,10 +2,15 @@
 const nextConfig = {
   // Enable strict mode for React
   reactStrictMode: true,
+  
+  // Ensure proper asset prefix (leave empty for Vercel)
+  assetPrefix: '',
+  
   env: {
     // Define environment variables for OpenAI API key and base URL
     OPENAI_API_KEY: process.env.OPENAI_API_KEY
   },
+  
   // Configure image domains to allow external images
   images: {
     remotePatterns: [
@@ -24,6 +29,17 @@ const nextConfig = {
 
   // Server external packages
   serverExternalPackages: [],
+
+  // Add these webpack configurations for better asset handling
+  webpack: (config: any, { isServer }: { isServer: boolean }) => {
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+      };
+    }
+    return config;
+  },
 };
 
 module.exports = nextConfig;
