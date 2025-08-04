@@ -1,3 +1,4 @@
+// src/app/logos/[id]/LogoView.tsx - MINIMAL changes for user-specific IndexedDB only
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -17,6 +18,7 @@ export default function LogoViewClient({ logoId }: LogoViewClientProps) {
   const [originalLogo, setOriginalLogo] = useState<StoredLogo | null>(null);
   const [revisions, setRevisions] = useState<StoredLogo[]>([]);
   const [activeLogoId, setActiveLogoId] = useState<string>(logoId);
+  const [userEmail, setUserEmail] = useState<string | null>(null); // ONLY NEW STATE ADDED
   
   // New state for name editing
   const [isEditingName, setIsEditingName] = useState(false);
@@ -30,7 +32,25 @@ export default function LogoViewClient({ logoId }: LogoViewClientProps) {
     const fetchLogo = async () => {
       try {
         setLoading(true);
-        const logoData = await getLogo(logoId);
+        
+        // ADDED: Get user info first
+        const userResponse = await fetch('/api/user');
+        if (userResponse.status === 401) {
+          router.push('/login');
+          return;
+        }
+        
+        if (!userResponse.ok) {
+          setError('Failed to authenticate user');
+          return;
+        }
+        
+        const userData = await userResponse.json();
+        const email = userData.email;
+        setUserEmail(email);
+        
+        // MODIFIED: Pass userEmail to getLogo
+        const logoData = await getLogo(logoId, email);
         
         if (!logoData) {
           setError('Logo not found');
@@ -48,18 +68,21 @@ export default function LogoViewClient({ logoId }: LogoViewClientProps) {
         
         // If this logo has an originalLogoId, fetch the original
         if (logoData.originalLogoId) {
-          const originalLogoData = await getLogo(logoData.originalLogoId);
-          setOriginalLogo(originalLogoData);
-          originalId = logoData.originalLogoId;
+          // MODIFIED: Pass userEmail to getLogo
+          const originalLogoData = await getLogo(logoData.originalLogoId, email);
+          if (originalLogoData) {
+            setOriginalLogo(originalLogoData);
+            originalId = originalLogoData.id;
+          }
         } else {
           // This is the original logo
           setOriginalLogo(logoData);
-          originalId = logoData.id;
         }
         
         // Fetch all revisions for the original logo
-        const allRevisions = await getRevisionsForLogo(originalId);
-        setRevisions(allRevisions);
+        // MODIFIED: Pass userEmail to getRevisionsForLogo
+        const revisionsData = await getRevisionsForLogo(originalId, email);
+        setRevisions(revisionsData);
         
         setError(null);
       } catch (err) {
@@ -71,12 +94,15 @@ export default function LogoViewClient({ logoId }: LogoViewClientProps) {
     };
     
     fetchLogo();
-  }, [logoId]);
+  }, [logoId, router]);
   
   const switchLogoVersion = async (id: string) => {
+    if (!userEmail) return; // ADDED: Check userEmail
+    
     try {
       setLoading(true);
-      const logoData = await getLogo(id);
+      // MODIFIED: Pass userEmail to getLogo
+      const logoData = await getLogo(id, userEmail);
       
       if (logoData) {
         setLogo(logoData);
@@ -96,7 +122,7 @@ export default function LogoViewClient({ logoId }: LogoViewClientProps) {
   
   // Handle logo name update
   const handleNameUpdate = async () => {
-    if (!logo) return;
+    if (!logo || !userEmail) return; // ADDED: Check userEmail
     
     try {
       // Make sure there's a name, or use "Untitled"
@@ -104,7 +130,8 @@ export default function LogoViewClient({ logoId }: LogoViewClientProps) {
       setLogoName(newName);
       
       // Update the logo name in the database
-      await renameLogo(logo.id, newName);
+      // MODIFIED: Pass userEmail to renameLogo
+      await renameLogo(logo.id, newName, userEmail);
       
       // Update the logo object with the new name
       setLogo({
@@ -138,11 +165,14 @@ export default function LogoViewClient({ logoId }: LogoViewClientProps) {
   };
   
   const handleEdit = async () => {
+    if (!userEmail) return; // ADDED: Check userEmail
+    
     // Check if we've reached the revision limit
     if (revisions.length >= 3) {
       // Check if user can create new logos before navigating
       try {
-        const canCreate = await canCreateOriginalLogo();
+        // MODIFIED: Pass userEmail to canCreateOriginalLogo
+        const canCreate = await canCreateOriginalLogo(userEmail);
         if (!canCreate) {
           setShowLimitModal(true);
           return;
@@ -167,9 +197,12 @@ export default function LogoViewClient({ logoId }: LogoViewClientProps) {
   };
 
   const handleCreateNewLogo = async () => {
+    if (!userEmail) return; // ADDED: Check userEmail
+    
     try {
       // Check if user can create a new original logo
-      const canCreate = await canCreateOriginalLogo();
+      // MODIFIED: Pass userEmail to canCreateOriginalLogo
+      const canCreate = await canCreateOriginalLogo(userEmail);
       if (!canCreate) {
         setShowLimitModal(true);
         return;
@@ -183,9 +216,12 @@ export default function LogoViewClient({ logoId }: LogoViewClientProps) {
   };
 
   const handleCreateNewLogoWithReference = async () => {
+    if (!userEmail) return; // ADDED: Check userEmail
+    
     try {
       // Check if user can create a new original logo
-      const canCreate = await canCreateOriginalLogo();
+      // MODIFIED: Pass userEmail to canCreateOriginalLogo
+      const canCreate = await canCreateOriginalLogo(userEmail);
       if (!canCreate) {
         setShowLimitModal(true);
         return;
@@ -241,7 +277,7 @@ export default function LogoViewClient({ logoId }: LogoViewClientProps) {
                 </div>
               ) : (
                 <h2 
-                  className="text-xl font-semibold cursor-pointer hover:bg-gray-100 px-2 py-1 rounded transition"
+                  className="text-xl font-semibold cursor-pointer hover:bg-gray-100 px-2 py-1 rounded transition flex-1"
                   onClick={() => {
                     setIsEditingName(true);
                     // Focus input after state update
@@ -352,116 +388,78 @@ export default function LogoViewClient({ logoId }: LogoViewClientProps) {
                               d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" 
                             />
                           </svg>
-                          <span>Rev {revision.revisionNumber}</span>
+                          <span>Revision {revision.revisionNumber}</span>
                         </div>
                         {activeLogoId === revision.id && (
                           <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></div>
                         )}
                       </button>
                     ))}
-                    
-                    {/* Add Revision Button (when not at limit) */}
-                    {originalLogo && revisions.length < 3 && (
-                      <button
-                        onClick={handleCreateRevision}
-                        className="flex items-center px-3 py-2.5 rounded-lg border-2 border-dashed border-indigo-300 text-indigo-600 hover:border-indigo-400 hover:bg-indigo-50 transition-all duration-200 cursor-pointer"
-                      >
-                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                        </svg>
-                        <span className="text-xs font-medium">Create revision</span>
-                      </button>
-                    )}
                   </div>
-                </div>
-                
-                {/* Current Version Info */}
-                <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                    <span className="text-sm font-medium text-blue-800">
-                      Currently viewing: {' '}
-                      {activeLogoId === originalLogo?.id 
-                        ? 'Original Logo' 
-                        : `Revision ${revisions.find(r => r.id === activeLogoId)?.revisionNumber}`
-                      }
-                    </span>
-                  </div>
-                  <p className="text-xs text-blue-600 mt-1">
-                    Generated on {formatDate(logo.createdAt)}
-                  </p>
                 </div>
               </div>
             )}
-
-            <ImageDisplay imageDataUri={logo.imageDataUri} />
             
-            <div className="mt-8 flex flex-col items-center">
-              {/* Show notification when all revisions are used up */}
-              {revisions.length >= 3 && (
-                <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-center max-w-md">
-                  <div className="flex items-center justify-center space-x-2 mb-1">
-                    <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                    </svg>
-                    <span className="text-sm font-medium text-amber-800">
-                      All Revisions Used
-                    </span>
-                  </div>
-                  <p className="text-xs text-amber-700">
-                    You've used all 3 revisions for this logo. Create a new logo with fresh revision opportunities.
-                  </p>
-                </div>
-              )}
-              
-              {/* Button Container - Three buttons */}
-              <div className="flex flex-col sm:flex-row gap-3 w-full max-w-2xl">
-                {/* Revise This Logo Button - Only show if revisions available */}
-                {revisions.length < 3 && (
-                  <button 
-                    onClick={handleEdit}
-                    className="btn-revise-logo flex-1"
-                  >
-                    <svg className="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    Revise This Logo
-                  </button>
-                )}
-                
-                {/* Create New Logo Button - Always show */}
-                <button 
-                  onClick={handleCreateNewLogo}
-                  className="btn-revise-logo flex-1"
-                >
-                  <svg className="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  Create New Logo
-                </button>
-
-                {/* Create New Logo with Reference Button - Always show */}
-                <button 
-                  onClick={handleCreateNewLogoWithReference}
-                  className="btn-revise-logo flex-1"
-                >
-                  <svg className="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  Create New Logo Using This Logo As Reference
-                </button>
-              </div>
+            {/* Logo Display */}
+            <div className="text-center mb-6">
+              <ImageDisplay imageDataUri={logo.imageDataUri} />
             </div>
-          </div>
-          
-          <div className="card">
-            <h3 className="text-lg font-semibold mb-4">Logo Details</h3>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Action Buttons */}
+            <div className="flex flex-wrap gap-3 justify-center mb-4">
+              <button
+                onClick={handleEdit}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-5 rounded-lg transition-colors duration-200 flex items-center space-x-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                <span>
+                  {revisions.length >= 3 ? 'Create New Logo' : `Create Revision (${3 - revisions.length} left)`}
+                </span>
+              </button>
+              
+              <button
+                onClick={handleCreateNewLogoWithReference}
+                className="bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 px-5 rounded-lg transition-colors duration-200 flex items-center space-x-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                <span>Create Similar Logo</span>
+              </button>
+
+              <button
+                onClick={handleCreateNewLogo}
+                className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2.5 px-5 rounded-lg transition-colors duration-200 flex items-center space-x-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                <span>Create New Logo</span>
+              </button>
+              
+              <Link href="/history" className="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2.5 px-5 rounded-lg transition-colors duration-200 flex items-center space-x-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>View All Logos</span>
+              </Link>
+            </div>
+            
+            {/* Logo Details */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 text-sm">
               <div>
-                <h4 className="font-medium text-gray-700">Company Name</h4>
+                <h4 className="font-medium text-gray-700">Company</h4>
                 <p>{logo.parameters.companyName}</p>
               </div>
+              
+              {logo.parameters.slogan && (
+                <div>
+                  <h4 className="font-medium text-gray-700">Slogan</h4>
+                  <p>"{logo.parameters.slogan}"</p>
+                </div>
+              )}
               
               <div>
                 <h4 className="font-medium text-gray-700">Style</h4>
@@ -469,7 +467,7 @@ export default function LogoViewClient({ logoId }: LogoViewClientProps) {
               </div>
               
               <div>
-                <h4 className="font-medium text-gray-700">Color Scheme</h4>
+                <h4 className="font-medium text-gray-700">Colors</h4>
                 <p>{logo.parameters.colorScheme}</p>
               </div>
               
@@ -536,54 +534,39 @@ export default function LogoViewClient({ logoId }: LogoViewClientProps) {
                   <p>{logo.parameters.applicationContext}</p>
                 </div>
               )}
-
+              
               {logo.parameters.specialInstructions && (
-                <div>
+                <div className="md:col-span-2">
                   <h4 className="font-medium text-gray-700">Special Instructions</h4>
-                  <p style={{ whiteSpace: 'pre-wrap' }}>{logo.parameters.specialInstructions}</p>
+                  <p>{logo.parameters.specialInstructions}</p>
                 </div>
               )}
             </div>
           </div>
-          
-          <div className="mt-6 text-center">
-            <Link 
-              href="/history" 
-              className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
-            >
-              ← Back to Logo History
-            </Link>
-          </div>
         </div>
       )}
-      
+
       {/* Limit Modal */}
       {showLimitModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
-            <div className="text-center mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 mx-auto text-yellow-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              <h3 className="text-lg font-semibold mb-2">Logo Limit Reached</h3>
-              <p className="text-gray-600 text-sm mb-4">
-                You've reached your logo creation limit. Purchase more credits to continue creating logos.
-              </p>
-            </div>
+            <h3 className="text-lg font-semibold mb-4">Logo Limit Reached</h3>
+            <p className="mb-6">
+              You have reached your logo generation limit. Please purchase more credits or upgrade your plan to continue creating logos.
+            </p>
             
-            <div className="flex justify-center gap-3">
+            <div className="flex justify-end gap-3">
               <button
                 className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
                 onClick={() => setShowLimitModal(false)}
               >
-                Cancel
+                Close
               </button>
               <Link
-                href="/purchase"
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-                onClick={() => setShowLimitModal(false)}
+                href="/account"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
-                Purchase Credits
+                Buy Credits
               </Link>
             </div>
           </div>

@@ -1,10 +1,11 @@
 // src/app/utils/indexedDBUtils.ts
 import { v4 as uuidv4 } from 'uuid';
 
-// Define the logo interface with revision tracking and name field
+// Define the logo interface with revision tracking, name field, and user association
 export interface StoredLogo {
   id: string;
-  name: string; // New field for logo name
+  userId: string; // NEW: Associate logo with user
+  name: string;
   imageDataUri: string;
   createdAt: number;
   parameters: LogoParameters;
@@ -33,16 +34,17 @@ export interface LogoParameters {
   specialInstructions?: string;
 }
 
-// Interface for usage tracking
+// Interface for usage tracking (now user-specific)
 export interface UserUsage {
-  id: string; // "usage" as the ID for the single record
+  id: string; // Now uses userId instead of "usage"
+  userId: string; // NEW: User identifier
   logosCreated: number;
   logosLimit: number;
 }
 
 // Database configuration
 const DB_NAME = 'logoGeneratorDB';
-const DB_VERSION = 3; // Increased version for schema update to add name field
+const DB_VERSION = 4; // Increased version for schema update to add userId field
 const LOGOS_STORE = 'logos';
 const USAGE_STORE = 'usage';
 
@@ -61,6 +63,7 @@ export const initDB = (): Promise<IDBDatabase> => {
         store.createIndex('createdAt', 'createdAt', { unique: false });
         store.createIndex('originalLogoId', 'originalLogoId', { unique: false });
         store.createIndex('isRevision', 'isRevision', { unique: false });
+        store.createIndex('userId', 'userId', { unique: false }); // NEW: Index by user
       } else {
         // If the store exists but needs to be updated with new indices
         const openRequest = event.target as IDBOpenDBRequest;
@@ -74,28 +77,55 @@ export const initDB = (): Promise<IDBDatabase> => {
           if (!store.indexNames.contains('isRevision')) {
             store.createIndex('isRevision', 'isRevision', { unique: false });
           }
+          if (!store.indexNames.contains('userId')) {
+            store.createIndex('userId', 'userId', { unique: false }); // NEW: Index by user
+          }
         }
       }
       
       // Create usage store
       if (!db.objectStoreNames.contains(USAGE_STORE)) {
-        db.createObjectStore(USAGE_STORE, { keyPath: 'id' });
+        const store = db.createObjectStore(USAGE_STORE, { keyPath: 'id' });
+        store.createIndex('userId', 'userId', { unique: false }); // NEW: Index by user
+      } else {
+        // Add userId index to existing usage store
+        const openRequest = event.target as IDBOpenDBRequest;
+        if (openRequest.transaction) {
+          const store = openRequest.transaction.objectStore(USAGE_STORE);
+          if (!store.indexNames.contains('userId')) {
+            store.createIndex('userId', 'userId', { unique: false });
+          }
+        }
       }
       
-      // Migrate existing logos to add name field if upgrading from version 2
-      if (oldVersion < 3 && oldVersion > 0) {
+      // Migrate existing data to add userId field if upgrading from version 3
+      if (oldVersion < 4 && oldVersion > 0) {
         const transaction = (event.target as IDBOpenDBRequest).transaction;
         if (transaction) {
-          const store = transaction.objectStore(LOGOS_STORE);
-          
-          // Get all existing logos and add name field
-          store.openCursor().onsuccess = (cursorEvent) => {
+          // Migration for logos - we'll need to handle this when user context is available
+          // For now, we'll mark existing logos with a special userId that can be migrated later
+          const logoStore = transaction.objectStore(LOGOS_STORE);
+          logoStore.openCursor().onsuccess = (cursorEvent) => {
             const cursor = (cursorEvent.target as IDBRequest).result;
             if (cursor) {
               const logo = cursor.value;
-              if (!logo.name) {
-                logo.name = "Untitled";
+              if (!logo.userId) {
+                logo.userId = 'legacy_user'; // Mark for migration
                 cursor.update(logo);
+              }
+              cursor.continue();
+            }
+          };
+
+          // Migration for usage data
+          const usageStore = transaction.objectStore(USAGE_STORE);
+          usageStore.openCursor().onsuccess = (cursorEvent) => {
+            const cursor = (cursorEvent.target as IDBRequest).result;
+            if (cursor) {
+              const usage = cursor.value;
+              if (!usage.userId) {
+                usage.userId = 'legacy_user'; // Mark for migration
+                cursor.update(usage);
               }
               cursor.continue();
             }
@@ -120,11 +150,22 @@ export const generateLogoId = (): string => {
   return uuidv4();
 };
 
-// Initialize user usage
-export const initializeUserUsage = async (): Promise<void> => {
+// NEW: Helper function to get current user ID (should be called with user context)
+let currentUserId: string | null = null;
+
+export const setCurrentUserId = (userId: string | null) => {
+  currentUserId = userId;
+};
+
+export const getCurrentUserId = (): string | null => {
+  return currentUserId;
+};
+
+// Initialize user usage (now user-specific)
+export const initializeUserUsage = async (userId: string): Promise<void> => {
   try {
     const db = await initDB();
-    const usage = await getUserUsage();
+    const usage = await getUserUsage(userId);
     
     if (!usage) {
       return new Promise((resolve, reject) => {
@@ -132,9 +173,10 @@ export const initializeUserUsage = async (): Promise<void> => {
         const store = transaction.objectStore(USAGE_STORE);
         
         const initialUsage: UserUsage = {
-          id: 'usage', // Single record
+          id: `usage_${userId}`, // Make ID user-specific
+          userId: userId,
           logosCreated: 0,
-          logosLimit: 0 // Changed from 10 to 0
+          logosLimit: 0
         };
         
         const request = store.add(initialUsage);
@@ -158,15 +200,15 @@ export const initializeUserUsage = async (): Promise<void> => {
   }
 };
 
-// Get user usage
-export const getUserUsage = async (): Promise<UserUsage | null> => {
+// Get user usage (now user-specific)
+export const getUserUsage = async (userId: string): Promise<UserUsage | null> => {
   try {
     const db = await initDB();
     
     return new Promise((resolve, reject) => {
       const transaction = db.transaction([USAGE_STORE], 'readonly');
       const store = transaction.objectStore(USAGE_STORE);
-      const request = store.get('usage');
+      const request = store.get(`usage_${userId}`);
       
       request.onsuccess = (event) => {
         resolve((event.target as IDBRequest).result || null);
@@ -181,80 +223,22 @@ export const getUserUsage = async (): Promise<UserUsage | null> => {
       };
     });
   } catch (error) {
+    console.error('Error getting user usage:', error);
     throw error;
   }
 };
 
-// Update user usage
-export const updateUserUsage = async (update: Partial<UserUsage>): Promise<void> => {
-  try {
-    const db = await initDB();
-    const currentUsage = await getUserUsage();
-    
-    if (!currentUsage) {
-      await initializeUserUsage();
-      return updateUserUsage(update);
-    }
-    
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction([USAGE_STORE], 'readwrite');
-      const store = transaction.objectStore(USAGE_STORE);
-      
-      const updatedUsage: UserUsage = {
-        ...currentUsage,
-        ...update
-      };
-      
-      const request = store.put(updatedUsage);
-      
-      request.onsuccess = () => {
-        resolve();
-      };
-      
-      request.onerror = (event) => {
-        reject((event.target as IDBRequest).error);
-      };
-      
-      transaction.oncomplete = () => {
-        db.close();
-      };
-    });
-  } catch (error) {
-    console.error('Error updating user usage:', error);
-    throw error;
-  }
-};
-
-// Increment logos created count
-export const incrementLogosCreated = async (): Promise<void> => {
-  try {
-    const usage = await getUserUsage();
-    
-    if (!usage) {
-      await initializeUserUsage();
-      return incrementLogosCreated();
-    }
-    
-    await updateUserUsage({
-      logosCreated: usage.logosCreated + 1
-    });
-  } catch (error) {
-    console.error('Error incrementing logos created:', error);
-    throw error;
-  }
-};
-
-// Check if user can create more original logos
-export const canCreateOriginalLogo = async (): Promise<boolean> => {
+// Check if user can create more original logos (now user-specific)
+export const canCreateOriginalLogo = async (userId: string): Promise<boolean> => {
   try {
     // First try to get the latest values from DynamoDB
     try {
-      const response = await fetch('/user');
+      const response = await fetch('/api/user');
       if (response.ok) {
         const userData = await response.json();
         
         // Sync with IndexedDB but use the values directly for the check
-        await syncUserUsageWithDynamoDB({
+        await syncUserUsageWithDynamoDB(userId, {
           logosCreated: userData.logosCreated,
           logosLimit: userData.logosLimit
         });
@@ -267,11 +251,11 @@ export const canCreateOriginalLogo = async (): Promise<boolean> => {
     }
     
     // Fall back to IndexedDB values if API call fails
-    const usage = await getUserUsage();
+    const usage = await getUserUsage(userId);
     
     if (!usage) {
-      await initializeUserUsage();
-      return canCreateOriginalLogo();
+      await initializeUserUsage(userId);
+      return canCreateOriginalLogo(userId);
     }
     
     return usage.logosCreated < usage.logosLimit;
@@ -281,10 +265,10 @@ export const canCreateOriginalLogo = async (): Promise<boolean> => {
   }
 };
 
-// Count revisions for a specific original logo
-export const countRevisionsForLogo = async (originalLogoId: string): Promise<number> => {
+// Count revisions for a specific original logo (now user-specific)
+export const countRevisionsForLogo = async (originalLogoId: string, userId: string): Promise<number> => {
   try {
-    const revisions = await getRevisionsForLogo(originalLogoId);
+    const revisions = await getRevisionsForLogo(originalLogoId, userId);
     return revisions.length;
   } catch (error) {
     console.error('Error counting revisions for logo:', error);
@@ -292,10 +276,10 @@ export const countRevisionsForLogo = async (originalLogoId: string): Promise<num
   }
 };
 
-// Check if user can create more revisions for a specific logo
-export const canCreateRevision = async (originalLogoId: string): Promise<boolean> => {
+// Check if user can create more revisions for a specific logo (now user-specific)
+export const canCreateRevision = async (originalLogoId: string, userId: string): Promise<boolean> => {
   try {
-    const revisionsCount = await countRevisionsForLogo(originalLogoId);
+    const revisionsCount = await countRevisionsForLogo(originalLogoId, userId);
     return revisionsCount < 3; // Maximum 3 revisions per logo
   } catch (error) {
     console.error('Error checking if user can create revision:', error);
@@ -303,12 +287,13 @@ export const canCreateRevision = async (originalLogoId: string): Promise<boolean
   }
 };
 
-// Save a logo to IndexedDB
+// Save a logo to IndexedDB (now user-specific)
 export const saveLogo = async (
+  userId: string,
   imageDataUri: string, 
   parameters: LogoParameters,
   originalLogoId?: string,
-  name?: string // New optional name parameter
+  name?: string
 ): Promise<string> => {
   try {
     const db = await initDB();
@@ -316,49 +301,13 @@ export const saveLogo = async (
     
     // Determine if this is a revision or an original logo
     const isRevision = !!originalLogoId;
-    
-    // For revisions, determine the revision number and set proper name
-    let revisionNumber: number | undefined = undefined;
-    let finalName = name || "Untitled";
-    console.log("Initial finalName:", finalName);
+    let revisionNumber: number | undefined;
     
     if (isRevision && originalLogoId) {
-      try {
-        // Get revisions and original logo
-        const revisions = await getRevisionsForLogo(originalLogoId);
-        revisionNumber = revisions.length + 1;
-        
-        // Get the original logo to base the revision name on it
-        const originalLogo = await getLogo(originalLogoId);
-        
-        if (originalLogo) {
-          // Set the revision name based on the original logo name
-          const baseName = originalLogo.name || "Untitled";
-          finalName = `${baseName} - Revision ${revisionNumber}`;
-          console.log("Setting revision name to:", finalName);
-        }
-        
-        // Validate revision limits
-        if (revisionNumber > 3) {
-          throw new Error('Maximum revisions reached for this logo');
-        }
-      } catch (err) {
-        console.error("Error processing revision:", err);
-        // Fallback to a default name if something went wrong with original logo retrieval
-        finalName = `Logo Revision ${Date.now()}`;
-      }
-    } else {
-      // Validate logo creation limits for original logos
-      const canCreate = await canCreateOriginalLogo();
-      if (!canCreate) {
-        throw new Error('Maximum logo limit reached');
-      }
-      
-      // Increment the logos created count
-      await incrementLogosCreated();
+      // Get existing revisions to determine the next revision number
+      const existingRevisions = await getRevisionsForLogo(originalLogoId, userId);
+      revisionNumber = existingRevisions.length + 1;
     }
-    
-    console.log("Final name before saving:", finalName);
     
     return new Promise((resolve, reject) => {
       const transaction = db.transaction([LOGOS_STORE], 'readwrite');
@@ -366,7 +315,8 @@ export const saveLogo = async (
       
       const logo: StoredLogo = {
         id,
-        name: finalName, // Use the determined name with revision suffix if applicable
+        userId, // NEW: Store user association
+        name: name?.trim() || "Untitled",
         imageDataUri,
         createdAt: Date.now(),
         parameters,
@@ -374,14 +324,6 @@ export const saveLogo = async (
         originalLogoId,
         revisionNumber
       };
-      
-      console.log("Logo object being saved:", {
-        id: logo.id,
-        name: logo.name,
-        isRevision: logo.isRevision,
-        originalLogoId: logo.originalLogoId,
-        revisionNumber: logo.revisionNumber
-      });
       
       const request = store.add(logo);
       
@@ -405,48 +347,8 @@ export const saveLogo = async (
   }
 };
 
-// New function to rename a logo
-export const renameLogo = async (id: string, newName: string): Promise<void> => {
-  try {
-    const db = await initDB();
-    const logo = await getLogo(id);
-    
-    if (!logo) {
-      throw new Error('Logo not found');
-    }
-    
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction([LOGOS_STORE], 'readwrite');
-      const store = transaction.objectStore(LOGOS_STORE);
-      
-      // Update only the name field, keeping all other properties the same
-      const updatedLogo = {
-        ...logo,
-        name: newName.trim() || "Untitled" // Use "Untitled" if empty string
-      };
-      
-      const request = store.put(updatedLogo);
-      
-      request.onsuccess = () => {
-        resolve();
-      };
-      
-      request.onerror = (event) => {
-        reject((event.target as IDBRequest).error);
-      };
-      
-      transaction.oncomplete = () => {
-        db.close();
-      };
-    });
-  } catch (error) {
-    console.error('Error renaming logo:', error);
-    throw error;
-  }
-};
-
-// Get a logo by ID
-export const getLogo = async (id: string): Promise<StoredLogo | null> => {
+// Get a logo by ID (with user verification)
+export const getLogo = async (id: string, userId?: string): Promise<StoredLogo | null> => {
   try {
     const db = await initDB();
     
@@ -456,7 +358,14 @@ export const getLogo = async (id: string): Promise<StoredLogo | null> => {
       const request = store.get(id);
       
       request.onsuccess = (event) => {
-        resolve((event.target as IDBRequest).result || null);
+        const logo = (event.target as IDBRequest).result as StoredLogo | null;
+        
+        // If userId is provided, verify the logo belongs to the user
+        if (logo && userId && logo.userId !== userId) {
+          resolve(null); // Don't return logos that don't belong to the user
+        } else {
+          resolve(logo);
+        }
       };
       
       request.onerror = (event) => {
@@ -473,23 +382,22 @@ export const getLogo = async (id: string): Promise<StoredLogo | null> => {
   }
 };
 
-// Get all original logos (non-revisions)
-export const getOriginalLogos = async (): Promise<StoredLogo[]> => {
+// Get all original logos for a specific user
+export const getOriginalLogos = async (userId: string): Promise<StoredLogo[]> => {
   try {
     const db = await initDB();
     
     return new Promise((resolve, reject) => {
       const transaction = db.transaction([LOGOS_STORE], 'readonly');
       const store = transaction.objectStore(LOGOS_STORE);
+      const userIndex = store.index('userId');
       
-      // Get all logos first, then filter them in JavaScript
-      // This avoids issues with boolean values in IDBKeyRange
-      const request = store.getAll();
+      const request = userIndex.getAll(userId);
       
       request.onsuccess = (event) => {
-        const allLogos = (event.target as IDBRequest).result as StoredLogo[];
+        const userLogos = (event.target as IDBRequest).result as StoredLogo[];
         // Filter for non-revisions (where isRevision is false)
-        const originalLogos = allLogos.filter(logo => logo.isRevision === false);
+        const originalLogos = userLogos.filter(logo => logo.isRevision === false);
         // Sort by creation date (newest first)
         originalLogos.sort((a, b) => b.createdAt - a.createdAt);
         resolve(originalLogos);
@@ -509,23 +417,22 @@ export const getOriginalLogos = async (): Promise<StoredLogo[]> => {
   }
 };
 
-// Get all revisions for a specific original logo
-export const getRevisionsForLogo = async (originalLogoId: string): Promise<StoredLogo[]> => {
+// Get all revisions for a specific original logo (user-specific)
+export const getRevisionsForLogo = async (originalLogoId: string, userId: string): Promise<StoredLogo[]> => {
   try {
     const db = await initDB();
     
     return new Promise((resolve, reject) => {
       const transaction = db.transaction([LOGOS_STORE], 'readonly');
       const store = transaction.objectStore(LOGOS_STORE);
+      const userIndex = store.index('userId');
       
-      // Get all logos first, then filter them in JavaScript
-      // This is more reliable across browsers than using IDBKeyRange with complex types
-      const request = store.getAll();
+      const request = userIndex.getAll(userId);
       
       request.onsuccess = (event) => {
-        const allLogos = (event.target as IDBRequest).result as StoredLogo[];
+        const userLogos = (event.target as IDBRequest).result as StoredLogo[];
         // Filter for revisions of the specified original logo
-        const revisions = allLogos.filter(
+        const revisions = userLogos.filter(
           logo => logo.isRevision === true && logo.originalLogoId === originalLogoId
         );
         // Sort by revision number
@@ -547,19 +454,19 @@ export const getRevisionsForLogo = async (originalLogoId: string): Promise<Store
   }
 };
 
-// Get all logos (originals and their revisions grouped)
-export const getAllLogosWithRevisions = async (): Promise<{
+// Get all logos (originals and their revisions grouped) for a specific user
+export const getAllLogosWithRevisions = async (userId: string): Promise<{
   original: StoredLogo;
   revisions: StoredLogo[];
 }[]> => {
   try {
-    // Get all original logos
-    const originals = await getOriginalLogos();
+    // Get all original logos for the user
+    const originals = await getOriginalLogos(userId);
     
     // For each original, get its revisions
     const logosWithRevisions = await Promise.all(
       originals.map(async (original) => {
-        const revisions = await getRevisionsForLogo(original.id);
+        const revisions = await getRevisionsForLogo(original.id, userId);
         return {
           original,
           revisions
@@ -574,18 +481,18 @@ export const getAllLogosWithRevisions = async (): Promise<{
   }
 };
 
-// Update user usage with values from DynamoDB
-export const syncUserUsageWithDynamoDB = async (dbUsage: {
+// Update user usage with values from DynamoDB (now user-specific)
+export const syncUserUsageWithDynamoDB = async (userId: string, dbUsage: {
   logosCreated: number;
   logosLimit: number;
 }): Promise<void> => {
   try {
     const db = await initDB();
-    const currentUsage = await getUserUsage();
+    const currentUsage = await getUserUsage(userId);
     
     if (!currentUsage) {
-      await initializeUserUsage();
-      return syncUserUsageWithDynamoDB(dbUsage);
+      await initializeUserUsage(userId);
+      return syncUserUsageWithDynamoDB(userId, dbUsage);
     }
     
     // Always use DynamoDB values as they take precedence
@@ -619,82 +526,171 @@ export const syncUserUsageWithDynamoDB = async (dbUsage: {
   }
 };
 
-// Delete a logo by ID (including its revisions if it's an original)
-export const deleteLogo = async (id: string): Promise<void> => {
+// Delete a logo (with user verification)
+export const deleteLogo = async (id: string, userId: string): Promise<void> => {
   try {
     const db = await initDB();
-    const logo = await getLogo(id);
     
+    // First verify the logo belongs to the user
+    const logo = await getLogo(id, userId);
     if (!logo) {
-      throw new Error('Logo not found');
+      throw new Error('Logo not found or access denied');
     }
     
-    // If this is an original logo, delete all its revisions first
-    if (!logo.isRevision) {
-      const revisions = await getRevisionsForLogo(id);
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction([LOGOS_STORE], 'readwrite');
+      const store = transaction.objectStore(LOGOS_STORE);
       
-      for (const revision of revisions) {
-        await deleteLogoInternal(db, revision.id);
-      }
-    } else {
-      // If this is a revision, just delete it
-      await deleteLogoInternal(db, id);
-      return;
-    }
-    
-    // Delete the original logo
-    await deleteLogoInternal(db, id);
-    
+      const request = store.delete(id);
+      
+      request.onsuccess = () => {
+        resolve();
+      };
+      
+      request.onerror = (event) => {
+        reject((event.target as IDBRequest).error);
+      };
+      
+      transaction.oncomplete = () => {
+        db.close();
+      };
+    });
   } catch (error) {
-    console.error('Error deleting logo from IndexedDB:', error);
+    console.error('Error deleting logo:', error);
     throw error;
   }
 };
 
-// Internal helper function for deleting a logo
-const deleteLogoInternal = async (db: IDBDatabase, id: string): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction([LOGOS_STORE], 'readwrite');
-    const store = transaction.objectStore(LOGOS_STORE);
-    const request = store.delete(id);
+// Rename a logo (with user verification)
+export const renameLogo = async (id: string, newName: string, userId: string): Promise<void> => {
+  try {
+    const db = await initDB();
+    const logo = await getLogo(id, userId);
     
-    request.onsuccess = () => {
-      resolve();
-    };
+    if (!logo) {
+      throw new Error('Logo not found or access denied');
+    }
     
-    request.onerror = (event) => {
-      reject((event.target as IDBRequest).error);
-    };
-    
-    transaction.oncomplete = () => {
-      // Don't close the database here, as it might be used for other operations
-    };
-  });
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction([LOGOS_STORE], 'readwrite');
+      const store = transaction.objectStore(LOGOS_STORE);
+      
+      // Update only the name field, keeping all other properties the same
+      const updatedLogo = {
+        ...logo,
+        name: newName.trim() || "Untitled"
+      };
+      
+      const request = store.put(updatedLogo);
+      
+      request.onsuccess = () => {
+        resolve();
+      };
+      
+      request.onerror = (event) => {
+        reject((event.target as IDBRequest).error);
+      };
+      
+      transaction.oncomplete = () => {
+        db.close();
+      };
+    });
+  } catch (error) {
+    console.error('Error renaming logo:', error);
+    throw error;
+  }
 };
 
-// Add this function to indexedDBUtils.ts
+// Reset database (clear all data)
 export const resetDatabase = async (): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    // This will delete the entire database
-    const request = indexedDB.deleteDatabase(DB_NAME);
+  try {
+    const db = await initDB();
     
-    request.onsuccess = () => {
-      console.log('Database deleted successfully');
-      // Reinitialize with new settings
-      initializeUserUsage()
-        .then(() => {
-          console.log('Database reinitialized with new settings');
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction([LOGOS_STORE, USAGE_STORE], 'readwrite');
+      
+      const logoStore = transaction.objectStore(LOGOS_STORE);
+      const usageStore = transaction.objectStore(USAGE_STORE);
+      
+      const clearLogos = logoStore.clear();
+      const clearUsage = usageStore.clear();
+      
+      let completed = 0;
+      const checkComplete = () => {
+        completed++;
+        if (completed === 2) {
           resolve();
-        })
-        .catch(reject);
-    };
-    
-    request.onerror = (event) => {
-      console.error('Error deleting database:', event);
-      reject(new Error('Failed to delete database'));
-    };
-  });
+        }
+      };
+      
+      clearLogos.onsuccess = checkComplete;
+      clearUsage.onsuccess = checkComplete;
+      
+      clearLogos.onerror = (event) => reject((event.target as IDBRequest).error);
+      clearUsage.onerror = (event) => reject((event.target as IDBRequest).error);
+      
+      transaction.oncomplete = () => {
+        db.close();
+      };
+    });
+  } catch (error) {
+    console.error('Error resetting database:', error);
+    throw error;
+  }
 };
 
-// Run this in your console or call it from a component
-// resetDatabase().then(() => location.reload());
+// NEW: Clear data for a specific user only
+export const clearUserData = async (userId: string): Promise<void> => {
+  try {
+    const db = await initDB();
+    
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction([LOGOS_STORE, USAGE_STORE], 'readwrite');
+      
+      const logoStore = transaction.objectStore(LOGOS_STORE);
+      const usageStore = transaction.objectStore(USAGE_STORE);
+      
+      // Clear user's logos
+      const userIndex = logoStore.index('userId');
+      const logoRequest = userIndex.openCursor(IDBKeyRange.only(userId));
+      
+      logoRequest.onsuccess = (event) => {
+        const cursor = (event.target as IDBRequest).result;
+        if (cursor) {
+          cursor.delete();
+          cursor.continue();
+        }
+      };
+      
+      // Clear user's usage data
+      const usageDeleteRequest = usageStore.delete(`usage_${userId}`);
+      
+      let completed = 0;
+      const checkComplete = () => {
+        completed++;
+        if (completed === 2) {
+          resolve();
+        }
+      };
+      
+      logoRequest.onerror = (event) => reject((event.target as IDBRequest).error);
+      usageDeleteRequest.onsuccess = checkComplete;
+      usageDeleteRequest.onerror = (event) => reject((event.target as IDBRequest).error);
+      
+      // Count when logo clearing is done
+      logoRequest.onsuccess = (event) => {
+        const cursor = (event.target as IDBRequest).result;
+        if (!cursor) {
+          checkComplete(); // No more logos to delete
+        }
+      };
+      
+      transaction.oncomplete = () => {
+        db.close();
+      };
+    });
+  } catch (error) {
+    console.error('Error clearing user data:', error);
+    throw error;
+  }
+};

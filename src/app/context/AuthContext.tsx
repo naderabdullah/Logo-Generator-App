@@ -1,4 +1,4 @@
-// src/app/context/AuthContext.tsx - UPDATED for DynamoDB + Supabase
+// src/app/context/AuthContext.tsx - UPDATED for user-specific IndexedDB
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
@@ -51,6 +51,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       if (response.status === 401) {
         setUser(null);
+        // Clear current user ID from IndexedDB utils
+        const { setCurrentUserId } = await import('../utils/indexedDBUtils');
+        setCurrentUserId(null);
         return;
       }
       
@@ -66,13 +69,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         };
         
         setUser(normalizedUser);
+        
+        // Set current user ID in IndexedDB utils for user-specific operations
+        const { setCurrentUserId, initializeUserUsage } = await import('../utils/indexedDBUtils');
+        setCurrentUserId(normalizedUser.email); // Using email as user ID
+        
+        // Initialize user-specific usage data
+        try {
+          await initializeUserUsage(normalizedUser.email);
+        } catch (error) {
+          console.error('Error initializing user usage:', error);
+        }
       } else {
         console.log("AuthContext: User response not OK:", response.status);
         setUser(null);
+        // Clear current user ID from IndexedDB utils
+        const { setCurrentUserId } = await import('../utils/indexedDBUtils');
+        setCurrentUserId(null);
       }
     } catch (error) {
       console.error('AuthContext: Error checking auth status:', error);
       setUser(null);
+      // Clear current user ID from IndexedDB utils
+      const { setCurrentUserId } = await import('../utils/indexedDBUtils');
+      setCurrentUserId(null);
     } finally {
       setLoading(false);
     }
@@ -107,6 +127,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         };
         
         setUser(normalizedUser);
+        
+        // Set current user ID in IndexedDB utils for user-specific operations
+        const { setCurrentUserId, initializeUserUsage } = await import('../utils/indexedDBUtils');
+        setCurrentUserId(normalizedUser.email); // Using email as user ID
+        
+        // Initialize user-specific usage data
+        try {
+          await initializeUserUsage(normalizedUser.email);
+        } catch (error) {
+          console.error('Error initializing user usage during login:', error);
+        }
       } else {
         // Fallback to refreshAuth to get user data
         await refreshAuth();
@@ -141,17 +172,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           localStorage.removeItem('user');
           sessionStorage.removeItem('user');
           
-          // Also clear IndexedDB to prevent stale data
-          const { resetDatabase } = await import('../utils/indexedDBUtils');
-          await resetDatabase();
-          console.log('AuthContext: IndexedDB cleared on logout');
+          // Clear user-specific IndexedDB data instead of resetting entire database
+          const { setCurrentUserId, clearUserData } = await import('../utils/indexedDBUtils');
+          
+          // Get current user ID before clearing it
+          const currentUserId = user?.email;
+          
+          // Clear current user ID
+          setCurrentUserId(null);
+          
+          // Optional: Clear only current user's data instead of entire database
+          // This allows other users' data to persist on the same computer
+          if (currentUserId) {
+            await clearUserData(currentUserId);
+            console.log('AuthContext: User-specific IndexedDB data cleared on logout');
+          }
+          
+          // Alternatively, if you want to clear everything (original behavior):
+          // const { resetDatabase } = await import('../utils/indexedDBUtils');
+          // await resetDatabase();
+          // console.log('AuthContext: IndexedDB cleared on logout');
         }
       } catch (err) {
         console.error('AuthContext: Error clearing storage:', err);
         // Don't block logout if clearing fails
       }
     }
-  }, []);
+  }, [user?.email]);
 
   // Function to update user data (for credit updates)
   const updateUser = useCallback((updates: Partial<User>) => {

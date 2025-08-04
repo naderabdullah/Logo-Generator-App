@@ -1,3 +1,4 @@
+// src/app/history/HistoryView.tsx - FIXED for user-specific IndexedDB
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -21,6 +22,7 @@ export default function HistoryView() {
   const [error, setError] = useState<string | null>(null);
   const [selectedLogo, setSelectedLogo] = useState<string | null>(null);
   const [usage, setUsage] = useState<{ used: number, limit: number } | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   
   const router = useRouter();
   
@@ -33,8 +35,11 @@ export default function HistoryView() {
         
         if (userResponse.ok) {
           const userData = await userResponse.json();
+          const email = userData.email;
+          setUserEmail(email);
           
-          await syncUserUsageWithDynamoDB({
+          // FIXED: Pass userId (email) as first parameter
+          await syncUserUsageWithDynamoDB(email, {
             logosCreated: userData.logosCreated,
             logosLimit: userData.logosLimit
           });
@@ -43,13 +48,14 @@ export default function HistoryView() {
             used: userData.logosCreated,
             limit: userData.logosLimit
           });
+          
+          // FIXED: Pass userId (email) to getAllLogosWithRevisions
+          const allLogosWithRevisions = await getAllLogosWithRevisions(email);
+          setLogosWithRevisions(allLogosWithRevisions);
         } else if (userResponse.status === 401) {
           router.push('/login?redirect=/history');
           return;
         }
-        
-        const allLogosWithRevisions = await getAllLogosWithRevisions();
-        setLogosWithRevisions(allLogosWithRevisions);
         
       } catch (err) {
         console.error('Error fetching logos:', err);
@@ -82,11 +88,14 @@ export default function HistoryView() {
   };
   
   const handleDeleteLogo = async () => {
-    if (!selectedLogo) return;
+    if (!selectedLogo || !userEmail) return;
     
     try {
-      await deleteLogo(selectedLogo);
-      const allLogosWithRevisions = await getAllLogosWithRevisions();
+      // FIXED: Pass userId (email) to deleteLogo
+      await deleteLogo(selectedLogo, userEmail);
+      
+      // FIXED: Pass userId (email) to getAllLogosWithRevisions
+      const allLogosWithRevisions = await getAllLogosWithRevisions(userEmail);
       setLogosWithRevisions(allLogosWithRevisions);
       setSelectedLogo(null);
     } catch (err) {
@@ -106,20 +115,16 @@ export default function HistoryView() {
         
         {usage && (
           <div className="mb-6 p-3 bg-indigo-50 rounded-lg">
-            <h3 className="font-medium text-indigo-700">Your Logo Usage</h3>
-            <p className="text-sm text-indigo-600">
-              You have created {usage.used} of {usage.limit} available logos
-              {usage.used >= usage.limit && (
-                <span className="ml-2">
-                  <Link href="/purchase" className="text-indigo-800 underline">Purchase more</Link>
-                </span>
-              )}
-            </p>
-            <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-              <div 
-                className="bg-indigo-600 h-2.5 rounded-full" 
-                style={{ width: `${Math.min(100, (usage.used / usage.limit) * 100)}%` }}
-              ></div>
+            <h3 className="font-medium text-indigo-900 mb-2">Logo Credits</h3>
+            <div className="flex justify-between items-center">
+              <span className="text-indigo-700">Used: {usage.used} / {usage.limit}</span>
+              <div className="bg-white rounded-full h-2 flex-1 mx-4">
+                <div 
+                  className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${Math.min((usage.used / usage.limit) * 100, 100)}%` }}
+                ></div>
+              </div>
+              <span className="text-indigo-700">{usage.limit - usage.used} remaining</span>
             </div>
           </div>
         )}
@@ -127,7 +132,7 @@ export default function HistoryView() {
         {loading && (
           <div className="text-center my-8">
             <div className="spinner"></div>
-            <p className="mt-4 text-gray-600">Loading logo history...</p>
+            <p className="mt-4 text-gray-600">Loading your logos...</p>
           </div>
         )}
         
@@ -140,92 +145,75 @@ export default function HistoryView() {
         
         {!loading && !error && logosWithRevisions.length === 0 && (
           <div className="text-center py-8">
-            <p className="text-gray-600 mb-4">You don't have any stored logos.</p>
-            <button
-              onClick={() => router.push('/')}
-              className="btn btn-primary"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                minHeight: '48px',
-                padding: '12px 24px',
-                fontSize: '16px',
-                fontWeight: '500',
-                borderRadius: '8px',
-                backgroundColor: '#6366f1',
-                color: 'white',
-                border: 'none',
-                cursor: 'pointer',
-                textDecoration: 'none',
-                boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#4f46e5';
-                e.currentTarget.style.transform = 'translateY(-1px)';
-                e.currentTarget.style.boxShadow = '0 4px 6px -1px rgb(0 0 0 / 0.1)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#6366f1';
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 1px 2px 0 rgb(0 0 0 / 0.05)';
-              }}
-            >
-              Create a Logo
-            </button>
+            <p className="text-gray-600 mb-4">You haven't created any logos yet.</p>
+            <Link href="/" className="btn btn-primary">
+              Create Your First Logo
+            </Link>
           </div>
         )}
         
         {!loading && !error && logosWithRevisions.length > 0 && (
-          <div className="space-y-6">
+          <div className="grid gap-6">
             {logosWithRevisions.map(({ original, revisions }) => {
+              // Determine which logo to display (latest revision or original)
               const latestRevision = getLatestRevision(revisions);
               const displayedLogo = latestRevision || original;
-              const idToView = latestRevision ? latestRevision.id : original.id;
+              const hasRevisions = revisions.length > 0;
               
               return (
-                <div key={original.id} className="border rounded-lg overflow-hidden shadow-sm">
-                  <div className="bg-indigo-50 p-3 border-b">
-                    <h3 className="font-medium text-indigo-800">
-                      {displayedLogo.name || "Untitled"}
-                      <span className="text-xs text-indigo-600 ml-2">
-                        ({3 - revisions.length} revision{(3 - revisions.length) !== 1 ? 's' : ''} remaining)
-                      </span>
-                    </h3>
-                    <p className="text-xs text-gray-500">
-                      {original.parameters.companyName} • Created on {formatDate(original.createdAt)}
-                      {latestRevision && (
-                        <span> • Last updated: {formatDate(latestRevision.createdAt)}</span>
-                      )}
-                    </p>
-                  </div>
-                  
-                  <div className="p-3">
-                    <div className="flex flex-col items-center">
-                      <div className="bg-gray-50 h-40 w-full flex items-center justify-center p-2 rounded border mb-3">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={displayedLogo.imageDataUri}
-                          alt={`${displayedLogo.name || displayedLogo.parameters.companyName} logo`}
-                          className="max-w-full max-h-full object-contain"
-                        />
+                <div key={original.id} className="border rounded-lg p-4 bg-white shadow-sm">
+                  <div className="flex flex-col md:flex-row gap-4">
+                    {/* Logo Image */}
+                    <div className="flex-shrink-0">
+                      <img
+                        src={displayedLogo.imageDataUri}
+                        alt={displayedLogo.name}
+                        className="w-32 h-32 object-contain border border-gray-200 rounded"
+                      />
+                    </div>
+                    
+                    {/* Logo Details */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-2">
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900 truncate">
+                            {displayedLogo.name}
+                          </h3>
+                          <p className="text-sm text-gray-500">
+                            Created: {formatDate(original.createdAt)}
+                          </p>
+                          {hasRevisions && (
+                            <p className="text-sm text-indigo-600 font-medium">
+                              Showing: Revision {latestRevision?.revisionNumber} 
+                              <span className="text-gray-500"> (of {revisions.length})</span>
+                            </p>
+                          )}
+                        </div>
                       </div>
                       
-                      <div className="text-center text-sm mb-3">
-                        {latestRevision ? (
-                          <span className="font-medium">Latest Revision (#{latestRevision.revisionNumber})</span>
-                        ) : (
-                          <span className="font-medium">Original Logo</span>
+                      {/* Company Name and Details */}
+                      <div className="mb-3">
+                        <p className="text-sm font-medium text-gray-700">
+                          Company: {displayedLogo.parameters.companyName}
+                        </p>
+                        {displayedLogo.parameters.slogan && (
+                          <p className="text-sm text-gray-600">
+                            Slogan: "{displayedLogo.parameters.slogan}"
+                          </p>
                         )}
+                        <p className="text-xs text-gray-500">
+                          Style: {displayedLogo.parameters.overallStyle} • 
+                          Colors: {displayedLogo.parameters.colorScheme}
+                        </p>
                       </div>
-
-                      <div className="flex gap-2 justify-center w-full">
+                      
+                      {/* Action Buttons */}
+                      <div className="flex flex-wrap gap-2">
                         <button
-                          onClick={() => handleViewLogo(idToView)}
-                          className="btn-action btn-primary-outline"
+                          onClick={() => handleViewLogo(displayedLogo.id)}
+                          className="btn-action btn-primary"
                         >
-                          {revisions.length > 0 ? "View All" : "View Logo"}
+                          {hasRevisions ? "View All" : "View Logo"}
                         </button>
                         
                         <button
