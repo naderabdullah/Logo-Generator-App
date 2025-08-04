@@ -4,7 +4,6 @@ const CACHE_NAME = 'logo-generator-v1';
 // Files to cache
 const ASSETS_TO_CACHE = [
   '/',
-  '/index.html',
   '/manifest.json',
   '/icons/smartyapps.png'
 ];
@@ -14,7 +13,6 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('Cache opened');
         return cache.addAll(ASSETS_TO_CACHE);
       })
       .then(() => self.skipWaiting())
