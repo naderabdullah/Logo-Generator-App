@@ -1,4 +1,4 @@
-// src/app/page.tsx (FIXED - Keep original structure but redirect to login)
+// src/app/page.tsx - PROPER FIX: Keep all your auth logic, just fix the hanging
 'use client';
 
 import { useState, useCallback, useEffect, Suspense } from 'react';
@@ -54,6 +54,7 @@ export default function Home() {
   const pathname = usePathname();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [mounted, setMounted] = useState(false);
   
   // Check if current path is a public route that shouldn't require authentication
   const isPublicRoute = () => {
@@ -68,8 +69,16 @@ export default function Home() {
            isAppManagerRegistrationUrl(pathname);
   };
   
-  // Check auth status and redirect to login if not authenticated
+  // FIXED: Prevent hydration mismatch by waiting for client mount
   useEffect(() => {
+    setMounted(true);
+  }, []);
+  
+  // FIXED: Check auth status with timeout and better error handling
+  useEffect(() => {
+    // Don't run auth check until component is mounted on client
+    if (!mounted) return;
+    
     const checkAuth = async () => {
       setIsCheckingAuth(true);
       
@@ -81,6 +90,14 @@ export default function Home() {
         return;
       }
       
+      // Add timeout to prevent infinite hanging
+      const timeoutId = setTimeout(() => {
+        console.log("Auth check timed out, redirecting to login");
+        setIsAuthenticated(false);
+        setIsCheckingAuth(false);
+        router.push('/login');
+      }, 10000); // 10 second timeout
+      
       try {
         // Try different API endpoints to see which one works
         let response = null;
@@ -88,7 +105,15 @@ export default function Home() {
         
         for (const endpoint of endpointsToTry) {
           try {
-            const tempResponse = await fetch(endpoint);
+            console.log(`Trying auth endpoint: ${endpoint}`);
+            const tempResponse = await fetch(endpoint, {
+              method: 'GET',
+              credentials: 'include',
+              // Add timeout to individual requests
+              signal: AbortSignal.timeout(5000) // 5 second timeout per request
+            });
+            
+            console.log(`${endpoint} responded with status:`, tempResponse.status);
             
             // If we get a non-404 response, use it
             if (tempResponse.status !== 404) {
@@ -97,8 +122,11 @@ export default function Home() {
             }
           } catch (err) {
             console.error(`Error with user endpoint ${endpoint}:`, err);
+            // Continue to next endpoint
           }
         }
+        
+        clearTimeout(timeoutId); // Clear timeout if we got a response
         
         if (!response || response.status === 401) {
           // User is not authenticated, redirect to login instead of App Manager
@@ -107,9 +135,16 @@ export default function Home() {
           router.push('/login');
         } else if (response.ok) {
           // User is authenticated
+          console.log("User is authenticated");
           setIsAuthenticated(true);
+        } else {
+          // Some other error, redirect to login
+          console.log("Auth check failed with status:", response.status);
+          setIsAuthenticated(false);
+          router.push('/login');
         }
       } catch (err) {
+        clearTimeout(timeoutId);
         console.error('Error checking auth status:', err);
         // If there's an error, redirect to login
         setIsAuthenticated(false);
@@ -120,7 +155,7 @@ export default function Home() {
     };
     
     checkAuth();
-  }, [router, pathname]);
+  }, [router, pathname, mounted]);
   
   // Initialize app
   useEffect(() => {
@@ -132,13 +167,14 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, []);
 
-  // If still checking auth, show loading
-  if (isCheckingAuth) {
+  // If not mounted yet or still checking auth, show loading
+  if (!mounted || isCheckingAuth) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="spinner"></div>
           <p className="mt-md text-gray-600">Loading...</p>
+          <p className="text-sm text-gray-500 mt-2">Checking authentication...</p>
         </div>
       </div>
     );

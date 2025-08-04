@@ -753,12 +753,8 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               </div>
             ) : (
               <div>
-                <div style={{ fontSize: 'var(--text-lg)', marginBottom: 'var(--space-xs)' }}>📤</div>
                 <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-gray-600)', margin: 0 }}>
                   Click to upload reference image (optional)
-                </p>
-                <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-gray-500)', marginTop: 'var(--space-xs)' }}>
-                  Upload an image for style reference (max 10MB)
                 </p>
               </div>
             )}
