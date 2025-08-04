@@ -4,7 +4,7 @@ import { useState, useCallback, ChangeEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { useAuth } from '@/app/context/AuthContext'; // ADDED: Import useAuth
+import { useAuth } from '@/app/context/AuthContext';
 import { 
   saveLogo, 
   getLogo, 
@@ -43,7 +43,6 @@ function useAuthCheck() {
           setUserInfo(null);
         }
       } catch (error) {
-        console.error('Error checking auth status:', error);
         setIsLoggedIn(false);
       } finally {
         setLoading(false);
@@ -64,7 +63,7 @@ interface GenerateFormProps {
 
 export default function GenerateForm({ setLoading, setImageDataUri, setError }: GenerateFormProps) {
   const { isLoggedIn, loading: authLoading } = useAuthCheck();
-  const { updateUser } = useAuth(); // ADDED: Get updateUser from context
+  const { updateUser } = useAuth();
   const router = useRouter();
   const editLogoId = useEditParam();
   
@@ -89,6 +88,9 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   const [complexityLevel, setComplexityLevel] = useState('');
   const [applicationContext, setApplicationContext] = useState('');
   
+  // Add special instructions state
+  const [specialInstructions, setSpecialInstructions] = useState('');
+  
   const [isAnimating, setIsAnimating] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -101,34 +103,29 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
 
   const useReferenceParam = () => {
     const searchParams = useSearchParams();
-    return searchParams?.get('reference') || undefined;
+    return searchParams?.get('reference') || null;
   };
-
+  
   const referenceLogoId = useReferenceParam();
 
+  // Check if user can perform actions
   useEffect(() => {
-    const checkUsageLimits = async () => {
-      try {
-        if (!editLogoId) {
-          const canCreate = await canCreateOriginalLogo();
-          setCanCreateLogo(canCreate);
+    const checkLimits = async () => {
+      if (isLoggedIn) {
+        const canCreate = await canCreateOriginalLogo();
+        setCanCreateLogo(canCreate);
+        
+        if (originalLogoId) {
+          const canCreateRevision_ = await canCreateRevision(originalLogoId);
+          setCanRevise(canCreateRevision_);
         }
-      } catch (error) {
-        console.error('Error checking usage limits:', error);
       }
     };
     
-    checkUsageLimits();
-  }, [editLogoId]);
+    checkLimits();
+  }, [isLoggedIn, originalLogoId]);
 
-  // Simple mobile check for other features
-  useEffect(() => {
-    const generatorPage = document.querySelector('.generator-page');
-    if (generatorPage && !generatorPage.classList.contains('allow-scroll')) {
-      generatorPage.classList.add('allow-scroll');
-    }
-  }, []);
-
+  // Load logo data if editing
   useEffect(() => {
     if (editLogoId) {
       const loadLogoData = async () => {
@@ -138,6 +135,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
           
           if (logoData) {
             const params = logoData.parameters;
+            
             setCompanyName(params.companyName || '');
             setSlogan(params.slogan || '');
             setOverallStyle(params.overallStyle || '');
@@ -146,16 +144,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
             setBrandPersonality(params.brandPersonality || '');
             setIndustry(params.industry || '');
             
-            // Check if color scheme contains custom colors
-            if (params.colorScheme && params.colorScheme.includes('Use these specific colors')) {
-              setColorScheme('Custom Colors');
-              // Extract colors from the saved prompt
-              const colorMatch = params.colorScheme.match(/#[0-9A-F]{6}/gi);
-              if (colorMatch) {
-                setCustomColors(colorMatch);
-              }
-            }
-            
+            // Check if we need to show advanced options
             if (
               params.typographyStyle || 
               params.lineStyle || 
@@ -163,7 +152,8 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               params.shapeEmphasis || 
               params.texture || 
               params.complexityLevel || 
-              params.applicationContext
+              params.applicationContext ||
+              params.specialInstructions
             ) {
               setShowAdvanced(true);
             }
@@ -175,6 +165,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
             setTexture(params.texture || '');
             setComplexityLevel(params.complexityLevel || '');
             setApplicationContext(params.applicationContext || '');
+            setSpecialInstructions(params.specialInstructions || ''); // Add this line
             
             if (logoData.imageDataUri) {
               setReferenceImagePreview(logoData.imageDataUri);
@@ -202,7 +193,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
             }
           }
         } catch (err) {
-          console.error('Error loading logo data for editing:', err);
           setError('Failed to load logo data for editing');
         } finally {
           setLoading(false);
@@ -214,15 +204,13 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   }, [editLogoId, setLoading, setError]);
 
   useEffect(() => {
-    if (referenceLogoId && !editLogoId) { // Only if not in edit mode
+    if (referenceLogoId && !editLogoId) {
       const loadReferenceLogoData = async () => {
         try {
           setLoading(true);
           const logoData = await getLogo(referenceLogoId);
           
           if (logoData) {
-            // IMPORTANT: Only set the reference image, don't populate other fields
-            // This differs from edit mode which populates all form fields
             if (logoData.imageDataUri) {
               setReferenceImagePreview(logoData.imageDataUri);
               
@@ -236,12 +224,10 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               }
             }
             
-            // Set this as a new logo creation (not revision)
             setIsRevision(false);
             setOriginalLogoId(undefined);
           }
         } catch (err) {
-          console.error('Error loading reference logo data:', err);
           setError('Failed to load reference logo data');
         } finally {
           setLoading(false);
@@ -370,6 +356,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     setCustomColors(newColors);
   }, [customColors]);
 
+  // Updated buildPrompt function to include special instructions alongside other parameters
   const buildPrompt = useCallback(() => {
     let prompt = `Create a logo with the following characteristics:\n`;
     prompt += `Company Name: ${companyName}\n`;
@@ -397,14 +384,19 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     if (complexityLevel) prompt += `Complexity: ${complexityLevel}\n`;
     if (applicationContext) prompt += `Application Context: ${applicationContext}\n`;
     
-    prompt += `Make it a high-quality, professional logo suitable for business use.`;
+    // Add special instructions as additional requirements if provided
+    if (specialInstructions && specialInstructions.trim()) {
+      prompt += `\nAdditional Requirements (these should take precedence over previous options): ${specialInstructions.trim()}\n`;
+    }
+    
+    prompt += `\nMake it a high-quality, professional logo suitable for business use.`;
     
     return prompt;
   }, [
     companyName, slogan, overallStyle, colorScheme, symbolFocus, 
     brandPersonality, industry, typographyStyle, lineStyle,
     composition, shapeEmphasis, texture, complexityLevel, 
-    applicationContext, customColors
+    applicationContext, customColors, specialInstructions
   ]);
 
   const collectParameters = useCallback((): LogoParameters => {
@@ -424,13 +416,14 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       shapeEmphasis: shapeEmphasis || undefined,
       texture: texture || undefined,
       complexityLevel: complexityLevel || undefined,
-      applicationContext: applicationContext || undefined
+      applicationContext: applicationContext || undefined,
+      specialInstructions: specialInstructions || undefined // Add this line
     };
   }, [
     companyName, slogan, overallStyle, colorScheme, symbolFocus, 
     brandPersonality, industry, typographyStyle, lineStyle,
     composition, shapeEmphasis, texture, complexityLevel, 
-    applicationContext, customColors
+    applicationContext, customColors, specialInstructions // Add this dependency
   ]);
 
   const areRequiredFieldsFilled = useCallback(() => {
@@ -449,7 +442,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     brandPersonality
   ]);
 
-  // FIXED: Updated handleGenerateLogo function
   const handleGenerateLogo = useCallback(async () => {
     if (!isLoggedIn) {
       router.push('/login?redirect=/');
@@ -485,14 +477,12 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
         formData.append('referenceImage', referenceImage);
       }
 
-      // FIXED: Add isRevision flag for proper credit handling
       formData.append('isRevision', isRevision.toString());
       
       if (isRevision && originalLogoId) {
         formData.append('originalLogoId', originalLogoId);
       }
 
-      // FIXED: Use /logos endpoint instead of /api/generate
       const response = await fetch('/logos', {
         method: 'POST',
         body: formData
@@ -511,17 +501,14 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
 
       const data = await response.json();
       
-      // FIXED: Handle the new response format from /logos endpoint
       let imageDataUriString = '';
       if (data?.image?.type === 'base64') {
         imageDataUriString = `data:image/png;base64,${data.image.data}`;
       } else if (data?.image?.type === 'url') {
         imageDataUriString = data.image.data;
       } else if (data?.data?.[0]?.b64_json) {
-        // Fallback for old format
         imageDataUriString = `data:image/png;base64,${data.data[0].b64_json}`;
       } else if (data?.data?.[0]?.url) {
-        // Fallback for old format
         imageDataUriString = data.data[0].url;
       } else {
         throw new Error('No image data received in the expected format');
@@ -537,7 +524,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       
       setImageDataUri(imageDataUriString);
       
-      // FIXED: Update user context with new usage data from API response
       if (data.usage && updateUser) {
         updateUser({
           logosCreated: data.usage.logosCreated,
@@ -549,18 +535,13 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       router.push(`/logos/${logoId}`);
       
     } catch (error) {
-      console.error('Error generating logo:', error);
-      
-      // Check if the error is about reaching the logo limit
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
       
       if (errorMessage.includes('reached your logo generation limit') || 
           errorMessage.includes('Logo Limit Reached') ||
           errorMessage.includes('Maximum logo limit reached')) {
-        // Show the modal instead of setting the error
         setShowLimitModal(true);
       } else {
-        // For other errors, show the regular error message
         setError(errorMessage);
       }
     } finally {
@@ -583,10 +564,9 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     companyName,
     canRevise,
     canCreateLogo,
-    updateUser // Now properly imported from useAuth
+    updateUser
   ]);
 
-  // Rest of the component remains the same...
   const renderDropdown = useCallback((
     id: string,
     label: string,
@@ -639,48 +619,57 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               marginBottom: 'var(--space-sm)',
               marginTop: '0'
             }}>
-              {isRevision ? 'Revise Logo' : referenceLogoId ? 'Create New Logo (Using Reference)' : 'Create New Logo'}
+              {isRevision ? 'Revise Logo' : referenceLogoId ? 'Create New Logo' : 'Generate Logo'}
             </h3>
 
-            <div className="mb-sm">
-              <label htmlFor="company-name" className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
+            {/* Company Name Field */}
+            <div style={{ marginBottom: 'var(--space-sm)' }}>
+              <label htmlFor="company-name" className="form-label">
                 Company Name <span style={{ color: 'var(--color-error)' }}>*</span>
               </label>
               <input
-                id="company-name"
                 type="text"
+                id="company-name"
                 className="form-input"
-                placeholder="Enter your company name"
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
+                placeholder="Enter your company name"
                 required
                 disabled={isGenerating}
-                autoComplete="off"
-                style={{ margin: '0 auto', display: 'block' }}
               />
             </div>
 
-            <div className="mb-sm">
-              <label htmlFor="slogan" className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
+            {/* Slogan Field */}
+            <div style={{ marginBottom: 'var(--space-sm)' }}>
+              <label htmlFor="slogan" className="form-label">
                 Slogan/Subtitle (Optional)
               </label>
               <input
-                id="slogan"
                 type="text"
+                id="slogan"
                 className="form-input"
-                placeholder="Enter your slogan or subtitle"
                 value={slogan}
                 onChange={(e) => setSlogan(e.target.value)}
+                placeholder="Enter your slogan (optional)"
                 disabled={isGenerating}
-                autoComplete="off"
-                style={{ margin: '0 auto', display: 'block' }}
               />
             </div>
 
-            <div className="mb-sm">
-              <label htmlFor="reference-image" className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
+            {/* Reference Image Upload */}
+            {referenceImagePreview && (
+              <div className="reference-image-container">
+                <img
+                  src={referenceImagePreview}
+                  alt="Reference"
+                  className="reference-image-preview"
+                />
+              </div>
+            )}
+
+            <div style={{ marginBottom: 'var(--space-sm)' }}>
+              <label htmlFor="reference-image" className="form-label">
                 Reference Image {
-                  isRevision ? '(Current Logo)' : 
+                  editLogoId ? '(Current Logo)' : 
                   referenceLogoId ? '(Using Selected Logo)' : 
                   '(Optional)'
                 }
@@ -711,116 +700,81 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                 }}
               >
                 <span style={{ color: 'var(--color-gray-500)' }}>
-                  {referenceImage ? referenceImage.name : 'Tap to upload an image'}
+                  {referenceImage ? 'Change reference image' : 'Upload reference image'}
                 </span>
                 <input
-                  id="reference-image"
                   type="file"
-                  accept="image/*"
-                  className="hidden"
+                  id="reference-image"
                   onChange={handleReferenceImageChange}
-                  disabled={isGenerating}
+                  accept="image/*"
                   style={{ display: 'none' }}
+                  disabled={isGenerating}
                 />
               </label>
-              
-              {referenceImagePreview && (
-                <div className="text-center" style={{ marginTop: 'var(--space-sm)' }}>
-                  <img
-                    src={referenceImagePreview}
-                    alt="Reference image preview"
-                    style={{
-                      maxWidth: '100%',
-                      maxHeight: '6rem',
-                      borderRadius: 'var(--radius-md)',
-                      boxShadow: 'var(--shadow-sm)',
-                      margin: '0 auto'
-                    }}
-                  />
-                  <button
-                    type="button"
-                    style={{
-                      color: 'var(--color-error)',
-                      fontSize: 'var(--text-xs)',
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      marginTop: 'var(--space-xs)'
-                    }}
-                    onClick={() => {
-                      setReferenceImage(null);
-                      setReferenceImagePreview(null);
-                    }}
-                  >
-                    Remove image
-                  </button>
-                </div>
-              )}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0', margin: '0 auto' }}>
-              {renderDropdown(
-                "overall-style",
-                'Overall Style',
-                overallStyle,
-                (e) => setOverallStyle(e.target.value),
-                overallStyleOptions,
-                true
-              )}
+            {/* Required Basic Options */}
+            {renderDropdown(
+              "overall-style",
+              'Overall Style',
+              overallStyle,
+              (e) => setOverallStyle(e.target.value),
+              overallStyleOptions,
+              true
+            )}
+
+            {/* Color Scheme with Custom Colors */}
+            <div style={{ marginBottom: 'var(--space-sm)' }}>
+              <label htmlFor="color-scheme" className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
+                Color Scheme <span style={{ color: 'var(--color-error)' }}>*</span>
+              </label>
+              <select
+                id="color-scheme"
+                className="form-select"
+                value={colorScheme}
+                onChange={(e) => setColorScheme(e.target.value)}
+                required
+                disabled={isGenerating}
+              >
+                <option value="">-- Select Color Scheme --</option>
+                {colorSchemeOptions.map((option, index) => (
+                  <option key={index} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
               
-              {renderDropdown(
-                "color-scheme",
-                'Color Scheme',
-                colorScheme,
-                (e) => setColorScheme(e.target.value),
-                colorSchemeOptions,
-                true
-              )}
-              
-              {/* Custom Color Picker - Only shown when Custom Colors is selected */}
               {colorScheme === 'Custom Colors' && (
-                <div style={{ 
-                  marginBottom: 'var(--space-sm)',
-                  padding: 'var(--space-sm)',
-                  backgroundColor: 'var(--color-gray-50)',
-                  borderRadius: 'var(--radius-md)',
-                  border: '1px solid var(--color-gray-200)'
-                }}>
-                  <label className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
-                    Select Your Colors
-                  </label>
+                <div style={{ marginTop: 'var(--space-sm)' }}>
+                  <p style={{ 
+                    fontSize: 'var(--text-sm)', 
+                    fontWeight: '500', 
+                    marginBottom: 'var(--space-xs)',
+                    color: 'var(--color-gray-700)'
+                  }}>
+                    Custom Colors
+                  </p>
                   
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
                     {customColors.map((color, index) => (
-                      <div key={index} style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: 'var(--space-xs)'
-                      }}>
+                      <div key={index} style={{ display: 'flex', gap: 'var(--space-xs)', alignItems: 'center' }}>
                         <input
                           type="color"
                           value={color}
                           onChange={(e) => updateCustomColor(index, e.target.value)}
                           disabled={isGenerating}
                           style={{
-                            width: '50px',
-                            height: '40px',
-                            border: '1px solid var(--color-gray-300)',
+                            width: '40px',
+                            height: '30px',
+                            border: 'none',
                             borderRadius: 'var(--radius-sm)',
-                            cursor: 'pointer',
-                            padding: '2px'
+                            cursor: 'pointer'
                           }}
                         />
                         <input
                           type="text"
                           value={color}
-                          onChange={(e) => {
-                            const newColor = e.target.value;
-                            if (/^#[0-9A-F]{6}$/i.test(newColor) || newColor.length < 7) {
-                              updateCustomColor(index, newColor);
-                            }
-                          }}
-                          placeholder="#000000"
+                          onChange={(e) => updateCustomColor(index, e.target.value)}
                           disabled={isGenerating}
                           style={{
                             flex: 1,
@@ -1011,6 +965,40 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                     (e) => setApplicationContext(e.target.value),
                     applicationContextOptions
                   )}
+
+                  {/* Special Instructions Field */}
+                  <div style={{ marginBottom: 'var(--space-md)' }}>
+                    <label 
+                      htmlFor="special-instructions" 
+                      style={{ 
+                        display: 'block', 
+                        marginBottom: 'var(--space-xs)', 
+                        fontWeight: '500',
+                        fontSize: 'var(--text-sm)',
+                        color: 'var(--color-gray-700)'
+                      }}
+                    >
+                      Special Instructions (Optional)
+                    </label>
+                    <textarea
+                      id="special-instructions"
+                      value={specialInstructions}
+                      onChange={(e) => setSpecialInstructions(e.target.value)}
+                      placeholder="Enter any additional specific details or requirements for your logo design..."
+                      rows={3}
+                      disabled={isGenerating}
+                      style={{
+                        width: '100%',
+                        padding: 'var(--space-sm)',
+                        border: '1px solid var(--color-gray-300)',
+                        borderRadius: 'var(--radius-md)',
+                        fontSize: 'var(--text-sm)',
+                        fontFamily: 'inherit',
+                        resize: 'vertical',
+                        minHeight: '80px'
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
             )}
@@ -1084,9 +1072,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
                 <h3 style={{ fontSize: 'var(--text-xl)', fontWeight: '600', marginTop: 'var(--space-sm)' }}>
-                  {isRevision 
-                    ? "Maximum Revisions Reached" 
-                    : "Logo Limit Reached"}
+                  {isRevision ? "Maximum Revisions Reached" : "Logo Limit Reached"}
                 </h3>
               </div>
               

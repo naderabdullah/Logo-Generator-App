@@ -9,13 +9,6 @@ export async function POST(request: NextRequest) {
     const apiEndpoint = process.env.API_ENDPOINT;
     const apiKey = process.env.API_KEY;
     
-    console.log('=== PROXY REQUEST DEBUG ===');
-    console.log('Action:', action);
-    console.log('Request body:', JSON.stringify(body, null, 2));
-    console.log('API Endpoint:', apiEndpoint);
-    console.log('API Key exists:', !!apiKey);
-    console.log('API Key first 4 chars:', apiKey?.substring(0, 4));
-    
     if (!apiEndpoint || !apiKey) {
       console.error('Missing environment variables');
       return NextResponse.json(

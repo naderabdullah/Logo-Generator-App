@@ -15,14 +15,10 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    console.log('Generating image with prompt:', prompt);
-    console.log('Reference image provided:', !!referenceImage);
     
     // Verify API key is present
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
-      console.error('OPENAI_API_KEY is not defined in environment variables');
       return NextResponse.json(
         { error: 'API key is not configured' },
         { status: 500 }
@@ -36,10 +32,7 @@ export async function POST(request: NextRequest) {
 
     let response;
     
-    if (referenceImage) {
-      // If a reference image is provided, use the images.edit endpoint
-      console.log('Using images.edit with reference image');
-      
+    if (referenceImage) {      
       // Convert the reference image to the proper format using toFile
       const bytes = await referenceImage.arrayBuffer();
       const imageFile = await toFile(
@@ -56,7 +49,6 @@ export async function POST(request: NextRequest) {
       });
     } else {
       // If no reference image, use images.generate with ONLY model and prompt
-      console.log('Using images.generate (no reference image)');
       response = await openai.images.generate({
         model: "gpt-image-1",
         prompt: prompt

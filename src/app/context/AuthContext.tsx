@@ -115,22 +115,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         };
         
         setUser(normalizedUser);
-        console.log("AuthContext: Login successful, user set:", normalizedUser);
       } else {
-        console.warn("AuthContext: Login response missing user data");
         // Fallback to refreshAuth to get user data
         await refreshAuth();
       }
     } catch (error) {
-      console.error('AuthContext: Login error:', error);
       throw error;
     }
   }, [refreshAuth]);
 
   // Function to handle logout
   const logout = useCallback(async () => {
-    console.log("AuthContext: Logout called");
-    
     try {
       // Call logout endpoint to clear server-side session/cookies
       const response = await fetch('/api/auth/logout', {
@@ -138,9 +133,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         credentials: 'include',
       });
       
-      if (response.ok) {
-        console.log("AuthContext: Logout API successful");
-      } else {
+      if (!response.ok) {
         console.log("AuthContext: Logout API failed, but continuing with local cleanup");
       }
     } catch (error) {

@@ -30,6 +30,7 @@ export interface LogoParameters {
   texture?: string;
   complexityLevel?: string;
   applicationContext?: string;
+  specialInstructions?: string;
 }
 
 // Interface for usage tracking
@@ -180,7 +181,6 @@ export const getUserUsage = async (): Promise<UserUsage | null> => {
       };
     });
   } catch (error) {
-    console.error('Error getting user usage:', error);
     throw error;
   }
 };
@@ -311,14 +311,11 @@ export const saveLogo = async (
   name?: string // New optional name parameter
 ): Promise<string> => {
   try {
-    console.log("saveLogo called with name:", name); // Log the input name
-    
     const db = await initDB();
     const id = generateLogoId();
     
     // Determine if this is a revision or an original logo
     const isRevision = !!originalLogoId;
-    console.log("Is revision:", isRevision, "Original logo ID:", originalLogoId);
     
     // For revisions, determine the revision number and set proper name
     let revisionNumber: number | undefined = undefined;
@@ -330,11 +327,9 @@ export const saveLogo = async (
         // Get revisions and original logo
         const revisions = await getRevisionsForLogo(originalLogoId);
         revisionNumber = revisions.length + 1;
-        console.log("Revision number:", revisionNumber, "Total revisions:", revisions.length);
         
         // Get the original logo to base the revision name on it
         const originalLogo = await getLogo(originalLogoId);
-        console.log("Original logo:", originalLogo ? originalLogo.name : "not found");
         
         if (originalLogo) {
           // Set the revision name based on the original logo name

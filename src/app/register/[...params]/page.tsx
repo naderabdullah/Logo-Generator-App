@@ -57,14 +57,6 @@ export default function AppManagerRegistration({ params }: RegistrationPageProps
 
   const [subappInfo, setSubappInfo] = useState<SubappInfo | null>(null);
 
-  // Mobile device check
-  useEffect(() => {
-    if (!isMobileDevice()) {
-      // You can optionally show a message or handle non-mobile users differently
-      console.log('Non-mobile device detected');
-    }
-  }, []);
-
   // Load subapp information
   useEffect(() => {
     // Always use fallback data for now to prevent API errors during development
@@ -73,19 +65,10 @@ export default function AppManagerRegistration({ params }: RegistrationPageProps
       description: 'Premium subscription tier with advanced features'
     };
     setSubappInfo(fallbackInfo);
-    
-    console.log('Using fallback subapp info - API calls disabled during development');
-    
-    // TODO: Enable API calls once environment variables are properly configured
-    // For now, we'll just use the fallback data to ensure the form works
   }, [appId, subappId]);
 
   // Validate URL parameters
   useEffect(() => {
-    console.log('Registration URL Parameters:', {
-      appId, subappId, linkType, token
-    });
-
     // Validate required parameters
     if (!appId || !linkType || !token) {
       setStatus({

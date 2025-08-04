@@ -536,6 +536,13 @@ export default function LogoViewClient({ logoId }: LogoViewClientProps) {
                   <p>{logo.parameters.applicationContext}</p>
                 </div>
               )}
+
+              {logo.parameters.specialInstructions && (
+                <div>
+                  <h4 className="font-medium text-gray-700">Special Instructions</h4>
+                  <p style={{ whiteSpace: 'pre-wrap' }}>{logo.parameters.specialInstructions}</p>
+                </div>
+              )}
             </div>
           </div>
           
