@@ -88,7 +88,6 @@ export default function Home() {
         
         for (const endpoint of endpointsToTry) {
           try {
-            console.log(`Trying user endpoint: ${endpoint}`);
             const tempResponse = await fetch(endpoint);
             
             // If we get a non-404 response, use it
@@ -108,7 +107,6 @@ export default function Home() {
           router.push('/login');
         } else if (response.ok) {
           // User is authenticated
-          console.log("User is authenticated");
           setIsAuthenticated(true);
         }
       } catch (err) {

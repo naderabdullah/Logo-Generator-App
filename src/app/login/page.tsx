@@ -74,8 +74,6 @@ function LoginForm() {
     setError(null);
 
     try {
-      console.log('Attempting DynamoDB authentication...');
-      
       const response = await fetch('/api/auth/dynamo-login', {
         method: 'POST',
         headers: {
@@ -88,7 +86,6 @@ function LoginForm() {
       });
       
       if (response.ok) {
-        console.log('DynamoDB authentication successful');
         await refreshAuth();
         router.push(redirectPath);
         return;

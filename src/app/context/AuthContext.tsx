@@ -43,24 +43,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const refreshAuth = useCallback(async () => {
     try {
       setLoading(true);
-      console.log("AuthContext: Refreshing auth state");
       
       const response = await fetch('/api/user', {
         method: 'GET',
         credentials: 'include', // Important for cookies
       });
       
-      console.log(`AuthContext: /api/user response status: ${response.status}`);
-      
       if (response.status === 401) {
-        console.log("AuthContext: User not authenticated");
         setUser(null);
         return;
       }
       
       if (response.ok) {
         const userData = await response.json();
-        console.log("AuthContext: User authenticated:", userData);
         
         // Ensure we have all required fields with defaults
         const normalizedUser: User = {
@@ -86,8 +81,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Function to handle login
   const login = useCallback(async (email: string, password: string) => {
     try {
-      console.log("AuthContext: Login attempt for:", email);
-      
       const response = await fetch('/api/auth/dynamo-login', {
         method: 'POST',
         headers: {
@@ -103,7 +96,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       const loginData = await response.json();
-      console.log("AuthContext: Login response:", loginData);
       
       // The API returns user data in loginData.user
       if (loginData.user) {
