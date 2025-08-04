@@ -374,8 +374,8 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     
     prompt += `Symbol Type: ${symbolFocus}\n`;
     prompt += `Brand Personality: ${brandPersonality}\n`;
-    prompt += `Industry: ${industry}\n`;
     
+    if (industry) prompt += `Industry: ${industry}\n`;
     if (typographyStyle) prompt += `Typography: ${typographyStyle}\n`;
     if (lineStyle) prompt += `Line Style: ${lineStyle}\n`;
     if (composition) prompt += `Composition: ${composition}\n`;
