@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
         },
       ],
       mode: 'payment',
-      success_url: `${domainURL}/account?payment=success&quantity=${quantity}`,
+      success_url: `${domainURL}/purchase?payment=success&quantity=${quantity}`,
       cancel_url: `${domainURL}/account?payment=cancelled`,
       customer_email: email || user.email,
       metadata: {
