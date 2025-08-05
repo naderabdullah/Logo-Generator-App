@@ -116,6 +116,7 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const prompt = formData.get('prompt') as string;
+    const size = formData.get('size') as string || '1024x1024';
     const referenceImage = formData.get('referenceImage') as File | null;
     const isRevision = formData.get('isRevision') === 'true';
     const originalLogoId = formData.get('originalLogoId') ? parseInt(formData.get('originalLogoId') as string) : undefined;
@@ -175,14 +176,17 @@ export async function POST(request: NextRequest) {
       response = await openai.images.edit({
         model: "gpt-image-1",
         image: imageFile,
-        prompt: prompt
+        prompt: prompt,
+        quality: "high"
       });
     } else {
       // If no reference image, use images.generate with ONLY model and prompt
       console.log('Using images.generate (no reference image)');
       response = await openai.images.generate({
         model: "gpt-image-1",
-        prompt: prompt
+        prompt: prompt,
+        size: size as "1024x1024" | "1024x1536" | "1536x1024",
+        quality: "high"
       });
     }
     

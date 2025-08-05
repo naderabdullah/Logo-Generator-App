@@ -24,6 +24,7 @@ export interface LogoParameters {
   symbolFocus: string;
   brandPersonality: string;
   industry: string;
+  size: string;
   typographyStyle?: string;
   lineStyle?: string;
   composition?: string;

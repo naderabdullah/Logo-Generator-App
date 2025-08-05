@@ -436,7 +436,7 @@ export default function LogoViewClient({ logoId }: LogoViewClientProps) {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
-                <span>Create New Logo</span>
+                <span>Create New Logo From Scratch</span>
               </button>
               
               <Link href="/history" className="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2.5 px-5 rounded-lg transition-colors duration-200 flex items-center space-x-2">

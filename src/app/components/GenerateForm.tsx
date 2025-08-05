@@ -80,8 +80,9 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   const [colorScheme, setColorScheme] = useState('');
   const [symbolFocus, setSymbolFocus] = useState('');
   const [brandPersonality, setBrandPersonality] = useState('');
+  const [size, setSize] = useState('1024x1024'); 
+
   const [industry, setIndustry] = useState('');
-  
   const [typographyStyle, setTypographyStyle] = useState('');
   const [lineStyle, setLineStyle] = useState('');
   const [composition, setComposition] = useState('');
@@ -108,6 +109,12 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     const searchParams = useSearchParams();
     return searchParams?.get('reference') || null;
   };
+
+  const sizeOptions = [
+    { value: '1024x1024', label: 'Square - 1024×1024 - 1:1' },
+    { value: '1024x1536', label: 'Portrait - 1024×1536 - 2:3' },
+    { value: '1536x1024', label: 'Landscape - 1536×1024 - 3:2' }
+  ];
   
   const referenceLogoId = useReferenceParam();
 
@@ -146,6 +153,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
             // Populate form fields with logo data
             setCompanyName(logoData.parameters.companyName || '');
             setSlogan(logoData.parameters.slogan || '');
+            setSize(logoData.parameters.size || '1024x1024'); 
             setOverallStyle(logoData.parameters.overallStyle || '');
             setColorScheme(logoData.parameters.colorScheme || '');
             setSymbolFocus(logoData.parameters.symbolFocus || '');
@@ -204,6 +212,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
             // Pre-populate form with reference data but don't set as revision
             setCompanyName(referenceData.parameters.companyName || '');
             setSlogan(referenceData.parameters.slogan || '');
+            setSize(referenceData.parameters.size || '1024x1024');
             setOverallStyle(referenceData.parameters.overallStyle || '');
             setColorScheme(referenceData.parameters.colorScheme || '');
             setSymbolFocus(referenceData.parameters.symbolFocus || '');
@@ -305,7 +314,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     return prompt;
   }, [
     companyName, slogan, overallStyle, colorScheme, symbolFocus, 
-    brandPersonality, industry, typographyStyle, lineStyle,
+    brandPersonality, industry, size, typographyStyle, lineStyle,
     composition, shapeEmphasis, texture, complexityLevel, 
     applicationContext, customColors, specialInstructions
   ]);
@@ -321,6 +330,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       symbolFocus,
       brandPersonality,
       industry,
+      size,
       typographyStyle: typographyStyle || undefined,
       lineStyle: lineStyle || undefined,
       composition: composition || undefined,
@@ -332,7 +342,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     };
   }, [
     companyName, slogan, overallStyle, colorScheme, symbolFocus, 
-    brandPersonality, industry, typographyStyle, lineStyle,
+    brandPersonality, industry, size, typographyStyle, lineStyle,
     composition, shapeEmphasis, texture, complexityLevel, 
     applicationContext, customColors, specialInstructions
   ]);
@@ -343,14 +353,17 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       overallStyle &&
       colorScheme &&
       symbolFocus &&
-      brandPersonality
+      brandPersonality &&
+      (referenceImagePreview || size)
     );
   }, [
     companyName,
     overallStyle,
     colorScheme,
     symbolFocus,
-    brandPersonality
+    brandPersonality,
+    referenceImagePreview,
+    size
   ]);
 
   const handleGenerateLogo = useCallback(async () => {
@@ -384,6 +397,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     try {
       const formData = new FormData();
       formData.append('prompt', prompt);
+      formData.append('size', size);
       
       if (referenceImage) {
         formData.append('referenceImage', referenceImage);
@@ -479,6 +493,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     isRevision,
     originalLogoId,
     companyName,
+    size,
     canRevise,
     canCreateLogo,
     updateUser
@@ -692,6 +707,30 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
             disabled={isGenerating}
           />
         </div>
+
+        {/* Size Selection - Only for new images (no reference) */}
+        {!referenceImagePreview && (
+          <div style={{ marginBottom: 'var(--space-sm)' }}>
+            <label htmlFor="size" className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
+              Size <span style={{ color: 'var(--color-error)' }}>*</span>
+            </label>
+            <select
+              id="size"
+              className="form-select"
+              value={size}
+              onChange={(e) => setSize(e.target.value)}
+              required
+              disabled={isGenerating}
+            >
+              <option value="">-- Select Size --</option>
+              {sizeOptions.map((option, index) => (
+                <option key={index} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Reference Image Upload Section - Original styling preserved */}
         <div style={{ marginBottom: 'var(--space-sm)' }}>

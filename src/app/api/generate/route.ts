@@ -7,6 +7,7 @@ export async function POST(request: NextRequest) {
     // Parse the multipart form data
     const formData = await request.formData();
     const prompt = formData.get('prompt') as string;
+    const size = formData.get('size') as string || '1024x1024'; // Get size parameter
     const referenceImage = formData.get('referenceImage') as File | null;
     
     if (!prompt) {
@@ -41,17 +42,20 @@ export async function POST(request: NextRequest) {
         { type: referenceImage.type }
       );
       
-      // Use images.edit with ONLY model and prompt parameters as requested
+      // Use images.edit with size and quality parameters
       response = await openai.images.edit({
         model: "gpt-image-1",
         image: imageFile,
-        prompt: prompt
+        prompt: prompt,
+        quality: "high"
       });
     } else {
-      // If no reference image, use images.generate with ONLY model and prompt
+      // Use images.generate with size and quality parameters
       response = await openai.images.generate({
         model: "gpt-image-1",
-        prompt: prompt
+        prompt: prompt,
+        size: size as "1024x1024" | "1024x1536" | "1536x1024",
+        quality: "high"
       });
     }
 
