@@ -183,15 +183,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           
           // Optional: Clear only current user's data instead of entire database
           // This allows other users' data to persist on the same computer
-          if (currentUserId) {
-            await clearUserData(currentUserId);
-            console.log('AuthContext: User-specific IndexedDB data cleared on logout');
-          }
+          // if (currentUserId) {
+          //   await clearUserData(currentUserId);
+          //   console.log('AuthContext: User-specific IndexedDB data cleared on logout');
+          // }
           
           // Alternatively, if you want to clear everything (original behavior):
-          // const { resetDatabase } = await import('../utils/indexedDBUtils');
-          // await resetDatabase();
-          // console.log('AuthContext: IndexedDB cleared on logout');
+          const { resetDatabase } = await import('../utils/indexedDBUtils');
+          await resetDatabase();
+          console.log('AuthContext: IndexedDB cleared on logout');
         }
       } catch (err) {
         console.error('AuthContext: Error clearing storage:', err);
