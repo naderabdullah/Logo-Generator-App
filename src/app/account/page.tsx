@@ -142,7 +142,7 @@ export default function AccountPage() {
   return (
     <main className="container mx-auto px-4 pb-6 max-w-2xl">
       <div className="mt-4 card">
-        <div className="text-center mb-6">
+        <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-indigo-600">My Account</h1>
           <p className="text-gray-600 mt-2">Manage your account settings and view your logo usage</p>
         </div>
@@ -208,7 +208,7 @@ export default function AccountPage() {
             </div>
             
             {/* Action Buttons */}
-            <div className="flex flex-col space-y-3">
+            <div className="flex flex-col space-y-4">
               <Link 
                 href="/history" 
                 className="w-full px-4 py-3 bg-indigo-600 text-white rounded-lg text-center hover:bg-indigo-700 transition-colors font-medium"
@@ -225,14 +225,14 @@ export default function AccountPage() {
               
               <button
                 onClick={handleLogout}
-                className="w-full px-4 py-8 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                className="w-full px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
               >
                 Log Out
               </button>
             </div>
 
             {/* OpenAI Acknowledgement, Contact & Mission Section */}
-            <div className="border-t pt-6 mt-6">
+            <div className="border-t pt-10 mt-6">
               <div className="space-y-4 text-sm text-gray-600">
                 {/* Mission Statement */}
                 <div className="bg-green-50 p-4 rounded-lg border border-green-200">

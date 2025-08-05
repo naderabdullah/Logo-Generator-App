@@ -217,7 +217,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         updatedUser.remainingLogos = Math.max(0, updatedUser.logosLimit - updatedUser.logosCreated);
       }
       
-      console.log('AuthContext: User updated:', updatedUser);
       return updatedUser;
     });
   }, []);
