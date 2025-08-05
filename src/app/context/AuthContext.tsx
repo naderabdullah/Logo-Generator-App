@@ -2,6 +2,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
 
 // Define the shape of our user object
 interface User {
@@ -38,6 +39,10 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const pathname = usePathname();
+
+  const publicRoutes = ['/login', '/signup', '/auth', '/register'];
+  const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route));
 
   // Function to check authentication status
   const refreshAuth = useCallback(async () => {
@@ -219,8 +224,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Check auth status when the component mounts
   useEffect(() => {
-    refreshAuth();
-  }, [refreshAuth]);
+    if (!isPublicRoute) {
+      refreshAuth();
+    } else {
+      setLoading(false);
+    }
+  }, [isPublicRoute, refreshAuth]);
 
   // The context value that will be provided
   const value = {

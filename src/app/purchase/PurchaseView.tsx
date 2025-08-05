@@ -189,9 +189,9 @@ export default function PurchaseView() {
         )}
         
         {/* Pricing Options */}
-        <div className="grid grid-cols-4 gap-3 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {/* 1 Logo Option */}
-          <div className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow p-4 flex flex-col min-h-[400px]">
+          <div className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow p-4 flex flex-col min-h-[350px]">
             <h3 className="text-lg font-semibold text-gray-900">Starter</h3>
             <div className="mt-4">
               <span className="text-3xl font-bold text-gray-900">$4.95</span>
@@ -226,7 +226,7 @@ export default function PurchaseView() {
           </div>
 
           {/* 3 Logo Option */}
-          <div className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow p-4 flex flex-col min-h-[400px]">
+          <div className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow p-4 flex flex-col min-h-[350px]">
             <h3 className="text-lg font-semibold text-gray-900">Professional</h3>
             <div className="mt-4">
               <span className="text-3xl font-bold text-gray-900">$9.95</span>
@@ -262,7 +262,7 @@ export default function PurchaseView() {
           </div>
           
           {/* 6 Logo Option */}
-          <div className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow p-4 flex flex-col min-h-[400px]">
+          <div className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow p-4 flex flex-col min-h-[350px]">
             <h3 className="text-lg font-semibold text-gray-900">Business</h3>
             <div className="mt-4">
               <span className="text-3xl font-bold text-gray-900">$14.95</span>
@@ -298,7 +298,7 @@ export default function PurchaseView() {
           </div>
 
           {/* 9 Logo Option - Best Value */}
-          <div className="bg-white border-2 border-indigo-500 rounded-lg shadow-md hover:shadow-lg transition-shadow relative p-4 flex flex-col min-h-[400px]">
+          <div className="bg-white border-2 border-indigo-500 rounded-lg shadow-md hover:shadow-lg transition-shadow relative p-4 flex flex-col min-h-[350px]">
             <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-indigo-500 text-white text-xs px-3 py-1 rounded-full">
               Best Value
             </div>

@@ -38,6 +38,11 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
+  // Skip caching for unsupported schemes
+  if (!url.protocol.startsWith('http')) {
+    return;
+  }
+
   // Skip caching for Next.js specific paths
   if (
     url.pathname.startsWith('/_next/') ||
