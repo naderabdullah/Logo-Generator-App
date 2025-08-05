@@ -1,16 +1,41 @@
 // src/app/components/UnifiedHeader.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 
 export default function UnifiedHeader() {
-  const { user, loading, logout } = useAuth();
+  const { user, loading, logout, refreshAuth } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
+  
+  // Auto-refresh when window regains focus (useful after Stripe checkout)
+  useEffect(() => {
+    const handleFocus = () => {
+      if (user) {
+        refreshAuth();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [user, refreshAuth]);
+
+  // Auto-refresh when returning from purchase flow
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentSuccess = urlParams.get('payment');
+    
+    if (paymentSuccess === 'success' && user) {
+      // Small delay to ensure backend has processed the purchase
+      setTimeout(() => {
+        refreshAuth();
+      }, 1000);
+    }
+  }, [pathname, user, refreshAuth]);
   
   // Show basic header on auth pages (including register pages)
   if (pathname === '/login' || pathname === '/signup' || pathname === '/auth' || pathname.startsWith('/register')) {

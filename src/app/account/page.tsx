@@ -225,7 +225,7 @@ export default function AccountPage() {
               
               <button
                 onClick={handleLogout}
-                className="w-full px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                className="w-full px-4 py-8 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
               >
                 Log Out
               </button>
