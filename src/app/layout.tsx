@@ -14,11 +14,11 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
   icons: {
     icon: [
-      { url: '/icons/smartyapps.png', sizes: '192x192', type: 'image/png' },
-      { url: '/icons/smartyapps.png', sizes: '512x512', type: 'image/png' }
+      { url: '/logo.ico', sizes: '32x32', type: 'image/x-icon' },
+      { url: '/logo.ico', sizes: '16x16', type: 'image/x-icon' }
     ],
     apple: [
-      { url: '/icons/smartyapps.png', sizes: '180x180', type: 'image/png' }
+      { url: '/logo.ico', sizes: '180x180', type: 'image/x-icon' }
     ]
   }
 };
@@ -44,9 +44,9 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="Logo Gen" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="theme-color" content="#6366f1" />
-        <link rel="apple-touch-icon" href="/icons/smartyapps.png" />
-        <link rel="shortcut icon" href="/icons/smartyapps.png" type="image/png" />
-        <link rel="icon" href="/icons/smartyapps.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/logo.ico" />
+        <link rel="shortcut icon" href="/logo.ico" type="image/x-icon" />
+        <link rel="icon" href="/logo.ico" type="image/x-icon" />
       </head>
       <body className={`${inter.className} ios-safe`}>
         <AuthProvider>

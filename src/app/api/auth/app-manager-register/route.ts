@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { DynamoDB } from 'aws-sdk';
 import bcrypt from 'bcryptjs';
-import { supabaseAdmin } from '../../../../lib/supabase';
+import { supabaseAuth } from '../../../../lib/supabaseAuth';
 
 // Initialize DynamoDB client
 const dynamoDB = new DynamoDB.DocumentClient({
@@ -179,50 +179,26 @@ async function saveToSupabaseForCredits(
     console.log('Saving logo credits tracking to Supabase...');
     
     // Check if user already exists in Supabase
-    const { data: existingUser } = await supabaseAdmin
-      .from('users')
-      .select('id, email')
-      .eq('email', email.toLowerCase())
-      .single();
+    const existingUser = await supabaseAuth.getUserByEmail(email.toLowerCase());
     
     if (existingUser) {
       console.log(`Updating Supabase credits tracking for: ${email}`);
       
-      const { data: updatedUser, error: updateError } = await supabaseAdmin
-        .from('users')
-        .update({
-          logosCreated: 0, // Reset to 0 for new registration
-          logosLimit: 5, // Everyone gets 5 logos
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', existingUser.id)
-        .select()
-        .single();
-      
-      if (updateError) {
-        throw new Error(`Failed to update Supabase credits: ${updateError.message}`);
-      }
+      const updatedUser = await supabaseAuth.updateUser(existingUser.id, {
+        logosCreated: 0, // Reset to 0 for new registration
+        logosLimit: 5 // Everyone gets 5 logos
+      });
       
       return updatedUser;
     } else {
       console.log(`Creating new Supabase credits tracking for: ${email}`);
       
-      const { data: newUser, error: createError } = await supabaseAdmin
-        .from('users')
-        .insert({
-          email: email.toLowerCase(),
-          // Note: No password stored in Supabase - only for logo credits tracking
-          logosCreated: 0,
-          logosLimit: 5, // Everyone gets 5 free logos
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .select()
-        .single();
-      
-      if (createError) {
-        throw new Error(`Failed to create Supabase credits tracking: ${createError.message}`);
-      }
+      const newUser = await supabaseAuth.createUser({
+        email: email.toLowerCase(),
+        // Note: No password stored in Supabase - only for logo credits tracking
+        logosCreated: 0,
+        logosLimit: 5 // Everyone gets 5 free logos
+      });
       
       console.log(`✅ Successfully created Supabase credits tracking: ${email} (5 free logos)`);
       return newUser;

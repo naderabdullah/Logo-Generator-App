@@ -1,11 +1,11 @@
 // public/sw.js
 // Service Worker for AI Logo Generator PWA
-const CACHE_NAME = 'logo-generator-v2';
+const CACHE_NAME = 'logo-generator-v3';
 
 // Files to cache - be selective to avoid caching Next.js assets
 const ASSETS_TO_CACHE = [
   '/manifest.json',
-  '/icons/smartyapps.png'
+  '/logo.ico'
 ];
 
 // Install event - cache only specific assets
@@ -69,38 +69,16 @@ self.addEventListener('fetch', (event) => {
         const responseToCache = response.clone();
 
         // Only cache specific file types
-        if (url.pathname.match(/\.(png|jpg|jpeg|svg|gif|woff|woff2|ttf|eot)$/)) {
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, responseToCache);
-          });
+        if (url.pathname.match(/\.(png|jpg|jpeg|gif|webp|svg|ico|css|js)$/)) {
+          caches.open(CACHE_NAME)
+            .then((cache) => cache.put(request, responseToCache));
         }
 
         return response;
       })
       .catch(() => {
-        // Return cached version if available
-        return caches.match(request).then((response) => {
-          if (response) {
-            return response;
-          }
-
-          // Return offline page for navigation requests
-          if (request.mode === 'navigate') {
-            return new Response(
-              '<!DOCTYPE html><html><head><title>Offline</title></head><body><h1>You are currently offline</h1><p>Please check your internet connection and try again.</p></body></html>',
-              {
-                headers: { 'Content-Type': 'text/html' },
-                status: 503
-              }
-            );
-          }
-
-          // Return error response for other requests
-          return new Response('Network error', {
-            status: 503,
-            statusText: 'Service Unavailable'
-          });
-        });
+        // If network fails, try to serve from cache
+        return caches.match(request);
       })
   );
 });

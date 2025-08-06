@@ -1,4 +1,4 @@
-// src/app/register/[...params]/page.tsx (FIXED for Next.js 15)
+// src/app/register/[...params]/page.tsx (FIXED - Original styling preserved)
 'use client';
 
 import { useState, useEffect, use } from 'react';
@@ -59,16 +59,26 @@ export default function AppManagerRegistration({ params }: RegistrationPageProps
 
   // Load subapp information
   useEffect(() => {
-    // Always use fallback data for now to prevent API errors during development
-    const fallbackInfo = {
-      subappName: 'Premium',
-      description: 'Premium subscription tier with advanced features'
+    const loadSubappInfo = async () => {
+      if (subappId) {
+        try {
+          const info = await appManagerApiService.getSubappInfo(appId, subappId);
+          setSubappInfo(info);
+        } catch (error) {
+          console.error('Failed to load subapp info:', error);
+          // Non-critical error - continue with registration
+        }
+      }
     };
-    setSubappInfo(fallbackInfo);
+    loadSubappInfo();
   }, [appId, subappId]);
 
   // Validate URL parameters
   useEffect(() => {
+    console.log('Registration URL Parameters:', {
+      appId, subappId, linkType, token
+    });
+
     // Validate required parameters
     if (!appId || !linkType || !token) {
       setStatus({
@@ -80,15 +90,6 @@ export default function AppManagerRegistration({ params }: RegistrationPageProps
     }
 
     // Verify this is for our app
-    if (!APP_ID) {
-      setStatus({
-        loading: false,
-        error: 'App configuration missing. Please check environment variables.',
-        success: false
-      });
-      return;
-    }
-    
     if (appId !== APP_ID) {
       setStatus({
         loading: false,
@@ -158,47 +159,24 @@ export default function AppManagerRegistration({ params }: RegistrationPageProps
     }
 
     try {
-      // Check if API configuration is available before proceeding
-      const apiEndpoint = process.env.API_ENDPOINT;
-      const apiKey = process.env.API_KEY;
+      // REMOVED: Client-side environment variable check - now handled by server
       
-      if (!apiEndpoint || !apiKey) {
-        setStatus({
-          loading: false,
-          error: 'This is a demo registration form. To complete actual registration, your administrator needs to configure the App Manager API settings in your deployment environment variables.',
-          success: false
-        });
-        return;
-      }
-
       // Prepare registration data exactly as Lambda expects
       const registrationData = {
         email: formData.email,
         password: formData.password,
-        token: token,
-        appId: appId,
-        linkType: linkType,
-        ...(subappId && { subappId }),
-        ...(linkType === 'generic' && { orderNumber: formData.orderNumber })
+        token,
+        appId,
+        linkType,
+        subappId: subappId || undefined,
+        orderNumber: linkType === 'generic' ? formData.orderNumber : undefined
       };
 
-      console.log('Sending registration data:', registrationData);
+      console.log('Submitting registration:', registrationData);
       
-      const response = await fetch('/api/auth/app-manager-register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(registrationData)
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Registration failed');
-      }
+      const result = await appManagerApiService.verifyRegistration(registrationData);
       
-      console.log('Registration successful:', response);
+      console.log('Registration successful:', result);
       
       setStatus({
         loading: false,
@@ -206,192 +184,162 @@ export default function AppManagerRegistration({ params }: RegistrationPageProps
         success: true
       });
 
-      // Redirect to login after 2 seconds
+      // Redirect to login after successful registration
       setTimeout(() => {
-        router.push('/login?registered=true');
+        router.push('/login');
       }, 2000);
-      
-    } catch (error: any) {
-      console.error('Registration error:', error);
-      
-      // Handle specific error codes from the API
-      let errorMessage = 'Registration failed. Please try again.';
-      
-      if (error.message?.includes('TOKEN_EXPIRED')) {
-        errorMessage = 'This registration link has expired. Please request a new one.';
-      } else if (error.message?.includes('EMAIL_EXISTS')) {
-        errorMessage = 'This email is already registered. Please login instead.';
-      } else if (error.message?.includes('INVALID_TOKEN')) {
-        errorMessage = 'Invalid registration link. Please check your link and try again.';
-      } else if (error.message?.includes('ORDER_ALREADY_USED')) {
-        errorMessage = 'This order number has already been used for registration.';
-      }
+
+    } catch (error) {
+      console.error('Registration failed:', error);
       
       setStatus({
         loading: false,
-        error: errorMessage,
+        error: error instanceof Error 
+          ? error.message 
+          : 'Registration failed. Please try again.',
         success: false
       });
     }
   };
 
-  // Success state
-  if (status.success) {
-    return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full text-center">
-          <div className="text-green-600 text-6xl mb-4">✓</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            Registration Successful!
-          </h2>
-          <p className="text-gray-600 mb-4">
-            Your account has been created successfully. You will be redirected to the login page.
-          </p>
-          <div className="text-sm text-gray-500">
-            Redirecting in a few seconds...
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-gray-50 overflow-hidden">
-      <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full">
-        <h1 className="text-2xl font-bold text-center text-gray-900 mb-6">
-          Create Your Account
-        </h1>
+    <div className="min-h-screen bg-gray-50 flex flex-col py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          Create your account
+        </h2>
+      </div>
 
-        {/* Registration Info Display
-        <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-          <h3 className="font-semibold text-blue-900 mb-2">Registration Details</h3>
-          <div className="text-sm text-blue-800">
-            <div>App: {appId}</div>
-            {subappInfo && (
-              <>
-                <div>Type: {subappInfo.subappName}</div>
-                <div>Description: {subappInfo.description}</div>
-              </>
-            )}
-            <div>Link Type: {linkType}</div>
-          </div>
-        </div> */}
-
-        {/* Development Mode Notice 
-        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <h3 className="font-semibold text-blue-800 mb-2">🧪 Development Mode</h3>
-          <div className="text-sm text-blue-700">
-            <div>✅ Registration form is working with test data</div>
-            <div>✅ Order number field is enabled for generic registrations</div>
-            <div>✅ Premium subscription tier configured</div>
-            <div className="mt-2 text-blue-600 text-xs">
-              💡 API calls are currently disabled to prevent errors during development.
-              Add environment variables and enable API integration for full functionality.
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          {status.loading ? (
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+              <p className="mt-4 text-sm text-gray-600">Processing registration...</p>
             </div>
-          </div>
-        </div>
-        */}
-
-        {/* Error Display */}
-        {status.error && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-800 text-sm">{status.error}</p>
-          </div>
-        )}
-
-        {/* Registration Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email Address
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              required
-              disabled={status.loading}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Enter your email"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleInputChange}
-              required
-              disabled={status.loading}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Create a password"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-              Confirm Password
-            </label>
-            <input
-              type="password"
-              id="confirmPassword"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleInputChange}
-              required
-              disabled={status.loading}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Confirm your password"
-            />
-          </div>
-
-          {/* Order Number field for generic registrations */}
-          {linkType === 'generic' && (
-            <div>
-              <label htmlFor="orderNumber" className="block text-sm font-medium text-gray-700 mb-1">
-                Order Number
-              </label>
-              <input
-                type="text"
-                id="orderNumber"
-                name="orderNumber"
-                value={formData.orderNumber}
-                onChange={handleInputChange}
-                required
-                disabled={status.loading}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter your order number"
-              />
+          ) : status.success ? (
+            <div className="text-center">
+              <div className="text-green-600 text-4xl mb-4">✓</div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Registration Successful!</h3>
+              <p className="text-sm text-gray-600 mb-6">
+                Your account has been created successfully. You will be redirected to the login page shortly.
+              </p>
+              <Link 
+                href="/login"
+                className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                Go to Login
+              </Link>
             </div>
+          ) : (
+            <form className="space-y-6" onSubmit={handleSubmit}>
+              {status.error && (
+                <div className="bg-red-50 border border-red-200 rounded-md p-4">
+                  <div className="text-sm text-red-700">{status.error}</div>
+                </div>
+              )}
+
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                  Email address
+                </label>
+                <div className="mt-1">
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    placeholder="Enter your email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    disabled={status.loading}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  Password
+                </label>
+                <div className="mt-1">
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autoComplete="new-password"
+                    required
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    placeholder="Create a password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    disabled={status.loading}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                  Confirm password
+                </label>
+                <div className="mt-1">
+                  <input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type="password"
+                    autoComplete="new-password"
+                    required
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    placeholder="Confirm your password"
+                    value={formData.confirmPassword}
+                    onChange={handleInputChange}
+                    disabled={status.loading}
+                  />
+                </div>
+              </div>
+
+              {linkType === 'generic' && (
+                <div>
+                  <label htmlFor="orderNumber" className="block text-sm font-medium text-gray-700">
+                    Order number
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      id="orderNumber"
+                      name="orderNumber"
+                      type="text"
+                      required
+                      className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                      placeholder="Enter your order number"
+                      value={formData.orderNumber}
+                      onChange={handleInputChange}
+                      disabled={status.loading}
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <button
+                  type="submit"
+                  disabled={status.loading}
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {status.loading ? 'Creating account...' : 'Create account'}
+                </button>
+              </div>
+
+              <div className="text-center">
+                <Link 
+                  href="/login" 
+                  className="text-indigo-600 hover:text-indigo-500 text-sm"
+                >
+                  Already have an account? Sign in
+                </Link>
+              </div>
+            </form>
           )}
-
-          <button
-            type="submit"
-            disabled={status.loading}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {status.loading ? 'Creating Account...' : 'Create Account'}
-          </button>
-        </form>
-
-        {/* Already registered link */}
-        <div className="mt-6 pt-6 border-t border-gray-200">
-          <p className="text-center text-sm text-gray-600">
-            Already registered?{' '}
-            <Link
-              href="/login"
-              className="text-blue-500 hover:text-blue-700 underline"
-            >
-              Sign in here
-            </Link>
-          </p>
         </div>
       </div>
     </div>

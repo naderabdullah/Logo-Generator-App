@@ -1,58 +1,34 @@
 // src/app/components/UnifiedHeader.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 
 export default function UnifiedHeader() {
-  const { user, loading, logout, refreshAuth } = useAuth();
+  const { user, loading, logout } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
   
-  // Auto-refresh when window regains focus (useful after Stripe checkout)
-  useEffect(() => {
-    const handleFocus = () => {
-      if (user) {
-        refreshAuth();
-      }
-    };
-
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, [user, refreshAuth]);
-
-  // Auto-refresh when returning from purchase flow
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const paymentSuccess = urlParams.get('payment');
-    
-    if (paymentSuccess === 'success' && user) {
-      // Small delay to ensure backend has processed the purchase
-      setTimeout(() => {
-        refreshAuth();
-      }, 1000);
-    }
-  }, [pathname, user, refreshAuth]);
-  
-  // Show basic header on auth pages (including register pages)
+  // Show basic header on auth pages (including register pages) - NO LINK
   if (pathname === '/login' || pathname === '/signup' || pathname === '/auth' || pathname.startsWith('/register')) {
     return (
       <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm border-b border-gray-200 ios-unified-header">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-center items-center h-16">
-            <Link href="/" className="flex items-center space-x-2 text-xl font-bold text-indigo-600">
+            {/* Static logo/text - NO LINK on auth pages */}
+            <div className="flex items-center space-x-2 text-xl font-bold text-indigo-600">
               <Image 
-                src="/icons/smartyapps.png" 
-                alt="Smarty Apps Logo" 
+                src="/logo.ico" 
+                alt="AI Logo Generator Logo" 
                 width={64} 
                 height={64}
                 className="rounded"
               />
               <span>AI Logo Generator</span>
-            </Link>
+            </div>
           </div>
         </div>
       </header>
@@ -64,16 +40,16 @@ export default function UnifiedHeader() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm border-b border-gray-200 ios-unified-header">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <Link href="/" className="flex items-center space-x-2 text-xl font-bold text-indigo-600">
+            <div className="flex items-center space-x-2 text-xl font-bold text-indigo-600">
               <Image 
-                src="/icons/smartyapps.png" 
-                alt="Smarty Apps Logo" 
+                src="/favicon.ico" 
+                alt="AI Logo Generator Logo" 
                 width={64} 
                 height={64}
                 className="rounded"
               />
               <span>AI Logo Generator</span>
-            </Link>
+            </div>
             <div className="w-5 h-5 animate-spin rounded-full border-2 border-gray-300 border-t-indigo-600"></div>
           </div>
         </div>
@@ -86,7 +62,7 @@ export default function UnifiedHeader() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm border-b border-gray-200 ios-unified-header">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-center items-center h-16">
-            <Link href="/" className="flex items-center space-x-2 text-xl font-bold text-indigo-600">
+            <div className="flex items-center space-x-2 text-xl font-bold text-indigo-600">
               <Image 
                 src="/icons/smartyapps.png" 
                 alt="Smarty Apps Logo" 
@@ -95,7 +71,7 @@ export default function UnifiedHeader() {
                 className="rounded"
               />
               <span>AI Logo Generator</span>
-            </Link>
+            </div>
           </div>
         </div>
       </header>
@@ -111,8 +87,8 @@ export default function UnifiedHeader() {
           <div className="flex items-center justify-between h-12 pt-2">
             <Link href="/" className="flex items-center space-x-2 text-lg font-bold text-indigo-600">
               <Image 
-                src="/icons/smartyapps.png" 
-                alt="Smarty Apps Logo" 
+                src="/logo.ico" 
+                alt="AI Logo Generator Logo" 
                 width={48} 
                 height={48}
                 className="rounded"
@@ -180,8 +156,8 @@ export default function UnifiedHeader() {
           <div className="flex-shrink-0">
             <Link href="/" className="flex items-center space-x-2 text-xl font-bold text-indigo-600">
               <Image 
-                src="/icons/smartyapps.png" 
-                alt="Smarty Apps Logo" 
+                src="/logo.ico" 
+                alt="AI Logo Generator Logo" 
                 width={64} 
                 height={64}
                 className="rounded"

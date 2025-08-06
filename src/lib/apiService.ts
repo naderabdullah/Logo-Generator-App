@@ -74,20 +74,25 @@ const createApiCall = async (url: string, data: any, params?: Record<string, str
 };
 
 export const appManagerApiService = {
-  // Registration API - matches Lambda verifyAppPurchase action
+  // Registration API - calls the full registration endpoint
   async verifyRegistration(registrationData: RegistrationData): Promise<ApiResponse> {
     try {
       console.log('Sending registration request:', registrationData);
-      console.log('Environment:', process.env.NODE_ENV);
       
-      const response = await createApiCall(
-        '', // URL path handled by createApiCall
-        registrationData, 
-        { action: 'verifyAppPurchase' }
-      );
+      const response = await fetch('/api/auth/app-manager-register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(registrationData)
+      });
 
-      console.log('Registration response:', response);
-      return response;
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || `HTTP ${response.status}`);
+      }
+
+      return response.json();
     } catch (error) {
       console.error('Registration API Error:', error);
       throw this.handleApiError(error);
