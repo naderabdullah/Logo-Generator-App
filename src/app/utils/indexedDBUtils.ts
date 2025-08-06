@@ -33,6 +33,7 @@ export interface LogoParameters {
   complexityLevel?: string;
   applicationContext?: string;
   specialInstructions?: string;
+  transparentBackground?: string;
 }
 
 // Interface for usage tracking (now user-specific)
@@ -694,4 +695,26 @@ export const clearUserData = async (userId: string): Promise<void> => {
     console.error('Error clearing user data:', error);
     throw error;
   }
+};
+
+// Get one original logo by ID (singular version)
+export const getOriginalLogo = async (logoId: string, userId: string): Promise<StoredLogo | null> => {
+  try {
+    const logo = await getLogo(logoId, userId);
+    
+    // Return the logo only if it's not a revision (i.e., it's an original)
+    if (logo && !logo.isRevision) {
+      return logo;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error getting original logo:', error);
+    throw error;
+  }
+};
+
+// Alias for updateLogoName to maintain compatibility
+export const updateLogoName = async (id: string, newName: string, userId: string): Promise<void> => {
+  return renameLogo(id, newName, userId);
 };

@@ -1,11 +1,21 @@
-// src/app/login/page.tsx - Fixed with locked scrolling and centered component
+// src/app/login/page.tsx - Fixed with authentication check and auto-redirect
 'use client';
 
 import { useState, useEffect, FormEvent, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '../context/AuthContext';
-import { getAppManagerRegistrationUrl } from '../../lib/appManagerUtils';
+
+// Get registration URL safely
+const getRegistrationUrl = () => {
+  try {
+    const { getAppManagerRegistrationUrl } = require('../../lib/appManagerUtils');
+    return getAppManagerRegistrationUrl();
+  } catch (error) {
+    console.warn('Registration URL not configured:', error);
+    return '/register'; // Fallback URL
+  }
+};
 
 // Loading fallback for Suspense
 function LoginLoading() {
@@ -23,6 +33,7 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [checkingAuth, setCheckingAuth] = useState(true); // NEW: Auth check loading state
   
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -30,7 +41,40 @@ function LoginForm() {
   
   const { refreshAuth } = useAuth();
   
+  // NEW: Check if user is already authenticated
   useEffect(() => {
+    const checkAuthentication = async () => {
+      try {
+        console.log('Login page: Checking if user is already authenticated...');
+        const response = await fetch('/api/user');
+        
+        if (response.ok) {
+          // User is already authenticated, redirect them
+          const userData = await response.json();
+          console.log('Login page: User already authenticated:', userData.email, 'redirecting to:', redirectPath);
+          router.replace(redirectPath);
+          return;
+        } else {
+          console.log('Login page: User not authenticated, status:', response.status);
+        }
+        
+        // User is not authenticated (401), show login form
+        setCheckingAuth(false);
+      } catch (error: unknown) {
+        // On error, show login form (safer fallback)
+        console.error('Login page: Error checking authentication:', error);
+        setCheckingAuth(false);
+      }
+    };
+    
+    // Always check authentication immediately
+    checkAuthentication();
+  }, []); // Remove router and redirectPath dependencies to prevent loops
+  
+  useEffect(() => {
+    // Only run these effects if we're not checking auth
+    if (checkingAuth) return;
+    
     // Set page attribute and lock scrolling
     document.body.setAttribute('data-page', 'login');
     document.body.style.overflow = 'hidden';
@@ -60,7 +104,7 @@ function LoginForm() {
       document.body.style.overflow = '';
       document.documentElement.style.overflow = '';
     };
-  }, [searchParams]);
+  }, [searchParams, checkingAuth]);
   
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -94,91 +138,106 @@ function LoginForm() {
         throw new Error(errorData.error || 'Invalid credentials');
       }
       
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Login error:', err);
-      setError(err.message || 'Login failed. Please check your credentials.');
+      const errorMessage = err instanceof Error ? err.message : 'Login failed. Please check your credentials.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
+  // NEW: Show loading spinner while checking authentication
+  if (checkingAuth) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-gray-50 overflow-hidden">
+        <div className="text-center">
+          <div className="w-8 h-8 animate-spin rounded-full border-2 border-gray-300 border-t-indigo-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-50 overflow-hidden">
-      <div className="w-full max-w-md px-4">
-        <div className="bg-white rounded-lg shadow-md p-8">
+      <div className="w-full max-w-md mx-auto p-6">
+        <form 
+          onSubmit={handleSubmit} 
+          className="bg-white shadow-lg rounded-lg p-6"
+        >
           <div className="text-center mb-6">
-            <h2 className="text-3xl font-extrabold text-gray-900">
-              Sign in to your account
-            </h2>
+            <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
+            <p className="text-gray-600 mt-2">Sign in to your account</p>
           </div>
 
           {message && (
-            <div className="rounded-md bg-green-50 p-4 mb-4">
-              <div className="text-sm text-green-800">{message}</div>
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
+              <p className="text-green-700 text-sm">{message}</p>
             </div>
           )}
 
           {error && (
-            <div className="rounded-md bg-red-50 p-4 mb-4">
-              <div className="text-sm text-red-800">{error}</div>
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-red-700 text-sm">{error}</p>
             </div>
           )}
 
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                  Email address
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={loading}
-                />
-              </div>
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                  Password
-                </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={loading}
-                />
-              </div>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                Email address
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="Enter your email"
+                required
+                disabled={loading}
+              />
             </div>
 
             <div>
-              <button
-                type="submit"
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="Enter your password"
+                required
                 disabled={loading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {loading ? 'Signing in...' : 'Sign in'}
-              </button>
+              />
             </div>
-          </form>
-        </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+            >
+              {loading ? (
+                <>
+                  <div className="w-4 h-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2"></div>
+                  Signing in...
+                </>
+              ) : (
+                'Sign in'
+              )}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
 }
 
-// Main page component with Suspense wrapper to fix the Vercel error
+// Main page component with Suspense wrapper
 export default function LoginPage() {
   return (
     <Suspense fallback={<LoginLoading />}>

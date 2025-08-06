@@ -1,9 +1,9 @@
-// src/app/page.tsx - Simplified to use the corrected AuthContext
+// src/app/page.tsx - FIXED: Working version with proper auth handling
 'use client';
 
 import { Suspense, useCallback, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from './context/AuthContext';
+import { useAuth } from '@/app/context/AuthContext';
 import GenerateForm from './components/GenerateForm';
 import OfflineIndicator from './components/OfflineIndicator';
 
@@ -26,7 +26,7 @@ function GenerateFormWithParams() {
 
   return (
     <>
-      {/* Error Display - Now shows ABOVE the form */}
+      {/* Error Display - Shows above the form */}
       {error && !loading && (
         <div className="mt-md p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg text-center mb-md">
           <p className="font-bold">Error</p>
@@ -47,34 +47,41 @@ function GenerateFormWithParams() {
 export default function Home() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [appReady, setAppReady] = useState(false);
 
+  // Simple auth redirect - only run once after loading is complete
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
     }
-  }, [user, loading, router]);
+  }, [loading, user, router]);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setAppReady(true);
-    }, 100);
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (loading || !user) {
+  // Show loading while AuthContext is checking authentication
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="spinner"></div>
-          <p className="mt-md text-gray-600">Loading...</p>
+          <p className="mt-4 text-gray-600">Loading...</p>
         </div>
       </div>
     );
   }
 
+  // Show loading if no user (will redirect to login)
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="spinner"></div>
+          <p className="mt-4 text-gray-600">Redirecting to login...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // User is authenticated, show the main app
   return (
-    <div className={`generator-page ${appReady ? 'app-loading' : 'opacity-0'}`}>
+    <div className="generator-page">
       <OfflineIndicator />
       
       <Suspense fallback={<div className="text-center p-4">Loading form...</div>}>

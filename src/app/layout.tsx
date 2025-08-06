@@ -45,8 +45,8 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="theme-color" content="#6366f1" />
         <link rel="apple-touch-icon" href="/logo.ico" />
-        <link rel="shortcut icon" href="/logo.ico" type="image/x-icon" />
-        <link rel="icon" href="/logo.ico" type="image/x-icon" />
+        <link rel="shortcut icon" href="/smallLogo.ico" type="image/x-icon" />
+        <link rel="icon" href="/smallLogo.ico" type="image/x-icon" />
       </head>
       <body className={`${inter.className} ios-safe`}>
         <AuthProvider>

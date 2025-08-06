@@ -154,7 +154,7 @@ body {
 .generator-page {
   /* Content-based height */
   min-height: calc(100vh - var(--header-offset) - var(--content-top-spacing));
-  padding: var(--space-md);
+  padding: var(--space-xs) var(--space-md);
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -558,7 +558,7 @@ body {
 @media (min-width: 768px) {
   :root {
     --header-height: var(--header-height-desktop);
-    --content-top-spacing: var(--space-xl);
+    --content-top-spacing: var(--space-xs);
   }
   
   .container {

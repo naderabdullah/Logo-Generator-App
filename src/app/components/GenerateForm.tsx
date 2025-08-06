@@ -1,4 +1,4 @@
-// src/app/components/GenerateForm.tsx - FIXED for user-specific IndexedDB with original styling preserved
+// src/app/components/GenerateForm.tsx - FIXED with transparent background field and reference image fixes
 'use client';
 
 import { useState, useCallback, ChangeEvent, useEffect } from 'react';
@@ -20,43 +20,6 @@ function useEditParam() {
   return searchParams.get('edit');
 }
 
-function useAuthCheck() {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
-  const [userInfo, setUserInfo] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  
-  useEffect(() => {
-    const checkAuthStatus = async () => {
-      try {
-        const response = await fetch('/api/user');
-        
-        if (response.ok) {
-          const userData = await response.json();
-          setIsLoggedIn(true);
-          setUserInfo(userData);
-          
-          // FIXED: Pass userId to syncUserUsageWithDynamoDB
-          await syncUserUsageWithDynamoDB(userData.email, {
-            logosCreated: userData.logosCreated,
-            logosLimit: userData.logosLimit
-          });
-        } else {
-          setIsLoggedIn(false);
-          setUserInfo(null);
-        }
-      } catch (error) {
-        setIsLoggedIn(false);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    checkAuthStatus();
-  }, []);
-  
-  return { isLoggedIn, userInfo, loading };
-}
-
 interface GenerateFormProps {
   setLoading: (loading: boolean) => void;
   setImageDataUri: (dataUri: string | null) => void;
@@ -64,8 +27,8 @@ interface GenerateFormProps {
 }
 
 export default function GenerateForm({ setLoading, setImageDataUri, setError }: GenerateFormProps) {
-  const { isLoggedIn, userInfo, loading: authLoading } = useAuthCheck();
-  const { updateUser } = useAuth();
+  // FIXED: Use AuthContext instead of duplicate auth checking
+  const { user, updateUser } = useAuth();
   const router = useRouter();
   const editLogoId = useEditParam();
   
@@ -81,6 +44,9 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   const [symbolFocus, setSymbolFocus] = useState('');
   const [brandPersonality, setBrandPersonality] = useState('');
   const [size, setSize] = useState('1024x1024'); 
+  
+  // ADD: Transparent background field - defaults to true
+  const [transparentBackground, setTransparentBackground] = useState(true);
 
   const [industry, setIndustry] = useState('');
   const [typographyStyle, setTypographyStyle] = useState('');
@@ -121,16 +87,16 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   // Check if user can perform actions
   useEffect(() => {
     const checkLimits = async () => {
-      // FIXED: Only check limits if logged in and have user email
-      if (isLoggedIn && userInfo?.email) {
+      // FIXED: Use user from AuthContext
+      if (user?.email) {
         try {
           // FIXED: Pass userId to canCreateOriginalLogo
-          const canCreate = await canCreateOriginalLogo(userInfo.email);
+          const canCreate = await canCreateOriginalLogo(user.email);
           setCanCreateLogo(canCreate);
           
           if (originalLogoId) {
             // FIXED: Pass userId to canCreateRevision
-            const canCreateRevision_ = await canCreateRevision(originalLogoId, userInfo.email);
+            const canCreateRevision_ = await canCreateRevision(originalLogoId, user.email);
             setCanRevise(canCreateRevision_);
           }
         } catch (error) {
@@ -140,15 +106,15 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     };
     
     checkLimits();
-  }, [isLoggedIn, userInfo?.email, originalLogoId]);
+  }, [user?.email, originalLogoId]);
 
   // Load logo for editing if editLogoId is provided
   useEffect(() => {
     const loadLogoForEdit = async () => {
-      if (editLogoId && userInfo?.email) {
+      if (editLogoId && user?.email) {
         try {
           // FIXED: Pass userId to getLogo for user verification
-          const logoData = await getLogo(editLogoId, userInfo.email);
+          const logoData = await getLogo(editLogoId, user.email);
           if (logoData) {
             // Populate form fields with logo data
             setCompanyName(logoData.parameters.companyName || '');
@@ -167,6 +133,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
             setComplexityLevel(logoData.parameters.complexityLevel || '');
             setApplicationContext(logoData.parameters.applicationContext || '');
             setSpecialInstructions(logoData.parameters.specialInstructions || '');
+            setTransparentBackground(logoData.parameters.transparentBackground === 'false' ? false : true); // ADD: Load transparent background
             
             // FIXED: Set the logo image as reference image for revision
             setReferenceImagePreview(logoData.imageDataUri);
@@ -199,15 +166,15 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     };
 
     loadLogoForEdit();
-  }, [editLogoId, userInfo?.email]);
+  }, [editLogoId, user?.email]);
 
   // Load reference logo data if referenceLogoId is provided
   useEffect(() => {
     const loadReferenceData = async () => {
-      if (referenceLogoId && userInfo?.email) {
+      if (referenceLogoId && user?.email) {
         try {
           // FIXED: Pass userId to getLogo for user verification
-          const referenceData = await getLogo(referenceLogoId, userInfo.email);
+          const referenceData = await getLogo(referenceLogoId, user.email);
           if (referenceData) {
             // Pre-populate form with reference data but don't set as revision
             setCompanyName(referenceData.parameters.companyName || '');
@@ -226,6 +193,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
             setComplexityLevel(referenceData.parameters.complexityLevel || '');
             setApplicationContext(referenceData.parameters.applicationContext || '');
             setSpecialInstructions(referenceData.parameters.specialInstructions || '');
+            setTransparentBackground(referenceData.parameters.transparentBackground === 'false' ? false : true); // ADD: Load transparent background
             
             // FIXED: Set the logo image as reference image for similar logo
             setReferenceImagePreview(referenceData.imageDataUri);
@@ -247,7 +215,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     };
 
     loadReferenceData();
-  }, [referenceLogoId, userInfo?.email]);
+  }, [referenceLogoId, user?.email]);
 
   // Original styling preserved - toggle advanced options function
   const toggleAdvancedOptions = useCallback(() => {
@@ -279,7 +247,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     setCustomColors(newColors);
   }, [customColors]);
 
-  // Updated buildPrompt function to include special instructions alongside other parameters
+  // Updated buildPrompt function to include transparent background and special instructions
   const buildPrompt = useCallback(() => {
     let prompt = `Create a logo with the following characteristics:\n`;
     prompt += `Company Name: ${companyName}\n`;
@@ -297,6 +265,13 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     
     prompt += `Symbol Focus: ${symbolFocus}\n`;
     prompt += `Brand Personality: ${brandPersonality}\n`;
+    
+    // ADD: Include transparent background requirement
+    if (transparentBackground) {
+      prompt += `Background: Transparent background (no background color or elements)\n`;
+    } else {
+      prompt += `Background: Include background color or design elements\n`;
+    }
     
     // Add advanced parameters if specified
     if (industry) prompt += `Industry: ${industry}\n`;
@@ -316,7 +291,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     companyName, slogan, overallStyle, colorScheme, symbolFocus, 
     brandPersonality, industry, size, typographyStyle, lineStyle,
     composition, shapeEmphasis, texture, complexityLevel, 
-    applicationContext, customColors, specialInstructions
+    applicationContext, customColors, specialInstructions, transparentBackground // ADD: transparentBackground dependency
   ]);
 
   const collectParameters = useCallback((): LogoParameters => {
@@ -338,13 +313,14 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       texture: texture || undefined,
       complexityLevel: complexityLevel || undefined,
       applicationContext: applicationContext || undefined,
-      specialInstructions: specialInstructions || undefined
+      specialInstructions: specialInstructions || undefined,
+      transparentBackground: transparentBackground ? 'true' : 'false' // ADD: Include transparent background parameter
     };
   }, [
     companyName, slogan, overallStyle, colorScheme, symbolFocus, 
     brandPersonality, industry, size, typographyStyle, lineStyle,
     composition, shapeEmphasis, texture, complexityLevel, 
-    applicationContext, customColors, specialInstructions
+    applicationContext, customColors, specialInstructions, transparentBackground // ADD: transparentBackground dependency
   ]);
 
   const areRequiredFieldsFilled = useCallback(() => {
@@ -367,7 +343,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   ]);
 
   const handleGenerateLogo = useCallback(async () => {
-    if (!isLoggedIn || !userInfo?.email) {
+    if (!user?.email) {
       router.push('/login?redirect=/');
       return;
     }
@@ -398,6 +374,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       const formData = new FormData();
       formData.append('prompt', prompt);
       formData.append('size', size);
+      formData.append('transparentBackground', transparentBackground.toString()); // ADD: Include transparent background
       
       if (referenceImage) {
         formData.append('referenceImage', referenceImage);
@@ -444,7 +421,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       
       // FIXED: Pass userId as first parameter to saveLogo
       const logoId = await saveLogo(
-        userInfo.email, // userId first
+        user.email, // userId first
         imageDataUriString, 
         parameters,
         isRevision ? originalLogoId : undefined,
@@ -479,8 +456,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       setIsGenerating(false);
     }
   }, [
-    isLoggedIn,
-    userInfo?.email,
+    user?.email,
     isGenerating,
     areRequiredFieldsFilled,
     buildPrompt,
@@ -496,7 +472,8 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     size,
     canRevise,
     canCreateLogo,
-    updateUser
+    updateUser,
+    transparentBackground // Keep this since it's used in buildPrompt and collectParameters
   ]);
 
   // Original renderDropdown function preserved
@@ -552,10 +529,18 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     }
   }, []);
 
+  // FIXED: Remove reference image function - only allow in new logo form, not revision form
   const removeReferenceImage = useCallback(() => {
-    setReferenceImage(null);
-    setReferenceImagePreview(null);
-  }, []);
+    if (!isRevision) { // FIXED: Only allow removing reference image if not in revision mode
+      setReferenceImage(null);
+      setReferenceImagePreview(null);
+      // Clear the file input
+      const fileInput = document.getElementById('reference-image') as HTMLInputElement;
+      if (fileInput) {
+        fileInput.value = '';
+      }
+    }
+  }, [isRevision]);
 
   // ORIGINAL options arrays restored
   const overallStyleOptions = [
@@ -633,27 +618,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     'Animation-ready', 'Brand system (multiple variations)'
   ];
 
-  if (authLoading) {
-    return (
-      <div className="text-center">
-        <div className="spinner"></div>
-        <p className="mt-4 text-gray-600">Loading...</p>
-      </div>
-    );
-  }
-
-  if (!isLoggedIn) {
-    return (
-      <div className="card text-center">
-        <h2>Generate Your Logo</h2>
-        <p className="mb-4">Please log in to start generating logos.</p>
-        <Link href="/login?redirect=/" className="btn btn-primary">
-          Log In
-        </Link>
-      </div>
-    );
-  }
-
+  // FIXED: Remove redundant auth loading check since parent page handles it
   return (
     <div className="generator-form-container">
       {/* Error Display - Shows above the form */}
@@ -734,6 +699,18 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
 
         {/* Reference Image Upload Section - Original styling preserved */}
         <div style={{ marginBottom: 'var(--space-sm)' }}>
+          {/* MOVED: Reference image instruction text above the button */}
+          {!referenceImagePreview && (
+            <p style={{ 
+              fontSize: 'var(--text-sm)', 
+              color: 'var(--color-gray-600)', 
+              margin: '0 0 var(--space-xs) 0',
+              textAlign: 'center'
+            }}>
+              {isRevision ? 'Reference logo will be used for revision' : 'Click to upload reference image (optional)'}
+            </p>
+          )}
+          
           <label 
             htmlFor="reference-image" 
             style={{
@@ -742,11 +719,12 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               padding: 'var(--space-md)',
               border: '2px dashed var(--color-gray-300)',
               borderRadius: 'var(--radius-md)',
-              cursor: 'pointer',
+              cursor: isRevision ? 'default' : 'pointer', // FIXED: No cursor in revision mode
               backgroundColor: referenceImagePreview ? 'var(--color-gray-50)' : 'white',
               transition: 'all var(--transition-base)',
               textAlign: 'center'
             }}
+            onClick={isRevision ? (e) => e.preventDefault() : undefined} // FIXED: Prevent clicks in revision mode
           >
             {referenceImagePreview ? (
               <div style={{ 
@@ -768,49 +746,49 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                   }} 
                 />
                 <div style={{ marginBottom: 'var(--space-xs)' }}>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      removeReferenceImage();
-                    }}
-                    style={{
-                      padding: 'var(--space-xs) var(--space-sm)',
-                      fontSize: 'var(--text-sm)',
-                      color: 'var(--color-error)',
-                      backgroundColor: 'white',
-                      border: '1px solid var(--color-error)',
-                      borderRadius: 'var(--radius-sm)',
-                      cursor: 'pointer',
-                      marginRight: 'var(--space-xs)'
-                    }}
-                    disabled={isGenerating}
-                  >
-                    Remove Image
-                  </button>
+                  {/* FIXED: Only show remove button when NOT in revision mode */}
+                  {!isRevision && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        removeReferenceImage();
+                      }}
+                      style={{
+                        padding: 'var(--space-xs) var(--space-sm)',
+                        fontSize: 'var(--text-sm)',
+                        color: 'var(--color-error)',
+                        backgroundColor: 'white',
+                        border: '1px solid var(--color-error)',
+                        borderRadius: 'var(--radius-sm)',
+                        cursor: 'pointer',
+                        marginRight: 'var(--space-xs)'
+                      }}
+                      disabled={isGenerating}
+                    >
+                      Remove Image
+                    </button>
+                  )}
                 </div>
               </div>
             ) : (
               <div>
-                <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-gray-600)', margin: 0 }}>
-                  Click to upload reference image (optional)
-                </p>
+                <span style={{ 
+                  fontSize: 'var(--text-xs)', 
+                  color: 'var(--color-primary)', 
+                  fontWeight: '500' 
+                }}>
+                  {referenceImagePreview ? 'Change reference image' : 'Upload reference image'}
+                </span>
               </div>
             )}
-            <span style={{ 
-              fontSize: 'var(--text-xs)', 
-              color: 'var(--color-primary)', 
-              fontWeight: '500' 
-            }}>
-              {referenceImagePreview ? 'Change reference image' : 'Upload reference image'}
-            </span>
             <input
               type="file"
               id="reference-image"
               onChange={handleReferenceImageChange}
               accept="image/*"
               style={{ display: 'none' }}
-              disabled={isGenerating}
+              disabled={isGenerating || isRevision} // FIXED: Disable upload in revision mode
             />
           </label>
         </div>
@@ -974,6 +952,38 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
           true
         )}
 
+        {/* ADD: Transparent Background Checkbox */}
+        <div style={{ 
+          marginBottom: 'var(--space-sm)', 
+          marginTop: 'var(--space-md)',
+          display: 'flex',
+          justifyContent: 'center'
+        }}>
+          <label style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 'var(--space-xs)',
+            cursor: 'pointer',
+            fontSize: 'var(--text-sm)',
+            fontWeight: '500',
+            color: 'var(--color-gray-700)'
+          }}>
+            <input
+              type="checkbox"
+              checked={transparentBackground}
+              onChange={(e) => setTransparentBackground(e.target.checked)}
+              disabled={isGenerating}
+              style={{
+                width: '18px',
+                height: '18px',
+                accentColor: 'var(--color-primary)',
+                cursor: 'pointer'
+              }}
+            />
+            Transparent Background
+          </label>
+        </div>
+
         {/* Advanced Options Toggle - Original styling preserved */}
         <div style={{ marginBottom: 'var(--space-sm)' }}>
           <button
@@ -1110,6 +1120,31 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
           </div>
         )}
 
+        {/* REVISION MODE: Cancel Button */}
+        {isRevision && (
+          <button
+            type="button"
+            onClick={() => router.push(`/logos/${originalLogoId || editLogoId}`)}
+            style={{
+              width: '100%',
+              marginBottom: 'var(--space-sm)',
+              padding: 'var(--space-sm) var(--space-lg)',
+              backgroundColor: '#ef4444',
+              color: 'white',
+              border: 'none',
+              borderRadius: 'var(--radius-md)',
+              fontSize: 'var(--text-base)',
+              fontWeight: '500',
+              cursor: 'pointer',
+              transition: 'all var(--transition-base)'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#dc2626'}
+            onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#ef4444'}
+          >
+            Cancel Revision
+          </button>
+        )}
+
         <button
           type="button"
           className="btn btn-primary"
@@ -1120,13 +1155,13 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
           disabled={
             isGenerating || 
             !areRequiredFieldsFilled() || 
-            !isLoggedIn
+            !user
           }
           onClick={handleGenerateLogo}
         >
           {isGenerating 
             ? 'Generating Logo...' 
-            : !isLoggedIn 
+            : !user 
               ? 'Login to Generate' 
               : isRevision 
                 ? 'Generate Revision' 

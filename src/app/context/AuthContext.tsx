@@ -1,7 +1,7 @@
-// src/app/context/AuthContext.tsx - UPDATED for user-specific IndexedDB
+// src/app/context/AuthContext.tsx - FIXED infinite loop with useRef
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 
 // Define the shape of our user object
@@ -40,32 +40,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const pathname = usePathname();
+  const hasCheckedAuth = useRef(false); // FIXED: Track if we've checked auth
 
   const publicRoutes = ['/login', '/signup', '/auth', '/register'];
   const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route));
 
-  // Function to check authentication status
+  // Function to check authentication status - FIXED: Stable function
   const refreshAuth = useCallback(async () => {
     try {
       setLoading(true);
       
       const response = await fetch('/api/user', {
         method: 'GET',
-        credentials: 'include', // Important for cookies
+        credentials: 'include',
       });
       
       if (response.status === 401) {
         setUser(null);
-        // Clear current user ID from IndexedDB utils
-        const { setCurrentUserId } = await import('../utils/indexedDBUtils');
-        setCurrentUserId(null);
+        setLoading(false);
         return;
       }
       
       if (response.ok) {
         const userData = await response.json();
         
-        // Ensure we have all required fields with defaults
         const normalizedUser: User = {
           email: userData.email,
           logosCreated: userData.logosCreated || 0,
@@ -74,30 +72,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         };
         
         setUser(normalizedUser);
-        
-        // Set current user ID in IndexedDB utils for user-specific operations
-        const { setCurrentUserId, initializeUserUsage } = await import('../utils/indexedDBUtils');
-        setCurrentUserId(normalizedUser.email); // Using email as user ID
-        
-        // Initialize user-specific usage data
-        try {
-          await initializeUserUsage(normalizedUser.email);
-        } catch (error) {
-          console.error('Error initializing user usage:', error);
-        }
       } else {
-        console.log("AuthContext: User response not OK:", response.status);
         setUser(null);
-        // Clear current user ID from IndexedDB utils
-        const { setCurrentUserId } = await import('../utils/indexedDBUtils');
-        setCurrentUserId(null);
       }
     } catch (error) {
-      console.error('AuthContext: Error checking auth status:', error);
       setUser(null);
-      // Clear current user ID from IndexedDB utils
-      const { setCurrentUserId } = await import('../utils/indexedDBUtils');
-      setCurrentUserId(null);
     } finally {
       setLoading(false);
     }
@@ -111,7 +90,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include', // Important for cookies
+        credentials: 'include',
         body: JSON.stringify({ email, password }),
       });
 
@@ -120,33 +99,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error(errorData.error || 'Login failed');
       }
 
-      const loginData = await response.json();
-      
-      // The API returns user data in loginData.user
-      if (loginData.user) {
-        const normalizedUser: User = {
-          email: loginData.user.email,
-          logosCreated: loginData.user.logosCreated || 0,
-          logosLimit: loginData.user.logosLimit || 5,
-          remainingLogos: loginData.user.remainingLogos || Math.max(0, (loginData.user.logosLimit || 5) - (loginData.user.logosCreated || 0))
-        };
-        
-        setUser(normalizedUser);
-        
-        // Set current user ID in IndexedDB utils for user-specific operations
-        const { setCurrentUserId, initializeUserUsage } = await import('../utils/indexedDBUtils');
-        setCurrentUserId(normalizedUser.email); // Using email as user ID
-        
-        // Initialize user-specific usage data
-        try {
-          await initializeUserUsage(normalizedUser.email);
-        } catch (error) {
-          console.error('Error initializing user usage during login:', error);
-        }
-      } else {
-        // Fallback to refreshAuth to get user data
-        await refreshAuth();
-      }
+      await refreshAuth();
     } catch (error) {
       throw error;
     }
@@ -155,64 +108,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Function to handle logout
   const logout = useCallback(async () => {
     try {
-      // Call logout endpoint to clear server-side session/cookies
-      const response = await fetch('/api/auth/logout', {
+      await fetch('/api/auth/logout', {
         method: 'POST',
         credentials: 'include',
       });
-      
-      if (!response.ok) {
-        console.log("AuthContext: Logout API failed, but continuing with local cleanup");
-      }
     } catch (error) {
       console.error('AuthContext: Logout API error:', error);
     } finally {
-      // ALWAYS clear user state regardless of API response
-      console.log("AuthContext: Clearing user state...");
       setUser(null);
-      
-      // Clear any cached data
-      try {
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('user');
-          sessionStorage.removeItem('user');
-          
-          // Clear user-specific IndexedDB data instead of resetting entire database
-          const { setCurrentUserId, clearUserData } = await import('../utils/indexedDBUtils');
-          
-          // Get current user ID before clearing it
-          const currentUserId = user?.email;
-          
-          // Clear current user ID
-          setCurrentUserId(null);
-          
-          // Optional: Clear only current user's data instead of entire database
-          // This allows other users' data to persist on the same computer
-          // if (currentUserId) {
-          //   await clearUserData(currentUserId);
-          //   console.log('AuthContext: User-specific IndexedDB data cleared on logout');
-          // }
-          
-          // Alternatively, if you want to clear everything (original behavior):
-          const { resetDatabase } = await import('../utils/indexedDBUtils');
-          await resetDatabase();
-          console.log('AuthContext: IndexedDB cleared on logout');
-        }
-      } catch (err) {
-        console.error('AuthContext: Error clearing storage:', err);
-        // Don't block logout if clearing fails
-      }
+      hasCheckedAuth.current = false; // Reset auth check flag
     }
-  }, [user?.email]);
+  }, []);
 
-  // Function to update user data (for credit updates)
+  // Function to update user data
   const updateUser = useCallback((updates: Partial<User>) => {
     setUser(prevUser => {
       if (!prevUser) return null;
       
       const updatedUser = { ...prevUser, ...updates };
       
-      // Recalculate remainingLogos if logosCreated or logosLimit changed
       if ('logosCreated' in updates || 'logosLimit' in updates) {
         updatedUser.remainingLogos = Math.max(0, updatedUser.logosLimit - updatedUser.logosCreated);
       }
@@ -221,16 +135,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
   }, []);
 
-  // Check auth status when the component mounts
+  // FIXED: Check auth status only once on mount for non-public routes
   useEffect(() => {
-    if (!isPublicRoute) {
+    if (!isPublicRoute && !hasCheckedAuth.current) {
+      hasCheckedAuth.current = true;
       refreshAuth();
-    } else {
+    } else if (isPublicRoute) {
       setLoading(false);
     }
   }, [isPublicRoute, refreshAuth]);
 
-  // The context value that will be provided
   const value = {
     user,
     loading,
