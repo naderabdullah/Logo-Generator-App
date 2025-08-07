@@ -24,6 +24,10 @@ export default function HistoryView() {
   const [usage, setUsage] = useState<{ used: number, limit: number } | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(3);
+  
   const router = useRouter();
   
   useEffect(() => {
@@ -68,6 +72,11 @@ export default function HistoryView() {
     fetchLogos();
   }, [router]);
 
+  // Reset to page 1 when items per page changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [itemsPerPage]);
+
   const getLatestRevision = (revisions: StoredLogo[]): StoredLogo | null => {
     if (revisions.length === 0) return null;
     return [...revisions].sort((a, b) => 
@@ -98,6 +107,12 @@ export default function HistoryView() {
       const allLogosWithRevisions = await getAllLogosWithRevisions(userEmail);
       setLogosWithRevisions(allLogosWithRevisions);
       setSelectedLogo(null);
+      
+      // Adjust current page if needed after deletion
+      const totalPages = Math.ceil((allLogosWithRevisions.length) / itemsPerPage);
+      if (currentPage > totalPages && totalPages > 0) {
+        setCurrentPage(totalPages);
+      }
     } catch (err) {
       console.error('Error deleting logo:', err);
       setError('Failed to delete logo');
@@ -107,27 +122,34 @@ export default function HistoryView() {
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString();
   };
+
+  // Pagination calculations
+  const totalLogos = logosWithRevisions.length;
+  const totalPages = Math.ceil(totalLogos / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentLogos = logosWithRevisions.slice(startIndex, endIndex);
+
+  const handlePreviousPage = () => {
+    setCurrentPage(prev => Math.max(prev - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage(prev => Math.min(prev + 1, totalPages));
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+  };
   
   return (
     <main className="container mx-auto px-4 pb-6 max-w-4xl history-page">
       <div className="mt-4 card">
         <h2 className="text-xl font-semibold mb-4 text-center">Logo History</h2>
-        
-        {usage && (
-          <div className="mb-6 p-3 bg-indigo-50 rounded-lg">
-            <h3 className="font-medium text-indigo-900 mb-2">Logo Credits</h3>
-            <div className="flex justify-between items-center">
-              <span className="text-indigo-700">Used: {usage.used} / {usage.limit}</span>
-              <div className="bg-white rounded-full h-2 flex-1 mx-4">
-                <div 
-                  className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${Math.min((usage.used / usage.limit) * 100, 100)}%` }}
-                ></div>
-              </div>
-              <span className="text-indigo-700">{usage.limit - usage.used} remaining</span>
-            </div>
-          </div>
-        )}
         
         {loading && (
           <div className="text-center my-8">
@@ -153,117 +175,179 @@ export default function HistoryView() {
         )}
         
         {!loading && !error && logosWithRevisions.length > 0 && (
-          <div className="grid gap-6">
-            {logosWithRevisions.map(({ original, revisions }) => {
-              // Determine which logo to display (latest revision or original)
-              const latestRevision = getLatestRevision(revisions);
-              const displayedLogo = latestRevision || original;
-              const hasRevisions = revisions.length > 0;
+          <>
+            {/* Pagination Controls - Top */}
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+              <div className="flex items-center gap-2">
+                <label htmlFor="itemsPerPage" className="text-sm font-medium text-gray-700">
+                  Show:
+                </label>
+                <select
+                  id="itemsPerPage"
+                  value={itemsPerPage}
+                  onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                  className="form-select w-auto min-w-0 py-1 px-2 text-sm"
+                >
+                  <option value={1}>1 per page</option>
+                  <option value={3}>3 per page</option>
+                  <option value={5}>5 per page</option>
+                  <option value={10}>10 per page</option>
+                  <option value={20}>20 per page</option>
+                </select>
+              </div>
               
-              return (
-                <div key={original.id} className="border rounded-lg p-4 bg-white shadow-sm">
-                  <div className="flex flex-col md:flex-row gap-4">
-                    {/* Logo Image */}
-                    <div className="flex-shrink-0">
-                      <img
-                        src={displayedLogo.imageDataUri}
-                        alt={displayedLogo.name}
-                        className="w-32 h-32 object-contain border border-gray-200 rounded"
-                      />
-                    </div>
-                    
-                    {/* Logo Details */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-2">
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-900 truncate">
-                            {displayedLogo.name}
-                          </h3>
-                          <p className="text-sm text-gray-500">
-                            Created: {formatDate(original.createdAt)}
+              <div className="text-sm text-gray-600">
+                Showing {startIndex + 1}-{Math.min(endIndex, totalLogos)} of {totalLogos} logos
+              </div>
+            </div>
+
+            {/* Logos Grid */}
+            <div className="grid gap-6">
+              {currentLogos.map(({ original, revisions }) => {
+                // Determine which logo to display (latest revision or original)
+                const latestRevision = getLatestRevision(revisions);
+                const displayedLogo = latestRevision || original;
+                const hasRevisions = revisions.length > 0;
+                
+                return (
+                  <div key={original.id} className="border rounded-lg p-4 bg-white shadow-sm">
+                    <div className="flex flex-col md:flex-row gap-4">
+                      {/* Logo Image */}
+                      <div className="flex-shrink-0">
+                        <img
+                          src={displayedLogo.imageDataUri}
+                          alt={displayedLogo.name}
+                          className="w-32 h-32 object-contain border border-gray-200 rounded"
+                        />
+                      </div>
+                      
+                      {/* Logo Details */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-2">
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900 truncate">
+                              {displayedLogo.name}
+                            </h3>
+                            <p className="text-sm text-gray-500">
+                              Created: {formatDate(original.createdAt)}
+                            </p>
+                            {hasRevisions && (
+                              <p className="text-sm text-indigo-600 font-medium">
+                                Showing: Revision {latestRevision?.revisionNumber} 
+                                <span className="text-gray-500"> (of {revisions.length})</span>
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {/* Company Name and Details */}
+                        <div className="mb-3">
+                          <p className="text-sm font-medium text-gray-700">
+                            Company: {displayedLogo.parameters.companyName}
                           </p>
-                          {hasRevisions && (
-                            <p className="text-sm text-indigo-600 font-medium">
-                              Showing: Revision {latestRevision?.revisionNumber} 
-                              <span className="text-gray-500"> (of {revisions.length})</span>
+                          {displayedLogo.parameters.slogan && (
+                            <p className="text-sm text-gray-600">
+                              Slogan: "{displayedLogo.parameters.slogan}"
                             </p>
                           )}
-                        </div>
-                      </div>
-                      
-                      {/* Company Name and Details */}
-                      <div className="mb-3">
-                        <p className="text-sm font-medium text-gray-700">
-                          Company: {displayedLogo.parameters.companyName}
-                        </p>
-                        {displayedLogo.parameters.slogan && (
-                          <p className="text-sm text-gray-600">
-                            Slogan: "{displayedLogo.parameters.slogan}"
+                          <p className="text-xs text-gray-500">
+                            {displayedLogo.parameters.overallStyle} •&nbsp;
+                            {displayedLogo.parameters.colorScheme}
                           </p>
-                        )}
-                        <p className="text-xs text-gray-500">
-                          Style: {displayedLogo.parameters.overallStyle} • 
-                          Colors: {displayedLogo.parameters.colorScheme}
-                        </p>
-                      </div>
-                      
-                      {/* Action Buttons */}
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          onClick={() => handleViewLogo(displayedLogo.id)}
-                          className="btn-action btn-primary"
-                        >
-                          {hasRevisions ? "View All" : "View Logo"}
-                        </button>
+                        </div>
                         
-                        <button
-                          onClick={() => handleEditLogo(displayedLogo.id)}
-                          className="btn-action btn-secondary"
-                          disabled={revisions.length >= 3}
-                        >
-                          {revisions.length >= 3 ? 'Max Revisions' : `Revise (${3 - revisions.length} left)`}
-                        </button>
-                        
-                        <button
-                          onClick={() => confirmDeleteLogo(original.id)}
-                          className="btn-action btn-danger"
-                        >
-                          Delete
-                        </button>
+                        {/* Action Buttons */}
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            onClick={() => handleViewLogo(displayedLogo.id)}
+                            className="btn-action btn-primary"
+                          >
+                            {hasRevisions ? "View All" : "View Logo"}
+                          </button>
+                          
+                          <button
+                            onClick={() => handleEditLogo(displayedLogo.id)}
+                            className="btn-action btn-secondary"
+                            disabled={revisions.length >= 3}
+                          >
+                            {revisions.length >= 3 ? "Max Revisions" : "Edit Logo"}
+                          </button>
+                          
+                          <button
+                            onClick={() => confirmDeleteLogo(displayedLogo.id)}
+                            className="btn-action btn-danger"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
+                );
+              })}
+            </div>
+
+            {/* Pagination Controls - Bottom */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center mt-6 gap-2">
+                <button
+                  onClick={handlePreviousPage}
+                  disabled={currentPage === 1}
+                  className="btn-action btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                
+                {/* Page Numbers */}
+                <div className="flex gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      className={`btn-action ${
+                        page === currentPage 
+                          ? 'btn-primary' 
+                          : 'btn-secondary'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
                 </div>
-              );
-            })}
-          </div>
+                
+                <button
+                  onClick={handleNextPage}
+                  disabled={currentPage === totalPages}
+                  className="btn-action btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
       
-      <div className="footer-wrapper mt-6">
-        <p className="text-center text-gray-500 text-sm">
-          Logo Generation Tool • Smarty Apps • {new Date().getFullYear()}
-        </p>
-      </div>
-
+      {/* Delete Confirmation Modal */}
       {selectedLogo && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold mb-4">Confirm Delete</h3>
-            <p className="mb-6">Are you sure you want to delete this logo? This will delete the original logo and all its revisions. This action cannot be undone.</p>
-            
-            <div className="flex justify-end gap-3">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-sm mx-4">
+            <h3 className="text-lg font-semibold mb-2">Delete Logo</h3>
+            <p className="text-gray-600 mb-4">
+              Are you sure you want to delete this logo and all its revisions? This action cannot be undone.
+            </p>
+            <div className="flex gap-2">
               <button
-                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
-                onClick={() => setSelectedLogo(null)}
-              >
-                Cancel
-              </button>
-              <button
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                 onClick={handleDeleteLogo}
+                className="btn-action btn-danger flex-1"
               >
                 Delete
+              </button>
+              <button
+                onClick={() => setSelectedLogo(null)}
+                className="btn-action btn-secondary flex-1"
+              >
+                Cancel
               </button>
             </div>
           </div>

@@ -470,7 +470,7 @@ body {
    HISTORY PAGE OVERRIDES (Unchanged)
    ======================================== */
 .history-page button {
-  padding: 6px 14px;
+  padding: 4px 14px;
   font-size: var(--text-sm);
   font-weight: 500;
   border-radius: var(--radius-md);
