@@ -131,7 +131,7 @@ export default function HistoryView() {
         
         {loading && (
           <div className="text-center my-8">
-            <div className="spinner"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Loading your logos...</p>
           </div>
         )}

@@ -9,7 +9,8 @@ import {
   getOriginalLogo, 
   getRevisionsForLogo, 
   updateLogoName,
-  StoredLogo 
+  StoredLogo,
+  canCreateOriginalLogo
 } from '@/app/utils/indexedDBUtils';
 import { useAuth } from '@/app/context/AuthContext';
 import ImageDisplay from '@/app/components/ImageDisplay';
@@ -26,6 +27,7 @@ export default function LogoView({ logoId }: LogoViewProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [showLimitModal, setShowLimitModal] = useState(false);
   
   // Name editing state
   const [isEditingName, setIsEditingName] = useState(false);
@@ -69,6 +71,7 @@ export default function LogoView({ logoId }: LogoViewProps) {
         else if (!logoData.isRevision) {
           const logoRevisions = await getRevisionsForLogo(logoData.id, user.email);
           setRevisions(logoRevisions);
+          setOriginalLogo(logoData); // FIXED: Set the current logo as the original
         }
         
       } catch (err) {
@@ -132,6 +135,48 @@ export default function LogoView({ logoId }: LogoViewProps) {
     if (!logo) return;
     router.push(`/?edit=${logo.id}`);
   };
+
+  const handleCreateSimilarLogo = async () => {
+    if (!user?.email) {
+      router.push('/login');
+      return;
+    }
+
+    try {
+      const canCreate = await canCreateOriginalLogo(user.email);
+      if (!canCreate) {
+        setShowLimitModal(true);
+        return;
+      }
+
+      if (logo) {
+        router.push(`/?reference=${logo.id}`);
+      }
+    } catch (error) {
+      console.error('Error checking logo creation limit:', error);
+      setShowLimitModal(true);
+    }
+  };
+
+  const handleCreateFromScratch = async () => {
+    if (!user?.email) {
+      router.push('/login');
+      return;
+    }
+
+    try {
+      const canCreate = await canCreateOriginalLogo(user.email);
+      if (!canCreate) {
+        setShowLimitModal(true);
+        return;
+      }
+      
+      router.push('/');
+    } catch (error) {
+      console.error('Error checking logo creation limit:', error);
+      setShowLimitModal(true);
+    }
+  };
   
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString('en-US', {
@@ -146,7 +191,7 @@ export default function LogoView({ logoId }: LogoViewProps) {
       <main className="container mx-auto px-4 pb-6 max-w-4xl">
         <div className="flex items-center justify-center min-h-96">
           <div className="text-center">
-            <div className="w-8 h-8 animate-spin rounded-full border-2 border-gray-300 border-t-indigo-600 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600 mx-auto mb-4"></div>
             <p className="text-gray-500">Loading logo...</p>
           </div>
         </div>
@@ -302,7 +347,7 @@ export default function LogoView({ logoId }: LogoViewProps) {
                             d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" 
                           />
                         </svg>
-                        <span>Revision {revision.revisionNumber}</span>
+                        <span>Revision {revisions.indexOf(revision) + 1}</span>
                       </div>
                       {activeLogoId === revision.id && (
                         <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></div>
@@ -334,25 +379,25 @@ export default function LogoView({ logoId }: LogoViewProps) {
               </button>
             )}
             
-            <Link
-              href={`/?reference=${logo.id}`}
+            <button
+              onClick={handleCreateSimilarLogo}
               className="bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 px-5 rounded-lg transition-colors duration-200 flex items-center space-x-2"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
               </svg>
               <span>Create New Similar Logo</span>
-            </Link>
+            </button>
             
-            <Link
-              href="/"
+            <button
+              onClick={handleCreateFromScratch}
               className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2.5 px-5 rounded-lg transition-colors duration-200 flex items-center space-x-2"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
               <span>Create from Scratch</span>
-            </Link>
+            </button>
             
             <button
               onClick={() => setShowDetails(!showDetails)}
@@ -412,7 +457,7 @@ export default function LogoView({ logoId }: LogoViewProps) {
                       </div>
                       <div className="flex-1">
                         <h5 className="font-medium text-gray-900 text-sm">Slogan</h5>
-                        <p className="text-gray-700 mt-1">"{logo.parameters.slogan}"</p>
+                        <p className="text-gray-700 mt-1">{logo.parameters.slogan}</p>
                       </div>
                     </div>
                   </div>
@@ -422,25 +467,11 @@ export default function LogoView({ logoId }: LogoViewProps) {
                   <div className="flex items-start space-x-3">
                     <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
                       <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                      </svg>
-                    </div>
-                    <div className="flex-1">
-                      <h5 className="font-medium text-gray-900 text-sm">Brand Personality</h5>
-                      <p className="text-gray-700 mt-1">{logo.parameters.brandPersonality}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                  <div className="flex items-start space-x-3">
-                    <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <svg className="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4h4a2 2 0 002-2V5z" />
                       </svg>
                     </div>
                     <div className="flex-1">
-                      <h5 className="font-medium text-gray-900 text-sm">Overall Style</h5>
+                      <h5 className="font-medium text-gray-900 text-sm">Style</h5>
                       <p className="text-gray-700 mt-1">{logo.parameters.overallStyle}</p>
                     </div>
                   </div>
@@ -482,15 +513,15 @@ export default function LogoView({ logoId }: LogoViewProps) {
               logo.parameters.complexityLevel || logo.parameters.applicationContext || logo.parameters.specialInstructions) && (
               <div className="mb-8">
                 <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center">
-                  <div className="w-8 h-0.5 bg-emerald-500 mr-2"></div>
+                  <div className="w-8 h-0.5 bg-green-500 mr-2"></div>
                   Advanced Details
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {logo.parameters.industry && (
                     <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
                       <div className="flex items-start space-x-3">
-                        <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="w-8 h-8 bg-cyan-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <svg className="w-4 h-4 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                           </svg>
                         </div>
@@ -505,9 +536,9 @@ export default function LogoView({ logoId }: LogoViewProps) {
                   {logo.parameters.typographyStyle && (
                     <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
                       <div className="flex items-start space-x-3">
-                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                        <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <svg className="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                           </svg>
                         </div>
                         <div className="flex-1">
@@ -521,9 +552,9 @@ export default function LogoView({ logoId }: LogoViewProps) {
                   {logo.parameters.lineStyle && (
                     <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
                       <div className="flex items-start space-x-3">
-                        <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                           </svg>
                         </div>
                         <div className="flex-1">
@@ -537,8 +568,8 @@ export default function LogoView({ logoId }: LogoViewProps) {
                   {logo.parameters.composition && (
                     <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
                       <div className="flex items-start space-x-3">
-                        <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <svg className="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
                           </svg>
                         </div>
@@ -553,13 +584,13 @@ export default function LogoView({ logoId }: LogoViewProps) {
                   {logo.parameters.shapeEmphasis && (
                     <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
                       <div className="flex items-start space-x-3">
-                        <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        <div className="w-8 h-8 bg-violet-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <svg className="w-4 h-4 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                           </svg>
                         </div>
                         <div className="flex-1">
-                          <h5 className="font-medium text-gray-900 text-sm">Shape Emphasis</h5>
+                          <h5 className="font-medium text-gray-900 text-sm">Shape</h5>
                           <p className="text-gray-700 mt-1">{logo.parameters.shapeEmphasis}</p>
                         </div>
                       </div>
@@ -569,8 +600,8 @@ export default function LogoView({ logoId }: LogoViewProps) {
                   {logo.parameters.texture && (
                     <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
                       <div className="flex items-start space-x-3">
-                        <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4h4a2 2 0 002-2V5z" />
                           </svg>
                         </div>
@@ -585,9 +616,9 @@ export default function LogoView({ logoId }: LogoViewProps) {
                   {logo.parameters.complexityLevel && (
                     <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
                       <div className="flex items-start space-x-3">
-                        <div className="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <svg className="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                           </svg>
                         </div>
                         <div className="flex-1">
@@ -675,6 +706,36 @@ export default function LogoView({ logoId }: LogoViewProps) {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Limit reached modal */}
+      {showLimitModal && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowLimitModal(false)}
+        >
+          <div 
+            className="bg-white rounded-lg shadow-lg max-w-md w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold mb-4 text-center">Logo Limit Reached</h3>
+            <p className="mb-6 text-center">You have reached your logo generation limit.</p>
+            <div className="flex justify-center gap-3">
+              <button 
+                onClick={() => setShowLimitModal(false)} 
+                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                Close
+              </button>
+              <Link 
+                href="/account" 
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+              >
+                Buy More Credits
+              </Link>
             </div>
           </div>
         </div>

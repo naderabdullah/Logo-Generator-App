@@ -955,7 +955,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
         {/* ADD: Transparent Background Checkbox */}
         <div style={{ 
           marginBottom: 'var(--space-sm)', 
-          marginTop: 'var(--space-md)',
+          marginTop: 'var(--space-xs)',
           display: 'flex',
           justifyContent: 'center'
         }}>
@@ -1124,7 +1124,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
         {isRevision && (
           <button
             type="button"
-            onClick={() => router.push(`/logos/${originalLogoId || editLogoId}`)}
+            onClick={() => router.push(`/logos/${editLogoId || originalLogoId}`)}
             style={{
               width: '100%',
               marginBottom: 'var(--space-sm)',
@@ -1175,25 +1175,37 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
             marginTop: 'var(--space-xs)',
             marginBottom: '0'
           }}>
-            Logo generation can take 15-30 seconds.
+            Please be patient while your logo is being generated. Logo generation can take 30-45 seconds...
           </p>
         )}
 
         {/* Limit reached modal */}
         {showLimitModal && (
-          <div className="modal-overlay">
-            <div className="modal">
-              <h3>Logo Limit Reached</h3>
-              <p>
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            onClick={() => setShowLimitModal(false)}
+          >
+            <div 
+              className="bg-white rounded-lg shadow-lg max-w-md w-full p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="text-lg font-semibold mb-4">Logo Limit Reached</h3>
+              <p className="mb-6">
                 {isRevision 
                   ? 'You have reached the maximum number of revisions (3) for this logo.'
                   : 'You have reached your logo generation limit.'}
               </p>
-              <div className="modal-actions">
-                <button onClick={() => setShowLimitModal(false)} className="btn-secondary">
+              <div className="flex justify-center gap-3">
+                <button 
+                  onClick={() => setShowLimitModal(false)} 
+                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
+                >
                   Close
                 </button>
-                <Link href="/account" className="btn-primary">
+                <Link 
+                  href="/purchase" 
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                >
                   Buy More Credits
                 </Link>
               </div>

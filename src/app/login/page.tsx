@@ -21,7 +21,7 @@ const getRegistrationUrl = () => {
 function LoginLoading() {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-50 overflow-hidden">
-      <div className="w-6 h-6 animate-spin rounded-full border-2 border-gray-300 border-t-indigo-600"></div>
+      <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-600"></div>
     </div>
   );
 }
@@ -152,7 +152,7 @@ function LoginForm() {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-gray-50 overflow-hidden">
         <div className="text-center">
-          <div className="w-8 h-8 animate-spin rounded-full border-2 border-gray-300 border-t-indigo-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Checking authentication...</p>
         </div>
       </div>

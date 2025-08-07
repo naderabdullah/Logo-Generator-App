@@ -108,7 +108,7 @@ export default function AccountPage() {
     return (
       <main className="container mx-auto px-4 pb-6 max-w-2xl">
         <div className="mt-4 text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600 mx-auto"></div>
           <p className="mt-2 text-gray-600">Loading account information...</p>
         </div>
       </main>

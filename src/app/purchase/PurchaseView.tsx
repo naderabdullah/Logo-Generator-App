@@ -181,7 +181,7 @@ export default function PurchaseView() {
                 </p>
               ) : (
                 <p className="text-sm text-red-600 mt-2 font-medium">
-                  You've used all your logo credits
+                  You've used all your logo credits. Purchasing more is easy!
                 </p>
               )}
             </div>
