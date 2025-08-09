@@ -27,7 +27,7 @@ export default function UnifiedHeader() {
                 height={64}
                 className="rounded"
               />
-              <span>AI Logo Generator!</span>
+              <span>AI Logo Generator!!</span>
             </div>
           </div>
         </div>
