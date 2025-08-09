@@ -22,7 +22,7 @@ export default function UnifiedHeader() {
             <div className="flex items-center space-x-2 text-xl font-bold text-indigo-600">
               <Image 
                 src="/logo.ico" 
-                alt="AI Logo Generator Logo" 
+                alt="AI Logo Generator Logo!"
                 width={64} 
                 height={64}
                 className="rounded"
