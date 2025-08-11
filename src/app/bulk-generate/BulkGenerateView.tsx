@@ -1,10 +1,17 @@
-// src/app/bulk-generate/BulkGenerateView.tsx - COMPREHENSIVE VERSION WITH ALL PARAMETERS
+// src/app/bulk-generate/BulkGenerateView.tsx - COMPLETE VERSION WITH ALL FIXES
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { saveLogo, getLogo, getAllLogosWithRevisions, type StoredLogo, type LogoParameters } from '@/app/utils/indexedDBUtils';
+import {
+    saveLogo,
+    getLogo,
+    getAllLogosWithRevisions,
+    renameLogo,
+    type StoredLogo,
+    type LogoParameters
+} from '@/app/utils/indexedDBUtils';
 import companyData from '../../data/company-names.json';
 
 // Define explicit interface for company data
@@ -39,6 +46,11 @@ export default function BulkGenerateView() {
     const [usedCompanyNames, setUsedCompanyNames] = useState<Set<string>>(new Set());
     const [isGenerating, setIsGenerating] = useState(false);
 
+    // NEW: Untitled logos fix functionality
+    const [untitledLogos, setUntitledLogos] = useState<StoredLogo[]>([]);
+    const [isFixingUntitled, setIsFixingUntitled] = useState(false);
+    const [fixingProgress, setFixingProgress] = useState({ current: 0, total: 0 });
+
     // Check if user is authorized
     useEffect(() => {
         if (!user || user.email !== 'tabdullah1215@live.com') {
@@ -70,6 +82,82 @@ export default function BulkGenerateView() {
         };
         loadExistingLogos();
     }, [user?.email]);
+
+    // NEW: Find untitled logos function
+    const findUntitledLogos = async (): Promise<StoredLogo[]> => {
+        if (!user?.email) return [];
+
+        try {
+            const allLogosWithRevisions = await getAllLogosWithRevisions(user.email);
+            const allLogos = allLogosWithRevisions.flatMap(logoGroup => [
+                logoGroup.original,
+                ...logoGroup.revisions
+            ]);
+
+            const untitled = allLogos.filter(logo =>
+                logo.name === 'Untitled' ||
+                logo.name === '' ||
+                !logo.name
+            );
+
+            return untitled;
+        } catch (error) {
+            console.error('Error finding untitled logos:', error);
+            return [];
+        }
+    };
+
+    // NEW: Check for untitled logos when component loads
+    useEffect(() => {
+        const checkUntitledLogos = async () => {
+            if (user?.email) {
+                const untitled = await findUntitledLogos();
+                setUntitledLogos(untitled);
+            }
+        };
+        checkUntitledLogos();
+    }, [user?.email, generatedLogos]); // Re-check when new logos are generated
+
+    // NEW: Fix untitled logos function
+    const fixUntitledLogos = async () => {
+        if (!user?.email || untitledLogos.length === 0) return;
+
+        setIsFixingUntitled(true);
+        setFixingProgress({ current: 0, total: untitledLogos.length });
+
+        let successCount = 0;
+
+        try {
+            for (let i = 0; i < untitledLogos.length; i++) {
+                const logo = untitledLogos[i];
+                setFixingProgress({ current: i + 1, total: untitledLogos.length });
+
+                try {
+                    // Use the company name from parameters as the new name
+                    const newName = logo.parameters.companyName || `Logo ${i + 1}`;
+                    await renameLogo(logo.id, newName, user.email);
+                    successCount++;
+
+                    // Small delay to show progress
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                } catch (error) {
+                    console.error(`Error renaming logo ${logo.id}:`, error);
+                }
+            }
+
+            // Refresh the untitled logos list
+            const remainingUntitled = await findUntitledLogos();
+            setUntitledLogos(remainingUntitled);
+
+            console.log(`Successfully renamed ${successCount}/${untitledLogos.length} logos`);
+
+        } catch (error) {
+            console.error('Error fixing untitled logos:', error);
+        } finally {
+            setIsFixingUntitled(false);
+            setFixingProgress({ current: 0, total: 0 });
+        }
+    };
 
     // AI-powered industry classification
     const classifyIndustryWithAI = async (company: CompanyData): Promise<string> => {
@@ -667,6 +755,7 @@ Industry:`;
         return prompt;
     };
 
+    // FIXED: Generate single logo function with proper company name
     const generateSingleLogo = async (company: CompanyData): Promise<StoredLogo | null> => {
         try {
             const parameters = await getRandomLogoParameters(company);
@@ -697,11 +786,13 @@ Industry:`;
             // Convert base64 data to data URI format
             const imageDataUri = `data:image/png;base64,${result.image.data}`;
 
-            // Save logo and get the ID
+            // FIXED: Save logo with proper company name
             const logoId = await saveLogo(
-                user!.email,
-                imageDataUri,
-                parameters
+                user!.email,         // userId
+                imageDataUri,        // imageDataUri
+                parameters,          // parameters
+                undefined,           // originalLogoId (undefined for new logos)
+                company.name         // name - Use the company name instead of defaulting to "Untitled"
             );
 
             // Get the full logo object using the returned ID
@@ -862,6 +953,58 @@ Industry:`;
                         {isGenerating ? '🔄 Generating...' : '🚀 Start Comprehensive Bulk Generation'}
                     </button>
                 </div>
+
+                {/* NEW: Utility Tools Section - Only show if there are untitled logos */}
+                {untitledLogos.length > 0 && (
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h3 className="text-sm font-semibold text-orange-800 mb-1">
+                                    🔧 Maintenance Tools
+                                </h3>
+                                <p className="text-xs text-orange-700">
+                                    Found {untitledLogos.length} logo{untitledLogos.length > 1 ? 's' : ''} with "Untitled" names
+                                </p>
+                            </div>
+                            <button
+                                onClick={fixUntitledLogos}
+                                disabled={isFixingUntitled || isGenerating}
+                                className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                                    isFixingUntitled || isGenerating
+                                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                        : 'bg-orange-600 hover:bg-orange-700 text-white'
+                                }`}
+                            >
+                                {isFixingUntitled ? (
+                                    <span className="flex items-center space-x-2">
+                                        <div className="w-4 h-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                                        <span>Fixing...</span>
+                                    </span>
+                                ) : (
+                                    '🏷️ Fix Names'
+                                )}
+                            </button>
+                        </div>
+
+                        {/* Progress bar for fixing process */}
+                        {isFixingUntitled && (
+                            <div className="mt-3">
+                                <div className="flex justify-between text-xs text-orange-700 mb-1">
+                                    <span>Renaming logos...</span>
+                                    <span>{fixingProgress.current} / {fixingProgress.total}</span>
+                                </div>
+                                <div className="w-full bg-orange-200 rounded-full h-2">
+                                    <div
+                                        className="bg-orange-600 h-2 rounded-full transition-all duration-300"
+                                        style={{
+                                            width: `${fixingProgress.total > 0 ? (fixingProgress.current / fixingProgress.total) * 100 : 0}%`
+                                        }}
+                                    ></div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* Progress Display */}
                 {progress.status !== 'idle' && (
