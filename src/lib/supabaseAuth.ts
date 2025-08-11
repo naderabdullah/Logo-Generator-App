@@ -24,6 +24,18 @@ export interface User {
   updated_at?: string;
 }
 
+// Catalog Logo interface
+export interface CatalogLogo {
+  id: number;
+  catalog_code: string;
+  logo_key_id: string;
+  image_data_uri: string;
+  parameters: any; // LogoParameters from indexedDBUtils
+  created_at: string;
+  created_by: string;
+  original_company_name: string;
+}
+
 export class SupabaseAuthService {
   
   // Check if email exists
@@ -142,7 +154,214 @@ export class SupabaseAuthService {
       logosCreated: newCount 
     });
   }
+  // Generate next catalog code
+  async getNextCatalogCode(): Promise<string> {
+    const { data, error } = await supabaseAdmin
+        .from('catalog_logos')
+        .select('catalog_code')
+        .order('id', { ascending: false })
+        .limit(1);
+
+    if (error) {
+      console.error('Error getting last catalog code:', error);
+      return 'CAT-001'; // Start with first code if no entries
+    }
+
+    if (!data || data.length === 0) {
+      return 'CAT-001';
+    }
+
+    // Extract number from last code (e.g., "CAT-042" -> 42)
+    const lastCode = data[0].catalog_code;
+    const match = lastCode.match(/CAT-(\d+)/);
+    const lastNumber = match ? parseInt(match[1]) : 0;
+    const nextNumber = lastNumber + 1;
+
+    // Format with leading zeros (e.g., 43 -> "CAT-043")
+    return `CAT-${nextNumber.toString().padStart(3, '0')}`;
+  }
+
+// Check if logo already exists in catalog
+  async checkLogoInCatalog(logoKeyId: string): Promise<CatalogLogo | null> {
+    const { data, error } = await supabaseAdmin
+        .from('catalog_logos')
+        .select('*')
+        .eq('logo_key_id', logoKeyId)
+        .single();
+
+    if (error && error.code !== 'PGRST116') { // PGRST116 = not found
+      throw new Error(`Failed to check catalog: ${error.message}`);
+    }
+
+    return data as CatalogLogo | null;
+  }
+
+// Add logo to catalog
+  async addToCatalog(logoData: {
+    logoKeyId: string;
+    imageDataUri: string;
+    parameters: any;
+    originalCompanyName: string;
+    createdBy: string;
+  }): Promise<CatalogLogo> {
+    try {
+      // Check if logo already exists
+      const existingLogo = await this.checkLogoInCatalog(logoData.logoKeyId);
+      if (existingLogo) {
+        throw new Error('Logo already exists in catalog');
+      }
+
+      // Generate next catalog code
+      const catalogCode = await this.getNextCatalogCode();
+
+      const { data, error } = await supabaseAdmin
+          .from('catalog_logos')
+          .insert({
+            catalog_code: catalogCode,
+            logo_key_id: logoData.logoKeyId,
+            image_data_uri: logoData.imageDataUri,
+            parameters: logoData.parameters,
+            created_by: logoData.createdBy,
+            original_company_name: logoData.originalCompanyName,
+            created_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+
+      if (error) {
+        throw new Error(`Failed to add to catalog: ${error.message}`);
+      }
+
+      return data as CatalogLogo;
+    } catch (error) {
+      console.error('Error adding to catalog:', error);
+      throw error;
+    }
+  }
+
+// Get all catalog logos
+  async getCatalogLogos(limit?: number, offset?: number): Promise<CatalogLogo[]> {
+    try {
+      let query = supabaseAdmin
+          .from('catalog_logos')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+      if (limit) {
+        query = query.limit(limit);
+      }
+
+      if (offset) {
+        query = query.range(offset, offset + (limit || 50) - 1);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        throw new Error(`Failed to get catalog logos: ${error.message}`);
+      }
+
+      return data as CatalogLogo[];
+    } catch (error) {
+      console.error('Error getting catalog logos:', error);
+      throw error;
+    }
+  }
+
+// Get catalog logo by code
+  async getCatalogLogoByCode(catalogCode: string): Promise<CatalogLogo | null> {
+    try {
+      const { data, error } = await supabaseAdmin
+          .from('catalog_logos')
+          .select('*')
+          .eq('catalog_code', catalogCode.toUpperCase())
+          .single();
+
+      if (error && error.code !== 'PGRST116') {
+        throw new Error(`Failed to get catalog logo: ${error.message}`);
+      }
+
+      return data as CatalogLogo | null;
+    } catch (error) {
+      console.error('Error getting catalog logo by code:', error);
+      throw error;
+    }
+  }
+
+// Search catalog logos
+  async searchCatalogLogos(searchTerm: string): Promise<CatalogLogo[]> {
+    try {
+      const { data, error } = await supabaseAdmin
+          .from('catalog_logos')
+          .select('*')
+          .or(`catalog_code.ilike.%${searchTerm}%,original_company_name.ilike.%${searchTerm}%,created_by.ilike.%${searchTerm}%`)
+          .order('created_at', { ascending: false });
+
+      if (error) {
+        throw new Error(`Failed to search catalog: ${error.message}`);
+      }
+
+      return data as CatalogLogo[];
+    } catch (error) {
+      console.error('Error searching catalog:', error);
+      throw error;
+    }
+  }
+
+// Get catalog statistics
+  async getCatalogStats(): Promise<{
+    totalLogos: number;
+    totalContributors: number;
+    latestAddition: string | null;
+  }> {
+    try {
+      // Get total count
+      const { count: totalLogos, error: countError } = await supabaseAdmin
+          .from('catalog_logos')
+          .select('*', { count: 'exact', head: true });
+
+      if (countError) {
+        throw new Error(`Failed to get catalog count: ${countError.message}`);
+      }
+
+      // Get unique contributors
+      const { data: contributors, error: contributorsError } = await supabaseAdmin
+          .from('catalog_logos')
+          .select('created_by')
+          .neq('created_by', null);
+
+      if (contributorsError) {
+        throw new Error(`Failed to get contributors: ${contributorsError.message}`);
+      }
+
+      const uniqueContributors = new Set(contributors?.map(c => c.created_by)).size;
+
+      // Get latest addition
+      const { data: latest, error: latestError } = await supabaseAdmin
+          .from('catalog_logos')
+          .select('created_at')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+
+      if (latestError && latestError.code !== 'PGRST116') {
+        throw new Error(`Failed to get latest addition: ${latestError.message}`);
+      }
+
+      return {
+        totalLogos: totalLogos || 0,
+        totalContributors: uniqueContributors,
+        latestAddition: latest?.created_at || null
+      };
+    } catch (error) {
+      console.error('Error getting catalog stats:', error);
+      throw error;
+    }
+  }
+
 }
+
+
 
 // Export singleton instance
 export const supabaseAuth = new SupabaseAuthService();
