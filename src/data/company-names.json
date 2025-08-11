@@ -1,0 +1,123 @@
+{
+  "companies": [
+
+    {"name": "TechForward Solutions", "description": "cutting-edge software development", "slogan": "Innovation at Every Click"},
+    {"name": "CloudNine Analytics", "description": "cloud-based data analysis", "slogan": "Data Dreams Come True"},
+    {"name": "DataFlow Systems", "description": "enterprise software solutions", "slogan": "Seamless. Smart. Secure."},
+    {"name": "TechStream Media", "description": "digital content production", "slogan": "Stories Worth Streaming"},
+    {"name": "TechGuru IT Support", "description": "computer technical assistance", "slogan": "Problems Solved Simply"},
+    {"name": "TechBoost Consulting", "description": "digital transformation services", "slogan": "Accelerate Your Success"},
+    {"name": "TechVision Labs", "description": "research and development company", "slogan": "Tomorrow's Tech Today"},
+    {"name": "TechConnect Networks", "description": "IT infrastructure solutions", "slogan": "Connecting Possibilities"},
+    {"name": "TechFusion Devices", "description": "consumer electronics manufacturing", "slogan": "Where Tech Meets Life"},
+    {"name": "TechSupport Central", "description": "24/7 technical assistance", "slogan": "Help When You Need It"},
+    {"name": "TechPro Services", "description": "professional IT consulting", "slogan": "Excellence in Every Solution"},
+    {"name": "TechAdvance Solutions", "description": "emerging technology consulting", "slogan": "Ahead of the Curve"},
+    {"name": "TechFlow Automation", "description": "industrial process optimization", "slogan": "Seamless Operations"},
+    {"name": "TechInnovate Labs", "description": "product development company", "slogan": "Innovation Unleashed"},
+    {"name": "TechBridge Solutions", "description": "legacy system modernization", "slogan": "Bridging Past and Future"},
+    {"name": "TechMaster Training", "description": "technical certification programs", "slogan": "Master the Future"},
+    {"name": "TechGenius Support", "description": "advanced technical solutions", "slogan": "Genius at Your Service"},
+    {"name": "TechPioneer Ventures", "description": "technology investment firm", "slogan": "Investing in Tomorrow"},
+    {"name": "TechCrafter Solutions", "description": "custom software development", "slogan": "Code Crafted to Perfection"},
+    {"name": "TechMagic Entertainment", "description": "digital gaming company", "slogan": "Where Magic Meets Technology"},
+
+
+    {"name": "Artisan Coffee Roasters", "description": "premium specialty coffee", "slogan": "Craft Every Cup"},
+    {"name": "FreshBites Restaurant", "description": "farm-to-table dining", "slogan": "Taste the Difference"},
+    {"name": "FreshMarket Deli", "description": "gourmet food and catering", "slogan": "Flavor Without Limits"},
+    {"name": "CraftBrew Taphouse", "description": "artisanal beer brewery", "slogan": "Brewed to Perfection"},
+    {"name": "GourmetBites Catering", "description": "upscale event food services", "slogan": "Extraordinary Every Bite"},
+    {"name": "QuickServe Restaurants", "description": "fast-casual dining chain", "slogan": "Fast Food, Slow Crafted"},
+    {"name": "FreshTaste Culinary", "description": "gourmet cooking classes", "slogan": "Master Every Flavor"},
+    {"name": "FreshMarket Express", "description": "grocery delivery service", "slogan": "Fresh to Your Door"},
+    {"name": "FreshCatch Seafood", "description": "sustainable fish market", "slogan": "Ocean to Table Fresh"},
+    {"name": "FreshSpirit Beverages", "description": "artisanal drink production", "slogan": "Taste the Spirit"},
+    {"name": "FreshOrigin Foods", "description": "locally sourced food products", "slogan": "From Origin to Plate"},
+    {"name": "FreshMart Grocery", "description": "organic food supermarket chain", "slogan": "Fresh Finds Daily"},
+    {"name": "GreenValley Organic", "description": "organic food production", "slogan": "Valley Fresh, Valley Pure"},
+    {"name": "FastFresh Delivery", "description": "restaurant delivery service", "slogan": "Fresh Food Fast"},
+    {"name": "PureTaste Organics", "description": "organic food distributor", "slogan": "Purely Delicious"},
+
+
+    {"name": "BlueOcean Consulting", "description": "business strategy consulting", "slogan": "Navigate New Waters"},
+    {"name": "Digital Marketing Pros", "description": "online advertising specialists", "slogan": "Your Success, Amplified"},
+    {"name": "Creative Design Studio", "description": "graphic design and branding", "slogan": "Vision Made Visual"},
+    {"name": "CreativeMinds Agency", "description": "marketing and advertising", "slogan": "Ideas That Move Mountains"},
+    {"name": "DigitalEdge Marketing", "description": "social media and SEO", "slogan": "Your Edge Online"},
+    {"name": "CreativeFlow Studios", "description": "video production company", "slogan": "Stories in Motion"},
+    {"name": "DigitalCraft Agency", "description": "web development specialists", "slogan": "Code Your Dreams"},
+    {"name": "FreshBrand Marketing", "description": "brand development agency", "slogan": "Brands That Breathe Life"},
+    {"name": "CreativeEdge Media", "description": "content creation studio", "slogan": "Content That Converts"},
+    {"name": "CreativeWorks Studio", "description": "multimedia production house", "slogan": "Where Ideas Come Alive"},
+    {"name": "CreativeAxis Design", "description": "brand identity development", "slogan": "Brands That Turn Heads"},
+    {"name": "CreativeHub Studios", "description": "collaborative workspace", "slogan": "Where Creativity Connects"},
+    {"name": "CreativeForce Marketing", "description": "dynamic advertising campaigns", "slogan": "Marketing That Moves Mountains"},
+    {"name": "CreativeVision Photography", "description": "professional photo services", "slogan": "Moments Made Timeless"},
+    {"name": "FreshConcept Design", "description": "innovative product development", "slogan": "Concepts That Change Everything"},
+
+
+    {"name": "SecureVault Banking", "description": "digital financial services", "slogan": "Trust. Secured."},
+    {"name": "SmartPay Financial", "description": "payment processing solutions", "slogan": "Transactions Made Simple"},
+    {"name": "SafeHaven Insurance", "description": "comprehensive coverage solutions", "slogan": "Peace of Mind Guaranteed"},
+    {"name": "SecureBank Financial", "description": "digital banking platform", "slogan": "Banking Beyond Boundaries"},
+    {"name": "SmartWealth Financial", "description": "investment advisory services", "slogan": "Wealth Made Wise"},
+    {"name": "SecureData Systems", "description": "enterprise data management", "slogan": "Data Fortress Secured"},
+    {"name": "TrustLine Financial", "description": "corporate banking solutions", "slogan": "Banking You Can Trust"},
+    {"name": "ClearPath Investments", "description": "wealth management services", "slogan": "Your Financial Future Clear"},
+
+
+    {"name": "HealthFirst Medical", "description": "comprehensive healthcare services", "slogan": "Care Without Compromise"},
+    {"name": "WellCare Clinics", "description": "preventive healthcare services", "slogan": "Prevention Is Power"},
+    {"name": "FastCare Medical", "description": "urgent care clinic network", "slogan": "Quick Care, Quality Results"},
+    {"name": "HealthBridge Medical", "description": "telemedicine platform", "slogan": "Care Without Boundaries"},
+    {"name": "SmartCare Medical", "description": "remote patient monitoring", "slogan": "Care That Never Sleeps"},
+    {"name": "HealthStream Services", "description": "healthcare administration", "slogan": "Healthcare Made Seamless"},
+    {"name": "PetCare Plus", "description": "veterinary and pet wellness services", "slogan": "Love Every Paw"},
+    {"name": "WellnessPath Spa", "description": "luxury wellness and beauty treatments", "slogan": "Rejuvenate Your Soul"},
+
+
+    {"name": "EcoHome Builders", "description": "sustainable construction company", "slogan": "Building Tomorrow Today"},
+    {"name": "UrbanLiving Realty", "description": "city property management", "slogan": "Home Is Where Heart Is"},
+    {"name": "SmartBuild Construction", "description": "intelligent building systems", "slogan": "Building Smarter Futures"},
+    {"name": "GreenBuild Materials", "description": "sustainable construction supplies", "slogan": "Build Green, Build Strong"},
+    {"name": "UrbanCore Construction", "description": "downtown development projects", "slogan": "Building City Hearts"},
+    {"name": "ModernSpace Architecture", "description": "contemporary building design", "slogan": "Form Meets Function"},
+    {"name": "UrbanLoft Living", "description": "luxury apartment development", "slogan": "Elevated Living Spaces"},
+    {"name": "SmartBridge Engineering", "description": "infrastructure technology", "slogan": "Connecting Tomorrow's Infrastructure"},
+
+
+    {"name": "FastTrack Logistics", "description": "express shipping and delivery", "slogan": "Speed Meets Precision"},
+    {"name": "FreshStart Moving", "description": "residential relocation services", "slogan": "New Beginnings Made Easy"},
+    {"name": "GreenRoute Transportation", "description": "eco-friendly delivery", "slogan": "Sustainable Miles Ahead"},
+    {"name": "FastForward Logistics", "description": "supply chain optimization", "slogan": "Efficiency Delivered"},
+    {"name": "UrbanFlow Transportation", "description": "city mobility solutions", "slogan": "Move the City Forward"},
+    {"name": "FastTrack Delivery", "description": "same-day shipping services", "slogan": "Speed Without Compromise"},
+
+
+    {"name": "CleanTech Energy", "description": "renewable energy solutions", "slogan": "Power the Possible"},
+    {"name": "GreenPower Solar", "description": "residential solar installation", "slogan": "Sunshine Powered Life"},
+    {"name": "PureEnergy Systems", "description": "alternative energy solutions", "slogan": "Power Without Limits"},
+    {"name": "GreenField Solar", "description": "renewable energy installation", "slogan": "Solar Power Made Simple"},
+    {"name": "EcoFuel Systems", "description": "alternative fuel technology", "slogan": "Fuel for a Better Future"},
+    {"name": "SmartGrid Energy", "description": "intelligent power distribution", "slogan": "Power Meets Intelligence"},
+
+
+    {"name": "LearnSmart Education", "description": "online learning platform", "slogan": "Knowledge Unleashed"},
+    {"name": "BrightMind Tutoring", "description": "academic support services", "slogan": "Unlock Your Potential"},
+    {"name": "FastTrack Learning", "description": "accelerated skill training", "slogan": "Skills at Speed"},
+    {"name": "CreativeMinds Education", "description": "innovative learning methods", "slogan": "Learning Reimagined"},
+    {"name": "FreshStart Coaching", "description": "life and career mentoring", "slogan": "Your New Beginning Starts Here"},
+
+    {"name": "StyleHub Fashion", "description": "trendy clothing boutique", "slogan": "Wear Your Story"},
+    {"name": "UrbanStyle Boutique", "description": "contemporary fashion store", "slogan": "Street Meets Chic"},
+    {"name": "UrbanChic Design", "description": "modern home furnishings", "slogan": "Style Lives Here"},
+    {"name": "UrbanElegance Fashion", "description": "upscale clothing design", "slogan": "Elegance Meets Edge"},
+    {"name": "EcoTrend Fashion", "description": "environmentally conscious clothing", "slogan": "Fashion Forward, Earth First"},
+
+    {"name": "GreenLeaf Organics", "description": "sustainable organic farming", "slogan": "Pure Growth, Pure Future"},
+    {"name": "GreenField Agriculture", "description": "modern farming techniques", "slogan": "Harvest the Future"},
+    {"name": "GreenMeadow Farms", "description": "sustainable agriculture", "slogan": "Fields of Tomorrow"},
+    {"name": "GreenThumb Landscaping", "description": "professional garden design", "slogan": "Nature by Design"}
+  ]
+}
