@@ -1,4 +1,4 @@
-// src/app/components/UnifiedHeader.tsx - SAFE UPDATE preserving ALL original imports and structure
+// src/app/components/UnifiedHeader.tsx - UPDATED with Catalog link for superuser
 'use client';
 
 import { useState } from 'react';
@@ -12,7 +12,7 @@ export default function UnifiedHeader() {
   const pathname = usePathname();
   const router = useRouter();
 
-  // NEW ADDITION - Check if user is privileged for bulk generation
+  // Check if user is privileged for bulk generation and catalog access
   const isPrivilegedUser = user?.email === 'tabdullah1215@live.com';
 
   // Show basic header on auth pages (including register pages) - NO LINK
@@ -106,9 +106,9 @@ export default function UnifiedHeader() {
               </div>
             </div>
 
-            {/* Bottom row - Navigation - MODIFIED SPACING ONLY for bulk link */}
+            {/* Bottom row - Navigation - UPDATED with smaller spacing for more links */}
             <nav className="flex justify-center pb-2">
-              <div className={`flex ${isPrivilegedUser ? 'space-x-4' : 'space-x-6'}`}>
+              <div className={`flex ${isPrivilegedUser ? 'space-x-3' : 'space-x-6'}`}>
                 <Link
                     href="/history"
                     className={`py-1 text-sm font-medium ${
@@ -129,7 +129,7 @@ export default function UnifiedHeader() {
                 >
                   Generator
                 </Link>
-                {/* NEW ADDITION - Bulk Generate link for privileged user only */}
+                {/* Bulk Generate link for privileged user only */}
                 {isPrivilegedUser && (
                     <Link
                         href="/bulk-generate"
@@ -140,6 +140,19 @@ export default function UnifiedHeader() {
                         }`}
                     >
                       Bulk
+                    </Link>
+                )}
+                {/* NEW: Catalog link for privileged user only */}
+                {isPrivilegedUser && (
+                    <Link
+                        href="/catalog"
+                        className={`py-1 text-sm font-medium ${
+                            pathname === '/catalog'
+                                ? 'text-indigo-600'
+                                : 'text-gray-500'
+                        }`}
+                    >
+                      Catalog
                     </Link>
                 )}
                 <Link
@@ -166,7 +179,7 @@ export default function UnifiedHeader() {
             </nav>
           </div>
 
-          {/* Desktop Layout - Original */}
+          {/* Desktop Layout - UPDATED with smaller spacing for more links */}
           <div className="hidden md:flex items-center justify-between h-16">
             {/* Logo - Left side */}
             <div className="flex-shrink-0">
@@ -182,9 +195,9 @@ export default function UnifiedHeader() {
               </Link>
             </div>
 
-            {/* Navigation - Center - MODIFIED SPACING ONLY for bulk link */}
+            {/* Navigation - Center - UPDATED with smaller spacing for more links */}
             <nav className="flex absolute left-1/2 transform -translate-x-1/2">
-              <div className={`flex ${isPrivilegedUser ? 'space-x-6' : 'space-x-8'}`}>
+              <div className={`flex ${isPrivilegedUser ? 'space-x-4' : 'space-x-8'}`}>
                 <Link
                     href="/history"
                     className={`py-4 px-1 border-b-2 text-sm font-medium inline-flex items-center ${
@@ -205,7 +218,7 @@ export default function UnifiedHeader() {
                 >
                   Generator
                 </Link>
-                {/* NEW ADDITION - Bulk Generate link for privileged user only */}
+                {/* Bulk Generate link for privileged user only */}
                 {isPrivilegedUser && (
                     <Link
                         href="/bulk-generate"
@@ -216,6 +229,19 @@ export default function UnifiedHeader() {
                         }`}
                     >
                       🚀 Bulk Generate
+                    </Link>
+                )}
+                {/* NEW: Catalog link for privileged user only */}
+                {isPrivilegedUser && (
+                    <Link
+                        href="/catalog"
+                        className={`py-4 px-1 border-b-2 text-sm font-medium inline-flex items-center ${
+                            pathname === '/catalog'
+                                ? 'border-indigo-500 text-indigo-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        }`}
+                    >
+                      📚 Catalog
                     </Link>
                 )}
                 <Link
