@@ -1,7 +1,7 @@
-// src/app/history/HistoryView.tsx - COMPLETE with search, bulk selection, and actions dropdown
+// src/app/history/HistoryView.tsx - COMPLETE with search, bulk selection, and actions dropdown + ONLY lazy loading and smart pagination added
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   getAllLogosWithRevisions, 
@@ -13,6 +13,83 @@ import {
 import Link from 'next/link';
 // @ts-ignore - JSZip might not have perfect types
 import JSZip from 'jszip';
+
+// ADDED: Lazy loading image component
+const LazyImage = ({ src, alt, className }: { 
+  src: string; 
+  alt: string; 
+  className: string;
+}) => {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isInView, setIsInView] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const imgRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsInView(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1, rootMargin: '50px' }
+    );
+
+    if (imgRef.current) {
+      observer.observe(imgRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  const handleImageLoad = () => {
+    setIsLoaded(true);
+  };
+
+  const handleImageError = () => {
+    setHasError(true);
+    setIsLoaded(true);
+  };
+
+  return (
+    <div ref={imgRef} className={className}>
+      {!isInView ? (
+        <div className="w-full h-full bg-gray-100 animate-pulse flex items-center justify-center">
+          <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+          </svg>
+        </div>
+      ) : (
+        <>
+          {!isLoaded && !hasError && (
+            <div className="w-full h-full bg-gray-100 animate-pulse flex items-center justify-center">
+              <svg className="w-6 h-6 text-gray-400 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </div>
+          )}
+          {hasError ? (
+            <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+              <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+            </div>
+          ) : (
+            <img
+              src={src}
+              alt={alt}
+              className={`${className} ${isLoaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
+              onLoad={handleImageLoad}
+              onError={handleImageError}
+              loading="lazy"
+            />
+          )}
+        </>
+      )}
+    </div>
+  );
+};
 
 export default function HistoryView() {
   const [logosWithRevisions, setLogosWithRevisions] = useState<{
@@ -53,7 +130,6 @@ export default function HistoryView() {
           const email = userData.email;
           setUserEmail(email);
           
-          // FIXED: Pass userId (email) as first parameter
           await syncUserUsageWithDynamoDB(email, {
             logosCreated: userData.logosCreated,
             logosLimit: userData.logosLimit
@@ -210,6 +286,48 @@ export default function HistoryView() {
     setItemsPerPage(newItemsPerPage);
   };
 
+  // ADDED: Smart pagination with ellipsis
+  const getPageNumbers = () => {
+    const pages = [];
+    const showEllipsis = totalPages > 7;
+    
+    if (!showEllipsis) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      pages.push(1);
+      
+      if (currentPage <= 4) {
+        for (let i = 2; i <= Math.min(5, totalPages - 1); i++) {
+          pages.push(i);
+        }
+        if (totalPages > 5) {
+          pages.push('ellipsis-end');
+        }
+      } else if (currentPage >= totalPages - 3) {
+        if (totalPages > 5) {
+          pages.push('ellipsis-start');
+        }
+        for (let i = Math.max(totalPages - 4, 2); i <= totalPages - 1; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push('ellipsis-start');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push('ellipsis-end');
+      }
+      
+      if (totalPages > 1) {
+        pages.push(totalPages);
+      }
+    }
+    
+    return pages;
+  };
+
   // Bulk selection functions
   const handleLogoSelect = (logoId: string, checked: boolean) => {
     setSelectedLogos(prev => {
@@ -286,131 +404,116 @@ export default function HistoryView() {
     return selectedData;
   };
 
-  // Download individual logo as SVG (using existing method)
-  const downloadAsSVG = async (imageDataUri: string, baseFilename: string) => {
-    try {
-      // Convert data URI to blob
-      const response = await fetch(imageDataUri);
-      const blob = await response.blob();
-      
-      // Create form data for SVG conversion
-      const formData = new FormData();
-      const file = new File([blob], 'logo.png', { type: blob.type });
-      formData.append('image', file);
-      
-      // Set options for SVG conversion (using simple type)
-      const options = {
-        type: 'simple',
-        width: 1000,
-        height: 1000,
-        threshold: 128,
-        color: '#000000'
-      };
-      
-      formData.append('options', JSON.stringify(options));
-      
-      // Call SVG conversion API
-      const serverResponse = await fetch('/api/convert-to-svg', {
-        method: 'POST',
-        body: formData
-      });
-      
-      if (!serverResponse.ok) {
-        const error = await serverResponse.json();
-        throw new Error(error.error || 'SVG conversion failed');
-      }
-      
-      const result = await serverResponse.json();
-      
-      if (!result.svg || !result.svg.includes('<svg')) {
-        throw new Error('Invalid SVG output');
-      }
-      
-      return result.svg;
-      
-    } catch (error) {
-      console.error('SVG conversion error:', error);
-      throw error;
-    }
-  };
-
-  // Download individual logo as PNG or JPEG
-  const downloadAsFormat = async (imageDataUri: string, format: 'png' | 'jpeg') => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const img = new Image();
-    
-    return new Promise<Blob>((resolve, reject) => {
-      img.onload = () => {
-        canvas.width = img.width;
-        canvas.height = img.height;
-        
-        if (ctx) {
-          ctx.drawImage(img, 0, 0);
-          
-          if (format === 'jpeg') {
-            canvas.toBlob((blob) => {
-              if (blob) resolve(blob);
-              else reject(new Error('Failed to create JPEG blob'));
-            }, 'image/jpeg', 0.9);
-          } else {
-            canvas.toBlob((blob) => {
-              if (blob) resolve(blob);
-              else reject(new Error('Failed to create PNG blob'));
-            }, 'image/png');
-          }
-        } else {
-          reject(new Error('Canvas context not available'));
-        }
-      };
-      img.onerror = () => reject(new Error('Failed to load image'));
-      img.src = imageDataUri;
-    });
-  };
-
-  // Download selected logos in specific format as ZIP
-  const handleBulkDownload = async (format: 'png' | 'jpeg' | 'svg') => {
-    if (selectedLogos.size === 0) return;
-    
+  // Handle bulk download
+  const handleBulkDownload = async (format: 'png' | 'svg' | 'jpg') => {
     setBulkActionLoading(true);
-    setShowActionsDropdown(false);
     
     try {
-      const zip = new JSZip();
       const selectedData = getSelectedLogosData();
       
+      if (selectedData.length === 0) {
+        alert('No logos selected');
+        return;
+      }
+
+      const zip = new JSZip();
+      
       for (const { logo, filename } of selectedData) {
-        try {
-          if (format === 'svg') {
-            // Convert to SVG and add to zip
-            const svgContent = await downloadAsSVG(logo.imageDataUri, filename);
-            zip.file(`${filename}.svg`, svgContent);
-          } else {
-            // Convert to PNG/JPEG and add to zip
-            const blob = await downloadAsFormat(logo.imageDataUri, format);
-            zip.file(`${filename}.${format === 'jpeg' ? 'jpg' : 'png'}`, blob);
+        if (format === 'png') {
+          // Convert data URI to blob and add to ZIP
+          const response = await fetch(logo.imageDataUri);
+          const blob = await response.blob();
+          zip.file(`${filename}.png`, blob);
+        } else if (format === 'jpg') {
+          // Convert PNG to JPG
+          const response = await fetch(logo.imageDataUri);
+          const blob = await response.blob();
+          
+          // Create a canvas to convert to JPG
+          const img = new Image();
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          await new Promise((resolve) => {
+            img.onload = () => {
+              canvas.width = img.width;
+              canvas.height = img.height;
+              
+              // Fill with white background for JPG
+              ctx!.fillStyle = '#FFFFFF';
+              ctx!.fillRect(0, 0, canvas.width, canvas.height);
+              
+              // Draw the image
+              ctx!.drawImage(img, 0, 0);
+              
+              canvas.toBlob((jpgBlob) => {
+                if (jpgBlob) {
+                  zip.file(`${filename}.jpg`, jpgBlob);
+                }
+                resolve(void 0);
+              }, 'image/jpeg', 0.9);
+            };
+            img.src = logo.imageDataUri;
+          });
+        } else if (format === 'svg') {
+          try {
+            // Convert data URI to blob
+            const response = await fetch(logo.imageDataUri);
+            const blob = await response.blob();
+            
+            // Create form data for SVG conversion
+            const formData = new FormData();
+            const file = new File([blob], 'logo.png', { type: blob.type });
+            formData.append('image', file);
+            
+            // Set options for SVG conversion
+            const options = {
+              type: 'simple',
+              width: 1000,
+              height: 1000,
+              threshold: 128,
+              color: '#000000'
+            };
+            
+            formData.append('options', JSON.stringify(options));
+            
+            // Call SVG conversion API
+            const serverResponse = await fetch('/api/convert-to-svg', {
+              method: 'POST',
+              body: formData
+            });
+            
+            if (serverResponse.ok) {
+              const result = await serverResponse.json();
+              if (result.svg && result.svg.includes('<svg')) {
+                zip.file(`${filename}.svg`, result.svg);
+              } else {
+                console.warn(`Failed to convert ${filename} to SVG`);
+              }
+            }
+          } catch (error) {
+            console.warn(`Failed to process ${filename}:`, error);
           }
-        } catch (error) {
-          console.error(`Error converting ${filename} to ${format}:`, error);
         }
       }
       
-      // Generate and download the zip
+      // Generate and download ZIP file
       const zipBlob = await zip.generateAsync({ type: 'blob' });
       const url = URL.createObjectURL(zipBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `logos-${format}-${new Date().toISOString().split('T')[0]}.zip`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `selected-logos-${format}-${Date.now()}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
       URL.revokeObjectURL(url);
       
     } catch (error) {
-      console.error(`Error creating ${format} zip file:`, error);
-      alert(`Failed to create ${format.toUpperCase()} zip file. Please try again.`);
+      console.error(`${format.toUpperCase()} bulk download failed:`, error);
+      alert(`Failed to download ${format.toUpperCase()} files. Please try again.`);
     } finally {
       setBulkActionLoading(false);
+      setShowActionsDropdown(false);
     }
   };
 
@@ -506,39 +609,69 @@ export default function HistoryView() {
                   
                   {/* Dropdown Menu */}
                   {showActionsDropdown && (
-                    <div className="absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-10">
-                      <div className="py-1">
+                    <div
+                      className="absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50 overflow-hidden"
+                      role="menu"
+                      aria-orientation="vertical"
+                    >
+                      <div
+                        className="group w-full cursor-pointer transition-colors hover:bg-gray-100"
+                        onClick={() => handleBulkDownload('png')}
+                        role="menuitem"
+                      >
                         <button
-                          onClick={() => handleBulkDownload('png')}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 transition-colors"
+                          className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 group-hover:text-gray-900 bg-transparent appearance-none outline-none text-left"
+                          type="button"
                         >
                           <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
                           </svg>
                           <span className="flex-1">Download as PNG</span>
                         </button>
+                      </div>
+
+                      <div
+                        className="group w-full cursor-pointer transition-colors hover:bg-gray-100"
+                        onClick={() => handleBulkDownload('jpg')}
+                        role="menuitem"
+                      >
                         <button
-                          onClick={() => handleBulkDownload('jpeg')}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 transition-colors"
+                          className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 group-hover:text-gray-900 bg-transparent appearance-none outline-none text-left"
+                          type="button"
                         >
                           <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
                           </svg>
-                          <span className="flex-1">Download as JPEG</span>
+                          <span className="flex-1">Download as JPG</span>
                         </button>
+                      </div>
+
+                      <div
+                        className="group w-full cursor-pointer transition-colors hover:bg-gray-100"
+                        onClick={() => handleBulkDownload('svg')}
+                        role="menuitem"
+                      >
                         <button
-                          onClick={() => handleBulkDownload('svg')}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 transition-colors"
+                          className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 group-hover:text-gray-900 bg-transparent appearance-none outline-none text-left"
+                          type="button"
                         >
                           <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
                           </svg>
                           <span className="flex-1">Download as SVG</span>
                         </button>
-                        <hr className="my-1" />
+                      </div>
+
+                      <div className="h-px bg-gray-200" />
+
+                      <div
+                        className="group w-full cursor-pointer transition-colors hover:bg-red-50"
+                        onClick={() => setShowBulkDeleteModal(true)}
+                        role="menuitem"
+                      >
                         <button
-                          onClick={() => setShowBulkDeleteModal(true)}
-                          className="w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                          className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-700 group-hover:text-red-800 bg-transparent appearance-none outline-none text-left"
+                          type="button"
                         >
                           <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -557,95 +690,81 @@ export default function HistoryView() {
         {/* Search and Pagination Controls */}
         {!loading && !error && logosWithRevisions.length > 0 && (
           <>
-            {/* Pagination Controls - Top */}
-            <div className="flex flex-col lg:flex-row justify-between items-center mb-1 gap-4">
-              <div className="flex items-center gap-2">
-                <label htmlFor="itemsPerPage" className="text-sm font-medium text-gray-700">
-                  Show:
-                </label>
-                <select
-                  id="itemsPerPage"
-                  value={itemsPerPage}
-                  onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
-                  className="form-select w-auto min-w-0 py-1 px-2 text-sm"
-                >
-                  <option value={1}>1 per page</option>
-                  <option value={3}>3 per page</option>
-                  <option value={5}>5 per page</option>
-                  <option value={10}>10 per page</option>
-                  <option value={20}>20 per page</option>
-                </select>
+            {/* All Controls on Same Level */}
+            <div className="flex flex-col lg:flex-row justify-between items-center mb-4 gap-4">
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-2">
+                  <label htmlFor="itemsPerPage" className="text-sm font-medium text-gray-700">
+                    Show:
+                  </label>
+                  <select
+                    id="itemsPerPage"
+                    value={itemsPerPage}
+                    onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                    className="form-select w-auto min-w-0 py-1 px-2 text-sm"
+                  >
+                    <option value={1}>1 per page</option>
+                    <option value={3}>3 per page</option>
+                    <option value={5}>5 per page</option>
+                    <option value={10}>10 per page</option>
+                    <option value={20}>20 per page</option>
+                  </select>
+                </div>
+
+                {/* Selection Controls moved to left */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleSelectAllCurrentPage}
+                    className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+                  >
+                    Select all on page
+                  </button>
+                  <button
+                    onClick={handleSelectAllFiltered}
+                    className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+                  >
+                    Select all {searchQuery ? 'search results' : 'logos'} ({totalLogos})
+                  </button>
+                  {hasSelection && (
+                    <>
+                      <span className="text-gray-400">•</span>
+                      <button
+                        onClick={handleDeselectAll}
+                        className="text-gray-600 hover:text-gray-700 underline text-sm"
+                      >
+                        Clear selection
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
-              
-              {/* Search Bar in the middle */}
-              <div className="flex-1 max-w-md">
+
+              {/* Search Bar on the right */}
+              <div className="w-full max-w-md">
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                  </div>
                   <input
                     type="text"
-                    className="form-input w-full text-sm"
-                    style={{ paddingLeft: '2.5rem', paddingRight: '2.25rem' }}
-                    placeholder="Search logos..."
+                    placeholder="Search by logo name or company..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   />
+                  <svg className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
                   {searchQuery && (
                     <button
                       onClick={clearSearch}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                      aria-label="Clear search"
+                      className="absolute right-3 top-2.5 h-5 w-5 text-gray-400 hover:text-gray-600"
                     >
-                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
                   )}
                 </div>
               </div>
-              
-              <div className="text-sm text-gray-600">
-                {searchQuery ? (
-                  <>Showing {Math.min(startIndex + 1, totalLogos)}-{Math.min(endIndex, totalLogos)} of {totalLogos} search results</>
-                ) : (
-                  <>Showing {Math.min(startIndex + 1, totalLogos)}-{Math.min(endIndex, totalLogos)} of {totalLogos} logos</>
-                )}
-              </div>
             </div>
-
-            {/* Bulk Selection Controls */}
-            {totalLogos > 0 && (
-              <div className="flex flex-wrap items-center gap-2 mb-4 text-sm">
-                <span className="text-gray-600">Select:</span>
-                <button
-                  onClick={handleSelectAllCurrentPage}
-                  className="text-indigo-600 hover:text-indigo-700 underline"
-                >
-                  All on page
-                </button>
-                <span className="text-gray-400">•</span>
-                <button
-                  onClick={handleSelectAllFiltered}
-                  className="text-indigo-600 hover:text-indigo-700 underline"
-                >
-                  All {searchQuery ? 'search results' : 'logos'} ({totalLogos})
-                </button>
-                {hasSelection && (
-                  <>
-                    <span className="text-gray-400">•</span>
-                    <button
-                      onClick={handleDeselectAll}
-                      className="text-gray-600 hover:text-gray-700 underline"
-                    >
-                      Clear selection
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
 
             {/* Search Results Info */}
             {searchQuery && filteredLogosWithRevisions.length === 0 && (
@@ -702,9 +821,9 @@ export default function HistoryView() {
                 return (
                   <div key={original.id} className={`border rounded-lg p-4 bg-white shadow-sm transition-all ${isSelected ? 'ring-2 ring-indigo-500 bg-indigo-50' : ''}`}>
                     <div className="flex flex-col md:flex-row gap-4">
-                      {/* Logo Image */}
+                      {/* Logo Image - MODIFIED: Now uses LazyImage */}
                       <div className="flex-shrink-0">
-                        <img
+                        <LazyImage
                           src={displayedLogo.imageDataUri}
                           alt={displayedLogo.name}
                           className="w-32 h-32 object-contain border border-gray-200 rounded"
@@ -788,7 +907,7 @@ export default function HistoryView() {
               })}
             </div>
 
-            {/* Pagination Controls - Bottom */}
+            {/* Pagination Controls - Bottom - MODIFIED: Now uses smart pagination */}
             {totalPages > 1 && (
               <div className="flex justify-center items-center mt-6 gap-2">
                 <button
@@ -799,25 +918,24 @@ export default function HistoryView() {
                   Previous
                 </button>
                 
-                {/* Page Numbers */}
+                {/* Smart Page Numbers with Ellipsis */}
                 <div className="flex gap-1">
-                  {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                    // Show first, last, current, and nearby pages
-                    let page;
-                    if (totalPages <= 5) {
-                      page = i + 1;
-                    } else if (currentPage <= 3) {
-                      page = i + 1;
-                    } else if (currentPage >= totalPages - 2) {
-                      page = totalPages - 4 + i;
-                    } else {
-                      page = currentPage - 2 + i;
+                  {getPageNumbers().map((page, index) => {
+                    if (page === 'ellipsis-start' || page === 'ellipsis-end') {
+                      return (
+                        <span 
+                          key={`ellipsis-${index}`}
+                          className="px-3 py-2 text-gray-500 cursor-default"
+                        >
+                          ...
+                        </span>
+                      );
                     }
                     
                     return (
                       <button
                         key={page}
-                        onClick={() => handlePageChange(page)}
+                        onClick={() => handlePageChange(page as number)}
                         className={`btn-action ${
                           page === currentPage 
                             ? 'btn-primary' 
