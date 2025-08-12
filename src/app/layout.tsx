@@ -14,11 +14,11 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
   icons: {
     icon: [
-      { url: '/logo.ico', sizes: '32x32', type: 'image/x-icon' },
-      { url: '/logo.ico', sizes: '16x16', type: 'image/x-icon' }
+      { url: '/smallLogo.ico', sizes: '32x32', type: 'image/x-icon' },
+      { url: '/smallLogo.ico', sizes: '16x16', type: 'image/x-icon' }
     ],
     apple: [
-      { url: '/logo.ico', sizes: '180x180', type: 'image/x-icon' }
+      { url: '/smallLogo.ico', sizes: '180x180', type: 'image/x-icon' }
     ]
   }
 };
@@ -44,9 +44,12 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="Logo Gen" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="theme-color" content="#6366f1" />
-        <link rel="apple-touch-icon" href="/logo.ico" />
+        {/* Preload the favicon to prevent flash */}
+        <link rel="preload" href="/smallLogo.ico" as="image" type="image/x-icon" />
+        {/* Favicon links with higher priority */}
+        <link rel="icon" href="/smallLogo.ico" type="image/x-icon" sizes="any" />
         <link rel="shortcut icon" href="/smallLogo.ico" type="image/x-icon" />
-        <link rel="icon" href="/smallLogo.ico" type="image/x-icon" />
+        <link rel="apple-touch-icon" href="/smallLogo.ico" />
       </head>
       <body className={`${inter.className} ios-safe`}>
         <AuthProvider>

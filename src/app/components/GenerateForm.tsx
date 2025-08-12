@@ -133,8 +133,11 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
             setComplexityLevel(logoData.parameters.complexityLevel || '');
             setApplicationContext(logoData.parameters.applicationContext || '');
             setSpecialInstructions(logoData.parameters.specialInstructions || '');
-            setTransparentBackground(logoData.parameters.transparentBackground === 'false' ? false : true); // ADD: Load transparent background
             
+            setSpecialInstructions(''); // CHANGED: Always clear for revisions
+          
+            setTransparentBackground(logoData.parameters.transparentBackground === 'false' ? false : true);
+
             // FIXED: Set the logo image as reference image for revision
             setReferenceImagePreview(logoData.imageDataUri);
             
@@ -195,6 +198,8 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
             setSpecialInstructions(referenceData.parameters.specialInstructions || '');
             setTransparentBackground(referenceData.parameters.transparentBackground === 'false' ? false : true); // ADD: Load transparent background
             
+            setSpecialInstructions('');
+
             // FIXED: Set the logo image as reference image for similar logo
             setReferenceImagePreview(referenceData.imageDataUri);
             
@@ -638,7 +643,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       )}
       
       <div className={`card generator-form text-center ${showAdvanced || referenceImagePreview || colorScheme === 'Custom Colors' ? 'expanded' : ''}`}>
-        <h2 style={{ marginBottom: 'var(--space-md)' }}>
+        <h2 className="text-indigo-600" style={{ marginBottom: 'var(--space-md)' }}>
           {isRevision ? 'Create Logo Revision' : 'Generate Your Logo'}
         </h2>
 

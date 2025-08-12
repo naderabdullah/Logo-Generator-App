@@ -1,3 +1,4 @@
+//ImageDisplay.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -5,6 +6,7 @@ import React, { useState, useEffect } from 'react';
 // Define the props interface
 interface ImageDisplayProps {
   imageDataUri: string;
+  logoName?: string;
 }
 
 // Format type
@@ -13,7 +15,7 @@ type ConversionStatus = 'idle' | 'converting' | 'success' | 'error';
 type SVGConversionType = 'simple' | 'posterized' | 'detailed';
 
 // Component
-export default function ImageDisplay({ imageDataUri }: ImageDisplayProps) {
+export default function ImageDisplay({ imageDataUri, logoName }: ImageDisplayProps) {
   const [selectedFormat, setSelectedFormat] = useState<Format>('png');
   const [svgType, setSvgType] = useState<SVGConversionType>('simple');
   const [svgContent, setSvgContent] = useState<string | null>(null);
@@ -47,6 +49,20 @@ export default function ImageDisplay({ imageDataUri }: ImageDisplayProps) {
       </div>
     );
   }
+
+  const createSafeFilename = (name: string | undefined, fallback: string = 'logo'): string => {
+    if (!name || name.trim() === '' || name === 'Untitled') {
+      return fallback;
+    }
+    
+    // Remove special characters and replace spaces with hyphens
+    return name
+      .trim()
+      .replace(/[^\w\s-]/g, '') // Remove special characters except spaces and hyphens
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+      .toLowerCase();
+  };
 
   // Server-side SVG conversion
   const convertToSVGServerSide = async (): Promise<string> => {
@@ -108,7 +124,9 @@ export default function ImageDisplay({ imageDataUri }: ImageDisplayProps) {
       
       let dataUrl: string;
       let fileExtension: string;
-      let fileName = `generated-logo-${Date.now()}`;
+      
+      // UPDATED: Use logo name for filename
+      const baseFileName = createSafeFilename(logoName, 'generated-logo');
       
       if (selectedFormat === 'svg') {
         try {
@@ -150,7 +168,7 @@ export default function ImageDisplay({ imageDataUri }: ImageDisplayProps) {
       
       const link = document.createElement('a');
       link.href = dataUrl;
-      link.download = `${fileName}.${fileExtension}`;
+      link.download = `${baseFileName}.${fileExtension}`; // UPDATED: Use logo name
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -169,10 +187,15 @@ export default function ImageDisplay({ imageDataUri }: ImageDisplayProps) {
 
   // Share function
   const handleShare = async () => {
-    if (!navigator.share) return;
+    if (!navigator.share) {
+      alert('Sharing is not supported on this device/browser.');
+      return;
+    }
 
     try {
       let file: File;
+
+      const baseFileName = createSafeFilename(logoName, 'logo');
       
       if (selectedFormat === 'svg') {
         // Handle SVG sharing
@@ -235,7 +258,7 @@ export default function ImageDisplay({ imageDataUri }: ImageDisplayProps) {
         // Default to PNG (or if selectedFormat is 'png')
         const response = await fetch(imageDataUri);
         const blob = await response.blob();
-        file = new File([blob], `logo-${Date.now()}.png`, { type: 'image/png' });
+        file = new File([blob], `${baseFileName}.png`, { type: 'image/png' }); 
       }
       
       // Reset conversion status and progress after successful conversion

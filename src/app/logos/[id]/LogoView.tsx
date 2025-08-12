@@ -284,7 +284,7 @@ export default function LogoView({ logoId }: LogoViewProps) {
                   Logo Versions
                 </h3>
                 <span className="text-xs text-gray-500">
-                  {revisions.length + 1} version{revisions.length + 1 > 1 ? 's' : ''}
+                  {3 - revisions.length} revision{3 - revisions.length > 1 ? 's' : ''} remaining
                 </span>
               </div>
 
@@ -361,7 +361,10 @@ export default function LogoView({ logoId }: LogoViewProps) {
           
           {/* Logo Display */}
           <div className="text-center mb-6">
-            <ImageDisplay imageDataUri={logo.imageDataUri} />
+            <ImageDisplay 
+              imageDataUri={logo.imageDataUri} 
+              logoName={logoName}
+            />
           </div>
           
           {/* Action Buttons - FIXED: Hide Edit button when revisions are maxed */}
