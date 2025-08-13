@@ -167,20 +167,38 @@ export default function CatalogView() {
 
                         {/* Statistics */}
                         {stats && (
-                            <div className="mt-4 md:mt-0 grid grid-cols-3 gap-4 text-center">
-                                <div className="bg-indigo-50 rounded-lg p-3">
-                                    <div className="text-2xl font-bold text-indigo-600">{stats.totalLogos}</div>
-                                    <div className="text-xs text-indigo-600">Total Logos</div>
-                                </div>
-                                <div className="bg-green-50 rounded-lg p-3">
-                                    <div className="text-2xl font-bold text-green-600">{stats.totalContributors}</div>
-                                    <div className="text-xs text-green-600">Contributors</div>
-                                </div>
-                                <div className="bg-purple-50 rounded-lg p-3">
-                                    <div className="text-sm font-bold text-purple-600">
-                                        {stats.latestAddition ? formatDate(stats.latestAddition) : 'N/A'}
+                            <div className="mt-4 md:mt-0">
+                                {/* Ultra simple horizontal layout */}
+                                <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                                    {/* Total Logos */}
+                                    <div style={{ flex: 1, backgroundColor: '#e0e7ff', padding: '12px', borderRadius: '8px', textAlign: 'center' }}>
+                                        <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#4338ca' }}>
+                                            {stats.totalLogos}
+                                        </div>
+                                        <div style={{ fontSize: '12px', color: '#4338ca' }}>
+                                            Total Logos
+                                        </div>
                                     </div>
-                                    <div className="text-xs text-purple-600">Latest Addition</div>
+
+                                    {/* Total Contributors */}
+                                    <div style={{ flex: 1, backgroundColor: '#dcfce7', padding: '12px', borderRadius: '8px', textAlign: 'center' }}>
+                                        <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#16a34a' }}>
+                                            {stats.totalContributors}
+                                        </div>
+                                        <div style={{ fontSize: '12px', color: '#16a34a' }}>
+                                            Contributors
+                                        </div>
+                                    </div>
+
+                                    {/* Latest Addition */}
+                                    <div style={{ flex: 1, backgroundColor: '#f3e8ff', padding: '12px', borderRadius: '8px', textAlign: 'center' }}>
+                                        <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#9333ea' }}>
+                                            {stats.latestAddition ? formatDate(stats.latestAddition) : 'N/A'}
+                                        </div>
+                                        <div style={{ fontSize: '12px', color: '#9333ea' }}>
+                                            Latest Addition
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         )}

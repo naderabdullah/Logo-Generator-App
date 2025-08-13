@@ -177,7 +177,6 @@ export default function LoginForm() {
                     window.open(registrationUrl, '_blank');
                   } catch (err) {
                     console.error('Error getting registration URL:', err);
-                    alert('Registration is not available at the moment. Please contact support.');
                   }
                 }}
                 className="font-medium text-indigo-600 hover:text-indigo-500"

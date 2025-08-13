@@ -411,7 +411,6 @@ export default function HistoryView() {
       const selectedData = getSelectedLogosData();
       
       if (selectedData.length === 0) {
-        alert('No logos selected');
         return;
       }
 
@@ -509,7 +508,6 @@ export default function HistoryView() {
       
     } catch (error) {
       console.error(`${format.toUpperCase()} bulk download failed:`, error);
-      alert(`Failed to download ${format.toUpperCase()} files. Please try again.`);
     } finally {
       setBulkActionLoading(false);
       setShowActionsDropdown(false);

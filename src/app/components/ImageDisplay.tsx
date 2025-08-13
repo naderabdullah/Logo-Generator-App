@@ -148,7 +148,6 @@ export default function ImageDisplay({ imageDataUri, logoName }: ImageDisplayPro
           console.error("SVG conversion error:", error);
           setConversionStatus('error');
           setConversionProgress('');
-          alert(`SVG conversion failed: ${error.message}`);
           return;
         }
       } else if (ctx) {
@@ -179,7 +178,6 @@ export default function ImageDisplay({ imageDataUri, logoName }: ImageDisplayPro
     
     img.onerror = () => {
       console.error('Failed to load image for conversion');
-      alert('Failed to load the image. Please try again.');
     };
     
     img.src = imageDataUri;
@@ -188,7 +186,6 @@ export default function ImageDisplay({ imageDataUri, logoName }: ImageDisplayPro
   // Share function
   const handleShare = async () => {
     if (!navigator.share) {
-      alert('Sharing is not supported on this device/browser.');
       return;
     }
 
@@ -213,7 +210,6 @@ export default function ImageDisplay({ imageDataUri, logoName }: ImageDisplayPro
             console.error('SVG conversion for sharing failed:', error);
             setConversionStatus('idle');
             setConversionProgress('');
-            alert('SVG conversion failed. Sharing as PNG instead.');
             svgToShare = null; // Ensure it's null so we fall back to PNG
           }
         }
@@ -275,7 +271,6 @@ export default function ImageDisplay({ imageDataUri, logoName }: ImageDisplayPro
       console.error('Error sharing:', error);
       setConversionStatus('idle');
       setConversionProgress('');
-      alert('Failed to share logo. Please try again.');
     }
   };
 

@@ -216,20 +216,16 @@ export default function LogoView({ logoId }: LogoViewProps) {
         const data = await response.json();
         setIsInCatalog(true);
         setCatalogCode(data.catalogLogo.catalog_code);
-        alert(`Logo successfully added to catalog with code: ${data.catalogLogo.catalog_code}`);
       } else if (response.status === 409) {
         // Logo already in catalog
         const data = await response.json();
         setIsInCatalog(true);
         setCatalogCode(data.catalogCode);
-        alert(`Logo is already in catalog with code: ${data.catalogCode}`);
       } else {
         const errorData = await response.json();
-        alert(`Failed to add to catalog: ${errorData.error}`);
       }
     } catch (error) {
       console.error('Error adding to catalog:', error);
-      alert('Failed to add logo to catalog. Please try again.');
     } finally {
       setCatalogLoading(false);
     }
