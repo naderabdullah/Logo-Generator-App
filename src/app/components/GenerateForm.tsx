@@ -14,6 +14,8 @@ import {
   canCreateRevision,
   syncUserUsageWithDynamoDB
 } from '@/app/utils/indexedDBUtils';
+import CatalogModeToggle from './CatalogModeToggle';
+import CatalogCodeInput from './CatalogCodeInput';
 
 function useEditParam() {
   const searchParams = useSearchParams();
@@ -71,6 +73,19 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   // Custom color state
   const [customColors, setCustomColors] = useState<string[]>(['#6366f1']);
 
+  const [catalogMode, setCatalogMode] = useState(false);
+  const [catalogCode, setCatalogCode] = useState('');
+  const [catalogData, setCatalogData] = useState<any>(null);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
+
+  const getFieldsDisabled = useCallback(() => {
+    // In catalog mode, disable all fields except company name and slogan
+    if (catalogMode) {
+      return true;
+    }
+    // Original logic for generating state
+    return isGenerating;
+  }, [catalogMode, isGenerating]);
   const useReferenceParam = () => {
     const searchParams = useSearchParams();
     return searchParams?.get('reference') || null;
@@ -481,38 +496,60 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     transparentBackground // Keep this since it's used in buildPrompt and collectParameters
   ]);
 
-  // Original renderDropdown function preserved
   const renderDropdown = useCallback((
-    id: string,
-    label: string,
-    value: string,
-    onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void,
-    options: string[],
-    required: boolean = false
+      id: string,
+      label: string,
+      value: string,
+      onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void,
+      options: string[],
+      required: boolean = false
   ) => {
+    // Determine if this specific field should be disabled
+    const isFieldDisabled = (() => {
+      // Company name and slogan are always editable in catalog mode
+      if (catalogMode && (id === 'company-name' || id === 'slogan')) {
+        return isGenerating; // Only disabled when generating
+      }
+      // All other fields follow the general locking logic
+      return getFieldsDisabled();
+    })();
+
     return (
-      <div style={{ marginBottom: 'var(--space-sm)' }}>
-        <label htmlFor={id} className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
-          {label} {required && <span style={{ color: 'var(--color-error)' }}>*</span>}
-        </label>
-        <select
-          id={id}
-          className="form-select"
-          value={value}
-          onChange={onChange}
-          required={required}
-          disabled={isGenerating}
-        >
-          <option value="">-- Select {label} --</option>
-          {options.map((option, index) => (
-            <option key={index} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-      </div>
+        <div style={{ marginBottom: 'var(--space-sm)' }}>
+          <label htmlFor={id} className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
+            {label} {required && <span style={{ color: 'var(--color-error)' }}>*</span>}
+            {catalogMode && !['company-name', 'slogan'].includes(id) && (
+                <span style={{
+                  fontSize: 'var(--text-xs)',
+                  color: 'var(--color-gray-500)',
+                  marginLeft: 'var(--space-xs)'
+                }}>
+              🔒
+            </span>
+            )}
+          </label>
+          <select
+              id={id}
+              className="form-select"
+              value={value}
+              onChange={onChange}
+              required={required}
+              disabled={isFieldDisabled}
+              style={{
+                backgroundColor: isFieldDisabled ? 'var(--color-gray-100)' : 'white',
+                cursor: isFieldDisabled ? 'not-allowed' : 'pointer'
+              }}
+          >
+            <option value="">-- Select {label} --</option>
+            {options.map((option, index) => (
+                <option key={index} value={option}>
+                  {option}
+                </option>
+            ))}
+          </select>
+        </div>
     );
-  }, [isGenerating]);
+  }, [getFieldsDisabled, catalogMode, isGenerating]);
 
   // Handle reference image upload - preserved original styling
   const handleReferenceImageChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
@@ -546,6 +583,67 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       }
     }
   }, [isRevision]);
+
+  const handleCatalogModeChange = useCallback((newCatalogMode: boolean) => {
+    setCatalogMode(newCatalogMode);
+
+    // Clear catalog data when switching back to manual mode
+    if (!newCatalogMode) {
+      setCatalogCode('');
+      setCatalogData(null);
+      setCatalogError(null);
+      // Clear reference image if it was from catalog
+      if (catalogData) {
+        setReferenceImage(null);
+        setReferenceImagePreview(null);
+      }
+    }
+  }, [catalogData]);
+
+  const handleCatalogLoaded = useCallback((catalogData: any) => {
+    setCatalogData(catalogData);
+
+    if (catalogData) {
+      // Populate all form fields with catalog parameters
+      const params = catalogData.parameters;
+
+      // Keep existing company name and slogan (editable fields)
+      // Only update if they're empty
+      setCompanyName('');
+      setSlogan('');
+
+      // Populate all other fields (these will be locked)
+      setOverallStyle(params.overallStyle || '');
+      setColorScheme(params.colorScheme || '');
+      setSymbolFocus(params.symbolFocus || '');
+      setBrandPersonality(params.brandPersonality || '');
+      setIndustry(params.industry || '');
+      setSize(params.size || '1024x1024');
+      setTypographyStyle(params.typographyStyle || '');
+      setLineStyle(params.lineStyle || '');
+      setComposition(params.composition || '');
+      setShapeEmphasis(params.shapeEmphasis || '');
+      setTexture(params.texture || '');
+      setComplexityLevel(params.complexityLevel || '');
+      setApplicationContext(params.applicationContext || '');
+      setSpecialInstructions(params.specialInstructions || '');
+      setTransparentBackground(params.transparentBackground !== 'false');
+
+      // Set reference image from catalog
+      setReferenceImagePreview(catalogData.image_data_uri);
+
+      // Convert image to File object for form submission
+      fetch(catalogData.image_data_uri)
+          .then(response => response.blob())
+          .then(blob => {
+            const file = new File([blob], `catalog-${catalogData.catalog_code}.png`, { type: 'image/png' });
+            setReferenceImage(file);
+          })
+          .catch(error => {
+            console.error('Error converting catalog image to file:', error);
+          });
+    }
+  }, [companyName, slogan]);
 
   // ORIGINAL options arrays restored
   const overallStyleOptions = [
@@ -647,6 +745,69 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
           {isRevision ? 'Create Logo Revision' : 'Generate Your Logo'}
         </h2>
 
+        <div style={{
+          marginBottom: 'var(--space-md)',
+          padding: 'var(--space-md)',
+          backgroundColor: '#f8f9fa', // Light grey background
+          border: '1px solid var(--color-gray-300)',
+          borderRadius: 'var(--radius-md)'
+        }}>
+
+        {/* NEW: Catalog Mode Toggle */}
+        <CatalogModeToggle
+            catalogMode={catalogMode}
+            onChange={handleCatalogModeChange}
+            disabled={isGenerating || isRevision} // Disable in revision mode
+        />
+
+        {/* NEW: Catalog Code Input - Only show when in catalog mode */}
+        {catalogMode && (
+            <CatalogCodeInput
+                enabled={catalogMode && !isRevision}
+                value={catalogCode}
+                onChange={setCatalogCode}
+                onCatalogLoaded={handleCatalogLoaded}
+                onError={setCatalogError}
+            />
+        )}
+
+        {/* NEW: Show catalog error if any */}
+        {catalogError && (
+            <div style={{
+              marginBottom: 'var(--space-sm)',
+              padding: 'var(--space-sm)',
+              backgroundColor: 'var(--color-red-50)',
+              border: '1px solid var(--color-red-200)',
+              borderRadius: 'var(--radius-sm)',
+              fontSize: 'var(--text-sm)',
+              color: 'var(--color-red-700)'
+            }}>
+              {catalogError}
+            </div>
+        )}
+
+        {/* NEW: Show catalog success info */}
+        {catalogMode && catalogData && (
+            <div style={{
+              marginBottom: 'var(--space-sm)',
+              padding: 'var(--space-sm)',
+              backgroundColor: 'var(--color-blue-50)',
+              border: '1px solid var(--color-blue-200)',
+              borderRadius: 'var(--radius-sm)',
+              fontSize: 'var(--text-sm)',
+              color: 'var(--color-blue-700)'
+            }}>
+              📋 Using template: <strong>{catalogData.catalog_code}</strong> - {catalogData.original_company_name}
+              <br />
+              <span style={{ fontSize: 'var(--text-xs)' }}>
+            All settings locked except company name and slogan
+          </span>
+            </div>
+        )}
+        </div>
+
+        {/* ===== END CATALOG COMPONENTS ===== */}
+
         <div style={{ marginBottom: 'var(--space-sm)' }}>
           <label htmlFor="company-name" className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
             Company Name <span style={{ color: 'var(--color-error)' }}>*</span>
@@ -690,7 +851,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               value={size}
               onChange={(e) => setSize(e.target.value)}
               required
-              disabled={isGenerating}
+              disabled={getFieldsDisabled()}
             >
               <option value="">-- Select Size --</option>
               {sizeOptions.map((option, index) => (
@@ -769,7 +930,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                         cursor: 'pointer',
                         marginRight: 'var(--space-xs)'
                       }}
-                      disabled={isGenerating}
+                      disabled={getFieldsDisabled()}
                     >
                       Remove Image
                     </button>
@@ -778,13 +939,15 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               </div>
             ) : (
               <div>
-                <span style={{ 
-                  fontSize: 'var(--text-xs)', 
-                  color: 'var(--color-primary)', 
-                  fontWeight: '500' 
-                }}>
-                  {referenceImagePreview ? 'Change reference image' : 'Upload reference image'}
-                </span>
+                {!getFieldsDisabled() &&
+                  (<span style={{
+                    fontSize: 'var(--text-xs)',
+                    color: 'var(--color-primary)',
+                    fontWeight: '500'
+                  }}>
+                    {referenceImagePreview ? 'Change reference image' : 'Upload reference image'}
+                  </span>)
+                }
               </div>
             )}
             <input
@@ -793,7 +956,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               onChange={handleReferenceImageChange}
               accept="image/*"
               style={{ display: 'none' }}
-              disabled={isGenerating || isRevision} // FIXED: Disable upload in revision mode
+              disabled={getFieldsDisabled() || isRevision} // FIXED: Disable upload in revision mode
             />
           </label>
         </div>
@@ -819,7 +982,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
             value={colorScheme}
             onChange={(e) => setColorScheme(e.target.value)}
             required
-            disabled={isGenerating}
+            disabled={getFieldsDisabled()}
           >
             <option value="">-- Select Color Scheme --</option>
             {colorSchemeOptions.map((option, index) => (
@@ -858,7 +1021,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                       type="color"
                       value={color}
                       onChange={(e) => updateCustomColor(index, e.target.value)}
-                      disabled={isGenerating}
+                      disabled={getFieldsDisabled()}
                       style={{
                         width: '50px',
                         height: '40px',
@@ -880,7 +1043,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                       <button
                         type="button"
                         onClick={() => removeCustomColor(index)}
-                        disabled={isGenerating}
+                        disabled={getFieldsDisabled()}
                         style={{
                           padding: 'var(--space-xs)',
                           color: 'var(--color-error)',
@@ -906,7 +1069,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                   <button
                     type="button"
                     onClick={addCustomColor}
-                    disabled={isGenerating}
+                    disabled={getFieldsDisabled()}
                     style={{
                       marginTop: 'var(--space-xs)',
                       padding: 'var(--space-xs) var(--space-sm)',
@@ -977,7 +1140,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               type="checkbox"
               checked={transparentBackground}
               onChange={(e) => setTransparentBackground(e.target.checked)}
-              disabled={isGenerating}
+              disabled={getFieldsDisabled()}
               style={{
                 width: '18px',
                 height: '18px',
@@ -1102,7 +1265,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                   onChange={(e) => setSpecialInstructions(e.target.value)}
                   placeholder="Any specific details, elements to include/exclude, or style preferences..."
                   rows={3}
-                  disabled={isGenerating}
+                  disabled={getFieldsDisabled()}
                   style={{
                     minHeight: '80px',
                     resize: 'vertical'
