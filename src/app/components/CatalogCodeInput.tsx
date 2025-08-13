@@ -227,12 +227,12 @@ export default function CatalogCodeInput({
     );
 }
 
-// Add keyframe animation for loading spinner
-const style = document.createElement('style');
-style.textContent = `
-  @keyframes spin {
-    0% { transform: translateY(-50%) rotate(0deg); }
-    100% { transform: translateY(-50%) rotate(360deg); }
-  }
-`;
-document.head.appendChild(style);
+// // Add keyframe animation for loading spinner
+// const style = document.createElement('style');
+// style.textContent = `
+//   @keyframes spin {
+//     0% { transform: translateY(-50%) rotate(0deg); }
+//     100% { transform: translateY(-50%) rotate(360deg); }
+//   }
+// `;
+// document.head.appendChild(style);
