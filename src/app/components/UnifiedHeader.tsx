@@ -1,4 +1,4 @@
-// src/app/components/UnifiedHeader.tsx - UPDATED with Catalog link for superuser
+// src/app/components/UnifiedHeader.tsx - FIXED with proper syntax
 'use client';
 
 import { useState } from 'react';
@@ -45,7 +45,7 @@ export default function UnifiedHeader() {
             <div className="flex justify-between items-center h-16">
               <div className="flex items-center space-x-2 text-xl font-bold text-indigo-600">
                 <Image
-                    src="/favicon.ico"
+                    src="/logo.ico"
                     alt="AI Logo Generator Logo"
                     width={64}
                     height={64}
@@ -67,8 +67,8 @@ export default function UnifiedHeader() {
             <div className="flex justify-center items-center h-16">
               <div className="flex items-center space-x-2 text-xl font-bold text-indigo-600">
                 <Image
-                    src="/icons/smartyapps.png"
-                    alt="Smarty Apps Logo"
+                    src="/logo.ico"
+                    alt="AI Logo Generator Logo"
                     width={64}
                     height={64}
                     className="rounded"
@@ -106,7 +106,7 @@ export default function UnifiedHeader() {
               </div>
             </div>
 
-            {/* Bottom row - Navigation - UPDATED with smaller spacing for more links */}
+            {/* Bottom row - Navigation */}
             <nav className="flex justify-center pb-2">
               <div className={`flex ${isPrivilegedUser ? 'space-x-3' : 'space-x-6'}`}>
                 <Link
@@ -139,10 +139,10 @@ export default function UnifiedHeader() {
                                 : 'text-gray-500'
                         }`}
                     >
-                      Bulk
+                      🚀 Bulk
                     </Link>
                 )}
-                {/* NEW: Catalog link for privileged user only */}
+                {/* Catalog link for privileged user only */}
                 {isPrivilegedUser && (
                     <Link
                         href="/catalog"
@@ -152,7 +152,7 @@ export default function UnifiedHeader() {
                                 : 'text-gray-500'
                         }`}
                     >
-                      Catalog
+                      📚 Catalog
                     </Link>
                 )}
                 <Link
@@ -179,24 +179,22 @@ export default function UnifiedHeader() {
             </nav>
           </div>
 
-          {/* Desktop Layout - UPDATED with smaller spacing for more links */}
+          {/* Desktop Layout - Single row */}
           <div className="hidden md:flex items-center justify-between h-16">
             {/* Logo - Left side */}
-            <div className="flex-shrink-0">
-              <Link href="/" className="flex items-center space-x-2 text-xl font-bold text-indigo-600">
-                <Image
-                    src="/logo.ico"
-                    alt="AI Logo Generator Logo"
-                    width={64}
-                    height={64}
-                    className="rounded"
-                />
-                <span>AI Logo Generator</span>
-              </Link>
-            </div>
+            <Link href="/" className="flex items-center space-x-2 text-xl font-bold text-indigo-600">
+              <Image
+                  src="/logo.ico"
+                  alt="AI Logo Generator Logo"
+                  width={64}
+                  height={64}
+                  className="rounded"
+              />
+              <span>AI Logo Generator</span>
+            </Link>
 
-            {/* Navigation - Center - UPDATED with smaller spacing for more links */}
-            <nav className="flex absolute left-1/2 transform -translate-x-1/2">
+            {/* Navigation - Center */}
+            <nav className="flex-1 flex justify-center">
               <div className={`flex ${isPrivilegedUser ? 'space-x-4' : 'space-x-8'}`}>
                 <Link
                     href="/history"
@@ -231,7 +229,7 @@ export default function UnifiedHeader() {
                       🚀 Bulk Generate
                     </Link>
                 )}
-                {/* NEW: Catalog link for privileged user only */}
+                {/* Catalog link for privileged user only */}
                 {isPrivilegedUser && (
                     <Link
                         href="/catalog"

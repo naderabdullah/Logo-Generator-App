@@ -6,14 +6,16 @@ import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/app/context/AuthContext';
-import { 
-  saveLogo, 
-  getLogo, 
-  LogoParameters, 
-  canCreateOriginalLogo, 
+import {
+  saveLogo,
+  getLogo,
+  LogoParameters,
+  canCreateOriginalLogo,
   canCreateRevision,
   syncUserUsageWithDynamoDB
 } from '@/app/utils/indexedDBUtils';
+import CatalogModeToggle from './CatalogModeToggle';
+import CatalogCodeInput from './CatalogCodeInput';
 
 function useEditParam() {
   const searchParams = useSearchParams();
@@ -31,10 +33,10 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   const { user, updateUser } = useAuth();
   const router = useRouter();
   const editLogoId = useEditParam();
-  
+
   const [isRevision, setIsRevision] = useState(false);
   const [originalLogoId, setOriginalLogoId] = useState<string | undefined>(undefined);
-  
+
   const [companyName, setCompanyName] = useState('');
   const [slogan, setSlogan] = useState('');
   const [referenceImage, setReferenceImage] = useState<File | null>(null);
@@ -43,8 +45,8 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   const [colorScheme, setColorScheme] = useState('');
   const [symbolFocus, setSymbolFocus] = useState('');
   const [brandPersonality, setBrandPersonality] = useState('');
-  const [size, setSize] = useState('1024x1024'); 
-  
+  const [size, setSize] = useState('1024x1024');
+
   // ADD: Transparent background field - defaults to true
   const [transparentBackground, setTransparentBackground] = useState(true);
 
@@ -56,10 +58,10 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   const [texture, setTexture] = useState('');
   const [complexityLevel, setComplexityLevel] = useState('');
   const [applicationContext, setApplicationContext] = useState('');
-  
+
   // Add special instructions state
   const [specialInstructions, setSpecialInstructions] = useState('');
-  
+
   const [isAnimating, setIsAnimating] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -67,10 +69,23 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   const [canRevise, setCanRevise] = useState(true);
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [error, setLocalError] = useState<string | null>(null); // Add local error state
-  
+
   // Custom color state
   const [customColors, setCustomColors] = useState<string[]>(['#6366f1']);
 
+  const [catalogMode, setCatalogMode] = useState(false);
+  const [catalogCode, setCatalogCode] = useState('');
+  const [catalogData, setCatalogData] = useState<any>(null);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
+
+  const getFieldsDisabled = useCallback(() => {
+    // In catalog mode, disable all fields except company name and slogan
+    if (catalogMode) {
+      return true;
+    }
+    // Original logic for generating state
+    return isGenerating;
+  }, [catalogMode, isGenerating]);
   const useReferenceParam = () => {
     const searchParams = useSearchParams();
     return searchParams?.get('reference') || null;
@@ -81,7 +96,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     { value: '1024x1536', label: 'Portrait - 1024×1536 - 2:3' },
     { value: '1536x1024', label: 'Landscape - 1536×1024 - 3:2' }
   ];
-  
+
   const referenceLogoId = useReferenceParam();
 
   // Check if user can perform actions
@@ -93,7 +108,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
           // FIXED: Pass userId to canCreateOriginalLogo
           const canCreate = await canCreateOriginalLogo(user.email);
           setCanCreateLogo(canCreate);
-          
+
           if (originalLogoId) {
             // FIXED: Pass userId to canCreateRevision
             const canCreateRevision_ = await canCreateRevision(originalLogoId, user.email);
@@ -104,7 +119,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
         }
       }
     };
-    
+
     checkLimits();
   }, [user?.email, originalLogoId]);
 
@@ -119,7 +134,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
             // Populate form fields with logo data
             setCompanyName(logoData.parameters.companyName || '');
             setSlogan(logoData.parameters.slogan || '');
-            setSize(logoData.parameters.size || '1024x1024'); 
+            setSize(logoData.parameters.size || '1024x1024');
             setOverallStyle(logoData.parameters.overallStyle || '');
             setColorScheme(logoData.parameters.colorScheme || '');
             setSymbolFocus(logoData.parameters.symbolFocus || '');
@@ -133,14 +148,14 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
             setComplexityLevel(logoData.parameters.complexityLevel || '');
             setApplicationContext(logoData.parameters.applicationContext || '');
             setSpecialInstructions(logoData.parameters.specialInstructions || '');
-            
+
             setSpecialInstructions(''); // CHANGED: Always clear for revisions
-          
+
             setTransparentBackground(logoData.parameters.transparentBackground === 'false' ? false : true);
 
             // FIXED: Set the logo image as reference image for revision
             setReferenceImagePreview(logoData.imageDataUri);
-            
+
             // Convert the image data to a File object for reference
             try {
               const response = await fetch(logoData.imageDataUri);
@@ -150,7 +165,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
             } catch (err) {
               console.error('Error converting logo to reference file:', err);
             }
-            
+
             // Set as revision if this logo has an originalLogoId
             if (logoData.originalLogoId) {
               setIsRevision(true);
@@ -197,12 +212,12 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
             setApplicationContext(referenceData.parameters.applicationContext || '');
             setSpecialInstructions(referenceData.parameters.specialInstructions || '');
             setTransparentBackground(referenceData.parameters.transparentBackground === 'false' ? false : true); // ADD: Load transparent background
-            
+
             setSpecialInstructions('');
 
             // FIXED: Set the logo image as reference image for similar logo
             setReferenceImagePreview(referenceData.imageDataUri);
-            
+
             // Convert the image data to a File object for reference
             try {
               const response = await fetch(referenceData.imageDataUri);
@@ -260,24 +275,24 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       prompt += `Slogan/Subtitle: ${slogan}\n`;
     }
     prompt += `Style: ${overallStyle}\n`;
-    
+
     // Handle custom colors
     if (colorScheme === 'Custom Colors' && customColors.length > 0) {
       prompt += `Colors: Use these specific colors - ${customColors.join(', ')}\n`;
     } else {
       prompt += `Colors: ${colorScheme}\n`;
     }
-    
+
     prompt += `Symbol Focus: ${symbolFocus}\n`;
     prompt += `Brand Personality: ${brandPersonality}\n`;
-    
+
     // ADD: Include transparent background requirement
     if (transparentBackground) {
       prompt += `Background: Transparent background (no background color or elements)\n`;
     } else {
       prompt += `Background: Include background color or design elements\n`;
     }
-    
+
     // Add advanced parameters if specified
     if (industry) prompt += `Industry: ${industry}\n`;
     if (typographyStyle) prompt += `Typography: ${typographyStyle}\n`;
@@ -288,14 +303,14 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     if (complexityLevel) prompt += `Complexity: ${complexityLevel}\n`;
     if (applicationContext) prompt += `Application: ${applicationContext}\n`;
     if (specialInstructions) prompt += `Special Instructions: ${specialInstructions}\n`;
-    
+
     prompt += `\nThe logo should be professional, memorable, and suitable for various applications. Ensure it's scalable and works well in both color and monochrome.`;
-    
+
     return prompt;
   }, [
-    companyName, slogan, overallStyle, colorScheme, symbolFocus, 
+    companyName, slogan, overallStyle, colorScheme, symbolFocus,
     brandPersonality, industry, size, typographyStyle, lineStyle,
-    composition, shapeEmphasis, texture, complexityLevel, 
+    composition, shapeEmphasis, texture, complexityLevel,
     applicationContext, customColors, specialInstructions, transparentBackground // ADD: transparentBackground dependency
   ]);
 
@@ -304,9 +319,9 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       companyName,
       slogan: slogan || undefined,
       overallStyle,
-      colorScheme: colorScheme === 'Custom Colors' 
-        ? `Use these specific colors - ${customColors.join(', ')}`
-        : colorScheme,
+      colorScheme: colorScheme === 'Custom Colors'
+          ? `Use these specific colors - ${customColors.join(', ')}`
+          : colorScheme,
       symbolFocus,
       brandPersonality,
       industry,
@@ -322,20 +337,20 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       transparentBackground: transparentBackground ? 'true' : 'false' // ADD: Include transparent background parameter
     };
   }, [
-    companyName, slogan, overallStyle, colorScheme, symbolFocus, 
+    companyName, slogan, overallStyle, colorScheme, symbolFocus,
     brandPersonality, industry, size, typographyStyle, lineStyle,
-    composition, shapeEmphasis, texture, complexityLevel, 
+    composition, shapeEmphasis, texture, complexityLevel,
     applicationContext, customColors, specialInstructions, transparentBackground // ADD: transparentBackground dependency
   ]);
 
   const areRequiredFieldsFilled = useCallback(() => {
     return (
-      companyName &&
-      overallStyle &&
-      colorScheme &&
-      symbolFocus &&
-      brandPersonality &&
-      (referenceImagePreview || size)
+        companyName &&
+        overallStyle &&
+        colorScheme &&
+        symbolFocus &&
+        brandPersonality &&
+        (referenceImagePreview || size)
     );
   }, [
     companyName,
@@ -356,19 +371,19 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     if (isGenerating || !areRequiredFieldsFilled()) {
       return;
     }
-    
+
     if (isRevision && !canRevise) {
       setShowLimitModal(true);
       return;
     }
-    
+
     if (!isRevision && !canCreateLogo) {
       setShowLimitModal(true);
       return;
     }
-    
+
     const prompt = buildPrompt();
-    
+
     setLoading(true);
     setError(null);
     setLocalError(null); // Clear local error
@@ -380,13 +395,13 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       formData.append('prompt', prompt);
       formData.append('size', size);
       formData.append('transparentBackground', transparentBackground.toString()); // ADD: Include transparent background
-      
+
       if (referenceImage) {
         formData.append('referenceImage', referenceImage);
       }
 
       formData.append('isRevision', isRevision.toString());
-      
+
       if (isRevision && originalLogoId) {
         formData.append('originalLogoId', originalLogoId);
       }
@@ -403,12 +418,12 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
           const errorData = JSON.parse(errorText);
           errorMessage = errorData.error || errorMessage;
         } catch {}
-        
+
         throw new Error(errorMessage);
       }
 
       const data = await response.json();
-      
+
       let imageDataUriString = '';
       if (data?.image?.type === 'base64') {
         imageDataUriString = `data:image/png;base64,${data.image.data}`;
@@ -421,20 +436,20 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       } else {
         throw new Error('No image data received in the expected format');
       }
-      
+
       const parameters = collectParameters();
-      
+
       // FIXED: Pass userId as first parameter to saveLogo
       const logoId = await saveLogo(
-        user.email, // userId first
-        imageDataUriString, 
-        parameters,
-        isRevision ? originalLogoId : undefined,
-        companyName
+          user.email, // userId first
+          imageDataUriString,
+          parameters,
+          isRevision ? originalLogoId : undefined,
+          companyName
       );
-      
+
       setImageDataUri(imageDataUriString);
-      
+
       if (data.usage && updateUser) {
         updateUser({
           logosCreated: data.usage.logosCreated,
@@ -442,13 +457,13 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
           remainingLogos: data.usage.remainingLogos
         });
       }
-      
+
       router.push(`/logos/${logoId}`);
-      
+
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-      
-      if (errorMessage.includes('reached your logo generation limit') || 
+
+      if (errorMessage.includes('reached your logo generation limit') ||
           errorMessage.includes('Logo Limit Reached') ||
           errorMessage.includes('Maximum logo limit reached')) {
         setShowLimitModal(true);
@@ -481,38 +496,60 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     transparentBackground // Keep this since it's used in buildPrompt and collectParameters
   ]);
 
-  // Original renderDropdown function preserved
   const renderDropdown = useCallback((
-    id: string,
-    label: string,
-    value: string,
-    onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void,
-    options: string[],
-    required: boolean = false
+      id: string,
+      label: string,
+      value: string,
+      onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void,
+      options: string[],
+      required: boolean = false
   ) => {
+    // Determine if this specific field should be disabled
+    const isFieldDisabled = (() => {
+      // Company name and slogan are always editable in catalog mode
+      if (catalogMode && (id === 'company-name' || id === 'slogan')) {
+        return isGenerating; // Only disabled when generating
+      }
+      // All other fields follow the general locking logic
+      return getFieldsDisabled();
+    })();
+
     return (
-      <div style={{ marginBottom: 'var(--space-sm)' }}>
-        <label htmlFor={id} className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
-          {label} {required && <span style={{ color: 'var(--color-error)' }}>*</span>}
-        </label>
-        <select
-          id={id}
-          className="form-select"
-          value={value}
-          onChange={onChange}
-          required={required}
-          disabled={isGenerating}
-        >
-          <option value="">-- Select {label} --</option>
-          {options.map((option, index) => (
-            <option key={index} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-      </div>
+        <div style={{ marginBottom: 'var(--space-sm)' }}>
+          <label htmlFor={id} className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
+            {label} {required && <span style={{ color: 'var(--color-error)' }}>*</span>}
+            {catalogMode && !['company-name', 'slogan'].includes(id) && (
+                <span style={{
+                  fontSize: 'var(--text-xs)',
+                  color: 'var(--color-gray-500)',
+                  marginLeft: 'var(--space-xs)'
+                }}>
+              🔒
+            </span>
+            )}
+          </label>
+          <select
+              id={id}
+              className="form-select"
+              value={value}
+              onChange={onChange}
+              required={required}
+              disabled={isFieldDisabled}
+              style={{
+                backgroundColor: isFieldDisabled ? 'var(--color-gray-100)' : 'white',
+                cursor: isFieldDisabled ? 'not-allowed' : 'pointer'
+              }}
+          >
+            <option value="">-- Select {label} --</option>
+            {options.map((option, index) => (
+                <option key={index} value={option}>
+                  {option}
+                </option>
+            ))}
+          </select>
+        </div>
     );
-  }, [isGenerating]);
+  }, [getFieldsDisabled, catalogMode, isGenerating]);
 
   // Handle reference image upload - preserved original styling
   const handleReferenceImageChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
@@ -522,9 +559,9 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
         setLocalError('Reference image must be smaller than 10MB');
         return;
       }
-      
+
       setReferenceImage(file);
-      
+
       // Create preview
       const reader = new FileReader();
       reader.onload = (event) => {
@@ -547,677 +584,803 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     }
   }, [isRevision]);
 
+  const handleCatalogModeChange = useCallback((newCatalogMode: boolean) => {
+    setCatalogMode(newCatalogMode);
+
+    // Clear catalog data when switching back to manual mode
+    if (!newCatalogMode) {
+      setCatalogCode('');
+      setCatalogData(null);
+      setCatalogError(null);
+      // Clear reference image if it was from catalog
+      if (catalogData) {
+        setReferenceImage(null);
+        setReferenceImagePreview(null);
+      }
+    }
+  }, [catalogData]);
+
+  const handleCatalogLoaded = useCallback((catalogData: any) => {
+    setCatalogData(catalogData);
+
+    if (catalogData) {
+      // Populate all form fields with catalog parameters
+      const params = catalogData.parameters;
+
+      // Keep existing company name and slogan (editable fields)
+      // Only update if they're empty
+      setCompanyName('');
+      setSlogan('');
+
+      // Populate all other fields (these will be locked)
+      setOverallStyle(params.overallStyle || '');
+      setColorScheme(params.colorScheme || '');
+      setSymbolFocus(params.symbolFocus || '');
+      setBrandPersonality(params.brandPersonality || '');
+      setIndustry(params.industry || '');
+      setSize(params.size || '1024x1024');
+      setTypographyStyle(params.typographyStyle || '');
+      setLineStyle(params.lineStyle || '');
+      setComposition(params.composition || '');
+      setShapeEmphasis(params.shapeEmphasis || '');
+      setTexture(params.texture || '');
+      setComplexityLevel(params.complexityLevel || '');
+      setApplicationContext(params.applicationContext || '');
+      setSpecialInstructions(params.specialInstructions || '');
+      setTransparentBackground(params.transparentBackground !== 'false');
+
+      // Set reference image from catalog
+      setReferenceImagePreview(catalogData.image_data_uri);
+
+      // Convert image to File object for form submission
+      fetch(catalogData.image_data_uri)
+          .then(response => response.blob())
+          .then(blob => {
+            const file = new File([blob], `catalog-${catalogData.catalog_code}.png`, { type: 'image/png' });
+            setReferenceImage(file);
+          })
+          .catch(error => {
+            console.error('Error converting catalog image to file:', error);
+          });
+    }
+  }, [companyName, slogan]);
+
   // ORIGINAL options arrays restored
   const overallStyleOptions = [
-    'Modern', 'Contemporary', 'Abstract', 'Classical', 
+    'Modern', 'Contemporary', 'Abstract', 'Classical',
     'Hi-Tech', 'Minimalist', 'Vintage', 'Geometric', 'Hand-Drawn'
   ];
-  
+
   const colorSchemeOptions = [
-    'Pastels', 'Primary Colors', 'Neon', 'Grey Tones', 
+    'Pastels', 'Primary Colors', 'Neon', 'Grey Tones',
     'Monochrome', 'Metallics', 'Earthy Tones', 'Black & White', 'Gradient Blends',
     'Custom Colors'
   ];
-  
+
   const symbolFocusOptions = [
-    'Lettermark (Initial-based)', 'Wordmark (Company Name)', 
-    'Pictorial (Image-based)', 'Mascot (Character-based)', 
-    'Emblem (Badge-style)', 'Symbol Only (No Text)', 'Abstract Icon', 'Minimalist Icon', 
+    'Lettermark (Initial-based)', 'Wordmark (Company Name)',
+    'Pictorial (Image-based)', 'Mascot (Character-based)',
+    'Emblem (Badge-style)', 'Symbol Only (No Text)', 'Abstract Icon', 'Minimalist Icon',
     'Geometric Icon', 'Nature-Inspired Icon'
   ];
-  
+
   const brandPersonalityOptions = [
-    'Professional', 'Playful', 'Elegant', 'Bold & Energetic', 
-    'Trustworthy', 'Futuristic & Cutting-Edge', 'Luxury & Premium', 
+    'Professional', 'Playful', 'Elegant', 'Bold & Energetic',
+    'Trustworthy', 'Futuristic & Cutting-Edge', 'Luxury & Premium',
     'Eco-Friendly', 'Tech & Innovation Focused'
   ];
-  
+
   const industryOptions = [
-    'Technology', 'Finance/Banking', 'Healthcare/Medical', 
-    'Food/Restaurant', 'Retail/Shopping', 'Education', 
-    'Arts/Entertainment', 'Sports/Fitness', 'Travel/Hospitality', 
-    'Professional Services', 'Manufacturing/Industrial', 
+    'Technology', 'Finance/Banking', 'Healthcare/Medical',
+    'Food/Restaurant', 'Retail/Shopping', 'Education',
+    'Arts/Entertainment', 'Sports/Fitness', 'Travel/Hospitality',
+    'Professional Services', 'Manufacturing/Industrial',
     'Non-profit/Charity', 'Fashion/Beauty', 'Construction/Real Estate'
   ];
-  
+
   const typographyStyleOptions = [
-    'Serif', 'Sans-serif', 'Script/Cursive', 'Display', 
-    'Slab serif', 'Geometric', 'Handwritten', 'Monospace', 
+    'Serif', 'Sans-serif', 'Script/Cursive', 'Display',
+    'Slab serif', 'Geometric', 'Handwritten', 'Monospace',
     'Decorative/Ornamental', 'Classic/Traditional'
   ];
-  
+
   const lineStyleOptions = [
-    'Thick', 'Thin', 'Hand-Drawn', 'Sharp/Angular', 
-    'Fluid/Wavy', 'Broken/Dotted', 'Continuous Smooth', 
+    'Thick', 'Thin', 'Hand-Drawn', 'Sharp/Angular',
+    'Fluid/Wavy', 'Broken/Dotted', 'Continuous Smooth',
     'Sketch-like', 'Calligraphy'
   ];
-  
+
   const compositionOptions = [
-    'Horizontal', 'Vertical', 'Circular/Radial', 'Diagonal', 
-    'Stacked', 'Enclosed (symbol + text in container)', 
-    'Symbol above text', 'Symbol beside text', 
+    'Horizontal', 'Vertical', 'Circular/Radial', 'Diagonal',
+    'Stacked', 'Enclosed (symbol + text in container)',
+    'Symbol above text', 'Symbol beside text',
     'Symbol integrated with text', 'Text only'
   ];
-  
+
   const shapeOptions = [
-    'Circular', 'Square/Rectangular', 'Triangular', 'Hexagonal', 
-    'Organic/Curved', 'Sharp/Angular', 'Shield/Emblem', 
+    'Circular', 'Square/Rectangular', 'Triangular', 'Hexagonal',
+    'Organic/Curved', 'Sharp/Angular', 'Shield/Emblem',
     'Asymmetrical', 'Symmetrical', 'Negative space'
   ];
-  
+
   const textureOptions = [
-    'Flat Design', 'Glossy', 'Gradient', 'Rough/Grungy', 
+    'Flat Design', 'Glossy', 'Gradient', 'Rough/Grungy',
     'Embossed', 'Metallic', 'Hand-Illustrated', '3D Depth', 'Shadowed'
   ];
-  
+
   const complexityOptions = [
-    'Ultra-minimal (1-2 elements)', 'Simple (2-3 elements)', 
-    'Moderate (3-5 elements)', 'Detailed (5+ elements)', 
+    'Ultra-minimal (1-2 elements)', 'Simple (2-3 elements)',
+    'Moderate (3-5 elements)', 'Detailed (5+ elements)',
     'Complex/Intricate', 'Balanced/Medium'
   ];
-  
+
   const applicationOptions = [
-    'Digital-first (websites, apps)', 'Print-first (business cards, letterheads)', 
-    'Merchandise/Products', 'Signage/Large format', 'Social media profiles', 
-    'Multi-purpose/Versatile', 'Mobile app icon', 'Favicon/Small display', 
+    'Digital-first (websites, apps)', 'Print-first (business cards, letterheads)',
+    'Merchandise/Products', 'Signage/Large format', 'Social media profiles',
+    'Multi-purpose/Versatile', 'Mobile app icon', 'Favicon/Small display',
     'Animation-ready', 'Brand system (multiple variations)'
   ];
 
   // FIXED: Remove redundant auth loading check since parent page handles it
   return (
-    <div className="generator-form-container">
-      {/* Error Display - Shows above the form */}
-      {error && (
-        <div style={{
-          marginBottom: 'var(--space-md)',
-          padding: 'var(--space-md)',
-          backgroundColor: 'var(--color-error-50, #fef2f2)',
-          border: '1px solid var(--color-error-300, #fca5a5)',
-          borderRadius: 'var(--radius-md)',
-          color: 'var(--color-error-700, #b91c1c)',
-          textAlign: 'center'
-        }}>
-          <p style={{ margin: 0, fontWeight: '500' }}>Error</p>
-          <p style={{ margin: 'var(--space-xs) 0 0 0', fontSize: 'var(--text-sm)' }}>{error}</p>
-        </div>
-      )}
-      
-      <div className={`card generator-form text-center ${showAdvanced || referenceImagePreview || colorScheme === 'Custom Colors' ? 'expanded' : ''}`}>
-        <h2 className="text-indigo-600" style={{ marginBottom: 'var(--space-md)' }}>
-          {isRevision ? 'Create Logo Revision' : 'Generate Your Logo'}
-        </h2>
+      <div className="generator-form-container">
+        {/* Error Display - Shows above the form */}
+        {error && (
+            <div style={{
+              marginBottom: 'var(--space-md)',
+              padding: 'var(--space-md)',
+              backgroundColor: 'var(--color-error-50, #fef2f2)',
+              border: '1px solid var(--color-error-300, #fca5a5)',
+              borderRadius: 'var(--radius-md)',
+              color: 'var(--color-error-700, #b91c1c)',
+              textAlign: 'center'
+            }}>
+              <p style={{ margin: 0, fontWeight: '500' }}>Error</p>
+              <p style={{ margin: 'var(--space-xs) 0 0 0', fontSize: 'var(--text-sm)' }}>{error}</p>
+            </div>
+        )}
 
-        <div style={{ marginBottom: 'var(--space-sm)' }}>
-          <label htmlFor="company-name" className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
-            Company Name <span style={{ color: 'var(--color-error)' }}>*</span>
-          </label>
-          <input
-            type="text"
-            id="company-name"
-            className="form-input"
-            value={companyName}
-            onChange={(e) => setCompanyName(e.target.value)}
-            placeholder="Enter your company name"
-            required
-            disabled={isGenerating}
-          />
-        </div>
+        <div className={`card generator-form text-center ${showAdvanced || referenceImagePreview || colorScheme === 'Custom Colors' ? 'expanded' : ''}`}>
+          <h2 className="text-indigo-600" style={{ marginBottom: 'var(--space-md)' }}>
+            {isRevision ? 'Create Logo Revision' : 'Generate Your Logo'}
+          </h2>
 
-        <div style={{ marginBottom: 'var(--space-sm)' }}>
-          <label htmlFor="slogan" className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
-            Slogan/Subtitle (Optional)
-          </label>
-          <input
-            type="text"
-            id="slogan"
-            className="form-input"
-            value={slogan}
-            onChange={(e) => setSlogan(e.target.value)}
-            placeholder="Enter your company slogan"
-            disabled={isGenerating}
-          />
-        </div>
+          <div style={{
+            marginBottom: 'var(--space-md)',
+            padding: 'var(--space-md)',
+            backgroundColor: '#f8f9fa', // Light grey background
+            border: '1px solid var(--color-gray-300)',
+            borderRadius: 'var(--radius-md)'
+          }}>
 
-        {/* Size Selection - Only for new images (no reference) */}
-        {!referenceImagePreview && (
+            {/* NEW: Catalog Mode Toggle */}
+            <CatalogModeToggle
+                catalogMode={catalogMode}
+                onChange={handleCatalogModeChange}
+                disabled={isGenerating || isRevision} // Disable in revision mode
+            />
+
+            {/* NEW: Catalog Code Input - Only show when in catalog mode */}
+            {catalogMode && (
+                <CatalogCodeInput
+                    enabled={catalogMode && !isRevision}
+                    value={catalogCode}
+                    onChange={setCatalogCode}
+                    onCatalogLoaded={handleCatalogLoaded}
+                    onError={setCatalogError}
+                />
+            )}
+
+            {/* NEW: Show catalog error if any */}
+            {catalogError && (
+                <div style={{
+                  marginBottom: 'var(--space-sm)',
+                  padding: 'var(--space-sm)',
+                  backgroundColor: 'var(--color-red-50)',
+                  border: '1px solid var(--color-red-200)',
+                  borderRadius: 'var(--radius-sm)',
+                  fontSize: 'var(--text-sm)',
+                  color: 'var(--color-red-700)'
+                }}>
+                  {catalogError}
+                </div>
+            )}
+
+            {/* NEW: Show catalog success info */}
+            {catalogMode && catalogData && (
+                <div style={{
+                  marginBottom: 'var(--space-sm)',
+                  padding: 'var(--space-sm)',
+                  backgroundColor: 'var(--color-blue-50)',
+                  border: '1px solid var(--color-blue-200)',
+                  borderRadius: 'var(--radius-sm)',
+                  fontSize: 'var(--text-sm)',
+                  color: 'var(--color-blue-700)'
+                }}>
+                  📋 Using template: <strong>{catalogData.catalog_code}</strong> - {catalogData.original_company_name}
+                  <br />
+                  <span style={{ fontSize: 'var(--text-xs)' }}>
+            All settings locked except company name and slogan
+          </span>
+                </div>
+            )}
+          </div>
+
+          {/* ===== END CATALOG COMPONENTS ===== */}
+
           <div style={{ marginBottom: 'var(--space-sm)' }}>
-            <label htmlFor="size" className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
-              Size <span style={{ color: 'var(--color-error)' }}>*</span>
+            <label htmlFor="company-name" className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
+              Company Name <span style={{ color: 'var(--color-error)' }}>*</span>
+            </label>
+            <input
+                type="text"
+                id="company-name"
+                className="form-input"
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                placeholder="Enter your company name"
+                required
+                disabled={isGenerating}
+            />
+          </div>
+
+          <div style={{ marginBottom: 'var(--space-sm)' }}>
+            <label htmlFor="slogan" className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
+              Slogan/Subtitle (Optional)
+            </label>
+            <input
+                type="text"
+                id="slogan"
+                className="form-input"
+                value={slogan}
+                onChange={(e) => setSlogan(e.target.value)}
+                placeholder="Enter your company slogan"
+                disabled={isGenerating}
+            />
+          </div>
+
+          {/* Size Selection - Only for new images (no reference) */}
+          {!referenceImagePreview && (
+              <div style={{ marginBottom: 'var(--space-sm)' }}>
+                <label htmlFor="size" className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
+                  Size <span style={{ color: 'var(--color-error)' }}>*</span>
+                </label>
+                <select
+                    id="size"
+                    className="form-select"
+                    value={size}
+                    onChange={(e) => setSize(e.target.value)}
+                    required
+                    disabled={getFieldsDisabled()}
+                >
+                  <option value="">-- Select Size --</option>
+                  {sizeOptions.map((option, index) => (
+                      <option key={index} value={option.value}>
+                        {option.label}
+                      </option>
+                  ))}
+                </select>
+              </div>
+          )}
+
+          {/* Reference Image Upload Section - Original styling preserved */}
+          <div style={{ marginBottom: 'var(--space-sm)' }}>
+            {/* MOVED: Reference image instruction text above the button */}
+            {!referenceImagePreview && (
+                <p style={{
+                  fontSize: 'var(--text-sm)',
+                  color: 'var(--color-gray-600)',
+                  margin: '0 0 var(--space-xs) 0',
+                  textAlign: 'center'
+                }}>
+                  {isRevision ? 'Reference logo will be used for revision' : 'Click to upload reference image (optional)'}
+                </p>
+            )}
+
+            <label
+                htmlFor="reference-image"
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  padding: 'var(--space-md)',
+                  border: '2px dashed var(--color-gray-300)',
+                  borderRadius: 'var(--radius-md)',
+                  cursor: isRevision ? 'default' : 'pointer', // FIXED: No cursor in revision mode
+                  backgroundColor: referenceImagePreview ? 'var(--color-gray-50)' : 'white',
+                  transition: 'all var(--transition-base)',
+                  textAlign: 'center'
+                }}
+                onClick={isRevision ? (e) => e.preventDefault() : undefined} // FIXED: Prevent clicks in revision mode
+            >
+              {referenceImagePreview ? (
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <img
+                        src={referenceImagePreview}
+                        alt="Reference preview"
+                        style={{
+                          maxWidth: '200px',
+                          maxHeight: '200px',
+                          objectFit: 'contain',
+                          borderRadius: 'var(--radius-sm)',
+                          marginBottom: 'var(--space-sm)',
+                          display: 'block'
+                        }}
+                    />
+                    <div style={{ marginBottom: 'var(--space-xs)' }}>
+                      {/* FIXED: Only show remove button when NOT in revision mode */}
+                      {!isRevision && (
+                          <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                removeReferenceImage();
+                              }}
+                              style={{
+                                padding: 'var(--space-xs) var(--space-sm)',
+                                fontSize: 'var(--text-sm)',
+                                color: 'var(--color-error)',
+                                backgroundColor: 'white',
+                                border: '1px solid var(--color-error)',
+                                borderRadius: 'var(--radius-sm)',
+                                cursor: 'pointer',
+                                marginRight: 'var(--space-xs)'
+                              }}
+                              disabled={getFieldsDisabled()}
+                          >
+                            Remove Image
+                          </button>
+                      )}
+                    </div>
+                  </div>
+              ) : (
+                  <div>
+                    {!getFieldsDisabled() &&
+                        (<span style={{
+                          fontSize: 'var(--text-xs)',
+                          color: 'var(--color-primary)',
+                          fontWeight: '500'
+                        }}>
+                    {referenceImagePreview ? 'Change reference image' : 'Upload reference image'}
+                  </span>)
+                    }
+                  </div>
+              )}
+              <input
+                  type="file"
+                  id="reference-image"
+                  onChange={handleReferenceImageChange}
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  disabled={getFieldsDisabled() || isRevision} // FIXED: Disable upload in revision mode
+              />
+            </label>
+          </div>
+
+          {/* Required Basic Options */}
+          {renderDropdown(
+              "overall-style",
+              'Overall Style',
+              overallStyle,
+              (e) => setOverallStyle(e.target.value),
+              overallStyleOptions,
+              true
+          )}
+
+          {/* Color Scheme with Custom Colors - Original styling preserved */}
+          <div style={{ marginBottom: 'var(--space-sm)' }}>
+            <label htmlFor="color-scheme" className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
+              Color Scheme <span style={{ color: 'var(--color-error)' }}>*</span>
             </label>
             <select
-              id="size"
-              className="form-select"
-              value={size}
-              onChange={(e) => setSize(e.target.value)}
-              required
-              disabled={isGenerating}
+                id="color-scheme"
+                className="form-select"
+                value={colorScheme}
+                onChange={(e) => setColorScheme(e.target.value)}
+                required
+                disabled={getFieldsDisabled()}
             >
-              <option value="">-- Select Size --</option>
-              {sizeOptions.map((option, index) => (
-                <option key={index} value={option.value}>
-                  {option.label}
-                </option>
+              <option value="">-- Select Color Scheme --</option>
+              {colorSchemeOptions.map((option, index) => (
+                  <option key={index} value={option}>
+                    {option}
+                  </option>
               ))}
             </select>
-          </div>
-        )}
 
-        {/* Reference Image Upload Section - Original styling preserved */}
-        <div style={{ marginBottom: 'var(--space-sm)' }}>
-          {/* MOVED: Reference image instruction text above the button */}
-          {!referenceImagePreview && (
-            <p style={{ 
-              fontSize: 'var(--text-sm)', 
-              color: 'var(--color-gray-600)', 
-              margin: '0 0 var(--space-xs) 0',
-              textAlign: 'center'
-            }}>
-              {isRevision ? 'Reference logo will be used for revision' : 'Click to upload reference image (optional)'}
-            </p>
-          )}
-          
-          <label 
-            htmlFor="reference-image" 
-            style={{
-              display: 'block',
-              width: '100%',
-              padding: 'var(--space-md)',
-              border: '2px dashed var(--color-gray-300)',
-              borderRadius: 'var(--radius-md)',
-              cursor: isRevision ? 'default' : 'pointer', // FIXED: No cursor in revision mode
-              backgroundColor: referenceImagePreview ? 'var(--color-gray-50)' : 'white',
-              transition: 'all var(--transition-base)',
-              textAlign: 'center'
-            }}
-            onClick={isRevision ? (e) => e.preventDefault() : undefined} // FIXED: Prevent clicks in revision mode
-          >
-            {referenceImagePreview ? (
-              <div style={{ 
-                display: 'flex', 
-                flexDirection: 'column', 
-                alignItems: 'center', 
-                justifyContent: 'center' 
-              }}>
-                <img 
-                  src={referenceImagePreview} 
-                  alt="Reference preview" 
-                  style={{ 
-                    maxWidth: '200px', 
-                    maxHeight: '200px', 
-                    objectFit: 'contain',
-                    borderRadius: 'var(--radius-sm)',
-                    marginBottom: 'var(--space-sm)',
-                    display: 'block'
-                  }} 
-                />
-                <div style={{ marginBottom: 'var(--space-xs)' }}>
-                  {/* FIXED: Only show remove button when NOT in revision mode */}
-                  {!isRevision && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        removeReferenceImage();
-                      }}
-                      style={{
-                        padding: 'var(--space-xs) var(--space-sm)',
-                        fontSize: 'var(--text-sm)',
-                        color: 'var(--color-error)',
-                        backgroundColor: 'white',
-                        border: '1px solid var(--color-error)',
-                        borderRadius: 'var(--radius-sm)',
-                        cursor: 'pointer',
-                        marginRight: 'var(--space-xs)'
-                      }}
-                      disabled={isGenerating}
-                    >
-                      Remove Image
-                    </button>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div>
-                <span style={{ 
-                  fontSize: 'var(--text-xs)', 
-                  color: 'var(--color-primary)', 
-                  fontWeight: '500' 
-                }}>
-                  {referenceImagePreview ? 'Change reference image' : 'Upload reference image'}
-                </span>
-              </div>
-            )}
-            <input
-              type="file"
-              id="reference-image"
-              onChange={handleReferenceImageChange}
-              accept="image/*"
-              style={{ display: 'none' }}
-              disabled={isGenerating || isRevision} // FIXED: Disable upload in revision mode
-            />
-          </label>
-        </div>
-
-        {/* Required Basic Options */}
-        {renderDropdown(
-          "overall-style",
-          'Overall Style',
-          overallStyle,
-          (e) => setOverallStyle(e.target.value),
-          overallStyleOptions,
-          true
-        )}
-
-        {/* Color Scheme with Custom Colors - Original styling preserved */}
-        <div style={{ marginBottom: 'var(--space-sm)' }}>
-          <label htmlFor="color-scheme" className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
-            Color Scheme <span style={{ color: 'var(--color-error)' }}>*</span>
-          </label>
-          <select
-            id="color-scheme"
-            className="form-select"
-            value={colorScheme}
-            onChange={(e) => setColorScheme(e.target.value)}
-            required
-            disabled={isGenerating}
-          >
-            <option value="">-- Select Color Scheme --</option>
-            {colorSchemeOptions.map((option, index) => (
-              <option key={index} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-          
-          {colorScheme === 'Custom Colors' && (
-            <div style={{ marginTop: 'var(--space-sm)' }}>
-              <p style={{ 
-                fontSize: 'var(--text-sm)', 
-                fontWeight: '500', 
-                marginBottom: 'var(--space-xs)',
-                color: 'var(--color-gray-700)'
-              }}>
-                Choose your colors:
-              </p>
-              
-              <div style={{ 
-                display: 'flex', 
-                flexDirection: 'column', 
-                gap: 'var(--space-xs)',
-                alignItems: 'center' 
-              }}>
-                {customColors.map((color, index) => (
-                  <div key={index} style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: 'var(--space-xs)',
-                    width: '100%',
-                    maxWidth: '200px'
+            {colorScheme === 'Custom Colors' && (
+                <div style={{ marginTop: 'var(--space-sm)' }}>
+                  <p style={{
+                    fontSize: 'var(--text-sm)',
+                    fontWeight: '500',
+                    marginBottom: 'var(--space-xs)',
+                    color: 'var(--color-gray-700)'
                   }}>
-                    <input
-                      type="color"
-                      value={color}
-                      onChange={(e) => updateCustomColor(index, e.target.value)}
-                      disabled={isGenerating}
-                      style={{
-                        width: '50px',
-                        height: '40px',
-                        border: '1px solid var(--color-gray-300)',
-                        borderRadius: 'var(--radius-sm)',
-                        cursor: 'pointer',
-                        flex: '0 0 50px'
-                      }}
-                    />
-                    <span style={{ 
-                      fontSize: 'var(--text-sm)', 
-                      color: 'var(--color-gray-600)',
-                      flex: '1',
-                      textAlign: 'left'
-                    }}>
-                      {color.toUpperCase()}
-                    </span>
-                    {customColors.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeCustomColor(index)}
-                        disabled={isGenerating}
-                        style={{
-                          padding: 'var(--space-xs)',
-                          color: 'var(--color-error)',
-                          backgroundColor: 'white',
-                          border: '1px solid var(--color-gray-300)',
-                          borderRadius: 'var(--radius-sm)',
-                          cursor: 'pointer',
-                          fontSize: 'var(--text-sm)',
-                          minWidth: '30px',
-                          height: '30px',
+                    Choose your colors:
+                  </p>
+
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 'var(--space-xs)',
+                    alignItems: 'center'
+                  }}>
+                    {customColors.map((color, index) => (
+                        <div key={index} style={{
                           display: 'flex',
                           alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        ×
-                      </button>
+                          gap: 'var(--space-xs)',
+                          width: '100%',
+                          maxWidth: '200px'
+                        }}>
+                          <input
+                              type="color"
+                              value={color}
+                              onChange={(e) => updateCustomColor(index, e.target.value)}
+                              disabled={getFieldsDisabled()}
+                              style={{
+                                width: '50px',
+                                height: '40px',
+                                border: '1px solid var(--color-gray-300)',
+                                borderRadius: 'var(--radius-sm)',
+                                cursor: 'pointer',
+                                flex: '0 0 50px'
+                              }}
+                          />
+                          <span style={{
+                            fontSize: 'var(--text-sm)',
+                            color: 'var(--color-gray-600)',
+                            flex: '1',
+                            textAlign: 'left'
+                          }}>
+                      {color.toUpperCase()}
+                    </span>
+                          {customColors.length > 1 && (
+                              <button
+                                  type="button"
+                                  onClick={() => removeCustomColor(index)}
+                                  disabled={getFieldsDisabled()}
+                                  style={{
+                                    padding: 'var(--space-xs)',
+                                    color: 'var(--color-error)',
+                                    backgroundColor: 'white',
+                                    border: '1px solid var(--color-gray-300)',
+                                    borderRadius: 'var(--radius-sm)',
+                                    cursor: 'pointer',
+                                    fontSize: 'var(--text-sm)',
+                                    minWidth: '30px',
+                                    height: '30px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                  }}
+                              >
+                                ×
+                              </button>
+                          )}
+                        </div>
+                    ))}
+
+                    {customColors.length < 3 && (
+                        <button
+                            type="button"
+                            onClick={addCustomColor}
+                            disabled={getFieldsDisabled()}
+                            style={{
+                              marginTop: 'var(--space-xs)',
+                              padding: 'var(--space-xs) var(--space-sm)',
+                              color: 'var(--color-primary)',
+                              backgroundColor: 'white',
+                              border: '1px dashed var(--color-primary)',
+                              borderRadius: 'var(--radius-sm)',
+                              cursor: 'pointer',
+                              fontSize: 'var(--text-sm)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: 'var(--space-xs)'
+                            }}
+                        >
+                          <span style={{ fontSize: '1.2em' }}>+</span> Add Color ({customColors.length}/3)
+                        </button>
                     )}
                   </div>
-                ))}
-                
-                {customColors.length < 3 && (
-                  <button
-                    type="button"
-                    onClick={addCustomColor}
-                    disabled={isGenerating}
-                    style={{
-                      marginTop: 'var(--space-xs)',
-                      padding: 'var(--space-xs) var(--space-sm)',
-                      color: 'var(--color-primary)',
-                      backgroundColor: 'white',
-                      border: '1px dashed var(--color-primary)',
-                      borderRadius: 'var(--radius-sm)',
-                      cursor: 'pointer',
-                      fontSize: 'var(--text-sm)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 'var(--space-xs)'
-                    }}
-                  >
-                    <span style={{ fontSize: '1.2em' }}>+</span> Add Color ({customColors.length}/3)
-                  </button>
-                )}
-              </div>
-              
-              <p style={{ 
-                fontSize: 'var(--text-xs)', 
-                color: 'var(--color-gray-600)', 
-                marginTop: 'var(--space-xs)',
-                marginBottom: 0
-              }}>
-                Select up to 3 colors for your logo design
-              </p>
-            </div>
+
+                  <p style={{
+                    fontSize: 'var(--text-xs)',
+                    color: 'var(--color-gray-600)',
+                    marginTop: 'var(--space-xs)',
+                    marginBottom: 0
+                  }}>
+                    Select up to 3 colors for your logo design
+                  </p>
+                </div>
+            )}
+          </div>
+
+          {renderDropdown(
+              "symbol-focus",
+              'Symbol or Icon Focus',
+              symbolFocus,
+              (e) => setSymbolFocus(e.target.value),
+              symbolFocusOptions,
+              true
           )}
-        </div>
-              
-        {renderDropdown(
-          "symbol-focus",
-          'Symbol or Icon Focus',
-          symbolFocus,
-          (e) => setSymbolFocus(e.target.value),
-          symbolFocusOptions,
-          true
-        )}
-        
-        {renderDropdown(
-          "brand-personality",
-          'Brand Personality',
-          brandPersonality,
-          (e) => setBrandPersonality(e.target.value),
-          brandPersonalityOptions,
-          true
-        )}
 
-        {/* ADD: Transparent Background Checkbox */}
-        <div style={{ 
-          marginBottom: 'var(--space-sm)', 
-          marginTop: 'var(--space-xs)',
-          display: 'flex',
-          justifyContent: 'center'
-        }}>
-          <label style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: 'var(--space-xs)',
-            cursor: 'pointer',
-            fontSize: 'var(--text-sm)',
-            fontWeight: '500',
-            color: 'var(--color-gray-700)'
+          {renderDropdown(
+              "brand-personality",
+              'Brand Personality',
+              brandPersonality,
+              (e) => setBrandPersonality(e.target.value),
+              brandPersonalityOptions,
+              true
+          )}
+
+          {/* ADD: Transparent Background Checkbox */}
+          <div style={{
+            marginBottom: 'var(--space-sm)',
+            marginTop: 'var(--space-xs)',
+            display: 'flex',
+            justifyContent: 'center'
           }}>
-            <input
-              type="checkbox"
-              checked={transparentBackground}
-              onChange={(e) => setTransparentBackground(e.target.checked)}
-              disabled={isGenerating}
-              style={{
-                width: '18px',
-                height: '18px',
-                accentColor: 'var(--color-primary)',
-                cursor: 'pointer'
-              }}
-            />
-            Transparent Background
-          </label>
-        </div>
-
-        {/* Advanced Options Toggle - Original styling preserved */}
-        <div style={{ marginBottom: 'var(--space-sm)' }}>
-          <button
-            type="button"
-            onClick={toggleAdvancedOptions}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--color-primary)',
-              fontWeight: '500',
-              cursor: 'pointer',
-              padding: 'var(--space-xs)',
-              borderRadius: 'var(--radius-md)',
-              minHeight: '36px',
-              display: 'inline-flex',
+            <label style={{
+              display: 'flex',
               alignItems: 'center',
               gap: 'var(--space-xs)',
-              fontSize: 'var(--text-sm)'
-            }}
-          >
-            <span>{showAdvanced ? '−' : '+'}</span>
-            {showAdvanced ? 'Hide Advanced Options' : 'Show Advanced Options'}
-          </button>
-        </div>
-
-        {showAdvanced && (
-          <div className={`advanced-options ${isAnimating ? 'hiding' : ''}`}>
-            <h3 style={{ 
-              fontSize: 'var(--text-lg)', 
-              fontWeight: '500', 
-              marginBottom: 'var(--space-sm)' 
-            }}>
-              Advanced Options
-            </h3>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0', margin: '0 auto' }}>
-              
-              {renderDropdown(
-                "industry",
-                'Industry/Niche',
-                industry,
-                (e) => setIndustry(e.target.value),
-                industryOptions
-              )}
-
-              {renderDropdown(
-                "typography",
-                'Typography Style',
-                typographyStyle,
-                (e) => setTypographyStyle(e.target.value),
-                typographyStyleOptions
-              )}
-              
-              {renderDropdown(
-                "line-style",
-                'Line & Stroke Style',
-                lineStyle,
-                (e) => setLineStyle(e.target.value),
-                lineStyleOptions
-              )}
-              
-              {renderDropdown(
-                "composition",
-                'Composition/Layout',
-                composition,
-                (e) => setComposition(e.target.value),
-                compositionOptions
-              )}
-              
-              {renderDropdown(
-                "shape",
-                'Shape Emphasis',
-                shapeEmphasis,
-                (e) => setShapeEmphasis(e.target.value),
-                shapeOptions
-              )}
-              
-              {renderDropdown(
-                "texture",
-                'Texture/Finish',
-                texture,
-                (e) => setTexture(e.target.value),
-                textureOptions
-              )}
-              
-              {renderDropdown(
-                "complexity",
-                'Complexity Level',
-                complexityLevel,
-                (e) => setComplexityLevel(e.target.value),
-                complexityOptions
-              )}
-              
-              {renderDropdown(
-                "application",
-                'Primary Use/Application',
-                applicationContext,
-                (e) => setApplicationContext(e.target.value),
-                applicationOptions
-              )}
-
-              {/* Special Instructions */}
-              <div style={{ marginBottom: 'var(--space-sm)' }}>
-                <label htmlFor="special-instructions" className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
-                  Special Instructions/Notes
-                </label>
-                <textarea
-                  id="special-instructions"
-                  className="form-textarea"
-                  value={specialInstructions}
-                  onChange={(e) => setSpecialInstructions(e.target.value)}
-                  placeholder="Any specific details, elements to include/exclude, or style preferences..."
-                  rows={3}
-                  disabled={isGenerating}
-                  style={{
-                    minHeight: '80px',
-                    resize: 'vertical'
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {isRevision && (
-          <div style={{ 
-            fontSize: 'var(--text-xs)', 
-            color: 'var(--color-gray-600)', 
-            marginBottom: 'var(--space-sm)',
-            lineHeight: '1.3'
-          }}>
-            <p>This will count as a revision of your original logo.</p>
-            <p>You are allowed up to 3 free revisions per logo.</p>
-          </div>
-        )}
-
-        {/* REVISION MODE: Cancel Button */}
-        {isRevision && (
-          <button
-            type="button"
-            onClick={() => router.push(`/logos/${editLogoId || originalLogoId}`)}
-            style={{
-              width: '100%',
-              marginBottom: 'var(--space-sm)',
-              padding: 'var(--space-sm) var(--space-lg)',
-              backgroundColor: '#ef4444',
-              color: 'white',
-              border: 'none',
-              borderRadius: 'var(--radius-md)',
-              fontSize: 'var(--text-base)',
-              fontWeight: '500',
               cursor: 'pointer',
-              transition: 'all var(--transition-base)'
-            }}
-            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#dc2626'}
-            onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#ef4444'}
-          >
-            Cancel Revision
-          </button>
-        )}
-
-        <button
-          type="button"
-          className="btn btn-primary"
-          style={{ 
-            width: '100%',
-            marginBottom: '0'
-          }}
-          disabled={
-            isGenerating || 
-            !areRequiredFieldsFilled() || 
-            !user
-          }
-          onClick={handleGenerateLogo}
-        >
-          {isGenerating 
-            ? 'Generating Logo...' 
-            : !user 
-              ? 'Login to Generate' 
-              : isRevision 
-                ? 'Generate Revision' 
-                : 'Generate Logo'}
-        </button>
-
-        {isGenerating && (
-          <p className="text-center" style={{ 
-            fontSize: 'var(--text-xs)', 
-            color: 'var(--color-gray-500)',
-            marginTop: 'var(--space-xs)',
-            marginBottom: '0'
-          }}>
-            Please be patient while your logo is being generated. Logo generation can take 30-45 seconds...
-          </p>
-        )}
-
-        {/* Limit reached modal */}
-        {showLimitModal && (
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-            onClick={() => setShowLimitModal(false)}
-          >
-            <div 
-              className="bg-white rounded-lg shadow-lg max-w-md w-full p-6"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h3 className="text-lg font-semibold mb-4">Logo Limit Reached</h3>
-              <p className="mb-6">
-                {isRevision 
-                  ? 'You have reached the maximum number of revisions (3) for this logo.'
-                  : 'You have reached your logo generation limit.'}
-              </p>
-              <div className="flex justify-center gap-3">
-                <button 
-                  onClick={() => setShowLimitModal(false)} 
-                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
-                >
-                  Close
-                </button>
-                <Link 
-                  href="/purchase" 
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-                >
-                  Buy More Credits
-                </Link>
-              </div>
-            </div>
+              fontSize: 'var(--text-sm)',
+              fontWeight: '500',
+              color: 'var(--color-gray-700)'
+            }}>
+              <input
+                  type="checkbox"
+                  checked={transparentBackground}
+                  onChange={(e) => setTransparentBackground(e.target.checked)}
+                  disabled={getFieldsDisabled()}
+                  style={{
+                    width: '18px',
+                    height: '18px',
+                    accentColor: 'var(--color-primary)',
+                    cursor: 'pointer'
+                  }}
+              />
+              Transparent Background
+            </label>
           </div>
-        )}
+
+          {/* Advanced Options Toggle - Original styling preserved */}
+          <div style={{ marginBottom: 'var(--space-sm)' }}>
+            <button
+                type="button"
+                onClick={toggleAdvancedOptions}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--color-primary)',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  padding: 'var(--space-xs)',
+                  borderRadius: 'var(--radius-md)',
+                  minHeight: '36px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 'var(--space-xs)',
+                  fontSize: 'var(--text-sm)'
+                }}
+            >
+              <span>{showAdvanced ? '−' : '+'}</span>
+              {showAdvanced ? 'Hide Advanced Options' : 'Show Advanced Options'}
+            </button>
+          </div>
+
+          {showAdvanced && (
+              <div className={`advanced-options ${isAnimating ? 'hiding' : ''}`}>
+                <h3 style={{
+                  fontSize: 'var(--text-lg)',
+                  fontWeight: '500',
+                  marginBottom: 'var(--space-sm)'
+                }}>
+                  Advanced Options
+                </h3>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0', margin: '0 auto' }}>
+
+                  {renderDropdown(
+                      "industry",
+                      'Industry/Niche',
+                      industry,
+                      (e) => setIndustry(e.target.value),
+                      industryOptions
+                  )}
+
+                  {renderDropdown(
+                      "typography",
+                      'Typography Style',
+                      typographyStyle,
+                      (e) => setTypographyStyle(e.target.value),
+                      typographyStyleOptions
+                  )}
+
+                  {renderDropdown(
+                      "line-style",
+                      'Line & Stroke Style',
+                      lineStyle,
+                      (e) => setLineStyle(e.target.value),
+                      lineStyleOptions
+                  )}
+
+                  {renderDropdown(
+                      "composition",
+                      'Composition/Layout',
+                      composition,
+                      (e) => setComposition(e.target.value),
+                      compositionOptions
+                  )}
+
+                  {renderDropdown(
+                      "shape",
+                      'Shape Emphasis',
+                      shapeEmphasis,
+                      (e) => setShapeEmphasis(e.target.value),
+                      shapeOptions
+                  )}
+
+                  {renderDropdown(
+                      "texture",
+                      'Texture/Finish',
+                      texture,
+                      (e) => setTexture(e.target.value),
+                      textureOptions
+                  )}
+
+                  {renderDropdown(
+                      "complexity",
+                      'Complexity Level',
+                      complexityLevel,
+                      (e) => setComplexityLevel(e.target.value),
+                      complexityOptions
+                  )}
+
+                  {renderDropdown(
+                      "application",
+                      'Primary Use/Application',
+                      applicationContext,
+                      (e) => setApplicationContext(e.target.value),
+                      applicationOptions
+                  )}
+
+                  {/* Special Instructions */}
+                  <div style={{ marginBottom: 'var(--space-sm)' }}>
+                    <label htmlFor="special-instructions" className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
+                      Special Instructions/Notes
+                    </label>
+                    <textarea
+                        id="special-instructions"
+                        className="form-textarea"
+                        value={specialInstructions}
+                        onChange={(e) => setSpecialInstructions(e.target.value)}
+                        placeholder="Any specific details, elements to include/exclude, or style preferences..."
+                        rows={3}
+                        disabled={getFieldsDisabled()}
+                        style={{
+                          minHeight: '80px',
+                          resize: 'vertical'
+                        }}
+                    />
+                  </div>
+                </div>
+              </div>
+          )}
+
+          {isRevision && (
+              <div style={{
+                fontSize: 'var(--text-xs)',
+                color: 'var(--color-gray-600)',
+                marginBottom: 'var(--space-sm)',
+                lineHeight: '1.3'
+              }}>
+                <p>This will count as a revision of your original logo.</p>
+                <p>You are allowed up to 3 free revisions per logo.</p>
+              </div>
+          )}
+
+          {/* REVISION MODE: Cancel Button */}
+          {isRevision && (
+              <button
+                  type="button"
+                  onClick={() => router.push(`/logos/${editLogoId || originalLogoId}`)}
+                  style={{
+                    width: '100%',
+                    marginBottom: 'var(--space-sm)',
+                    padding: 'var(--space-sm) var(--space-lg)',
+                    backgroundColor: '#ef4444',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 'var(--radius-md)',
+                    fontSize: 'var(--text-base)',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'all var(--transition-base)'
+                  }}
+                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#dc2626'}
+                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#ef4444'}
+              >
+                Cancel Revision
+              </button>
+          )}
+
+          <button
+              type="button"
+              className="btn btn-primary"
+              style={{
+                width: '100%',
+                marginBottom: '0'
+              }}
+              disabled={
+                  isGenerating ||
+                  !areRequiredFieldsFilled() ||
+                  !user
+              }
+              onClick={handleGenerateLogo}
+          >
+            {isGenerating
+                ? 'Generating Logo...'
+                : !user
+                    ? 'Login to Generate'
+                    : isRevision
+                        ? 'Generate Revision'
+                        : 'Generate Logo'}
+          </button>
+
+          {isGenerating && (
+              <p className="text-center" style={{
+                fontSize: 'var(--text-xs)',
+                color: 'var(--color-gray-500)',
+                marginTop: 'var(--space-xs)',
+                marginBottom: '0'
+              }}>
+                Please be patient while your logo is being generated. Logo generation can take 30-45 seconds...
+              </p>
+          )}
+
+          {/* Limit reached modal */}
+          {showLimitModal && (
+              <div
+                  className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+                  onClick={() => setShowLimitModal(false)}
+              >
+                <div
+                    className="bg-white rounded-lg shadow-lg max-w-md w-full p-6"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                  <h3 className="text-lg font-semibold mb-4">Logo Limit Reached</h3>
+                  <p className="mb-6">
+                    {isRevision
+                        ? 'You have reached the maximum number of revisions (3) for this logo.'
+                        : 'You have reached your logo generation limit.'}
+                  </p>
+                  <div className="flex justify-center gap-3">
+                    <button
+                        onClick={() => setShowLimitModal(false)}
+                        className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      Close
+                    </button>
+                    <Link
+                        href="/purchase"
+                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                    >
+                      Buy More Credits
+                    </Link>
+                  </div>
+                </div>
+              </div>
+          )}
+        </div>
       </div>
-    </div>
   );
 }
