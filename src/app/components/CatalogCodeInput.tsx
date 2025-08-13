@@ -162,13 +162,14 @@ export default function CatalogCodeInput({
                             backgroundColor: !enabled ? 'var(--color-gray-100)' : 'white',
                             cursor: !enabled ? 'not-allowed' : 'text'
                         }}
+                        maxLength={7} // CAT-XXX format
                     />
 
                     {/* Loading Spinner */}
                     {loading && (
                         <div style={{
                             position: 'absolute',
-                            right: 'var(--space-md)',
+                            right: 'var(--space-sm)',
                             top: '50%',
                             transform: 'translateY(-50%)',
                             width: '16px',
@@ -225,3 +226,13 @@ export default function CatalogCodeInput({
         </div>
     );
 }
+
+// Add keyframe animation for loading spinner
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes spin {
+    0% { transform: translateY(-50%) rotate(0deg); }
+    100% { transform: translateY(-50%) rotate(360deg); }
+  }
+`;
+document.head.appendChild(style);
