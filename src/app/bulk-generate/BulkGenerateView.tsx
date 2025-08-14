@@ -14,6 +14,8 @@ import {
 } from '@/app/utils/indexedDBUtils';
 import companyData from '../../data/company-names.json';
 
+type StringIndexed<T> = { [key: string]: T };
+
 // Define explicit interface for company data
 interface CompanyData {
     name: string;
@@ -53,7 +55,7 @@ export default function BulkGenerateView() {
 
     // Check if user is authorized
     useEffect(() => {
-        if (!user || user.email !== 'tabdullah1215@live.com') {
+        if (!user || !user.isSuperUser) {
             router.push('/');
             return;
         }
@@ -241,7 +243,7 @@ Industry:`;
 
     // CONTEXTUAL STYLE SELECTION
     const getContextualStyle = (industry: string): string => {
-        const styleMapping = {
+        const styleMapping: StringIndexed<string[]> = {
             'Technology': ['Modern', 'Contemporary', 'Minimalist', 'Hi-Tech'],
             'Healthcare/Medical': ['Professional', 'Modern', 'Elegant'],
             'Food/Restaurant': ['Modern', 'Contemporary', 'Vintage', 'Hand-Drawn'],
@@ -273,7 +275,7 @@ Industry:`;
 
     // CONTEXTUAL COLOR SCHEME SELECTION
     const getContextualColors = (industry: string, style: string): string => {
-        const colorMapping = {
+        const colorMapping: StringIndexed<string[]> = {
             'Technology': ['Blue & White', 'Navy & Gold', 'Monochrome', 'Metallics'],
             'Healthcare/Medical': ['Blue & White', 'Green & White', 'Primary Colors'],
             'Food/Restaurant': ['Earthy Tones', 'Green & Gold', 'Primary Colors'],
@@ -313,7 +315,7 @@ Industry:`;
 
     // CONTEXTUAL SYMBOL FOCUS SELECTION
     const getContextualSymbolFocus = (industry: string): string => {
-        const symbolMapping = {
+        const symbolMapping: StringIndexed<string[]> = {
             'Technology': ['Abstract Icon', 'Lettermark (Initial-based)', 'Minimalist Icon', 'Geometric Icon'],
             'Healthcare/Medical': ['Pictorial (Image-based)', 'Wordmark (Company Name)', 'Symbol Only (No Text)'],
             'Food/Restaurant': ['Pictorial (Image-based)', 'Wordmark (Company Name)', 'Nature-Inspired Icon'],
@@ -343,7 +345,7 @@ Industry:`;
 
     // CONTEXTUAL BRAND PERSONALITY SELECTION
     const getContextualPersonality = (industry: string, companyName: string): string => {
-        const personalityMapping = {
+        const personalityMapping: StringIndexed<string[]> = {
             'Technology': ['Futuristic & Cutting-Edge', 'Professional', 'Bold & Energetic'],
             'Healthcare/Medical': ['Trustworthy', 'Professional', 'Elegant'],
             'Food/Restaurant': ['Playful', 'Elegant', 'Trustworthy'],
@@ -383,7 +385,7 @@ Industry:`;
 
     // NEW: CONTEXTUAL TYPOGRAPHY SELECTION
     const getContextualTypography = (industry: string, style: string): string => {
-        const typographyMapping = {
+        const typographyMapping: StringIndexed<string[]> = {
             'Technology': ['Sans-serif', 'Geometric', 'Monospace'],
             'Healthcare/Medical': ['Sans-serif', 'Serif', 'Classic/Traditional'],
             'Food/Restaurant': ['Script/Cursive', 'Handwritten', 'Display'],
@@ -413,7 +415,7 @@ Industry:`;
 
     // NEW: CONTEXTUAL LINE STYLE SELECTION
     const getContextualLineStyle = (style: string, personality: string): string => {
-        const lineMapping = {
+        const lineMapping: StringIndexed<string[]> = {
             'Modern': ['Thin', 'Continuous Smooth', 'Sharp/Angular'],
             'Minimalist': ['Thin', 'Continuous Smooth'],
             'Hand-Drawn': ['Hand-Drawn', 'Sketch-like', 'Fluid/Wavy'],
@@ -436,7 +438,7 @@ Industry:`;
 
     // NEW: CONTEXTUAL COMPOSITION SELECTION
     const getContextualComposition = (symbolFocus: string, industry: string): string => {
-        const compositionMapping = {
+        const compositionMapping: StringIndexed<string[]> = {
             'Lettermark (Initial-based)': ['Symbol beside text', 'Symbol integrated with text', 'Horizontal'],
             'Wordmark (Company Name)': ['Text only', 'Horizontal', 'Stacked'],
             'Pictorial (Image-based)': ['Symbol above text', 'Symbol beside text', 'Vertical'],
@@ -462,7 +464,7 @@ Industry:`;
 
     // NEW: CONTEXTUAL SHAPE EMPHASIS SELECTION
     const getContextualShape = (industry: string, symbolFocus: string): string => {
-        const shapeMapping = {
+        const shapeMapping: StringIndexed<string[]> = {
             'Technology': ['Circular', 'Sharp/Angular', 'Asymmetrical', 'Hexagonal'],
             'Healthcare/Medical': ['Circular', 'Organic/Curved', 'Symmetrical'],
             'Finance/Banking': ['Square/Rectangular', 'Shield/Emblem', 'Symmetrical'],
@@ -489,7 +491,7 @@ Industry:`;
 
     // NEW: CONTEXTUAL TEXTURE SELECTION
     const getContextualTexture = (style: string, personality: string): string => {
-        const textureMapping = {
+        const textureMapping: StringIndexed<string[]> = {
             'Modern': ['Flat Design', 'Gradient', 'Metallic'],
             'Minimalist': ['Flat Design'],
             'Hi-Tech': ['Metallic', 'Glossy', '3D Depth'],
@@ -516,7 +518,7 @@ Industry:`;
 
     // NEW: CONTEXTUAL COMPLEXITY SELECTION
     const getContextualComplexity = (industry: string, personality: string): string => {
-        const complexityMapping = {
+        const complexityMapping: StringIndexed<string[]> = {
             'Technology': ['Simple (2-3 elements)', 'Moderate (3-5 elements)', 'Balanced/Medium'],
             'Healthcare/Medical': ['Simple (2-3 elements)', 'Balanced/Medium'],
             'Finance/Banking': ['Simple (2-3 elements)', 'Balanced/Medium'],
@@ -544,7 +546,7 @@ Industry:`;
 
     // NEW: CONTEXTUAL APPLICATION CONTEXT SELECTION
     const getContextualApplication = (industry: string): string => {
-        const applicationMapping = {
+        const applicationMapping: StringIndexed<string[]> = {
             'Technology': ['Mobile app icon', 'Digital-first (websites, apps)', 'Multi-purpose/Versatile'],
             'Healthcare/Medical': ['Print-first (business cards, letterheads)', 'Signage/Large format', 'Multi-purpose/Versatile'],
             'Food/Restaurant': ['Signage/Large format', 'Merchandise/Products', 'Multi-purpose/Versatile'],
@@ -572,7 +574,7 @@ Industry:`;
             'Ensure the design is unique and stands out from competitors'
         ];
 
-        const industrySpecific = {
+        const industrySpecific: StringIndexed<string[]> = {
             'Technology': ['Incorporate subtle tech elements without being too literal', 'Focus on innovation and forward-thinking design'],
             'Healthcare/Medical': ['Convey trust, care, and professionalism', 'Use calming and reassuring design elements'],
             'Food/Restaurant': ['Make it appetizing and inviting', 'Consider how it will look on packaging and signage'],
@@ -583,7 +585,7 @@ Industry:`;
             'Fashion/Beauty': ['Emphasize elegance, style, and sophistication', 'Consider premium and luxury aesthetics']
         };
 
-        const styleSpecific = {
+        const styleSpecific: StringIndexed<string[]> = {
             'Modern': ['Keep lines clean and contemporary', 'Avoid overly decorative elements'],
             'Minimalist': ['Use negative space effectively', 'Focus on essential elements only'],
             'Vintage': ['Incorporate classic design elements', 'Use traditional color palettes appropriately'],
@@ -591,7 +593,7 @@ Industry:`;
             'Hi-Tech': ['Use precise geometric forms', 'Incorporate subtle technological references']
         };
 
-        const personalitySpecific = {
+        const personalitySpecific: StringIndexed<string[]> = {
             'Professional': ['Maintain business-appropriate aesthetics', 'Ensure credibility and trustworthiness'],
             'Playful': ['Include friendly and approachable elements', 'Use vibrant and engaging design'],
             'Elegant': ['Focus on sophisticated and refined aesthetics', 'Use premium design principles'],
@@ -891,7 +893,7 @@ Industry:`;
     };
 
     // Check authorization
-    if (!user || user.email !== 'tabdullah1215@live.com') {
+    if (!user || !user.isSuperUser) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <div className="text-center">

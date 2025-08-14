@@ -47,7 +47,7 @@ export default function CatalogView() {
 
     // Check authorization
     useEffect(() => {
-        if (!user || user.email !== 'tabdullah1215@live.com') {
+        if (!user || !user.isSuperUser) {
             router.push('/');
             return;
         }
@@ -56,7 +56,7 @@ export default function CatalogView() {
     // Fetch catalog data
     useEffect(() => {
         const fetchCatalogData = async () => {
-            if (!user || user.email !== 'tabdullah1215@live.com') return;
+            if (!user || !user.isSuperUser) return;
 
             try {
                 setLoading(true);
@@ -139,7 +139,7 @@ export default function CatalogView() {
     };
 
     // Check authorization
-    if (!user || user.email !== 'tabdullah1215@live.com') {
+    if (!user || !user.isSuperUser) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <div className="text-center">

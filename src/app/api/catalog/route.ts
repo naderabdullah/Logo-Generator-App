@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { DynamoDB } from 'aws-sdk';
 import { supabaseAuth } from '../../../lib/supabaseAuth';
 import { getLogo } from '../../utils/indexedDBUtils';
+import { getCurrentUser } from '../../../lib/auth-utils';
 
 // Initialize DynamoDB client
 const dynamoDB = new DynamoDB.DocumentClient({
@@ -11,39 +12,6 @@ const dynamoDB = new DynamoDB.DocumentClient({
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
 });
-
-// Function to get current user from request
-async function getCurrentUser(request: NextRequest) {
-    try {
-        const accessToken = request.cookies.get('access_token')?.value;
-
-        if (!accessToken) {
-            return null;
-        }
-
-        const decoded = jwt.verify(
-            accessToken,
-            process.env.JWT_ACCESS_TOKEN_SECRET || 'access-token-secret'
-        ) as { id: number, email: string };
-
-        const dynamoResult = await dynamoDB.get({
-            TableName: process.env.DYNAMODB_USERS_TABLE || 'users',
-            Key: { id: decoded.id }
-        }).promise();
-
-        if (!dynamoResult.Item) {
-            return null;
-        }
-
-        return {
-            id: dynamoResult.Item.id,
-            email: dynamoResult.Item.email
-        };
-    } catch (error) {
-        console.error('Error getting current user:', error);
-        return null;
-    }
-}
 
 // GET endpoint - Get catalog logos
 export async function GET(request: NextRequest) {
@@ -55,6 +23,10 @@ export async function GET(request: NextRequest) {
                 { error: 'Unauthorized' },
                 { status: 401 }
             );
+        }
+
+        if (user === 'not_allowed') {
+            return NextResponse.json({ error: 'Account not active' }, { status: 401 });
         }
 
         const url = new URL(request.url);
@@ -118,6 +90,10 @@ export async function POST(request: NextRequest) {
                 { error: 'Unauthorized' },
                 { status: 401 }
             );
+        }
+
+        if (user === 'not_allowed') {
+            return NextResponse.json({ error: 'Account not active' }, { status: 401 });
         }
 
         const { logoKeyId, imageDataUri, parameters, originalCompanyName } = await request.json();

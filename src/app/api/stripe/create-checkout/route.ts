@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { DynamoDB } from 'aws-sdk';
 import jwt from 'jsonwebtoken';
+import { getCurrentUser } from '../../../../lib/auth-utils';
 
 // Initialize Stripe only if the API key is available
 let stripe: Stripe | undefined;
@@ -18,35 +19,6 @@ const dynamoDB = new DynamoDB.DocumentClient({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
 });
-
-// Function to get current user from request
-async function getCurrentUser(request: NextRequest) {
-  try {
-    // Get access token from cookies
-    const accessToken = request.cookies.get('access_token')?.value;
-    
-    if (!accessToken) {
-      return null;
-    }
-    
-    // Verify token
-    const decoded = jwt.verify(
-      accessToken, 
-      process.env.JWT_ACCESS_TOKEN_SECRET || 'access-token-secret'
-    ) as { id: number };
-    
-    // Get user from DynamoDB
-    const result = await dynamoDB.get({
-      TableName: process.env.DYNAMODB_USERS_TABLE || 'users',
-      Key: { id: decoded.id }
-    }).promise();
-    
-    return result.Item;
-  } catch (error) {
-    console.error('Error getting current user:', error);
-    return null;
-  }
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -122,9 +94,9 @@ export async function POST(request: NextRequest) {
       mode: 'payment',
       success_url: `${domainURL}/purchase?payment=success&quantity=${quantity}`,
       cancel_url: `${domainURL}/account?payment=cancelled`,
-      customer_email: email || user.email,
+      customer_email: email || (typeof user === 'object' && 'email' in user ? user.email : undefined),
       metadata: {
-        userId: user.id.toString(),
+        userId: (typeof user === 'object' && 'id' in user && user.id ? user.id.toString() : ''),
         quantity: quantity.toString(),
       },
     });

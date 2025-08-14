@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { DynamoDB } from 'aws-sdk';
+import { getCurrentUser } from '../../../../lib/auth-utils';
 
 // Initialize DynamoDB client
 const dynamoDB = new DynamoDB.DocumentClient({
@@ -10,50 +11,13 @@ const dynamoDB = new DynamoDB.DocumentClient({
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
 });
 
-// Function to get current user from request
-async function getCurrentUser(request: NextRequest) {
-  try {
-    // Get access token from cookies
-    const accessToken = request.cookies.get('access_token')?.value;
-    
-    if (!accessToken) {
-      return null;
-    }
-    
-    // Verify token
-    const decoded = jwt.verify(
-      accessToken, 
-      process.env.JWT_ACCESS_TOKEN_SECRET || 'access-token-secret'
-    ) as { id: number, email: string };
-    
-    // Get user auth data from DynamoDB
-    const dynamoResult = await dynamoDB.get({
-      TableName: process.env.DYNAMODB_USERS_TABLE || 'users',
-      Key: { id: decoded.id }
-    }).promise();
-    
-    if (!dynamoResult.Item) {
-      return null;
-    }
-    
-    return {
-      id: dynamoResult.Item.id,
-      email: dynamoResult.Item.email,
-      status: dynamoResult.Item.Status || dynamoResult.Item.status // Handle both cases
-    };
-  } catch (error) {
-    console.error('Error getting current user:', error);
-    return null;
-  }
-}
-
 // DELETE endpoint - Soft delete user account (change Status to 'inactive')
 export async function DELETE(request: NextRequest) {
   try {
     // Get current user
     const user = await getCurrentUser(request);
     
-    if (!user) {
+    if (!user || typeof user !== 'object' || !('status' in user)) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }

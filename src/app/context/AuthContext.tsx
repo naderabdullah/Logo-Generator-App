@@ -10,6 +10,8 @@ interface User {
   logosCreated: number;
   logosLimit: number;
   remainingLogos?: number;
+  isSuperUser?: boolean;
+  superUserPrivilege?: string;
 }
 
 // Define the shape of our auth context
@@ -68,7 +70,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           email: userData.email,
           logosCreated: userData.logosCreated || 0,
           logosLimit: userData.logosLimit || 5,
-          remainingLogos: Math.max(0, (userData.logosLimit || 5) - (userData.logosCreated || 0))
+          remainingLogos: Math.max(0, (userData.logosLimit || 5) - (userData.logosCreated || 0)),
+          isSuperUser: userData.isSuperUser || false,
+          superUserPrivilege: userData.superUserPrivilege
         };
         
         setUser(normalizedUser);

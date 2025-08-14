@@ -13,7 +13,7 @@ export default function UnifiedHeader() {
   const router = useRouter();
 
   // Check if user is privileged for bulk generation and catalog access
-  const isPrivilegedUser = user?.email === 'tabdullah1215@live.com';
+  const isPrivilegedUser = user?.isSuperUser || false;
 
   // Show basic header on auth pages (including register pages) - NO LINK
   if (pathname === '/login' || pathname === '/signup' || pathname === '/auth' || pathname.startsWith('/register')) {

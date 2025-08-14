@@ -1,79 +1,10 @@
 // src/app/logos/route.ts - MINIMAL UPDATE preserving all existing functionality
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI, { toFile } from 'openai';
-import jwt from 'jsonwebtoken';
-import { DynamoDB } from 'aws-sdk';
 import { supabaseAuth } from '../../lib/supabaseAuth';
+import { getCurrentUser, AuthenticatedUser } from '../../lib/auth-utils';
 
-// Initialize DynamoDB client (needed to get user email from ID)
-const dynamoDB = new DynamoDB.DocumentClient({
-  region: process.env.AWS_REGION || 'us-east-1',
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-});
-
-// User interface for the combined user data
-interface AuthenticatedUser {
-  id: number; // DynamoDB ID
-  supabaseId: number; // Supabase ID
-  email: string;
-  logosCreated: number;
-  logosLimit: number;
-}
-
-// FIXED: Function to get current user from request (matches /api/user/route.ts pattern)
-async function getCurrentUser(request: NextRequest): Promise<AuthenticatedUser | null | 'not_allowed'> {
-  try {
-    // Get access token from cookies
-    const accessToken = request.cookies.get('access_token')?.value;
-
-    if (!accessToken) {
-      return null;
-    }
-
-    // Verify token
-    const decoded = jwt.verify(
-        accessToken,
-        process.env.JWT_ACCESS_TOKEN_SECRET || 'access-token-secret'
-    ) as { id: number, email: string };
-
-    // FIXED: Get user auth data from DynamoDB first
-    const dynamoResult = await dynamoDB.get({
-      TableName: process.env.DYNAMODB_USERS_TABLE || 'users',
-      Key: { id: decoded.id }
-    }).promise();
-
-    if (!dynamoResult.Item) {
-      return null;
-    }
-
-    // Check if user account status allows access ('active' or 'pending' only)
-    const userStatus = dynamoResult.Item.Status || dynamoResult.Item.status;
-    if (userStatus !== 'active' && userStatus !== 'pending') {
-      console.log('User account status does not allow access, status:', userStatus, 'for email:', dynamoResult.Item.email);
-      return 'not_allowed'; // Return a special value to distinguish from not found
-    }
-
-    // FIXED: Get user logo credits from Supabase using EMAIL (not ID)
-    const supabaseUser = await supabaseAuth.getUserByEmail(dynamoResult.Item.email);
-
-    if (!supabaseUser) {
-      return null;
-    }
-
-    // FIXED: Combine auth data from DynamoDB with logo data from Supabase
-    return {
-      id: dynamoResult.Item.id, // Keep DynamoDB ID for compatibility
-      supabaseId: supabaseUser.id, // Add Supabase ID for logo updates
-      email: dynamoResult.Item.email,
-      logosCreated: supabaseUser.logosCreated,
-      logosLimit: supabaseUser.logosLimit
-    };
-  } catch (error) {
-    console.error('Error getting current user:', error);
-    return null;
-  }
-}
+// REMOVED: Duplicate AuthenticatedUser interface (using the one from auth-utils)
 
 // GET endpoint - Return user's logo usage statistics
 export async function GET(request: NextRequest) {
@@ -148,8 +79,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // NEW ADDITION - Check if this is bulk generation by privileged user
-    const isPrivilegedBulkGeneration = isBulkGeneration && user.email === 'tabdullah1215@live.com';
+    // UPDATED - Use superuser status instead of hard-coded email
+    const isPrivilegedBulkGeneration = isBulkGeneration && user.isSuperUser;
 
     // Check if user has remaining credits (only for new logos, not revisions, not privileged bulk generation)
     if (!isRevision && !isPrivilegedBulkGeneration && user.logosCreated >= user.logosLimit) {
@@ -212,7 +143,13 @@ export async function POST(request: NextRequest) {
     let finalLogosLimit = user.logosLimit;
 
     if (!isRevision && !isPrivilegedBulkGeneration) {
-      const supabaseUpdatedUser = await supabaseAuth.updateLogoCount(user.supabaseId, 1);
+      // FIXED: Handle optional supabaseId properly
+      const supabaseId = user.supabaseId;
+      if (!supabaseId) {
+        throw new Error('User Supabase ID not found');
+      }
+
+      const supabaseUpdatedUser = await supabaseAuth.updateLogoCount(supabaseId, 1);
       console.log(`Updated logo count for user ${user.email}: ${supabaseUpdatedUser.logosCreated}/${supabaseUpdatedUser.logosLimit}`);
 
       // Update our counts with the new values
@@ -235,7 +172,7 @@ export async function POST(request: NextRequest) {
       message: isRevision
           ? 'Logo revision generated successfully'
           : 'Logo generated successfully',
-      // NEW ADDITION - Flag to indicate if this was a privileged generation
+      // UPDATED - Flag to indicate if this was a privileged generation
       isPrivilegedGeneration: isPrivilegedBulkGeneration
     });
 
