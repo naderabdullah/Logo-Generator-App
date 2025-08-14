@@ -1,4 +1,4 @@
-// src/app/bulk-generate/BulkGenerateView.tsx - COMPLETE VERSION WITH ALL FIXES
+// src/app/bulk-generate/BulkGenerateView.tsx - UPDATED to use global generation state
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -13,6 +13,7 @@ import {
     type LogoParameters
 } from '@/app/utils/indexedDBUtils';
 import companyData from '../../data/company-names.json';
+import { useGeneration } from '@/app/context/GenerationContext';
 
 type StringIndexed<T> = { [key: string]: T };
 
@@ -46,7 +47,8 @@ export default function BulkGenerateView() {
     });
     const [generatedLogos, setGeneratedLogos] = useState<StoredLogo[]>([]);
     const [usedCompanyNames, setUsedCompanyNames] = useState<Set<string>>(new Set());
-    const [isGenerating, setIsGenerating] = useState(false);
+    // UPDATED: Use global bulk generation state
+    const { isBulkGenerating, setIsBulkGenerating } = useGeneration();
 
     // NEW: Untitled logos fix functionality
     const [untitledLogos, setUntitledLogos] = useState<StoredLogo[]>([]);
@@ -809,9 +811,10 @@ Industry:`;
 
     // Main bulk generation function
     const startBulkGeneration = async () => {
-        if (!user || isGenerating) return;
+        // UPDATED: Use global bulk generation state
+        if (!user || isBulkGenerating) return;
 
-        setIsGenerating(true);
+        setIsBulkGenerating(true);
         setProgress({
             totalLogos: bulkCount,
             currentCount: 0,
@@ -883,7 +886,8 @@ Industry:`;
                 errorMessage: error instanceof Error ? error.message : 'Unknown error occurred'
             }));
         } finally {
-            setIsGenerating(false);
+            // UPDATED: Use global bulk generation state
+            setIsBulkGenerating(false);
         }
     };
 
@@ -932,7 +936,8 @@ Industry:`;
                             id="bulkCount"
                             value={bulkCount}
                             onChange={(e) => setBulkCount(parseInt(e.target.value))}
-                            disabled={isGenerating}
+                            // UPDATED: Use global bulk generation state
+                            disabled={isBulkGenerating}
                             className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                         >
                             <option value={5}>5 logos</option>
@@ -945,14 +950,17 @@ Industry:`;
 
                     <button
                         onClick={startBulkGeneration}
-                        disabled={isGenerating || usedCompanyNames.size >= companyData.companies.length}
+                        // UPDATED: Use global bulk generation state
+                        disabled={isBulkGenerating || usedCompanyNames.size >= companyData.companies.length}
                         className={`w-full py-3 px-4 rounded-md font-medium ${
-                            isGenerating || usedCompanyNames.size >= companyData.companies.length
+                            // UPDATED: Use global bulk generation state
+                            isBulkGenerating || usedCompanyNames.size >= companyData.companies.length
                                 ? 'bg-gray-400 cursor-not-allowed'
                                 : 'bg-indigo-600 hover:bg-indigo-700'
                         } text-white transition-colors`}
                     >
-                        {isGenerating ? '🔄 Generating...' : '🚀 Start Comprehensive Bulk Generation'}
+                        {/* UPDATED: Use global bulk generation state */}
+                        {isBulkGenerating ? '🔄 Generating...' : '🚀 Start Comprehensive Bulk Generation'}
                     </button>
                 </div>
 
@@ -970,9 +978,11 @@ Industry:`;
                             </div>
                             <button
                                 onClick={fixUntitledLogos}
-                                disabled={isFixingUntitled || isGenerating}
+                                // UPDATED: Use global bulk generation state
+                                disabled={isFixingUntitled || isBulkGenerating}
                                 className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                                    isFixingUntitled || isGenerating
+                                    // UPDATED: Use global bulk generation state
+                                    isFixingUntitled || isBulkGenerating
                                         ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                         : 'bg-orange-600 hover:bg-orange-700 text-white'
                                 }`}

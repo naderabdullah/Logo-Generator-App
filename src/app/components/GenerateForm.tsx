@@ -1,4 +1,4 @@
-// src/app/components/GenerateForm.tsx - FIXED with transparent background field and reference image fixes
+// src/app/components/GenerateForm.tsx - COMPLETE VERSION with global generation state
 'use client';
 
 import { useState, useCallback, ChangeEvent, useEffect } from 'react';
@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/app/context/AuthContext';
+import { useGeneration } from '@/app/context/GenerationContext';
 import {
   saveLogo,
   getLogo,
@@ -29,8 +30,8 @@ interface GenerateFormProps {
 }
 
 export default function GenerateForm({ setLoading, setImageDataUri, setError }: GenerateFormProps) {
-  // FIXED: Use AuthContext instead of duplicate auth checking
   const { user, updateUser } = useAuth();
+  const { isGenerating, isRevising, setIsGenerating, setIsRevising } = useGeneration();
   const router = useRouter();
   const editLogoId = useEditParam();
 
@@ -47,7 +48,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   const [brandPersonality, setBrandPersonality] = useState('');
   const [size, setSize] = useState('1024x1024');
 
-  // ADD: Transparent background field - defaults to true
   const [transparentBackground, setTransparentBackground] = useState(true);
 
   const [industry, setIndustry] = useState('');
@@ -58,19 +58,15 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   const [texture, setTexture] = useState('');
   const [complexityLevel, setComplexityLevel] = useState('');
   const [applicationContext, setApplicationContext] = useState('');
-
-  // Add special instructions state
   const [specialInstructions, setSpecialInstructions] = useState('');
 
   const [isAnimating, setIsAnimating] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
   const [canCreateLogo, setCanCreateLogo] = useState(true);
   const [canRevise, setCanRevise] = useState(true);
   const [showLimitModal, setShowLimitModal] = useState(false);
-  const [error, setLocalError] = useState<string | null>(null); // Add local error state
+  const [error, setLocalError] = useState<string | null>(null);
 
-  // Custom color state
   const [customColors, setCustomColors] = useState<string[]>(['#6366f1']);
 
   const [catalogMode, setCatalogMode] = useState(false);
@@ -79,13 +75,12 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   const [catalogError, setCatalogError] = useState<string | null>(null);
 
   const getFieldsDisabled = useCallback(() => {
-    // In catalog mode, disable all fields except company name and slogan
     if (catalogMode) {
       return true;
     }
-    // Original logic for generating state
-    return isGenerating;
-  }, [catalogMode, isGenerating]);
+    return isGenerating || isRevising;
+  }, [catalogMode, isGenerating, isRevising]);
+
   const useReferenceParam = () => {
     const searchParams = useSearchParams();
     return searchParams?.get('reference') || null;
@@ -99,18 +94,14 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
 
   const referenceLogoId = useReferenceParam();
 
-  // Check if user can perform actions
   useEffect(() => {
     const checkLimits = async () => {
-      // FIXED: Use user from AuthContext
       if (user?.email) {
         try {
-          // FIXED: Pass userId to canCreateOriginalLogo
           const canCreate = await canCreateOriginalLogo(user.email);
           setCanCreateLogo(canCreate);
 
           if (originalLogoId) {
-            // FIXED: Pass userId to canCreateRevision
             const canCreateRevision_ = await canCreateRevision(originalLogoId, user.email);
             setCanRevise(canCreateRevision_);
           }
@@ -123,15 +114,12 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     checkLimits();
   }, [user?.email, originalLogoId]);
 
-  // Load logo for editing if editLogoId is provided
   useEffect(() => {
     const loadLogoForEdit = async () => {
       if (editLogoId && user?.email) {
         try {
-          // FIXED: Pass userId to getLogo for user verification
           const logoData = await getLogo(editLogoId, user.email);
           if (logoData) {
-            // Populate form fields with logo data
             setCompanyName(logoData.parameters.companyName || '');
             setSlogan(logoData.parameters.slogan || '');
             setSize(logoData.parameters.size || '1024x1024');
@@ -149,14 +137,12 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
             setApplicationContext(logoData.parameters.applicationContext || '');
             setSpecialInstructions(logoData.parameters.specialInstructions || '');
 
-            setSpecialInstructions(''); // CHANGED: Always clear for revisions
+            setSpecialInstructions('');
 
             setTransparentBackground(logoData.parameters.transparentBackground === 'false' ? false : true);
 
-            // FIXED: Set the logo image as reference image for revision
             setReferenceImagePreview(logoData.imageDataUri);
 
-            // Convert the image data to a File object for reference
             try {
               const response = await fetch(logoData.imageDataUri);
               const blob = await response.blob();
@@ -166,12 +152,10 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               console.error('Error converting logo to reference file:', err);
             }
 
-            // Set as revision if this logo has an originalLogoId
             if (logoData.originalLogoId) {
               setIsRevision(true);
               setOriginalLogoId(logoData.originalLogoId);
             } else {
-              // This is an original logo, set it up for creating revisions
               setIsRevision(true);
               setOriginalLogoId(editLogoId);
             }
@@ -186,15 +170,12 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     loadLogoForEdit();
   }, [editLogoId, user?.email]);
 
-  // Load reference logo data if referenceLogoId is provided
   useEffect(() => {
     const loadReferenceData = async () => {
       if (referenceLogoId && user?.email) {
         try {
-          // FIXED: Pass userId to getLogo for user verification
           const referenceData = await getLogo(referenceLogoId, user.email);
           if (referenceData) {
-            // Pre-populate form with reference data but don't set as revision
             setCompanyName(referenceData.parameters.companyName || '');
             setSlogan(referenceData.parameters.slogan || '');
             setSize(referenceData.parameters.size || '1024x1024');
@@ -211,14 +192,12 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
             setComplexityLevel(referenceData.parameters.complexityLevel || '');
             setApplicationContext(referenceData.parameters.applicationContext || '');
             setSpecialInstructions(referenceData.parameters.specialInstructions || '');
-            setTransparentBackground(referenceData.parameters.transparentBackground === 'false' ? false : true); // ADD: Load transparent background
+            setTransparentBackground(referenceData.parameters.transparentBackground === 'false' ? false : true);
 
             setSpecialInstructions('');
 
-            // FIXED: Set the logo image as reference image for similar logo
             setReferenceImagePreview(referenceData.imageDataUri);
 
-            // Convert the image data to a File object for reference
             try {
               const response = await fetch(referenceData.imageDataUri);
               const blob = await response.blob();
@@ -237,7 +216,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     loadReferenceData();
   }, [referenceLogoId, user?.email]);
 
-  // Original styling preserved - toggle advanced options function
   const toggleAdvancedOptions = useCallback(() => {
     if (showAdvanced) {
       setIsAnimating(true);
@@ -250,7 +228,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     }
   }, [showAdvanced]);
 
-  // Original styling preserved - custom color functions
   const addCustomColor = useCallback(() => {
     if (customColors.length < 3) {
       setCustomColors([...customColors, '#000000']);
@@ -267,7 +244,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     setCustomColors(newColors);
   }, [customColors]);
 
-  // Updated buildPrompt function to include transparent background and special instructions
   const buildPrompt = useCallback(() => {
     let prompt = `Create a logo with the following characteristics:\n`;
     prompt += `Company Name: ${companyName}\n`;
@@ -276,7 +252,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     }
     prompt += `Style: ${overallStyle}\n`;
 
-    // Handle custom colors
     if (colorScheme === 'Custom Colors' && customColors.length > 0) {
       prompt += `Colors: Use these specific colors - ${customColors.join(', ')}\n`;
     } else {
@@ -286,14 +261,12 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     prompt += `Symbol Focus: ${symbolFocus}\n`;
     prompt += `Brand Personality: ${brandPersonality}\n`;
 
-    // ADD: Include transparent background requirement
     if (transparentBackground) {
       prompt += `Background: Transparent background (no background color or elements)\n`;
     } else {
       prompt += `Background: Include background color or design elements\n`;
     }
 
-    // Add advanced parameters if specified
     if (industry) prompt += `Industry: ${industry}\n`;
     if (typographyStyle) prompt += `Typography: ${typographyStyle}\n`;
     if (lineStyle) prompt += `Line Style: ${lineStyle}\n`;
@@ -311,7 +284,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     companyName, slogan, overallStyle, colorScheme, symbolFocus,
     brandPersonality, industry, size, typographyStyle, lineStyle,
     composition, shapeEmphasis, texture, complexityLevel,
-    applicationContext, customColors, specialInstructions, transparentBackground // ADD: transparentBackground dependency
+    applicationContext, customColors, specialInstructions, transparentBackground
   ]);
 
   const collectParameters = useCallback((): LogoParameters => {
@@ -334,13 +307,13 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       complexityLevel: complexityLevel || undefined,
       applicationContext: applicationContext || undefined,
       specialInstructions: specialInstructions || undefined,
-      transparentBackground: transparentBackground ? 'true' : 'false' // ADD: Include transparent background parameter
+      transparentBackground: transparentBackground ? 'true' : 'false'
     };
   }, [
     companyName, slogan, overallStyle, colorScheme, symbolFocus,
     brandPersonality, industry, size, typographyStyle, lineStyle,
     composition, shapeEmphasis, texture, complexityLevel,
-    applicationContext, customColors, specialInstructions, transparentBackground // ADD: transparentBackground dependency
+    applicationContext, customColors, specialInstructions, transparentBackground
   ]);
 
   const areRequiredFieldsFilled = useCallback(() => {
@@ -368,7 +341,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       return;
     }
 
-    if (isGenerating || !areRequiredFieldsFilled()) {
+    if ((isGenerating || isRevising) || !areRequiredFieldsFilled()) {
       return;
     }
 
@@ -386,15 +359,21 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
 
     setLoading(true);
     setError(null);
-    setLocalError(null); // Clear local error
+    setLocalError(null);
     setImageDataUri(null);
-    setIsGenerating(true);
+    
+    // Set appropriate global generation state
+    if (isRevision) {
+      setIsRevising(true);
+    } else {
+      setIsGenerating(true);
+    }
 
     try {
       const formData = new FormData();
       formData.append('prompt', prompt);
       formData.append('size', size);
-      formData.append('transparentBackground', transparentBackground.toString()); // ADD: Include transparent background
+      formData.append('transparentBackground', transparentBackground.toString());
 
       if (referenceImage) {
         formData.append('referenceImage', referenceImage);
@@ -439,9 +418,8 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
 
       const parameters = collectParameters();
 
-      // FIXED: Pass userId as first parameter to saveLogo
       const logoId = await saveLogo(
-          user.email, // userId first
+          user.email,
           imageDataUriString,
           parameters,
           isRevision ? originalLogoId : undefined,
@@ -468,16 +446,22 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
           errorMessage.includes('Maximum logo limit reached')) {
         setShowLimitModal(true);
       } else {
-        setLocalError(errorMessage); // Use local error state
-        setError(errorMessage); // Still set parent error for any other handling
+        setLocalError(errorMessage);
+        setError(errorMessage);
       }
     } finally {
       setLoading(false);
-      setIsGenerating(false);
+      // Clear appropriate global generation state
+      if (isRevision) {
+        setIsRevising(false);
+      } else {
+        setIsGenerating(false);
+      }
     }
   }, [
     user?.email,
     isGenerating,
+    isRevising,
     areRequiredFieldsFilled,
     buildPrompt,
     collectParameters,
@@ -493,7 +477,9 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     canRevise,
     canCreateLogo,
     updateUser,
-    transparentBackground // Keep this since it's used in buildPrompt and collectParameters
+    transparentBackground,
+    setIsGenerating,
+    setIsRevising
   ]);
 
   const renderDropdown = useCallback((
@@ -504,13 +490,10 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       options: string[],
       required: boolean = false
   ) => {
-    // Determine if this specific field should be disabled
     const isFieldDisabled = (() => {
-      // Company name and slogan are always editable in catalog mode
       if (catalogMode && (id === 'company-name' || id === 'slogan')) {
-        return isGenerating; // Only disabled when generating
+        return isGenerating || isRevising;
       }
-      // All other fields follow the general locking logic
       return getFieldsDisabled();
     })();
 
@@ -549,20 +532,18 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
           </select>
         </div>
     );
-  }, [getFieldsDisabled, catalogMode, isGenerating]);
+  }, [getFieldsDisabled, catalogMode, isGenerating, isRevising]);
 
-  // Handle reference image upload - preserved original styling
   const handleReferenceImageChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      if (file.size > 10 * 1024 * 1024) {
         setLocalError('Reference image must be smaller than 10MB');
         return;
       }
 
       setReferenceImage(file);
 
-      // Create preview
       const reader = new FileReader();
       reader.onload = (event) => {
         setReferenceImagePreview(event.target?.result as string);
@@ -571,12 +552,10 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     }
   }, []);
 
-  // FIXED: Remove reference image function - only allow in new logo form, not revision form
   const removeReferenceImage = useCallback(() => {
-    if (!isRevision) { // FIXED: Only allow removing reference image if not in revision mode
+    if (!isRevision) {
       setReferenceImage(null);
       setReferenceImagePreview(null);
-      // Clear the file input
       const fileInput = document.getElementById('reference-image') as HTMLInputElement;
       if (fileInput) {
         fileInput.value = '';
@@ -587,12 +566,10 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   const handleCatalogModeChange = useCallback((newCatalogMode: boolean) => {
     setCatalogMode(newCatalogMode);
 
-    // Clear catalog data when switching back to manual mode
     if (!newCatalogMode) {
       setCatalogCode('');
       setCatalogData(null);
       setCatalogError(null);
-      // Clear reference image if it was from catalog
       if (catalogData) {
         setReferenceImage(null);
         setReferenceImagePreview(null);
@@ -604,15 +581,11 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     setCatalogData(catalogData);
 
     if (catalogData) {
-      // Populate all form fields with catalog parameters
       const params = catalogData.parameters;
 
-      // Keep existing company name and slogan (editable fields)
-      // Only update if they're empty
       setCompanyName('');
       setSlogan('');
 
-      // Populate all other fields (these will be locked)
       setOverallStyle(params.overallStyle || '');
       setColorScheme(params.colorScheme || '');
       setSymbolFocus(params.symbolFocus || '');
@@ -629,10 +602,8 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       setSpecialInstructions(params.specialInstructions || '');
       setTransparentBackground(params.transparentBackground !== 'false');
 
-      // Set reference image from catalog
       setReferenceImagePreview(catalogData.image_data_uri);
 
-      // Convert image to File object for form submission
       fetch(catalogData.image_data_uri)
           .then(response => response.blob())
           .then(blob => {
@@ -645,7 +616,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     }
   }, [companyName, slogan]);
 
-  // ORIGINAL options arrays restored
   const overallStyleOptions = [
     'Modern', 'Contemporary', 'Abstract', 'Classical',
     'Hi-Tech', 'Minimalist', 'Vintage', 'Geometric', 'Hand-Drawn'
@@ -721,10 +691,8 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     'Animation-ready', 'Brand system (multiple variations)'
   ];
 
-  // FIXED: Remove redundant auth loading check since parent page handles it
   return (
       <div className="generator-form-container">
-        {/* Error Display - Shows above the form */}
         {error && (
             <div style={{
               marginBottom: 'var(--space-md)',
@@ -748,19 +716,17 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
           <div style={{
             marginBottom: 'var(--space-md)',
             padding: 'var(--space-md)',
-            backgroundColor: '#f8f9fa', // Light grey background
+            backgroundColor: '#f8f9fa',
             border: '1px solid var(--color-gray-300)',
             borderRadius: 'var(--radius-md)'
           }}>
 
-            {/* NEW: Catalog Mode Toggle */}
             <CatalogModeToggle
                 catalogMode={catalogMode}
                 onChange={handleCatalogModeChange}
-                disabled={isGenerating || isRevision} // Disable in revision mode
+                disabled={(isGenerating || isRevising) || isRevision}
             />
 
-            {/* NEW: Catalog Code Input - Only show when in catalog mode */}
             {catalogMode && (
                 <CatalogCodeInput
                     enabled={catalogMode && !isRevision}
@@ -771,7 +737,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                 />
             )}
 
-            {/* NEW: Show catalog error if any */}
             {catalogError && (
                 <div style={{
                   marginBottom: 'var(--space-sm)',
@@ -786,7 +751,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                 </div>
             )}
 
-            {/* NEW: Show catalog success info */}
             {catalogMode && catalogData && (
                 <div style={{
                   marginBottom: 'var(--space-sm)',
@@ -806,8 +770,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
             )}
           </div>
 
-          {/* ===== END CATALOG COMPONENTS ===== */}
-
           <div style={{ marginBottom: 'var(--space-sm)' }}>
             <label htmlFor="company-name" className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
               Company Name <span style={{ color: 'var(--color-error)' }}>*</span>
@@ -820,7 +782,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                 onChange={(e) => setCompanyName(e.target.value)}
                 placeholder="Enter your company name"
                 required
-                disabled={isGenerating}
+                disabled={isGenerating || isRevising}
             />
           </div>
 
@@ -835,11 +797,10 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                 value={slogan}
                 onChange={(e) => setSlogan(e.target.value)}
                 placeholder="Enter your company slogan"
-                disabled={isGenerating}
+                disabled={isGenerating || isRevising}
             />
           </div>
 
-          {/* Size Selection - Only for new images (no reference) */}
           {!referenceImagePreview && (
               <div style={{ marginBottom: 'var(--space-sm)' }}>
                 <label htmlFor="size" className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
@@ -863,9 +824,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               </div>
           )}
 
-          {/* Reference Image Upload Section - Original styling preserved */}
           <div style={{ marginBottom: 'var(--space-sm)' }}>
-            {/* MOVED: Reference image instruction text above the button */}
             {!referenceImagePreview && (
                 <p style={{
                   fontSize: 'var(--text-sm)',
@@ -885,12 +844,12 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                   padding: 'var(--space-md)',
                   border: '2px dashed var(--color-gray-300)',
                   borderRadius: 'var(--radius-md)',
-                  cursor: isRevision ? 'default' : 'pointer', // FIXED: No cursor in revision mode
+                  cursor: isRevision ? 'default' : 'pointer',
                   backgroundColor: referenceImagePreview ? 'var(--color-gray-50)' : 'white',
                   transition: 'all var(--transition-base)',
                   textAlign: 'center'
                 }}
-                onClick={isRevision ? (e) => e.preventDefault() : undefined} // FIXED: Prevent clicks in revision mode
+                onClick={isRevision ? (e) => e.preventDefault() : undefined}
             >
               {referenceImagePreview ? (
                   <div style={{
@@ -912,7 +871,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                         }}
                     />
                     <div style={{ marginBottom: 'var(--space-xs)' }}>
-                      {/* FIXED: Only show remove button when NOT in revision mode */}
                       {!isRevision && (
                           <button
                               type="button"
@@ -956,12 +914,11 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                   onChange={handleReferenceImageChange}
                   accept="image/*"
                   style={{ display: 'none' }}
-                  disabled={getFieldsDisabled() || isRevision} // FIXED: Disable upload in revision mode
+                  disabled={getFieldsDisabled() || isRevision}
               />
             </label>
           </div>
 
-          {/* Required Basic Options */}
           {renderDropdown(
               "overall-style",
               'Overall Style',
@@ -971,7 +928,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               true
           )}
 
-          {/* Color Scheme with Custom Colors - Original styling preserved */}
           <div style={{ marginBottom: 'var(--space-sm)' }}>
             <label htmlFor="color-scheme" className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
               Color Scheme <span style={{ color: 'var(--color-error)' }}>*</span>
@@ -1120,7 +1076,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               true
           )}
 
-          {/* ADD: Transparent Background Checkbox */}
           <div style={{
             marginBottom: 'var(--space-sm)',
             marginTop: 'var(--space-xs)',
@@ -1152,7 +1107,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
             </label>
           </div>
 
-          {/* Advanced Options Toggle - Original styling preserved */}
           <div style={{ marginBottom: 'var(--space-sm)' }}>
             <button
                 type="button"
@@ -1253,7 +1207,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                       applicationOptions
                   )}
 
-                  {/* Special Instructions */}
                   <div style={{ marginBottom: 'var(--space-sm)' }}>
                     <label htmlFor="special-instructions" className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
                       Special Instructions/Notes
@@ -1288,7 +1241,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               </div>
           )}
 
-          {/* REVISION MODE: Cancel Button */}
           {isRevision && (
               <button
                   type="button"
@@ -1321,13 +1273,13 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                 marginBottom: '0'
               }}
               disabled={
-                  isGenerating ||
+                  (isGenerating || isRevising) ||
                   !areRequiredFieldsFilled() ||
                   !user
               }
               onClick={handleGenerateLogo}
           >
-            {isGenerating
+            {(isGenerating || isRevising)
                 ? 'Generating Logo...'
                 : !user
                     ? 'Login to Generate'
@@ -1336,7 +1288,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                         : 'Generate Logo'}
           </button>
 
-          {isGenerating && (
+          {(isGenerating || isRevising) && (
               <p className="text-center" style={{
                 fontSize: 'var(--text-xs)',
                 color: 'var(--color-gray-500)',
@@ -1347,7 +1299,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               </p>
           )}
 
-          {/* Limit reached modal */}
           {showLimitModal && (
               <div
                   className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"

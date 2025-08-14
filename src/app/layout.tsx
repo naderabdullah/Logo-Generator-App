@@ -5,6 +5,7 @@ import './globals.css';
 import Script from 'next/script';
 import UnifiedHeader from './components/UnifiedHeader';
 import { AuthProvider } from './context/AuthContext';
+import { GenerationProvider } from './context/GenerationContext';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -53,12 +54,14 @@ export default function RootLayout({
       </head>
       <body className={`${inter.className} ios-safe`}>
         <AuthProvider>
-          <div className="app-container">
-            <UnifiedHeader />
-            <main className="main-content">
-              {children}
-            </main>
-          </div>
+          <GenerationProvider>
+            <div className="app-container">
+              <UnifiedHeader />
+              <main className="main-content">
+                {children}
+              </main>
+            </div>
+          </GenerationProvider>
         </AuthProvider>
         
         <Script src="/sw-register.js" strategy="beforeInteractive" />
