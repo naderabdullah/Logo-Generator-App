@@ -289,6 +289,65 @@ export const canCreateRevision = async (originalLogoId: string, userId: string):
   }
 };
 
+// Helper function to check for existing logo names
+const getExistingLogoNames = async (userId: string): Promise<string[]> => {
+  try {
+    const db = await initDB();
+    
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction([LOGOS_STORE], 'readonly');
+      const store = transaction.objectStore(LOGOS_STORE);
+      const userIndex = store.index('userId');
+      const request = userIndex.openCursor(IDBKeyRange.only(userId));
+      
+      const existingNames: string[] = [];
+      
+      request.onsuccess = (event) => {
+        const cursor = (event.target as IDBRequest).result;
+        if (cursor) {
+          const logo = cursor.value as StoredLogo;
+          existingNames.push(logo.name);
+          cursor.continue();
+        } else {
+          resolve(existingNames);
+        }
+      };
+      
+      request.onerror = (event) => {
+        reject((event.target as IDBRequest).error);
+      };
+      
+      transaction.oncomplete = () => {
+        db.close();
+      };
+    });
+  } catch (error) {
+    console.error('Error getting existing logo names:', error);
+    throw error;
+  }
+};
+
+// Helper function to generate unique name
+const generateUniqueName = (baseName: string, existingNames: string[]): string => {
+  const trimmedBaseName = baseName.trim() || "Untitled";
+  
+  // If the base name doesn't exist, use it as-is
+  if (!existingNames.includes(trimmedBaseName)) {
+    return trimmedBaseName;
+  }
+  
+  // Find the next available number
+  let counter = 1;
+  let uniqueName = `${trimmedBaseName} ${counter}`;
+  
+  while (existingNames.includes(uniqueName)) {
+    counter++;
+    uniqueName = `${trimmedBaseName} ${counter}`;
+  }
+  
+  return uniqueName;
+};
+
 // Save a logo to IndexedDB (now user-specific)
 export const saveLogo = async (
   userId: string,
@@ -300,6 +359,13 @@ export const saveLogo = async (
   try {
     const db = await initDB();
     const id = generateLogoId();
+    
+    // Get existing logo names for this user
+    const existingNames = await getExistingLogoNames(userId);
+    
+    // Generate unique name
+    const baseName = name?.trim() || "Untitled";
+    const uniqueName = generateUniqueName(baseName, existingNames);
     
     // Determine if this is a revision or an original logo
     const isRevision = !!originalLogoId;
@@ -317,8 +383,8 @@ export const saveLogo = async (
       
       const logo: StoredLogo = {
         id,
-        userId, // NEW: Store user association
-        name: name?.trim() || "Untitled",
+        userId,
+        name: uniqueName, // Use the unique name instead of the original name
         imageDataUri,
         createdAt: Date.now(),
         parameters,
@@ -330,7 +396,7 @@ export const saveLogo = async (
       const request = store.add(logo);
       
       request.onsuccess = () => {
-        console.log("Logo saved successfully with ID:", id);
+        console.log("Logo saved successfully with ID:", id, "and unique name:", uniqueName);
         resolve(id);
       };
       
