@@ -1,4 +1,4 @@
-// src/app/components/UnifiedHeader.tsx - Enhanced tab highlighting for better visibility
+// src/app/components/UnifiedHeader.tsx - Fixed mobile navigation overflow
 'use client';
 
 import { useState } from 'react';
@@ -93,14 +93,14 @@ export default function UnifiedHeader() {
 
   return (
       <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm border-b border-gray-200 ios-unified-header">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
           {/* Mobile Layout - Stacked */}
           <div className="md:hidden">
             {/* Top row - Logo and User Info */}
             <div className="flex items-center justify-between h-12 pt-2">
               <Link 
                 href="/" 
-                className="flex items-center space-x-2 text-lg font-bold text-indigo-600"
+                className="flex items-center space-x-1 text-base font-bold text-indigo-600"
                 onClick={(e) => handleNavClick(e, '/')}
                 style={{
                   opacity: isAnyGenerationActive() ? 0.5 : 1,
@@ -110,28 +110,28 @@ export default function UnifiedHeader() {
                 <Image
                     src="/logo.ico"
                     alt="AI Logo Generator Logo"
-                    width={48}
-                    height={48}
+                    width={32}
+                    height={32}
                     className="rounded"
                 />
-                <span>AI Logo Generator</span>
+                <span className="text-sm">AI Logo Generator</span>
               </Link>
               <div className="flex items-center text-xs font-medium text-gray-700">
-                <div className="mr-2 text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                <div className="mr-1 text-xs text-gray-500 bg-gray-100 px-1 py-0.5 rounded text-[10px]">
                   <span className="font-medium">{user.logosCreated || 0}</span>/<span className="font-medium">{user.logosLimit || 0}</span>
                 </div>
-                <span className="hidden xs:inline">{user.email.split('@')[0]}</span>
+                <span className="text-xs hidden xs:inline">{user.email.split('@')[0]}</span>
               </div>
             </div>
 
-            {/* Bottom row - Navigation */}
-            <nav className="flex justify-center pb-2">
-              <div className={`flex ${isPrivilegedUser ? 'space-x-3' : 'space-x-6'}`}>
+            {/* Bottom row - Navigation - FIXED: Better mobile layout */}
+            <nav className="flex justify-center pb-1 px-1">
+              <div className="flex flex-wrap justify-center gap-1 max-w-full">
                 <Link
                     href="/"
-                    className={`py-1 px-2 text-sm font-medium rounded-t-lg transition-all duration-200 ${
+                    className={`py-1 px-2 text-xs font-medium rounded transition-all duration-200 ${
                         pathname === '/'
-                            ? 'text-white bg-indigo-600 shadow-lg transform -translate-y-0.5'
+                            ? 'text-white bg-indigo-600 shadow-sm'
                             : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                     }`}
                     onClick={(e) => handleNavClick(e, '/')}
@@ -145,9 +145,9 @@ export default function UnifiedHeader() {
                 {isPrivilegedUser && (
                     <Link
                         href="/bulk-generate"
-                        className={`py-1 px-2 text-sm font-medium rounded-t-lg transition-all duration-200 ${
+                        className={`py-1 px-2 text-xs font-medium rounded transition-all duration-200 ${
                             pathname === '/bulk-generate'
-                                ? 'text-white bg-indigo-600 shadow-lg transform -translate-y-0.5'
+                                ? 'text-white bg-indigo-600 shadow-sm'
                                 : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                         }`}
                         onClick={(e) => handleNavClick(e, '/bulk-generate')}
@@ -156,15 +156,15 @@ export default function UnifiedHeader() {
                           cursor: isAnyGenerationActive() ? 'not-allowed' : 'pointer'
                         }}
                     >
-                      🚀 Bulk Generate
+                      Bulk
                     </Link>
                 )}
                 {isPrivilegedUser && (
                     <Link
                         href="/catalog"
-                        className={`py-1 px-2 text-sm font-medium rounded-t-lg transition-all duration-200 ${
+                        className={`py-1 px-2 text-xs font-medium rounded transition-all duration-200 ${
                             pathname === '/catalog'
-                                ? 'text-white bg-indigo-600 shadow-lg transform -translate-y-0.5'
+                                ? 'text-white bg-indigo-600 shadow-sm'
                                 : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                         }`}
                         onClick={(e) => handleNavClick(e, '/catalog')}
@@ -173,14 +173,14 @@ export default function UnifiedHeader() {
                           cursor: isAnyGenerationActive() ? 'not-allowed' : 'pointer'
                         }}
                     >
-                      📚 Catalog
+                      Catalog
                     </Link>
                 )}
                 <Link
                     href="/history"
-                    className={`py-1 px-2 text-sm font-medium rounded-t-lg transition-all duration-200 ${
+                    className={`py-1 px-2 text-xs font-medium rounded transition-all duration-200 ${
                         pathname === '/history'
-                            ? 'text-white bg-indigo-600 shadow-lg transform -translate-y-0.5'
+                            ? 'text-white bg-indigo-600 shadow-sm'
                             : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                     }`}
                     onClick={(e) => handleNavClick(e, '/history')}
@@ -193,9 +193,9 @@ export default function UnifiedHeader() {
                 </Link>
                 <Link
                     href="/account"
-                    className={`py-1 px-2 text-sm font-medium rounded-t-lg transition-all duration-200 ${
+                    className={`py-1 px-2 text-xs font-medium rounded transition-all duration-200 ${
                         pathname === '/account'
-                            ? 'text-white bg-indigo-600 shadow-lg transform -translate-y-0.5'
+                            ? 'text-white bg-indigo-600 shadow-sm'
                             : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                     }`}
                     onClick={(e) => handleNavClick(e, '/account')}
@@ -208,9 +208,9 @@ export default function UnifiedHeader() {
                 </Link>
                 <Link
                     href="/purchase"
-                    className={`py-1 px-2 text-sm font-medium rounded-t-lg transition-all duration-200 ${
+                    className={`py-1 px-2 text-xs font-medium rounded transition-all duration-200 ${
                         pathname === '/purchase'
-                            ? 'text-white bg-indigo-600 shadow-lg transform -translate-y-0.5'
+                            ? 'text-white bg-indigo-600 shadow-sm'
                             : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                     }`}
                     onClick={(e) => handleNavClick(e, '/purchase')}
@@ -279,7 +279,7 @@ export default function UnifiedHeader() {
                           cursor: isAnyGenerationActive() ? 'not-allowed' : 'pointer'
                         }}
                     >
-                      🚀 Bulk Generate
+                      Bulk Generate
                     </Link>
                 )}
                 {isPrivilegedUser && (
@@ -296,7 +296,7 @@ export default function UnifiedHeader() {
                           cursor: isAnyGenerationActive() ? 'not-allowed' : 'pointer'
                         }}
                     >
-                      📚 Catalog
+                      Catalog
                     </Link>
                 )}
                 <Link
