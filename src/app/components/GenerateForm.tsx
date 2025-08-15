@@ -15,6 +15,7 @@ import {
   canCreateRevision,
   syncUserUsageWithDynamoDB
 } from '@/app/utils/indexedDBUtils';
+import { INDUSTRIES } from '@/app/constants/industries';
 import CatalogModeToggle from './CatalogModeToggle';
 import CatalogCodeInput from './CatalogCodeInput';
 
@@ -261,13 +262,14 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     prompt += `Symbol Focus: ${symbolFocus}\n`;
     prompt += `Brand Personality: ${brandPersonality}\n`;
 
+    prompt += `Industry: ${industry}\n`;
+
     if (transparentBackground) {
       prompt += `Background: Transparent background (no background color or elements)\n`;
     } else {
       prompt += `Background: Include background color or design elements\n`;
     }
 
-    if (industry) prompt += `Industry: ${industry}\n`;
     if (typographyStyle) prompt += `Typography: ${typographyStyle}\n`;
     if (lineStyle) prompt += `Line Style: ${lineStyle}\n`;
     if (composition) prompt += `Composition: ${composition}\n`;
@@ -323,6 +325,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
         colorScheme &&
         symbolFocus &&
         brandPersonality &&
+        industry &&
         (referenceImagePreview || size)
     );
   }, [
@@ -331,6 +334,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     colorScheme,
     symbolFocus,
     brandPersonality,
+    industry,
     referenceImagePreview,
     size
   ]);
@@ -361,7 +365,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     setError(null);
     setLocalError(null);
     setImageDataUri(null);
-    
+
     // Set appropriate global generation state
     if (isRevision) {
       setIsRevising(true);
@@ -487,7 +491,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       label: string,
       value: string,
       onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void,
-      options: string[],
+      options: string[] | readonly string[],
       required: boolean = false
   ) => {
     const isFieldDisabled = (() => {
@@ -638,14 +642,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     'Professional', 'Playful', 'Elegant', 'Bold & Energetic',
     'Trustworthy', 'Futuristic & Cutting-Edge', 'Luxury & Premium',
     'Eco-Friendly', 'Tech & Innovation Focused'
-  ];
-
-  const industryOptions = [
-    'Technology', 'Finance/Banking', 'Healthcare/Medical',
-    'Food/Restaurant', 'Retail/Shopping', 'Education',
-    'Arts/Entertainment', 'Sports/Fitness', 'Travel/Hospitality',
-    'Professional Services', 'Manufacturing/Industrial',
-    'Non-profit/Charity', 'Fashion/Beauty', 'Construction/Real Estate'
   ];
 
   const typographyStyleOptions = [
@@ -1076,6 +1072,15 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               true
           )}
 
+          {renderDropdown(
+              "industry",
+              'Industry/Niche',
+              industry,
+              (e) => setIndustry(e.target.value),
+              INDUSTRIES,
+              true
+          )}
+
           <div style={{
             marginBottom: 'var(--space-sm)',
             marginTop: 'var(--space-xs)',
@@ -1142,14 +1147,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                 </h3>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0', margin: '0 auto' }}>
-
-                  {renderDropdown(
-                      "industry",
-                      'Industry/Niche',
-                      industry,
-                      (e) => setIndustry(e.target.value),
-                      industryOptions
-                  )}
 
                   {renderDropdown(
                       "typography",

@@ -13,6 +13,7 @@ import {
     type LogoParameters
 } from '@/app/utils/indexedDBUtils';
 import companyData from '../../data/company-names.json';
+import { INDUSTRIES, DEFAULT_INDUSTRY, isValidIndustry } from '@/app/constants/industries';
 import { useGeneration } from '@/app/context/GenerationContext';
 
 type StringIndexed<T> = { [key: string]: T };
@@ -165,15 +166,6 @@ export default function BulkGenerateView() {
 
     // AI-powered industry classification
     const classifyIndustryWithAI = async (company: CompanyData): Promise<string> => {
-        const industries = [
-            'Technology', 'Healthcare/Medical', 'Food/Restaurant', 'Finance/Banking',
-            'Construction/Real Estate', 'Education', 'Transportation/Logistics', 'Energy',
-            'Entertainment/Media', 'Retail/Fashion', 'Marketing/Advertising', 'Professional Services',
-            'Manufacturing/Industrial', 'Legal', 'Design/Creative', 'Telecommunications',
-            'Security', 'Consulting', 'Agriculture', 'Non-profit/Charity', 'Arts/Entertainment',
-            'Sports/Fitness', 'Travel/Hospitality', 'Fashion/Beauty'
-        ];
-
         const prompt = `Classify this company into the most appropriate industry category:
 
 Company Name: "${company.name}"
@@ -181,7 +173,7 @@ Description: "${company.description}"
 Slogan: "${company.slogan}"
 
 Available Industries:
-${industries.map(industry => `- ${industry}`).join('\n')}
+${INDUSTRIES.map(industry => `- ${industry}`).join('\n')}
 
 Instructions:
 - Consider the company name, description, and slogan
@@ -207,12 +199,12 @@ Industry:`;
             const result = await response.json();
             const classifiedIndustry = result.industry?.trim();
 
-            if (industries.includes(classifiedIndustry)) {
+            if (isValidIndustry(classifiedIndustry)) {
                 console.log(`✅ AI classified "${company.name}" as: ${classifiedIndustry}`);
                 return classifiedIndustry;
             } else {
-                console.warn(`AI returned invalid industry: ${classifiedIndustry}, falling back to Professional Services`);
-                return 'Professional Services';
+                console.warn(`AI returned invalid industry: ${classifiedIndustry}, falling back to ${DEFAULT_INDUSTRY}`);
+                return DEFAULT_INDUSTRY;
             }
         } catch (error) {
             console.error('Error classifying industry with AI:', error);
@@ -240,7 +232,7 @@ Industry:`;
                 return industry;
             }
         }
-        return 'Professional Services';
+        return DEFAULT_INDUSTRY;
     };
 
     // CONTEXTUAL STYLE SELECTION
