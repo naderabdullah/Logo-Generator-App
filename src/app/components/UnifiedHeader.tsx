@@ -128,21 +128,6 @@ export default function UnifiedHeader() {
             <nav className="flex justify-center pb-2">
               <div className={`flex ${isPrivilegedUser ? 'space-x-3' : 'space-x-6'}`}>
                 <Link
-                    href="/history"
-                    className={`py-1 text-sm font-medium ${
-                        pathname === '/history'
-                            ? 'text-indigo-600'
-                            : 'text-gray-500'
-                    }`}
-                    onClick={(e) => handleNavClick(e, '/history')}
-                    style={{
-                      opacity: isAnyGenerationActive() ? 0.5 : 1,
-                      cursor: isAnyGenerationActive() ? 'not-allowed' : 'pointer'
-                    }}
-                >
-                  History
-                </Link>
-                <Link
                     href="/"
                     className={`py-1 text-sm font-medium ${
                         pathname === '/'
@@ -193,6 +178,21 @@ export default function UnifiedHeader() {
                       📚 Catalog
                     </Link>
                 )}
+                <Link
+                    href="/history"
+                    className={`py-1 text-sm font-medium ${
+                        pathname === '/history'
+                            ? 'text-indigo-600'
+                            : 'text-gray-500'
+                    }`}
+                    onClick={(e) => handleNavClick(e, '/history')}
+                    style={{
+                      opacity: isAnyGenerationActive() ? 0.5 : 1,
+                      cursor: isAnyGenerationActive() ? 'not-allowed' : 'pointer'
+                    }}
+                >
+                  History
+                </Link>
                 <Link
                     href="/account"
                     className={`py-1 text-sm font-medium ${
@@ -253,21 +253,6 @@ export default function UnifiedHeader() {
             <nav className="flex-1 flex justify-center">
               <div className={`flex ${isPrivilegedUser ? 'space-x-4' : 'space-x-8'}`}>
                 <Link
-                    href="/history"
-                    className={`py-4 px-1 border-b-2 text-sm font-medium inline-flex items-center ${
-                        pathname === '/history'
-                            ? 'border-indigo-500 text-indigo-600'
-                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                    onClick={(e) => handleNavClick(e, '/history')}
-                    style={{
-                      opacity: isAnyGenerationActive() ? 0.5 : 1,
-                      cursor: isAnyGenerationActive() ? 'not-allowed' : 'pointer'
-                    }}
-                >
-                  History
-                </Link>
-                <Link
                     href="/"
                     className={`py-4 px-1 border-b-2 text-sm font-medium inline-flex items-center ${
                         pathname === '/'
@@ -318,6 +303,21 @@ export default function UnifiedHeader() {
                       📚 Catalog
                     </Link>
                 )}
+                <Link
+                    href="/history"
+                    className={`py-4 px-1 border-b-2 text-sm font-medium inline-flex items-center ${
+                        pathname === '/history'
+                            ? 'border-indigo-500 text-indigo-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                    onClick={(e) => handleNavClick(e, '/history')}
+                    style={{
+                      opacity: isAnyGenerationActive() ? 0.5 : 1,
+                      cursor: isAnyGenerationActive() ? 'not-allowed' : 'pointer'
+                    }}
+                >
+                  History
+                </Link>
                 <Link
                     href="/account"
                     className={`py-4 px-1 border-b-2 text-sm font-medium inline-flex items-center ${
