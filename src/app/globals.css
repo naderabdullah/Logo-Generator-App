@@ -706,40 +706,28 @@ body {
 .from-emerald-500 { --tw-gradient-from: #10b981; }
 .to-teal-500 { --tw-gradient-to: #14b8a6; }
 
-/* Mobile - SIMPLE AND WORKING */
-@media (max-width: 767px) {
-  :root {
-    --header-height: var(--header-height-mobile);
-  }
-  
-  /* Hide scrollbar on mobile but keep functionality */
-  body,
-  .generator-page,
-  .main-content {
-    /* Hide scrollbar for webkit browsers (iOS Safari, Chrome) */
-    -webkit-scrollbar: none;
-    /* Hide scrollbar for Firefox */
-    scrollbar-width: none;
-    /* Hide scrollbar for IE and Edge */
-    -ms-overflow-style: none;
-  }
-  
-  /* Ensure proper scrolling */
-  body {
-    overflow-x: hidden;
-    overflow-y: auto;
-  }
-  
-  .container {
-    max-width: 100%;
-    padding: 0 var(--space-sm);
-  }
-  
-  /* Generator page always scrolls on mobile */
-  .generator-page {
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-  }
+
+/* Hide scrollbar for Webkit browsers (Safari, Chrome on iOS) */
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar but maintain scroll functionality */
+* {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Specifically for body and html elements */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+}
+
+/* For any scrollable containers */
+.generator-page::-webkit-scrollbar,
+.main-content::-webkit-scrollbar {
+  display: none;
 }
 
 /* Mobile scroll fix - PERMANENT VERSION */
