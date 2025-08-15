@@ -10,7 +10,8 @@ import {
   getRevisionsForLogo,
   updateLogoName,
   StoredLogo,
-  canCreateOriginalLogo
+  canCreateOriginalLogo,
+  isLogoNameTaken
 } from '@/app/utils/indexedDBUtils';
 import { useAuth } from '@/app/context/AuthContext';
 import ImageDisplay from '@/app/components/ImageDisplay';
@@ -33,6 +34,7 @@ export default function LogoView({ logoId }: LogoViewProps) {
   const [isEditingName, setIsEditingName] = useState(false);
   const [logoName, setLogoName] = useState('');
   const nameInputRef = useRef<HTMLInputElement>(null);
+  const [nameError, setNameError] = useState<string | null>(null);
 
   // NEW: Catalog functionality state
   const [isInCatalog, setIsInCatalog] = useState<boolean>(false);
@@ -135,24 +137,51 @@ export default function LogoView({ logoId }: LogoViewProps) {
     }
   };
 
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLogoName(e.target.value);
+    if (nameError) {
+      setNameError(null);
+    }
+  };
+
   const handleNameUpdate = async () => {
     if (!logo || !user?.email) return;
 
     const trimmedName = logoName.trim();
+    
+    // Clear any previous error
+    setNameError(null);
+    
+    // If name hasn't changed, just exit edit mode
     if (trimmedName === logo.name) {
       setIsEditingName(false);
       return;
     }
+    
+    // Check if name is empty
+    if (!trimmedName) {
+      setNameError('Logo name cannot be empty');
+      return;
+    }
 
     try {
+      // Check if the new name is already taken
+      const isTaken = await isLogoNameTaken(user.email, trimmedName, logo.id);
+      
+      if (isTaken) {
+        setNameError('This name is already taken. Please choose a different name.');
+        return;
+      }
+
+      // Name is valid, proceed with update
       await updateLogoName(logo.id, trimmedName, user.email);
       setLogo(prev => prev ? { ...prev, name: trimmedName } : null);
       setIsEditingName(false);
     } catch (err) {
       console.error('Error updating logo name:', err);
+      setNameError('Failed to update name. Please try again.');
       // Revert to original name
       setLogoName(logo.name || 'Untitled');
-      setIsEditingName(false);
     }
   };
 
@@ -161,6 +190,7 @@ export default function LogoView({ logoId }: LogoViewProps) {
       handleNameUpdate();
     } else if (e.key === 'Escape') {
       setLogoName(logo?.name || 'Untitled');
+      setNameError(null);
       setIsEditingName(false);
     }
   };
@@ -305,29 +335,40 @@ export default function LogoView({ logoId }: LogoViewProps) {
             {/* Header with editable name */}
             <div className="flex items-center justify-between mb-2">
               {isEditingName ? (
-                  <div className="flex-1">
-                    <input
-                        ref={nameInputRef}
-                        type="text"
-                        value={logoName}
-                        onChange={(e) => setLogoName(e.target.value)}
-                        onBlur={handleNameUpdate}
-                        onKeyDown={handleNameKeyDown}
-                        className="form-input text-xl font-semibold w-full py-1"
-                        placeholder="Untitled"
-                        autoFocus
-                    />
-                  </div>
+                <div className="flex-1">
+                  <input
+                    ref={nameInputRef}
+                    type="text"
+                    value={logoName}
+                    onChange={handleNameChange}
+                    onBlur={handleNameUpdate}
+                    onKeyDown={handleNameKeyDown}
+                    className={`form-input text-xl font-semibold w-full py-1 ${
+                      nameError ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : ''
+                    }`}
+                    placeholder="Untitled"
+                    autoFocus
+                  />
+                  {nameError && (
+                    <p className="text-red-500 text-sm mt-1 flex items-center">
+                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {nameError}
+                    </p>
+                  )}
+                </div>
               ) : (
-                  <h2
-                      className="text-xl font-semibold cursor-pointer hover:bg-gray-100 px-2 py-1 rounded transition flex-1"
-                      onClick={() => {
-                        setIsEditingName(true);
-                        setTimeout(() => nameInputRef.current?.focus(), 0);
-                      }}
-                  >
-                    {logoName || 'Untitled'}
-                  </h2>
+                <h2
+                  className="text-xl font-semibold cursor-pointer hover:bg-gray-100 px-2 py-1 rounded transition flex-1"
+                  onClick={() => {
+                    setIsEditingName(true);
+                    setNameError(null);
+                    setTimeout(() => nameInputRef.current?.focus(), 0);
+                  }}
+                >
+                  {logoName || 'Untitled'}
+                </h2>
               )}
               {!isEditingName && (
                   <button

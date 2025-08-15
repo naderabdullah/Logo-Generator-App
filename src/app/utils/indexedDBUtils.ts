@@ -289,6 +289,48 @@ export const canCreateRevision = async (originalLogoId: string, userId: string):
   }
 };
 
+export const isLogoNameTaken = async (userId: string, name: string, excludeLogoId?: string): Promise<boolean> => {
+  try {
+    const db = await initDB();
+    
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction([LOGOS_STORE], 'readonly');
+      const store = transaction.objectStore(LOGOS_STORE);
+      const userIndex = store.index('userId');
+      const request = userIndex.openCursor(IDBKeyRange.only(userId));
+      
+      let nameExists = false;
+      
+      request.onsuccess = (event) => {
+        const cursor = (event.target as IDBRequest).result;
+        if (cursor) {
+          const logo = cursor.value as StoredLogo;
+          // Check if name matches and it's not the logo we're excluding
+          if (logo.name.toLowerCase() === name.toLowerCase().trim() && logo.id !== excludeLogoId) {
+            nameExists = true;
+            resolve(true);
+            return;
+          }
+          cursor.continue();
+        } else {
+          resolve(nameExists);
+        }
+      };
+      
+      request.onerror = (event) => {
+        reject((event.target as IDBRequest).error);
+      };
+      
+      transaction.oncomplete = () => {
+        db.close();
+      };
+    });
+  } catch (error) {
+    console.error('Error checking if logo name is taken:', error);
+    throw error;
+  }
+};
+
 // Helper function to check for existing logo names
 const getExistingLogoNames = async (userId: string): Promise<string[]> => {
   try {
