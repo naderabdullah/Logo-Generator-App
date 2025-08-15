@@ -1,4 +1,4 @@
-// src/app/components/UnifiedHeader.tsx - MINIMAL update to add generation state checking
+// src/app/components/UnifiedHeader.tsx - Enhanced tab highlighting for better visibility
 'use client';
 
 import { useState } from 'react';
@@ -129,10 +129,10 @@ export default function UnifiedHeader() {
               <div className={`flex ${isPrivilegedUser ? 'space-x-3' : 'space-x-6'}`}>
                 <Link
                     href="/"
-                    className={`py-1 text-sm font-medium ${
+                    className={`py-1 px-2 text-sm font-medium rounded-t-lg transition-all duration-200 ${
                         pathname === '/'
-                            ? 'text-indigo-600'
-                            : 'text-gray-500'
+                            ? 'text-white bg-indigo-600 shadow-lg transform -translate-y-0.5'
+                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                     }`}
                     onClick={(e) => handleNavClick(e, '/')}
                     style={{
@@ -140,16 +140,15 @@ export default function UnifiedHeader() {
                       cursor: isAnyGenerationActive() ? 'not-allowed' : 'pointer'
                     }}
                 >
-                  Generator
+                  Generate
                 </Link>
-                {/* Bulk Generate link for privileged user only */}
                 {isPrivilegedUser && (
                     <Link
                         href="/bulk-generate"
-                        className={`py-1 text-sm font-medium ${
+                        className={`py-1 px-2 text-sm font-medium rounded-t-lg transition-all duration-200 ${
                             pathname === '/bulk-generate'
-                                ? 'text-indigo-600'
-                                : 'text-gray-500'
+                                ? 'text-white bg-indigo-600 shadow-lg transform -translate-y-0.5'
+                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                         }`}
                         onClick={(e) => handleNavClick(e, '/bulk-generate')}
                         style={{
@@ -157,17 +156,16 @@ export default function UnifiedHeader() {
                           cursor: isAnyGenerationActive() ? 'not-allowed' : 'pointer'
                         }}
                     >
-                      🚀 Bulk
+                      🚀 Bulk Generate
                     </Link>
                 )}
-                {/* Catalog link for privileged user only */}
                 {isPrivilegedUser && (
                     <Link
                         href="/catalog"
-                        className={`py-1 text-sm font-medium ${
+                        className={`py-1 px-2 text-sm font-medium rounded-t-lg transition-all duration-200 ${
                             pathname === '/catalog'
-                                ? 'text-indigo-600'
-                                : 'text-gray-500'
+                                ? 'text-white bg-indigo-600 shadow-lg transform -translate-y-0.5'
+                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                         }`}
                         onClick={(e) => handleNavClick(e, '/catalog')}
                         style={{
@@ -180,10 +178,10 @@ export default function UnifiedHeader() {
                 )}
                 <Link
                     href="/history"
-                    className={`py-1 text-sm font-medium ${
+                    className={`py-1 px-2 text-sm font-medium rounded-t-lg transition-all duration-200 ${
                         pathname === '/history'
-                            ? 'text-indigo-600'
-                            : 'text-gray-500'
+                            ? 'text-white bg-indigo-600 shadow-lg transform -translate-y-0.5'
+                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                     }`}
                     onClick={(e) => handleNavClick(e, '/history')}
                     style={{
@@ -195,10 +193,10 @@ export default function UnifiedHeader() {
                 </Link>
                 <Link
                     href="/account"
-                    className={`py-1 text-sm font-medium ${
+                    className={`py-1 px-2 text-sm font-medium rounded-t-lg transition-all duration-200 ${
                         pathname === '/account'
-                            ? 'text-indigo-600'
-                            : 'text-gray-500'
+                            ? 'text-white bg-indigo-600 shadow-lg transform -translate-y-0.5'
+                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                     }`}
                     onClick={(e) => handleNavClick(e, '/account')}
                     style={{
@@ -210,10 +208,10 @@ export default function UnifiedHeader() {
                 </Link>
                 <Link
                     href="/purchase"
-                    className={`py-1 text-sm font-medium ${
+                    className={`py-1 px-2 text-sm font-medium rounded-t-lg transition-all duration-200 ${
                         pathname === '/purchase'
-                            ? 'text-indigo-600'
-                            : 'text-gray-500'
+                            ? 'text-white bg-indigo-600 shadow-lg transform -translate-y-0.5'
+                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                     }`}
                     onClick={(e) => handleNavClick(e, '/purchase')}
                     style={{
@@ -254,10 +252,10 @@ export default function UnifiedHeader() {
               <div className={`flex ${isPrivilegedUser ? 'space-x-4' : 'space-x-8'}`}>
                 <Link
                     href="/"
-                    className={`py-4 px-1 border-b-2 text-sm font-medium inline-flex items-center ${
+                    className={`py-4 px-3 border-b-4 text-sm font-medium inline-flex items-center transition-all duration-200 ${
                         pathname === '/'
-                            ? 'border-indigo-500 text-indigo-600'
-                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            ? 'border-indigo-600 text-indigo-700 bg-indigo-50 shadow-sm'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'
                     }`}
                     onClick={(e) => handleNavClick(e, '/')}
                     style={{
@@ -265,16 +263,15 @@ export default function UnifiedHeader() {
                       cursor: isAnyGenerationActive() ? 'not-allowed' : 'pointer'
                     }}
                 >
-                  Generator
+                  Generate
                 </Link>
-                {/* Bulk Generate link for privileged user only */}
                 {isPrivilegedUser && (
                     <Link
                         href="/bulk-generate"
-                        className={`py-4 px-1 border-b-2 text-sm font-medium inline-flex items-center ${
+                        className={`py-4 px-3 border-b-4 text-sm font-medium inline-flex items-center transition-all duration-200 ${
                             pathname === '/bulk-generate'
-                                ? 'border-indigo-500 text-indigo-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                ? 'border-indigo-600 text-indigo-700 bg-indigo-50 shadow-sm'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'
                         }`}
                         onClick={(e) => handleNavClick(e, '/bulk-generate')}
                         style={{
@@ -285,14 +282,13 @@ export default function UnifiedHeader() {
                       🚀 Bulk Generate
                     </Link>
                 )}
-                {/* Catalog link for privileged user only */}
                 {isPrivilegedUser && (
                     <Link
                         href="/catalog"
-                        className={`py-4 px-1 border-b-2 text-sm font-medium inline-flex items-center ${
+                        className={`py-4 px-3 border-b-4 text-sm font-medium inline-flex items-center transition-all duration-200 ${
                             pathname === '/catalog'
-                                ? 'border-indigo-500 text-indigo-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                ? 'border-indigo-600 text-indigo-700 bg-indigo-50 shadow-sm'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'
                         }`}
                         onClick={(e) => handleNavClick(e, '/catalog')}
                         style={{
@@ -305,10 +301,10 @@ export default function UnifiedHeader() {
                 )}
                 <Link
                     href="/history"
-                    className={`py-4 px-1 border-b-2 text-sm font-medium inline-flex items-center ${
+                    className={`py-4 px-3 border-b-4 text-sm font-medium inline-flex items-center transition-all duration-200 ${
                         pathname === '/history'
-                            ? 'border-indigo-500 text-indigo-600'
-                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            ? 'border-indigo-600 text-indigo-700 bg-indigo-50 shadow-sm'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'
                     }`}
                     onClick={(e) => handleNavClick(e, '/history')}
                     style={{
@@ -320,10 +316,10 @@ export default function UnifiedHeader() {
                 </Link>
                 <Link
                     href="/account"
-                    className={`py-4 px-1 border-b-2 text-sm font-medium inline-flex items-center ${
+                    className={`py-4 px-3 border-b-4 text-sm font-medium inline-flex items-center transition-all duration-200 ${
                         pathname === '/account'
-                            ? 'border-indigo-500 text-indigo-600'
-                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            ? 'border-indigo-600 text-indigo-700 bg-indigo-50 shadow-sm'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'
                     }`}
                     onClick={(e) => handleNavClick(e, '/account')}
                     style={{
@@ -335,10 +331,10 @@ export default function UnifiedHeader() {
                 </Link>
                 <Link
                     href="/purchase"
-                    className={`py-4 px-1 border-b-2 text-sm font-medium inline-flex items-center ${
+                    className={`py-4 px-3 border-b-4 text-sm font-medium inline-flex items-center transition-all duration-200 ${
                         pathname === '/purchase'
-                            ? 'border-indigo-500 text-indigo-600'
-                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            ? 'border-indigo-600 text-indigo-700 bg-indigo-50 shadow-sm'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'
                     }`}
                     onClick={(e) => handleNavClick(e, '/purchase')}
                     style={{
