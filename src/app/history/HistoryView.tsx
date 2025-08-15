@@ -1,4 +1,4 @@
-// src/app/history/HistoryView.tsx - COMPLETE with search, bulk selection, and actions dropdown + ONLY lazy loading and smart pagination added
+// src/app/history/HistoryView.tsx - COMPLETE with search, bulk selection, and actions dropdown + ONLY lazy loading and simple pagination
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
@@ -145,8 +145,9 @@ export default function HistoryView() {
         } else if (userResponse.status === 401) {
           router.push('/login?redirect=/history');
           return;
+        } else {
+          throw new Error('Failed to fetch user data');
         }
-        
       } catch (err) {
         console.error('Error fetching logos:', err);
         setError('Failed to load logo history');
@@ -269,62 +270,8 @@ export default function HistoryView() {
   const endIndex = startIndex + itemsPerPage;
   const currentLogos = filteredLogosWithRevisions.slice(startIndex, endIndex);
 
-  const handlePreviousPage = () => {
-    setCurrentPage(prev => Math.max(prev - 1, 1));
-  };
-
-  const handleNextPage = () => {
-    setCurrentPage(prev => Math.min(prev + 1, totalPages));
-  };
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
   const handleItemsPerPageChange = (newItemsPerPage: number) => {
     setItemsPerPage(newItemsPerPage);
-  };
-
-  // ADDED: Smart pagination with ellipsis
-  const getPageNumbers = () => {
-    const pages = [];
-    const showEllipsis = totalPages > 7;
-    
-    if (!showEllipsis) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      pages.push(1);
-      
-      if (currentPage <= 4) {
-        for (let i = 2; i <= Math.min(5, totalPages - 1); i++) {
-          pages.push(i);
-        }
-        if (totalPages > 5) {
-          pages.push('ellipsis-end');
-        }
-      } else if (currentPage >= totalPages - 3) {
-        if (totalPages > 5) {
-          pages.push('ellipsis-start');
-        }
-        for (let i = Math.max(totalPages - 4, 2); i <= totalPages - 1; i++) {
-          pages.push(i);
-        }
-      } else {
-        pages.push('ellipsis-start');
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-          pages.push(i);
-        }
-        pages.push('ellipsis-end');
-      }
-      
-      if (totalPages > 1) {
-        pages.push(totalPages);
-      }
-    }
-    
-    return pages;
   };
 
   // Bulk selection functions
@@ -684,110 +631,90 @@ export default function HistoryView() {
           </div>
         )}
 
-        {/* Search and Pagination Controls */}
-        {!loading && !error && logosWithRevisions.length > 0 && (
-          <>
-            {/* All Controls on Same Level */}
-            <div className="flex flex-col lg:flex-row justify-between items-center mb-4 gap-4">
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2">
-                  <label htmlFor="itemsPerPage" className="text-sm font-medium text-gray-700">
-                    Show:
-                  </label>
-                  <select
-                    id="itemsPerPage"
-                    value={itemsPerPage}
-                    onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
-                    className="form-select w-auto min-w-0 py-1 px-2 text-sm"
-                  >
-                    <option value={1}>1 per page</option>
-                    <option value={3}>3 per page</option>
-                    <option value={5}>5 per page</option>
-                    <option value={10}>10 per page</option>
-                    <option value={20}>20 per page</option>
-                  </select>
-                </div>
+        {/* Search Bar */}
+        <div className="mb-4 relative">
+          <input
+            type="text"
+            placeholder="Search logos by name or company..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent pl-10"
+          />
+          <svg className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          {searchQuery && (
+            <button
+              onClick={clearSearch}
+              className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+            >
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
 
-                {/* Selection Controls moved to left */}
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={handleSelectAllCurrentPage}
-                    className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
-                  >
-                    Select all on page
-                  </button>
-                  <button
-                    onClick={handleSelectAllFiltered}
-                    className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
-                  >
-                    Select all {searchQuery ? 'search results' : 'logos'} ({totalLogos})
-                  </button>
-                  {hasSelection && (
-                    <>
-                      <span className="text-gray-400">•</span>
-                      <button
-                        onClick={handleDeselectAll}
-                        className="text-gray-600 hover:text-gray-700 underline text-sm"
-                      >
-                        Clear selection
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Search Bar on the right */}
-              <div className="w-full max-w-md">
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search by logo name or company..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  />
-                  <svg className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  {searchQuery && (
-                    <button
-                      onClick={clearSearch}
-                      className="absolute right-3 top-2.5 h-5 w-5 text-gray-400 hover:text-gray-600"
-                    >
-                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  )}
-                </div>
-              </div>
+        {/* Pagination Controls Top */}
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <label htmlFor="itemsPerPage" className="text-sm font-medium text-gray-700">
+                Show:
+              </label>
+              <select
+                id="itemsPerPage"
+                value={itemsPerPage}
+                onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value={1}>1 per page</option>
+                <option value={3}>3 per page</option>
+                <option value={5}>5 per page</option>
+                <option value={10}>10 per page</option>
+                <option value={20}>20 per page</option>
+              </select>
             </div>
 
-            {/* Search Results Info */}
-            {searchQuery && filteredLogosWithRevisions.length === 0 && (
-              <div className="text-center py-8">
-                <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <p className="text-gray-600 mb-2">No logos found matching "{searchQuery}"</p>
-                <button 
-                  onClick={clearSearch}
-                  className="text-indigo-600 hover:text-indigo-700 font-medium"
-                >
-                  Clear search to see all logos
-                </button>
-              </div>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <button
+                onClick={handleSelectAllCurrentPage}
+                className="text-xs sm:text-sm text-indigo-600 hover:text-indigo-700 underline whitespace-nowrap"
+              >
+                Select page
+              </button>
+              <button
+                onClick={handleSelectAllFiltered}
+                className="text-xs sm:text-sm text-indigo-600 hover:text-indigo-700 underline whitespace-nowrap"
+              >
+                Select all
+              </button>
+            </div>
+          </div>
+
+          <div className="text-sm text-gray-600">
+            {searchQuery ? (
+              <>
+                Showing {filteredLogosWithRevisions.length} of {logosWithRevisions.length} logos
+                {filteredLogosWithRevisions.length === 0 && (
+                  <span className="text-red-600 ml-2">No matches found</span>
+                )}
+              </>
+            ) : (
+              `${logosWithRevisions.length} total logos`
             )}
-          </>
-        )}
-        
+          </div>
+        </div>
+
+        {/* Loading State */}
         {loading && (
-          <div className="text-center my-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600 mx-auto"></div>
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Loading your logos...</p>
           </div>
         )}
         
+        {/* Error State */}
         {error && !loading && (
           <div className="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg text-center">
             <p className="font-bold">Error</p>
@@ -795,6 +722,7 @@ export default function HistoryView() {
           </div>
         )}
         
+        {/* No Logos State */}
         {!loading && !error && logosWithRevisions.length === 0 && (
           <div className="text-center py-8">
             <p className="text-gray-600 mb-4">You haven't created any logos yet.</p>
@@ -804,9 +732,19 @@ export default function HistoryView() {
           </div>
         )}
 
+        {/* No Search Results State */}
+        {!loading && !error && logosWithRevisions.length > 0 && filteredLogosWithRevisions.length === 0 && (
+          <div className="text-center py-8">
+            <p className="text-gray-600 mb-4">No logos match your search.</p>
+            <button onClick={clearSearch} className="btn btn-secondary">
+              Clear Search
+            </button>
+          </div>
+        )}
+
+        {/* Logos Grid */}
         {!loading && !error && filteredLogosWithRevisions.length > 0 && (
           <>
-            {/* Logos Grid */}
             <div className="grid gap-2">
               {currentLogos.map(({ original, revisions }) => {
                 // Determine which logo to display (latest revision or original)
@@ -888,7 +826,7 @@ export default function HistoryView() {
                         </div>
                       </div>
 
-                      {/* Selection Checkbox - moved to the right */}
+                      {/* Selection Checkbox */}
                       <div className="flex-shrink-0 flex items-start pt-1">
                         <input
                           type="checkbox"
@@ -904,51 +842,25 @@ export default function HistoryView() {
               })}
             </div>
 
-            {/* Pagination Controls - Bottom - MODIFIED: Now uses smart pagination */}
+            {/* Pagination Controls - Bottom - UPDATED: Simple pagination like catalog */}
             {totalPages > 1 && (
               <div className="flex justify-center items-center mt-6 gap-2">
                 <button
-                  onClick={handlePreviousPage}
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                   disabled={currentPage === 1}
-                  className="btn-action btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Previous
                 </button>
-                
-                {/* Smart Page Numbers with Ellipsis */}
-                <div className="flex gap-1">
-                  {getPageNumbers().map((page, index) => {
-                    if (page === 'ellipsis-start' || page === 'ellipsis-end') {
-                      return (
-                        <span 
-                          key={`ellipsis-${index}`}
-                          className="px-3 py-2 text-gray-500 cursor-default"
-                        >
-                          ...
-                        </span>
-                      );
-                    }
-                    
-                    return (
-                      <button
-                        key={page}
-                        onClick={() => handlePageChange(page as number)}
-                        className={`btn-action ${
-                          page === currentPage 
-                            ? 'btn-primary' 
-                            : 'btn-secondary'
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    );
-                  })}
-                </div>
-                
+
+                <span className="text-sm text-gray-600">
+                  Page {currentPage} of {totalPages}
+                </span>
+
                 <button
-                  onClick={handleNextPage}
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                   disabled={currentPage === totalPages}
-                  className="btn-action btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Next
                 </button>
