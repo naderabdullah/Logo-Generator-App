@@ -1,25 +1,24 @@
 // src/app/components/CatalogCodeInput.tsx
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
-// CatalogLogo interface to match backend
 interface CatalogLogo {
     id: number;
     catalog_code: string;
     logo_key_id: string;
     image_data_uri: string;
     parameters: any;
-    created_at: string;
-    created_by: string;
     original_company_name: string;
+    created_by: string;
+    created_at: string;
 }
 
 interface CatalogCodeInputProps {
     enabled: boolean;
     value: string;
-    onChange: (code: string) => void;
-    onCatalogLoaded: (catalogData: CatalogLogo | null) => void;
+    onChange: (value: string) => void;
+    onCatalogLoaded: (catalog: CatalogLogo | null) => void;
     onError: (error: string | null) => void;
     disabled?: boolean;
 }
@@ -51,9 +50,9 @@ export default function CatalogCodeInput({
         }
     }, []); // Empty dependency array means this runs once on mount
 
-    // Validate catalog code format (CAT-XXX)
+    // Validate catalog code format (CAT-XXXX)
     const isValidCodeFormat = (code: string): boolean => {
-        return /^CAT-\d{3}$/i.test(code.trim());
+        return /^CAT-\d{4}$/i.test(code.trim());
     };
 
     // Fetch catalog data from API
@@ -94,7 +93,7 @@ export default function CatalogCodeInput({
 
         // Validate format before making API call
         if (!isValidCodeFormat(trimmedValue)) {
-            onError('Invalid format. Use: CAT-XXX (e.g., CAT-001)');
+            onError('Invalid format. Use: CAT-XXXX (e.g., CAT-0001)');
             onCatalogLoaded(null);
             return;
         }
@@ -162,7 +161,7 @@ export default function CatalogCodeInput({
                             backgroundColor: !enabled ? 'var(--color-gray-100)' : 'white',
                             cursor: !enabled ? 'not-allowed' : 'text'
                         }}
-                        maxLength={7} // CAT-XXX format
+                        maxLength={8} // CAT-XXXX format
                     />
 
                     {/* Loading Spinner */}
@@ -226,13 +225,3 @@ export default function CatalogCodeInput({
         </div>
     );
 }
-
-// // Add keyframe animation for loading spinner
-// const style = document.createElement('style');
-// style.textContent = `
-//   @keyframes spin {
-//     0% { transform: translateY(-50%) rotate(0deg); }
-//     100% { transform: translateY(-50%) rotate(360deg); }
-//   }
-// `;
-// document.head.appendChild(style);

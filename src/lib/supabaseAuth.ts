@@ -154,6 +154,8 @@ export class SupabaseAuthService {
       logosCreated: newCount 
     });
   }
+// Updated section from src/lib/supabaseAuth.ts
+
   // Generate next catalog code
   async getNextCatalogCode(): Promise<string> {
     const { data, error } = await supabaseAdmin
@@ -164,23 +166,80 @@ export class SupabaseAuthService {
 
     if (error) {
       console.error('Error getting last catalog code:', error);
-      return 'CAT-001'; // Start with first code if no entries
+      return 'CAT-0001'; // Start with first code if no entries
     }
 
     if (!data || data.length === 0) {
-      return 'CAT-001';
+      return 'CAT-0001';
     }
 
-    // Extract number from last code (e.g., "CAT-042" -> 42)
+    // Extract number from last code (e.g., "CAT-0042" -> 42)
     const lastCode = data[0].catalog_code;
     const match = lastCode.match(/CAT-(\d+)/);
     const lastNumber = match ? parseInt(match[1]) : 0;
     const nextNumber = lastNumber + 1;
 
-    // Format with leading zeros (e.g., 43 -> "CAT-043")
-    return `CAT-${nextNumber.toString().padStart(3, '0')}`;
+    // Format with leading zeros (e.g., 43 -> "CAT-0043")
+    return `CAT-${nextNumber.toString().padStart(4, '0')}`;
   }
 
+// Check if logo already exists in catalog
+  async checkLogoInCatalog(logoKeyId: string): Promise<CatalogLogo | null> {
+    const { data, error } = await supabaseAdmin
+        .from('catalog_logos')
+        .select('*')
+        .eq('logo_key_id', logoKeyId)
+        .single();
+
+    if (error && error.code !== 'PGRST116') { // PGRST116 = not found
+      throw new Error(`Failed to check catalog: ${error.message}`);
+    }
+
+    return data as CatalogLogo | null;
+  }
+
+// Add logo to catalog
+  async addToCatalog(logoData: {
+    logoKeyId: string;
+    imageDataUri: string;
+    parameters: any;
+    originalCompanyName: string;
+    createdBy: string;
+  }): Promise<CatalogLogo> {
+    try {
+      // Check if logo already exists
+      const existingLogo = await this.checkLogoInCatalog(logoData.logoKeyId);
+      if (existingLogo) {
+        throw new Error('Logo already exists in catalog');
+      }
+
+      // Generate next catalog code
+      const catalogCode = await this.getNextCatalogCode();
+
+      const { data, error } = await supabaseAdmin
+          .from('catalog_logos')
+          .insert({
+            catalog_code: catalogCode,
+            logo_key_id: logoData.logoKeyId,
+            image_data_uri: logoData.imageDataUri,
+            parameters: logoData.parameters,
+            created_by: logoData.createdBy,
+            original_company_name: logoData.originalCompanyName,
+            created_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+
+      if (error) {
+        throw new Error(`Failed to add to catalog: ${error.message}`);
+      }
+
+      return data as CatalogLogo;
+    } catch (error) {
+      console.error('Error adding to catalog:', error);
+      throw error;
+    }
+  }
 // Check if logo already exists in catalog
   async checkLogoInCatalog(logoKeyId: string): Promise<CatalogLogo | null> {
     const { data, error } = await supabaseAdmin
