@@ -570,17 +570,53 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   const handleCatalogModeChange = useCallback((newCatalogMode: boolean) => {
     setCatalogMode(newCatalogMode);
 
-    if (!newCatalogMode) {
+    if (newCatalogMode) {
+      // Switching FROM manual TO catalog mode
+      // Clear the fields that will be populated by catalog data
+      setCompanyName('');
+      setSlogan('');
+      setIndustry('');
+
+      // Also clear any existing reference image since catalog will provide its own
+      setReferenceImage(null);
+      setReferenceImagePreview(null);
+      const fileInput = document.getElementById('reference-image') as HTMLInputElement;
+      if (fileInput) {
+        fileInput.value = '';
+      }
+    } else {
+      // Switching FROM catalog TO manual mode
       setCatalogCode('');
       setCatalogData(null);
       setCatalogError(null);
+
+      // Clear reference image if it was from catalog
       if (catalogData) {
         setReferenceImage(null);
         setReferenceImagePreview(null);
       }
+
+      // Reset ALL form fields to default values (including company, slogan, industry)
+      setCompanyName('');        // ADD THIS
+      setSlogan('');             // ADD THIS
+      setIndustry('');           // ADD THIS
+      setOverallStyle('');
+      setColorScheme('');
+      setSymbolFocus('');
+      setBrandPersonality('');
+      setSize('1024x1024');
+      setTypographyStyle('');
+      setLineStyle('');
+      setComposition('');
+      setShapeEmphasis('');
+      setTexture('');
+      setComplexityLevel('');
+      setApplicationContext('');
+      setSpecialInstructions('');
+      setTransparentBackground(true);
+      setCustomColors([]);
     }
   }, [catalogData]);
-
   const handleCatalogLoaded = useCallback((catalogData: any) => {
     setCatalogData(catalogData);
 
@@ -617,6 +653,33 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
           .catch(error => {
             console.error('Error converting catalog image to file:', error);
           });
+    } else {
+      // Clear all fields when catalogData is null (when Clear button is clicked)
+      setOverallStyle('');
+      setColorScheme('');
+      setSymbolFocus('');
+      setBrandPersonality('');
+      setSize('1024x1024');
+      setTypographyStyle('');
+      setLineStyle('');
+      setComposition('');
+      setShapeEmphasis('');
+      setTexture('');
+      setComplexityLevel('');
+      setApplicationContext('');
+      setSpecialInstructions('');
+      setCustomColors([]);
+      setTransparentBackground(true);
+
+      // Clear reference image
+      setReferenceImage(null);
+      setReferenceImagePreview(null);
+
+      // Clear file input
+      const fileInput = document.getElementById('reference-image') as HTMLInputElement;
+      if (fileInput) {
+        fileInput.value = '';
+      }
     }
   }, [companyName, slogan]);
 
@@ -758,10 +821,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                   color: 'var(--color-blue-700)'
                 }}>
                   📋 Using template: <strong>{catalogData.catalog_code}</strong> - {catalogData.original_company_name}
-                  <br />
-                  <span style={{ fontSize: 'var(--text-xs)' }}>
-            All settings locked except company name, slogan and industry
-          </span>
                 </div>
             )}
           </div>
@@ -843,8 +902,8 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                         color: 'var(--color-gray-500)',
                         marginLeft: 'var(--space-xs)'
                       }}>
-      🔒
-    </span>
+          🔒
+        </span>
                   )}
                 </p>
             )}
@@ -883,42 +942,75 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                           display: 'block'
                         }}
                     />
-                    <div style={{ marginBottom: 'var(--space-xs)' }}>
-                      {!isRevision && (
-                          <button
-                              type="button"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                removeReferenceImage();
-                              }}
-                              style={{
-                                padding: 'var(--space-xs) var(--space-sm)',
-                                fontSize: 'var(--text-sm)',
-                                color: 'var(--color-error)',
-                                backgroundColor: 'white',
-                                border: '1px solid var(--color-error)',
-                                borderRadius: 'var(--radius-sm)',
-                                cursor: 'pointer',
-                                marginRight: 'var(--space-xs)'
-                              }}
-                              disabled={getFieldsDisabled()}
-                          >
-                            Remove Image
-                          </button>
-                      )}
+                    <div style={{marginBottom: 'var(--space-xs)'}}>
+
+                      <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (!catalogMode && !isRevision) {
+                              removeReferenceImage();
+                            }
+                          }}
+                          style={{
+                            padding: 'var(--space-xs) var(--space-sm)',
+                            fontSize: 'var(--text-sm)',
+                            color: (catalogMode || isRevision) ? 'var(--color-gray-500)' : 'var(--color-error)',
+                            backgroundColor: (catalogMode || isRevision) ? 'var(--color-gray-100)' : 'white',
+                            border: `1px solid ${(catalogMode || isRevision) ? 'var(--color-gray-300)' : 'var(--color-error)'}`,
+                            borderRadius: 'var(--radius-sm)',
+                            cursor: (catalogMode || isRevision) ? 'not-allowed' : 'pointer',
+                            opacity: (catalogMode || isRevision) ? 0.6 : 1,
+                            marginRight: 'var(--space-xs)',
+                            transition: 'all 0.2s ease'
+                          }}
+                          disabled={getFieldsDisabled() || catalogMode || isRevision}
+                          title={
+                            catalogMode
+                                ? "Cannot remove reference image in catalog mode"
+                                : isRevision
+                                    ? "Cannot remove reference image during revision"
+                                    : "Remove reference image"
+                          }
+                      >
+                        Remove Image
+                      </button>
+
                     </div>
                   </div>
               ) : (
                   <div>
-                    {!getFieldsDisabled() &&
-                        (<span style={{
-                          fontSize: 'var(--text-xs)',
-                          color: 'var(--color-primary)',
-                          fontWeight: '500'
-                        }}>
-                    {referenceImagePreview ? 'Change reference image' : 'Upload reference image'}
-                  </span>)
-                    }
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (!catalogMode && !isRevision && !getFieldsDisabled()) {
+                            document.getElementById('reference-image')?.click();
+                          }
+                        }}
+                        style={{
+                          padding: 'var(--space-xs) var(--space-sm)',
+                          fontSize: 'var(--text-sm)',
+                          color: (catalogMode || isRevision || getFieldsDisabled()) ? 'var(--color-gray-500)' : 'var(--color-primary)',
+                          backgroundColor: (catalogMode || isRevision || getFieldsDisabled()) ? 'var(--color-gray-100)' : 'white',
+                          border: `1px solid ${(catalogMode || isRevision || getFieldsDisabled()) ? 'var(--color-gray-300)' : 'var(--color-primary)'}`,
+                          borderRadius: 'var(--radius-sm)',
+                          cursor: (catalogMode || isRevision || getFieldsDisabled()) ? 'not-allowed' : 'pointer',
+                          opacity: (catalogMode || isRevision || getFieldsDisabled()) ? 0.6 : 1,
+                          transition: 'all 0.2s ease'
+                        }}
+                        disabled={catalogMode || isRevision || getFieldsDisabled()}
+                        title={
+                          catalogMode
+                              ? "Cannot upload reference image in catalog mode"
+                              : isRevision
+                                  ? "Cannot upload reference image during revision"
+                                  : "Upload reference image (optional)"
+                        }
+                    >
+                      📁 Upload Reference Image
+                    </button>
                   </div>
               )}
               <input
@@ -926,7 +1018,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                   id="reference-image"
                   onChange={handleReferenceImageChange}
                   accept="image/*"
-                  style={{ display: 'none' }}
+                  style={{display: 'none'}}
                   disabled={getFieldsDisabled() || isRevision}
               />
             </label>
