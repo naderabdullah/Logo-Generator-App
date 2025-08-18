@@ -496,7 +496,7 @@ export default function LogoView({ logoId }: LogoViewProps) {
                   </button>
               )}
 
-              {/* NEW: Add to Catalog button */}
+              {user?.isSuperUser && (
               <button
                   onClick={handleAddToCatalog}
                   disabled={catalogLoading || isInCatalog}
@@ -529,6 +529,7 @@ export default function LogoView({ logoId }: LogoViewProps) {
                     </>
                 )}
               </button>
+              )}
 
               <button
                   onClick={handleCreateSimilarLogo}

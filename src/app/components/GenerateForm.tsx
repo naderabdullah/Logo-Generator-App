@@ -856,6 +856,16 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
             />
           </div>
 
+
+          {renderDropdown(
+              "industry",
+              'Industry/Niche',
+              industry,
+              (e) => setIndustry(e.target.value),
+              INDUSTRIES,
+              true
+          )}
+
           {!referenceImagePreview && (
               <div style={{marginBottom: 'var(--space-sm)'}}>
                 <label htmlFor="size" className="form-label" style={{marginBottom: 'var(--space-xs)'}}>
@@ -1196,15 +1206,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               brandPersonality,
               (e) => setBrandPersonality(e.target.value),
               brandPersonalityOptions,
-              true
-          )}
-
-          {renderDropdown(
-              "industry",
-              'Industry/Niche',
-              industry,
-              (e) => setIndustry(e.target.value),
-              INDUSTRIES,
               true
           )}
 
