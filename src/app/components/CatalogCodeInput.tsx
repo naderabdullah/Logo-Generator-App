@@ -95,6 +95,7 @@ export default function CatalogCodeInput({
         if (!isValidCodeFormat(trimmedValue)) {
             onError('Invalid format. Use: CAT-XXXX (e.g., CAT-0001)');
             onCatalogLoaded(null);
+            setLastValidCode('');
             return;
         }
 
@@ -113,10 +114,12 @@ export default function CatalogCodeInput({
                 } else {
                     onCatalogLoaded(null);
                     onError(`Catalog code ${trimmedValue.toUpperCase()} not found`);
+                    setLastValidCode('');
                 }
             } catch (error) {
                 onCatalogLoaded(null);
                 onError(error instanceof Error ? error.message : 'Failed to fetch catalog data');
+                setLastValidCode('');
             } finally {
                 setLoading(false);
             }
