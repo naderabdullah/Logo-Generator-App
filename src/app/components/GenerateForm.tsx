@@ -495,7 +495,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       required: boolean = false
   ) => {
     const isFieldDisabled = (() => {
-      if (catalogMode && (id === 'company-name' || id === 'slogan')) {
+      if (catalogMode && ['company-name', 'slogan', 'industry'].includes(id)) {
         return isGenerating || isRevising;
       }
       return getFieldsDisabled();
@@ -505,7 +505,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
         <div style={{ marginBottom: 'var(--space-sm)' }}>
           <label htmlFor={id} className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
             {label} {required && <span style={{ color: 'var(--color-error)' }}>*</span>}
-            {catalogMode && !['company-name', 'slogan'].includes(id) && (
+            {catalogMode && !['company-name', 'slogan', 'industry'].includes(id) && (
                 <span style={{
                   fontSize: 'var(--text-xs)',
                   color: 'var(--color-gray-500)',
@@ -589,12 +589,12 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
 
       setCompanyName('');
       setSlogan('');
+      setIndustry('');
 
       setOverallStyle(params.overallStyle || '');
       setColorScheme(params.colorScheme || '');
       setSymbolFocus(params.symbolFocus || '');
       setBrandPersonality(params.brandPersonality || '');
-      setIndustry(params.industry || '');
       setSize(params.size || '1024x1024');
       setTypographyStyle(params.typographyStyle || '');
       setLineStyle(params.lineStyle || '');
@@ -760,7 +760,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                   📋 Using template: <strong>{catalogData.catalog_code}</strong> - {catalogData.original_company_name}
                   <br />
                   <span style={{ fontSize: 'var(--text-xs)' }}>
-            All settings locked except company name and slogan
+            All settings locked except company name, slogan and industry
           </span>
                 </div>
             )}
@@ -798,9 +798,17 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
           </div>
 
           {!referenceImagePreview && (
-              <div style={{ marginBottom: 'var(--space-sm)' }}>
-                <label htmlFor="size" className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
-                  Size <span style={{ color: 'var(--color-error)' }}>*</span>
+              <div style={{marginBottom: 'var(--space-sm)'}}>
+                <label htmlFor="size" className="form-label" style={{marginBottom: 'var(--space-xs)'}}>
+                  Size <span style={{color: 'var(--color-error)'}}>*</span>
+                  {catalogMode && (
+                      <span style={{
+                        fontSize: 'var(--text-xs)',
+                        color: 'var(--color-gray-500)',
+                        marginLeft: 'var(--space-xs)'
+                      }}>🔒
+                      </span>
+                  )}
                 </label>
                 <select
                     id="size"
@@ -820,7 +828,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               </div>
           )}
 
-          <div style={{ marginBottom: 'var(--space-sm)' }}>
+          <div style={{marginBottom: 'var(--space-sm)'}}>
             {!referenceImagePreview && (
                 <p style={{
                   fontSize: 'var(--text-sm)',
@@ -829,6 +837,15 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                   textAlign: 'center'
                 }}>
                   {isRevision ? 'Reference logo will be used for revision' : 'Click to upload reference image (optional)'}
+                  {catalogMode && (
+                      <span style={{
+                        fontSize: 'var(--text-xs)',
+                        color: 'var(--color-gray-500)',
+                        marginLeft: 'var(--space-xs)'
+                      }}>
+      🔒
+    </span>
+                  )}
                 </p>
             )}
 
@@ -924,9 +941,18 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               true
           )}
 
-          <div style={{ marginBottom: 'var(--space-sm)' }}>
-            <label htmlFor="color-scheme" className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
-              Color Scheme <span style={{ color: 'var(--color-error)' }}>*</span>
+          <div style={{marginBottom: 'var(--space-sm)'}}>
+            <label htmlFor="color-scheme" className="form-label" style={{marginBottom: 'var(--space-xs)'}}>
+              Color Scheme <span style={{color: 'var(--color-error)'}}>*</span>
+              {catalogMode && (
+                  <span style={{
+                    fontSize: 'var(--text-xs)',
+                    color: 'var(--color-gray-500)',
+                    marginLeft: 'var(--space-xs)'
+                  }}>
+      🔒
+    </span>
+              )}
             </label>
             <select
                 id="color-scheme"
@@ -945,7 +971,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
             </select>
 
             {colorScheme === 'Custom Colors' && (
-                <div style={{ marginTop: 'var(--space-sm)' }}>
+                <div style={{marginTop: 'var(--space-sm)'}}>
                   <p style={{
                     fontSize: 'var(--text-sm)',
                     fontWeight: '500',
@@ -953,6 +979,15 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                     color: 'var(--color-gray-700)'
                   }}>
                     Choose your colors:
+                    {catalogMode && (
+                        <span style={{
+                          fontSize: 'var(--text-xs)',
+                          color: 'var(--color-gray-500)',
+                          marginLeft: 'var(--space-xs)'
+                        }}>
+      🔒
+    </span>
+                    )}
                   </p>
 
                   <div style={{
@@ -1037,7 +1072,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                               gap: 'var(--space-xs)'
                             }}
                         >
-                          <span style={{ fontSize: '1.2em' }}>+</span> Add Color ({customColors.length}/3)
+                          <span style={{fontSize: '1.2em'}}>+</span> Add Color ({customColors.length}/3)
                         </button>
                     )}
                   </div>
@@ -1109,10 +1144,19 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                   }}
               />
               Transparent Background
+              {catalogMode && (
+                  <span style={{
+                    fontSize: 'var(--text-xs)',
+                    color: 'var(--color-gray-500)',
+                    marginLeft: 'var(--space-xs)'
+                  }}>
+      🔒
+    </span>
+              )}
             </label>
           </div>
 
-          <div style={{ marginBottom: 'var(--space-sm)' }}>
+          <div style={{marginBottom: 'var(--space-sm)'}}>
             <button
                 type="button"
                 onClick={toggleAdvancedOptions}
@@ -1204,9 +1248,19 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                       applicationOptions
                   )}
 
-                  <div style={{ marginBottom: 'var(--space-sm)' }}>
-                    <label htmlFor="special-instructions" className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
+                  <div style={{marginBottom: 'var(--space-sm)'}}>
+                    <label htmlFor="special-instructions" className="form-label"
+                           style={{marginBottom: 'var(--space-xs)'}}>
                       Special Instructions/Notes
+                      {catalogMode && (
+                          <span style={{
+                            fontSize: 'var(--text-xs)',
+                            color: 'var(--color-gray-500)',
+                            marginLeft: 'var(--space-xs)'
+                          }}>
+      🔒
+    </span>
+                      )}
                     </label>
                     <textarea
                         id="special-instructions"
