@@ -80,7 +80,8 @@ export async function POST(request: NextRequest) {
     }
 
     // UPDATED - Use superuser status instead of hard-coded email
-    const isPrivilegedBulkGeneration = isBulkGeneration && user.isSuperUser;
+    // const isPrivilegedBulkGeneration = isBulkGeneration && user.isSuperUser; <== set to this if superuser bypasses logo credit limits for bulk generating
+    const isPrivilegedBulkGeneration = false;
 
     // Check if user has remaining credits (only for new logos, not revisions, not privileged bulk generation)
     if (!isRevision && !isPrivilegedBulkGeneration && user.logosCreated >= user.logosLimit) {
