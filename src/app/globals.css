@@ -1018,3 +1018,24 @@ html:has(body[data-page="register"]) {
   margin-right: 0 !important;
   margin-bottom: 0 !important;
 }
+
+/* History View Catalog Button Styles */
+.btn-action {
+  @apply px-3 py-1.5 text-xs font-medium rounded border transition-colors duration-200;
+}
+
+.btn-action.btn-primary {
+  @apply bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700;
+}
+
+.btn-action.btn-secondary {
+  @apply bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200;
+}
+
+.btn-action.btn-danger {
+  @apply bg-red-600 text-white border-red-600 hover:bg-red-700;
+}
+
+.btn-action:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}

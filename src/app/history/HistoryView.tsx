@@ -3,6 +3,10 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/app/context/AuthContext';
+
+
+import ImageDisplay from '@/app/components/ImageDisplay';
 import { 
   getAllLogosWithRevisions, 
   deleteLogo, 
@@ -91,6 +95,7 @@ const LazyImage = ({ src, alt, className }: {
 };
 
 export default function HistoryView() {
+  const { user } = useAuth();
   const [logosWithRevisions, setLogosWithRevisions] = useState<{
     original: StoredLogo;
     revisions: StoredLogo[];
@@ -114,6 +119,12 @@ export default function HistoryView() {
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [showActionsDropdown, setShowActionsDropdown] = useState(false);
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+
+  const [catalogStates, setCatalogStates] = useState<{[logoId: string]: {
+      isInCatalog: boolean;
+      catalogLoading: boolean;
+      catalogCode: string | null;
+    }}>({});
   
   const router = useRouter();
   
@@ -234,6 +245,72 @@ export default function HistoryView() {
     return new Date(timestamp).toLocaleDateString();
   };
 
+const handleAddToCatalog = async (displayedLogo: StoredLogo) => {
+    if (!user?.isSuperUser) return;
+
+    const logoId = displayedLogo.id;
+    const currentState = catalogStates[logoId];
+
+    if (currentState?.isInCatalog) return;
+
+    setCatalogStates(prev => ({
+        ...prev,
+        [logoId]: {
+            ...prev[logoId],
+            catalogLoading: true
+        }
+    }));
+
+    try {
+        const response = await fetch('/api/catalog', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                logoKeyId: displayedLogo.id,
+                imageDataUri: displayedLogo.imageDataUri,
+                parameters: displayedLogo.parameters,
+                originalCompanyName: displayedLogo.parameters.companyName || 'Unknown Company'
+            }),
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            setCatalogStates(prev => ({
+                ...prev,
+                [logoId]: {
+                    isInCatalog: true,
+                    catalogLoading: false,
+                    catalogCode: data.catalogLogo.catalog_code
+                }
+            }));
+        } else if (response.status === 409) {
+            // Logo already in catalog
+            const data = await response.json();
+            setCatalogStates(prev => ({
+                ...prev,
+                [logoId]: {
+                    isInCatalog: true,
+                    catalogLoading: false,
+                    catalogCode: data.catalogCode
+                }
+            }));
+        } else {
+            throw new Error('Failed to add to catalog');
+        }
+    } catch (error) {
+        console.error('Error adding to catalog:', error);
+        setCatalogStates(prev => ({
+            ...prev,
+            [logoId]: {
+                ...prev[logoId],
+                catalogLoading: false
+            }
+        }));
+    }
+};
+
   // ADD: Filtered logos based on search query
   const filteredLogosWithRevisions = useMemo(() => {
     if (!searchQuery.trim()) {
@@ -268,7 +345,68 @@ export default function HistoryView() {
   const totalPages = Math.ceil(totalLogos / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentLogos = filteredLogosWithRevisions.slice(startIndex, endIndex);
+  const currentLogos = useMemo(() => {
+    return filteredLogosWithRevisions.slice(startIndex, endIndex);
+  }, [filteredLogosWithRevisions, startIndex, endIndex]);
+
+  const currentLogoIds = useMemo(() => {
+    return currentLogos.map(({ original, revisions }) => {
+      const latestRevision = getLatestRevision(revisions);
+      const displayedLogo = latestRevision || original;
+      return displayedLogo.id;
+    });
+  }, [currentLogos]);
+
+  useEffect(() => {
+    const checkAllCatalogStatuses = async () => {
+      if (!user?.isSuperUser) return;
+
+      const logoIds = currentLogos.map(({ original, revisions }) => {
+        const latestRevision = getLatestRevision(revisions);
+        const displayedLogo = latestRevision || original;
+        return displayedLogo.id;
+      });
+
+      // Check catalog status for each displayed logo
+      for (const logoId of logoIds) {
+        try {
+          const response = await fetch('/api/catalog', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ logoKeyId: logoId }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            setCatalogStates(prev => ({
+              ...prev,
+              [logoId]: {
+                isInCatalog: data.isInCatalog,
+                catalogLoading: false,
+                catalogCode: data.catalogLogo?.catalog_code || null
+              }
+            }));
+          }
+        } catch (error) {
+          console.error(`Error checking catalog status for logo ${logoId}:`, error);
+          setCatalogStates(prev => ({
+            ...prev,
+            [logoId]: {
+              isInCatalog: false,
+              catalogLoading: false,
+              catalogCode: null
+            }
+          }));
+        }
+      }
+    };
+
+    if (currentLogos.length > 0) {
+      checkAllCatalogStatuses();
+    }
+  }, [currentLogoIds, user?.isSuperUser]);
 
   const handleItemsPerPageChange = (newItemsPerPage: number) => {
     setItemsPerPage(newItemsPerPage);
@@ -816,6 +954,51 @@ export default function HistoryView() {
                           >
                             {revisions.length >= 3 ? "Max Revisions" : "Edit Logo"}
                           </button>
+                          {user?.isSuperUser && (() => {
+                            const catalogState = catalogStates[displayedLogo.id] || {
+                              isInCatalog: false,
+                              catalogLoading: false,
+                              catalogCode: null
+                            };
+
+                            return (
+                                <button
+                                    onClick={() => handleAddToCatalog(displayedLogo)}
+                                    disabled={catalogState.catalogLoading || catalogState.isInCatalog}
+                                    className={`btn-action flex items-center space-x-1 text-xs ${
+                                        catalogState.isInCatalog
+                                            ? 'bg-gray-400 text-white cursor-not-allowed'
+                                            : 'bg-purple-600 hover:bg-purple-700 text-white'
+                                    }`}
+                                >
+                                  {catalogState.catalogLoading ? (
+                                      <>
+                                        <svg className="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                        </svg>
+                                        <span>Adding...</span>
+                                      </>
+                                  ) : catalogState.isInCatalog ? (
+                                      <>
+                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        <span>In Catalog</span>
+                                        {catalogState.catalogCode && (
+                                            <span className="text-xs">({catalogState.catalogCode})</span>
+                                        )}
+                                      </>
+                                  ) : (
+                                      <>
+                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                        </svg>
+                                        <span>Add to Catalog</span>
+                                      </>
+                                  )}
+                                </button>
+                            );
+                          })()}
                           
                           <button
                             onClick={() => confirmDeleteLogo(displayedLogo.id)}
