@@ -39,7 +39,7 @@ export default function CatalogView() {
 
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(12);
+    const [itemsPerPage, setItemsPerPage] = useState(15);
 
     // Modal state for viewing parameters
     const [selectedLogo, setSelectedLogo] = useState<CatalogLogo | null>(null);
@@ -270,17 +270,18 @@ export default function CatalogView() {
                                     }}
                                     className="form-select w-auto min-w-0 py-1 px-2 text-sm"
                                 >
-                                    <option value={6}>6 per page</option>
-                                    <option value={12}>12 per page</option>
-                                    <option value={24}>24 per page</option>
-                                    <option value={48}>48 per page</option>
+                                    <option value={10}>10 per page</option>
+                                    <option value={15}>15 per page</option>
+                                    <option value={20}>20 per page</option>
+                                    <option value={25}>25 per page</option>
+                                    <option value={50}>50 per page</option>
                                 </select>
                             </div>
 
                             {/* Pagination */}
                             {totalPages > 1 && (
                                 <div className="flex items-center gap-2">
-                                    <button
+                                <button
                                         onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                         disabled={currentPage === 1}
                                         className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -304,7 +305,7 @@ export default function CatalogView() {
                         </div>
 
                         {/* Logo Grid */}
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                             {currentLogos.map((logo) => (
                                 <div
                                     key={logo.id}
@@ -322,7 +323,8 @@ export default function CatalogView() {
 
                                     {/* Catalog Code */}
                                     <div className="text-center mb-2">
-                    <span className="inline-block bg-indigo-100 text-indigo-800 text-xs font-semibold px-2 py-1 rounded">
+                    <span
+                        className="inline-block bg-indigo-100 text-indigo-800 text-xs font-semibold px-2 py-1 rounded">
                       {logo.catalog_code}
                     </span>
                                     </div>
@@ -343,7 +345,8 @@ export default function CatalogView() {
                                     </div>
 
                                     {/* Creation Info */}
-                                    <div className="text-xs text-gray-400 text-center mt-2 pt-2 border-t border-gray-100">
+                                    <div
+                                        className="text-xs text-gray-400 text-center mt-2 pt-2 border-t border-gray-100">
                                         <div className="truncate">By: {logo.created_by}</div>
                                         <div>{formatDate(logo.created_at)}</div>
                                     </div>

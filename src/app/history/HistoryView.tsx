@@ -967,7 +967,7 @@ const handleAddToCatalog = async (displayedLogo: StoredLogo) => {
                                     disabled={catalogState.catalogLoading || catalogState.isInCatalog}
                                     className={`btn-action flex items-center space-x-1 text-xs ${
                                         catalogState.isInCatalog
-                                            ? 'bg-gray-400 text-white cursor-not-allowed'
+                                            ? 'bg-gray-800 text-white cursor-not-allowed'
                                             : 'bg-purple-600 hover:bg-purple-700 text-white'
                                     }`}
                                 >
@@ -983,7 +983,7 @@ const handleAddToCatalog = async (displayedLogo: StoredLogo) => {
                                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                         </svg>
-                                        <span>In Catalog</span>
+
                                         {catalogState.catalogCode && (
                                             <span className="text-xs">({catalogState.catalogCode})</span>
                                         )}
@@ -991,17 +991,18 @@ const handleAddToCatalog = async (displayedLogo: StoredLogo) => {
                                   ) : (
                                       <>
                                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                                d="M12 4v16m8-8H4"/>
                                         </svg>
-                                        <span>Add to Catalog</span>
+                                        <span>Catalog</span>
                                       </>
                                   )}
                                 </button>
                             );
                           })()}
-                          
+
                           <button
-                            onClick={() => confirmDeleteLogo(displayedLogo.id)}
+                              onClick={() => confirmDeleteLogo(displayedLogo.id)}
                             className="btn-action btn-danger"
                           >
                             Delete
