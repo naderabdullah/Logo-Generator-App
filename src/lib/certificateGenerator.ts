@@ -2,12 +2,15 @@
 import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
 
+//TODO remove from code, add to production env, and add to .env.local
+//then replace with this: const BASE_URL = process.env.NEXTAUTH_URL
 const BASE_URL = process.env.NEXTAUTH_URL ||
     (process.env.NODE_ENV === 'production'
         ? 'https://smartylogos.com'
         : 'http://localhost:3000');
 
-// Secret key for signing certificates - should be in environment variables
+//TODO remove from code, add to production env, and add to .env.local
+//then replace with this: const CERTIFICATE_SECRET = process.env.CERTIFICATE_SECRET
 const CERTIFICATE_SECRET = process.env.CERTIFICATE_SECRET || 'your-secret-key-change-in-production';
 
 export interface CertificateData {
