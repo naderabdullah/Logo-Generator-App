@@ -4,7 +4,7 @@ import QRCode from 'qrcode';
 
 const BASE_URL = process.env.NEXTAUTH_URL ||
     (process.env.NODE_ENV === 'production'
-        ? 'https://your-production-domain.com'
+        ? 'https://smartylogos.com'
         : 'http://localhost:3000');
 
 // Secret key for signing certificates - should be in environment variables
