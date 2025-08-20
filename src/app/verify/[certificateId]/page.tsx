@@ -103,14 +103,17 @@ export default function CertificateVerificationPage({
                                 'bg-red-500'
                     }`}>
                         <div className="flex items-center justify-center text-white">
-                            <div className="w-12 h-12 rounded-full bg-white bg-opacity-20 flex items-center justify-center mr-4">
+                            <div
+                                className="w-12 h-12 rounded-full bg-white bg-opacity-20 flex items-center justify-center mr-4">
                                 {isValid ? (
                                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                              d="M5 13l4 4L19 7"/>
                                     </svg>
                                 ) : (
                                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                              d="M6 18L18 6M6 6l12 12"/>
                                     </svg>
                                 )}
                             </div>
@@ -165,7 +168,8 @@ export default function CertificateVerificationPage({
                                         <label className="block text-sm font-medium text-gray-600 mb-1">
                                             Status
                                         </label>
-                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        <span
+                                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                       Active
                     </span>
                                     </div>
@@ -183,8 +187,9 @@ export default function CertificateVerificationPage({
                                 <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
                                     <h3 className="font-medium text-indigo-900 mb-2">Certificate Grants</h3>
                                     <p className="text-indigo-800 text-sm mb-3">
-                                        This certificate establishes the holder's complete ownership of all logos created
-                                        through the AI Logo Generator platform, including:
+                                        This certificate establishes the holder's complete ownership of all logos
+                                        created
+                                        through the SMARTY LOGOS™ AI LOGO GENERATOR PLATFORM, including:
                                     </p>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-indigo-700 text-sm">
                                         <div>• Full commercial usage rights</div>
@@ -205,7 +210,8 @@ export default function CertificateVerificationPage({
                                 </p>
                                 <p className="text-gray-600">
                                     This certificate ID was not found in our verification database.
-                                    Please check the ID and try again, or contact support if you believe this is an error.
+                                    Please check the ID and try again, or contact support if you believe this is an
+                                    error.
                                 </p>
                             </div>
                         )}
@@ -213,7 +219,8 @@ export default function CertificateVerificationPage({
                         {isRevoked && certificate && (
                             <div className="text-center py-8">
                                 <p className="text-gray-600 mb-4">
-                                    This certificate was issued to <strong>{certificate.userEmail}</strong> on {certificate.issueDate}
+                                    This certificate was issued
+                                    to <strong>{certificate.userEmail}</strong> on {certificate.issueDate}
                                     but has since been revoked.
                                 </p>
                                 <p className="text-gray-600">
@@ -227,7 +234,7 @@ export default function CertificateVerificationPage({
                     <div className="bg-gray-50 px-6 py-4 border-t">
                         <div className="flex flex-col sm:flex-row items-center justify-between">
                             <p className="text-sm text-gray-500 mb-2 sm:mb-0">
-                                AI Logo Generator Platform • Certificate Verification System
+                                SMARTY LOGOS™ AI LOGO GENERATOR PLATFORM • Certificate Verification System
                             </p>
                             <Link
                                 href="/"
@@ -235,7 +242,8 @@ export default function CertificateVerificationPage({
                             >
                                 Return to Platform
                                 <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                          d="M9 5l7 7-7 7"/>
                                 </svg>
                             </Link>
                         </div>
@@ -248,11 +256,13 @@ export default function CertificateVerificationPage({
                     <div className="prose text-sm text-gray-600">
                         <p>
                             This verification system validates the authenticity of Digital Ownership Certificates
-                            issued by the AI Logo Generator platform. Each certificate contains a unique ID and
+                            issued by the SMARTY LOGOS™ AI LOGO GENERATOR PLATFORM. Each certificate contains a unique
+                            ID and
                             cryptographic signature that can be verified against our secure database.
                         </p>
                         <p className="mt-3">
-                            Valid certificates establish legal ownership of all logos created through the platform
+                            Valid certificates establish legal ownership of all logos created through the SMARTY LOGOS™
+                            AI LOGO GENERATOR PLATFORM
                             and serve as proof of intellectual property rights for commercial and legal purposes.
                         </p>
                     </div>

@@ -1,19 +1,14 @@
-// src/lib/certificateGenerator.ts - STATELESS VERSION
+// src/lib/certificateGenerator.ts - Complete file with clean design
 import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
 
-//TODO remove from code, add to production env, and add to .env.local
-//then replace with this:
-const BASE_URL = process.env.NEXTAUTH_URL
-// const BASE_URL = process.env.NEXTAUTH_URL ||
-//     (process.env.NODE_ENV === 'production'
-//         ? 'https://smartylogos.com'
-//         : 'http://localhost:3000');
+const BASE_URL = process.env.NEXTAUTH_URL ||
+    (process.env.NODE_ENV === 'production'
+        ? 'https://smartylogos.com'
+        : 'http://localhost:3000');
 
-//TODO remove from code, add to production env, and add to .env.local
-//then replace with this:
-const CERTIFICATE_SECRET = process.env.CERTIFICATE_SECRET
-// const CERTIFICATE_SECRET = process.env.CERTIFICATE_SECRET || 'your-secret-key-change-in-production';
+// Secret key for signing certificates - should be in environment variables
+const CERTIFICATE_SECRET = process.env.CERTIFICATE_SECRET || 'your-secret-key-change-in-production';
 
 export interface CertificateData {
     userEmail: string;
@@ -204,68 +199,56 @@ export async function generateOwnershipCertificate(data: CertificateData): Promi
         const textDark = [31, 41, 55]; // #1F2937
         const textGray = [107, 114, 128]; // #6B7280
 
-        // Header Background
-        doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-        doc.rect(0, 0, pageWidth, 35, 'F');
-
-        // Header Content
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(24);
-        doc.setFont('helvetica', 'bold');
-        doc.text('DIGITAL OWNERSHIP CERTIFICATE', pageWidth / 2, 20, { align: 'center' });
-
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Legal Proof of Intellectual Property Rights', pageWidth / 2, 28, { align: 'center' });
-
-        // Certificate Border
+        // Certificate Border - Start from top
         doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
         doc.setLineWidth(2);
-        doc.rect(15, 45, pageWidth - 30, pageHeight - 70);
+        doc.rect(15, 15, pageWidth - 30, pageHeight - 40); // Start from top with margin
 
         // Inner decorative border
         doc.setDrawColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
         doc.setLineWidth(0.5);
-        doc.rect(18, 48, pageWidth - 36, pageHeight - 76);
+        doc.rect(18, 18, pageWidth - 36, pageHeight - 46);
 
-        // Certificate Title
+        // Certificate Title - At top of border
         doc.setTextColor(textDark[0], textDark[1], textDark[2]);
         doc.setFontSize(20);
         doc.setFont('helvetica', 'bold');
-        doc.text('CERTIFICATE OF OWNERSHIP', pageWidth / 2, 65, { align: 'center' });
+        doc.text('CERTIFICATE OF OWNERSHIP', pageWidth / 2, 35, { align: 'center' });
 
         // Decorative line
         doc.setDrawColor(accentColor[0], accentColor[1], accentColor[2]);
         doc.setLineWidth(1);
-        doc.line(pageWidth / 2 - 40, 70, pageWidth / 2 + 40, 70);
+        doc.line(pageWidth / 2 - 40, 40, pageWidth / 2 + 40, 40);
 
         // Main Content
         doc.setTextColor(textDark[0], textDark[1], textDark[2]);
         doc.setFontSize(14);
         doc.setFont('helvetica', 'normal');
 
-        const startY = 85;
+        const startY = 50;
         let currentY = startY;
 
         // Introduction
-        doc.text('This certificate hereby declares and legally establishes that:', 25, currentY);
-        currentY += 15;
+        // Introduction
+        doc.text('This certificate hereby declares and establishes that the owner of this email:', pageWidth / 2, currentY, { align: 'center' });
+        currentY += 10;
 
         // User Information
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(16);
         doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
         doc.text(userEmail, pageWidth / 2, currentY, { align: 'center' });
-        currentY += 15;
+        currentY += 10;
 
-        // Ownership Declaration
+        // Ownership Declaration - SMARTY LOGOS™ AI LOGO GENERATOR PLATFORM
         doc.setTextColor(textDark[0], textDark[1], textDark[2]);
         doc.setFontSize(12);
         doc.setFont('helvetica', 'normal');
 
         const ownershipText = [
             'is the sole and exclusive owner of all logos, designs, graphics, and intellectual',
-            'property created through the AI Logo Generator platform associated with this account.',
+            'property created through the SMARTY LOGOS™ AI LOGO GENERATOR',
+            'PLATFORM associated with this account.',
             '',
             'This ownership includes, but is not limited to, the following comprehensive rights:'
         ];
@@ -279,7 +262,7 @@ export async function generateOwnershipCertificate(data: CertificateData): Promi
             }
         });
 
-        currentY += 8;
+        currentY += 3;
 
         // Rights List
         const rights = [
@@ -297,15 +280,31 @@ export async function generateOwnershipCertificate(data: CertificateData): Promi
             '• INCORPORATE the logos into larger works or derivative products'
         ];
 
+// Calculate block dimensions
+        const rightsBlockHeight = (rights.length * 5) + 10; // 5mm per line + 10mm padding
+        const rightsBlockY = currentY;
+
+// Draw background block (similar to QR overlay)
+        doc.setFillColor(249, 250, 251); // Same gray as details section
+        doc.rect(25, rightsBlockY - 3, pageWidth - 50, rightsBlockHeight, 'F');
+
+doc.setDrawColor(200, 200, 200);
+doc.setLineWidth(0.5);
+doc.rect(25, rightsBlockY - 3, pageWidth - 50, rightsBlockHeight);
+
+        currentY += 5; // Padding from top of block
+
+// Centered rights text
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
+        doc.setTextColor(textDark[0], textDark[1], textDark[2]);
 
         rights.forEach(right => {
-            doc.text(right, 25, currentY);
+            doc.text(right, pageWidth / 2, currentY, { align: 'center' });
             currentY += 5;
         });
 
-        currentY += 8;
+        currentY += 8; // Padding from bottom of block
 
         // Copyright Declaration
         doc.setFontSize(12);
@@ -317,7 +316,8 @@ export async function generateOwnershipCertificate(data: CertificateData): Promi
             '',
             'The certificate holder reserves and is entitled to ALL associated copyrights,',
             'including moral rights, economic rights, and any future rights that may arise',
-            'under intellectual property law. No rights are retained by the platform provider.'
+            'under intellectual property law. Limited rights are retained by',
+            'SMARTY LOGOS™ AI LOGO GENERATOR PLATFORM.'
         ];
 
         copyrightText.forEach(line => {
@@ -329,61 +329,64 @@ export async function generateOwnershipCertificate(data: CertificateData): Promi
             }
         });
 
-        currentY += 10;
+        currentY += 8; // Reduced spacing
 
-        // Legal Declaration
+        // Legal Declaration - SMARTY LOGOS™ AI LOGO GENERATOR PLATFORM
         doc.setTextColor(textDark[0], textDark[1], textDark[2]);
         doc.setFontSize(10);
         doc.setFont('helvetica', 'italic');
 
         const legalText = [
-            'This certificate constitutes a legal declaration of ownership and may be used as evidence',
-            'in legal proceedings. The platform provider hereby waives any claim to the intellectual',
-            'property described herein and acknowledges the exclusive ownership of the certificate holder.'
-        ];
+            'This certificate constitutes an official declaration of ownership and may be used accordingly.',
+            'SMARTY LOGOS™ AI LOGO GENERATOR PLATFORM hereby',
+            'waives any claim to the intellectual property described herein and acknowledges',
+            'the exclusive ownership of the certificate holder.'
+        ]
 
         legalText.forEach(line => {
             doc.text(line, pageWidth / 2, currentY, { align: 'center' });
             currentY += 4;
         });
 
-        // Certificate Details Section
-        currentY = pageHeight - 55;
+        currentY += 8; // Space before certificate details
+
+        // Certificate Details Section - More space available now
+        const detailsStartY = pageHeight - 55; // More space available
 
         // Background for certificate details
         doc.setFillColor(249, 250, 251);
-        doc.rect(20, currentY - 5, pageWidth - 40, 35, 'F');
+        doc.rect(20, detailsStartY - 5, pageWidth - 40, 30, 'F');
 
-        currentY += 5;
+        let detailsY = detailsStartY;
 
         // Certificate ID and Date
         doc.setTextColor(textGray[0], textGray[1], textGray[2]);
         doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
 
-        doc.text('Certificate ID:', 25, currentY);
+        doc.text('Certificate ID:', 25, detailsY);
         doc.setFont('helvetica', 'bold');
-        doc.text(certificateId, 55, currentY);
+        doc.text(certificateId, 55, detailsY);
 
         doc.setFont('helvetica', 'normal');
-        doc.text('Issue Date:', 25, currentY + 6);
+        doc.text('Issue Date:', 25, detailsY + 6);
         doc.setFont('helvetica', 'bold');
-        doc.text(issueDate, 55, currentY + 6);
+        doc.text(issueDate, 55, detailsY + 6);
 
         doc.setFont('helvetica', 'normal');
-        doc.text('Account Email:', 25, currentY + 12);
+        doc.text('Account Email:', 25, detailsY + 12);
         doc.setFont('helvetica', 'bold');
-        doc.text(userEmail, 55, currentY + 12);
+        doc.text(userEmail, 55, detailsY + 12);
 
-        // Digital Signature
+        // Digital Signature - Compact layout
         doc.setFont('helvetica', 'normal');
-        doc.text('Digital Signature:', 25, currentY + 18);
+        doc.text('Digital Signature:', 25, detailsY + 18);
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(8);
         const shortSignature = digitalSignature.length > 40 ?
             digitalSignature.substring(0, 40) + '...' :
             digitalSignature;
-        doc.text(shortSignature, 55, currentY + 18);
+        doc.text(shortSignature, 55, detailsY + 18);
 
         // QR CODE GENERATION
         try {
@@ -406,7 +409,7 @@ export async function generateOwnershipCertificate(data: CertificateData): Promi
 
             const qrSize = 18;
             const qrX = pageWidth - 45;
-            const qrY = currentY - 2;
+            const qrY = detailsY + 2; // Positioned within details area
 
             doc.addImage(qrCodeDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
 
@@ -417,20 +420,37 @@ export async function generateOwnershipCertificate(data: CertificateData): Promi
         } catch (error) {
             console.error('❌ Failed to generate QR code:', error);
 
+            // Fallback QR code placeholder
             doc.setDrawColor(textGray[0], textGray[1], textGray[2]);
             doc.setLineWidth(0.5);
-            doc.rect(pageWidth - 45, currentY - 2, 20, 20);
+            doc.rect(pageWidth - 45, detailsY + 2, 20, 20); // Positioned within details area
             doc.setFontSize(6);
-            doc.text('QR CODE', pageWidth - 35, currentY + 8, { align: 'center' });
-            doc.text('VERIFICATION', pageWidth - 35, currentY + 11, { align: 'center' });
+            doc.text('QR CODE', pageWidth - 35, detailsY + 12, { align: 'center' });
+            doc.text('VERIFICATION', pageWidth - 35, detailsY + 15, { align: 'center' });
         }
 
-        // Footer
+// Footer
         doc.setTextColor(textGray[0], textGray[1], textGray[2]);
         doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
-        doc.text('Generated by AI Logo Generator Platform', pageWidth / 2, pageHeight - 10, { align: 'center' });
-        doc.text(`Verify at: ${BASE_URL}/verify/${certificateId}`, pageWidth / 2, pageHeight - 6, { align: 'center' });
+        doc.text('Generated by SMARTY LOGOS™ AI LOGO GENERATOR PLATFORM', pageWidth / 2, pageHeight - 10, { align: 'center' });
+
+// Clickable verification link
+        const verificationText = `Verify at: ${BASE_URL}/verify/${certificateId}`;
+        const verificationUrl = `${BASE_URL}/verify/${certificateId}`;
+
+// Calculate text width for centering the link area
+        const textWidth = doc.getTextWidth(verificationText);
+        const linkX = (pageWidth - textWidth) / 2;
+        const linkY = pageHeight - 8; // Slightly above the text baseline
+        const linkWidth = textWidth;
+        const linkHeight = 4; // Height of clickable area
+
+// Add the text
+        doc.text(verificationText, pageWidth / 2, pageHeight - 6, { align: 'center' });
+
+// Add clickable link
+        doc.link(linkX, linkY, linkWidth, linkHeight, { url: verificationUrl });
 
         // Convert to buffer
         try {
