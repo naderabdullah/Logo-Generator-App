@@ -2,13 +2,15 @@
 import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
 
-const BASE_URL = process.env.NEXTAUTH_URL ||
-    (process.env.NODE_ENV === 'production'
-        ? 'https://smartylogos.com'
-        : 'http://localhost:3000');
+const BASE_URL = process.env.NEXTAUTH_URL;
+// const BASE_URL = process.env.NEXTAUTH_URL ||
+//     (process.env.NODE_ENV === 'production'
+//         ? 'https://smartylogos.com'
+//         : 'http://localhost:3000');
 
 // Secret key for signing certificates - should be in environment variables
-const CERTIFICATE_SECRET = process.env.CERTIFICATE_SECRET || 'your-secret-key-change-in-production';
+const CERTIFICATE_SECRET = process.env.CERTIFICATE_SECRET;
+// const CERTIFICATE_SECRET = process.env.CERTIFICATE_SECRET || 'your-secret-key-change-in-production';
 
 export interface CertificateData {
     userEmail: string;
