@@ -20,45 +20,54 @@ export interface CertificateData {
 }
 
 // Encode user data into the certificate ID for stateless verification
+// Replace your generateCertificateId function with this:
 export function generateCertificateId(userEmail: string): string {
     try {
         const timestamp = Date.now();
-        const dateStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+        const emailPrefix = userEmail.split('@')[0].substring(0, 6).toLowerCase();
 
-        // Create a compact encoding of user email (first part before @, max 8 chars)
-        const emailPrefix = userEmail.split('@')[0].substring(0, 8).toLowerCase();
+        // Create the base ID parts (keep lowercase)
+        const baseParts = `cert-${timestamp.toString(36)}-${emailPrefix}`;
 
-        // Create hash of email for verification
-        const emailHash = simpleHash(userEmail).toString(36).substring(0, 6);
+// Generate checksum using base parts + secret
+        const checksumInput = `${baseParts}-${CERTIFICATE_SECRET}`;
+        console.log('🔑 GENERATION - Secret being used:', CERTIFICATE_SECRET);
+        console.log('🔑 GENERATION - Full checksum input:', checksumInput);
+        const checksum = simpleHash(checksumInput);
+        console.log('🔑 GENERATION - Calculated checksum:', checksum);
+        console.log('🔑 GENERATION - Final certificate ID will be:', `${baseParts}-${checksum}`.toUpperCase());
+        // Final ID (keep everything lowercase for consistency)
+        const certificateId = `${baseParts}-${checksum}`;
 
-        // Format: CERT-TIMESTAMP-EMAILPREFIX-EMAILHASH
-        const id = `CERT-${timestamp.toString(36)}-${emailPrefix}-${emailHash}`.toUpperCase();
+        console.log('✅ DEBUG GENERATION:');
+        console.log('   Base parts:', baseParts);
+        console.log('   Checksum input:', checksumInput);
+        console.log('   Generated checksum:', checksum);
+        console.log('   Final ID:', certificateId);
 
-        console.log('✅ Generated self-verifying certificate ID:', id);
-        return id;
+        return certificateId.toUpperCase(); // Only convert to uppercase at the very end
     } catch (error) {
         console.error('❌ Error generating certificate ID:', error);
-        const fallbackId = `CERT-${Date.now()}-${Math.random().toString(36).substr(2, 8)}`.toUpperCase();
-        console.log('⚠️ Using fallback ID:', fallbackId);
-        return fallbackId;
+        throw new Error('Failed to generate certificate ID');
     }
 }
 
 // Simple hash function for email verification (not cryptographically secure, but sufficient for this purpose)
-function simpleHash(str: string): number {
+function simpleHash(str: string): string {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
         const char = str.charCodeAt(i);
         hash = ((hash << 5) - hash) + char;
         hash = hash & hash; // Convert to 32-bit integer
     }
-    return Math.abs(hash);
+    return Math.abs(hash).toString(36);
 }
 
 // Generate digital signature that can be verified without storing data
+// Replace your generateDigitalSignature function with this:
 export function generateDigitalSignature(data: CertificateData): string {
     try {
-        console.log('📄 Generating stateless signature for data:', data);
+        console.log('📄 Generating digital signature for data:', data);
 
         if (!data || !data.userEmail || !data.issueDate || !data.certificateId) {
             throw new Error('Missing required data for signature generation');
@@ -68,77 +77,89 @@ export function generateDigitalSignature(data: CertificateData): string {
         const signatureData = `${data.userEmail}:${data.issueDate}:${data.certificateId}:${CERTIFICATE_SECRET}`;
         console.log('📤 Signature input created (without secret shown)');
 
-        // Generate signature hash
-        const signature = simpleHash(signatureData).toString(36) + simpleHash(signatureData.split('').reverse().join('')).toString(36);
+        // Generate signature hash - simpleHash already returns a string, so no .toString(36) needed
+        const signature = simpleHash(signatureData) + simpleHash(signatureData.split('').reverse().join(''));
 
-        console.log('✅ Generated stateless signature:', signature);
+        console.log('✅ Generated digital signature:', signature);
         return signature.toUpperCase();
 
     } catch (error) {
         console.error('❌ Error generating digital signature:', error);
-        const fallbackSignature = simpleHash(`fallback-${Date.now()}`).toString(36);
+        const fallbackSignature = simpleHash(`fallback-${Date.now()}`);
         console.log('⚠️ Using fallback signature:', fallbackSignature);
         return fallbackSignature.toUpperCase();
     }
 }
-
 // Verify certificate using only the certificate ID (stateless)
+
+// Replace your verifyCertificateId function with this:
 export function verifyCertificateId(certificateId: string): {
     isValid: boolean;
     timestamp?: number;
     issueDate?: string;
     emailPrefix?: string;
     estimatedEmail?: string;
+    details?: string;
 } {
     try {
-        console.log('🔍 Verifying certificate ID:', certificateId);
+        console.log('🔍 DEBUG VERIFICATION: Verifying certificate ID:', certificateId);
 
-        // Parse certificate ID format: CERT-TIMESTAMP-EMAILPREFIX-EMAILHASH
-        const parts = certificateId.split('-');
+        // Convert to lowercase for consistent processing
+        const lowerCertId = certificateId.toLowerCase();
+        const parts = lowerCertId.split('-');
 
-        if (parts.length !== 4 || parts[0] !== 'CERT') {
-            return { isValid: false };
+        if (parts.length !== 4 || parts[0] !== 'cert') {
+            return { isValid: false, details: 'Invalid ID structure' };
         }
 
-        const timestampStr = parts[1];
-        const emailPrefix = parts[2].toLowerCase();
-        const emailHash = parts[3].toLowerCase();
+        const [certPrefix, timestampStr, emailPrefix, providedChecksum] = parts;
 
-        // Convert timestamp back to number
+        // Regenerate checksum using EXACTLY the same logic as generation
+        const baseParts = `cert-${timestampStr}-${emailPrefix}`;
+        const checksumInput = `${baseParts}-${CERTIFICATE_SECRET}`;
+        console.log('🔑 VERIFICATION - Secret being used:', CERTIFICATE_SECRET);
+        console.log('🔑 VERIFICATION - Full checksum input:', checksumInput);
+        const expectedChecksum = simpleHash(checksumInput);
+        console.log('🔑 VERIFICATION - Calculated checksum:', expectedChecksum);
+
+        console.log('🔍 DEBUG VERIFICATION:');
+        console.log('   Base parts:', baseParts);
+        console.log('   Checksum input:', checksumInput);
+        console.log('   Expected checksum:', expectedChecksum);
+        console.log('   Provided checksum:', providedChecksum);
+        console.log('   Secret:', CERTIFICATE_SECRET ? 'SET' : 'NOT SET');
+
+        if (providedChecksum !== expectedChecksum) {
+            console.log('❌ CHECKSUM MISMATCH!');
+            return {
+                isValid: false,
+                details: `Checksum mismatch. Expected: ${expectedChecksum}, got: ${providedChecksum}`
+            };
+        }
+
+        console.log('✅ CHECKSUM MATCH!');
+
         const timestamp = parseInt(timestampStr, 36);
-        const issueDate = new Date(timestamp);
-
-        // Basic validation
-        const now = Date.now();
-        const oneYearAgo = now - (365 * 24 * 60 * 60 * 1000);
-        const oneHourFromNow = now + (60 * 60 * 1000);
-
-        // Check if timestamp is reasonable (not too old, not in future)
-        if (timestamp < oneYearAgo || timestamp > oneHourFromNow) {
-            console.log('❌ Certificate timestamp out of valid range');
-            return { isValid: false };
-        }
-
-        console.log('✅ Certificate ID structure is valid');
+        const issueDate = new Date(timestamp).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
 
         return {
             isValid: true,
             timestamp,
-            issueDate: issueDate.toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            }),
+            issueDate,
             emailPrefix,
-            estimatedEmail: `${emailPrefix}@[domain]` // We can't recover the full email, but we can show the prefix
+            estimatedEmail: `${emailPrefix}@[domain]`,
+            details: 'Valid'
         };
 
     } catch (error) {
-        console.error('❌ Error verifying certificate ID:', error);
-        return { isValid: false };
+        console.error('❌ Error:', error);
+        return { isValid: false, details: `Error: ${error}` };
     }
 }
-
 // Verify the complete certificate signature
 export function verifyCertificateSignature(certificateId: string, userEmail: string, digitalSignature: string): boolean {
     try {
