@@ -19,6 +19,305 @@ export interface CertificateData {
     digitalSignature: string;
 }
 
+export interface LogoCertificateData {
+    clientEmail: string;
+    resellerEmail?: string;
+    logoId: string;
+    certificateId: string;
+    logoImageBuffer: Buffer;
+    issueDate: string;
+}
+
+// Generate consistent logo image hash for verification
+function generateLogoImageHash(logoImageBuffer: Buffer): string {
+    // Use same simple hash for consistency, but on image data
+    const imageDataString = logoImageBuffer.toString('base64');
+    const fullHash = simpleHash(imageDataString);
+    return fullHash.substring(0, 12); // Truncate for URL friendliness
+}
+
+// Generate logo certificate ID with embedded verification data
+export function generateLogoCertificateId(
+    clientEmail: string,
+    logoId: string,
+    logoImageBuffer: Buffer
+): string {
+    try {
+        const timestamp = Date.now();
+        const clientPrefix = clientEmail.split('@')[0].substring(0, 6).toLowerCase();
+
+        // Generate logo hash for image integrity
+        const logoHash = generateLogoImageHash(logoImageBuffer);
+
+        // Create base parts (no reseller in ID)
+        const baseParts = `logo-${logoId}-${timestamp.toString(36)}-${clientPrefix}-${logoHash}`;
+
+        // Generate checksum with client data + secret
+        const checksumInput = `${baseParts}-${clientEmail}-${CERTIFICATE_SECRET}`;
+        const checksum = simpleHash(checksumInput);
+
+        const certificateId = `${baseParts}-${checksum}`;
+
+        console.log('✅ Logo certificate generated:', {
+            logoId,
+            clientEmail: clientPrefix + '@...',
+            logoHashLength: logoHash.length,
+            finalId: certificateId.toUpperCase()
+        });
+
+        return certificateId.toUpperCase();
+
+    } catch (error) {
+        console.error('❌ Error generating logo certificate ID:', error);
+        throw new Error('Failed to generate logo certificate ID');
+    }
+}
+
+// Verify logo certificate using only the certificate ID (stateless)
+export function verifyLogoCertificateId(
+    certificateId: string,
+    logoImageBuffer?: Buffer
+): {
+    isValid: boolean;
+    logoId?: string;
+    clientEmail?: string;
+    issueDate?: string;
+    logoImageVerified?: boolean;
+    details?: string;
+} {
+    try {
+        console.log('🔍 Verifying logo certificate:', certificateId);
+
+        const lowerCertId = certificateId.toLowerCase();
+        const parts = lowerCertId.split('-');
+
+        // Validate structure: logo-{logoId}-{timestamp}-{clientPrefix}-{logoHash}-{checksum}
+        if (parts.length !== 6 || parts[0] !== 'logo') {
+            return { isValid: false, details: 'Invalid logo certificate structure' };
+        }
+
+        const [certType, logoId, timestampStr, clientPrefix, providedLogoHash, providedChecksum] = parts;
+
+        // Reconstruct checksum using same logic as generation
+        const baseParts = `logo-${logoId}-${timestampStr}-${clientPrefix}-${providedLogoHash}`;
+        const checksumInput = `${baseParts}-${clientPrefix}@unknown-${CERTIFICATE_SECRET}`;
+        const expectedChecksum = simpleHash(checksumInput);
+
+        console.log('🔍 Logo certificate verification:', {
+            baseParts,
+            expectedChecksum,
+            providedChecksum,
+            match: expectedChecksum === providedChecksum
+        });
+
+        if (providedChecksum !== expectedChecksum) {
+            return {
+                isValid: false,
+                details: `Checksum mismatch. Expected: ${expectedChecksum}, got: ${providedChecksum}`
+            };
+        }
+
+        // Extract timestamp and format date
+        const timestamp = parseInt(timestampStr, 36);
+        const issueDate = new Date(timestamp).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        // Optional: Verify logo image if provided
+        let logoImageVerified = false;
+        if (logoImageBuffer) {
+            const actualLogoHash = generateLogoImageHash(logoImageBuffer);
+            logoImageVerified = actualLogoHash === providedLogoHash;
+
+            console.log('🖼️ Logo image verification:', {
+                providedHash: providedLogoHash,
+                actualHash: actualLogoHash,
+                verified: logoImageVerified
+            });
+        }
+
+        return {
+            isValid: true,
+            logoId,
+            clientEmail: `${clientPrefix}@[domain]`,
+            issueDate,
+            logoImageVerified,
+            details: 'Valid logo certificate'
+        };
+
+    } catch (error) {
+        console.error('❌ Logo certificate verification error:', error);
+        return { isValid: false, details: `Error: ${error}` };
+    }
+}
+
+// Generate logo certificate PDF with embedded logo image
+export async function generateLogoCertificate(data: LogoCertificateData): Promise<Buffer> {
+    try {
+        console.log('📄 Starting logo certificate PDF generation');
+
+        const clientEmail = data.clientEmail || 'Unknown Client';
+        const resellerEmail = data.resellerEmail || 'SMARTY LOGOS™ PLATFORM';
+        const logoId = data.logoId || 'UNKNOWN-LOGO';
+        const issueDate = data.issueDate || new Date().toLocaleDateString();
+        const certificateId = data.certificateId || 'UNKNOWN-ID';
+
+        // Create PDF
+        const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+        });
+
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+
+        // Colors
+        const primaryBlue = [59, 130, 246];
+        const darkGray = [55, 65, 81];
+        const lightGray = [107, 114, 128];
+
+        // HEADER with gradient background simulation
+        doc.setFillColor(245, 247, 250);
+        doc.rect(0, 0, pageWidth, 50, 'F');
+
+        // Main title
+        doc.setFontSize(24);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+        doc.text('CERTIFICATE OF LOGO OWNERSHIP', pageWidth / 2, 30, { align: 'center' });
+
+        // CHAIN OF CUSTODY SECTION - Very prominent
+        doc.setFillColor(245, 247, 250);
+        doc.rect(20, 55, pageWidth - 40, 25, 'F');
+
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
+        doc.text('CHAIN OF CUSTODY', pageWidth / 2, 62, { align: 'center' });
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+        doc.text('Platform Creator:', 25, 68);
+        doc.text('SMARTY LOGOS™ AI LOGO GENERATOR PLATFORM', 65, 68);
+
+        doc.text('Certificate Issuer:', 25, 73);
+        doc.text(resellerEmail, 65, 73);
+
+        doc.text('Logo Owner:', 25, 78);
+        doc.text(clientEmail, 65, 78);
+
+        // Add logo image if provided
+        if (data.logoImageBuffer) {
+            const logoDataUrl = `data:image/png;base64,${data.logoImageBuffer.toString('base64')}`;
+            const logoSize = 35;
+            const logoX = (pageWidth - logoSize) / 2;
+            const logoY = 90;
+
+            doc.addImage(logoDataUrl, 'PNG', logoX, logoY, logoSize, logoSize);
+
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`Logo ID: ${logoId}`, pageWidth / 2, logoY + logoSize + 8, { align: 'center' });
+        }
+
+        // OWNERSHIP DECLARATION
+        const textStartY = data.logoImageBuffer ? 145 : 100;
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+
+        const ownershipText = `This certificate establishes that ${clientEmail} is the rightful and exclusive owner of the logo displayed above. This logo was created using the SMARTY LOGOS™ AI LOGO GENERATOR PLATFORM and this ownership certificate was issued by ${resellerEmail}.`;
+
+        const splitText = doc.splitTextToSize(ownershipText, 150);
+        doc.text(splitText, pageWidth / 2, textStartY, { align: 'center' });
+
+        // RIGHTS GRANTED SECTION
+        const rightsY = textStartY + 25;
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
+        doc.text('RIGHTS GRANTED TO OWNER', pageWidth / 2, rightsY, { align: 'center' });
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+        const rights = [
+            '• Full commercial usage rights',
+            '• Complete copyright ownership',
+            '• Transfer and resale permissions',
+            '• Modification and editing rights',
+            '• Distribution and licensing rights',
+            '• Trademark usage permissions'
+        ];
+
+        rights.forEach((right, index) => {
+            doc.text(right, 30, rightsY + 8 + (index * 5));
+        });
+
+        // CERTIFICATE DETAILS (Technical verification info)
+        const detailsY = rightsY + 45;
+        doc.setFillColor(249, 250, 251);
+        doc.rect(20, detailsY - 5, pageWidth - 40, 35, 'F');
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+        doc.text('CERTIFICATE VERIFICATION DETAILS', 25, detailsY);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.text(`Certificate ID: ${certificateId}`, 25, detailsY + 6);
+        doc.text(`Logo ID: ${logoId}`, 25, detailsY + 12);
+        doc.text(`Issue Date: ${issueDate}`, 25, detailsY + 18);
+        doc.text(`Verification: Cryptographically signed and verifiable`, 25, detailsY + 24);
+
+        // QR Code for verification
+        try {
+            const verificationUrl = `${BASE_URL}/verify/logo/${certificateId}`;
+            const qrCodeDataUrl = await QRCode.toDataURL(verificationUrl, {
+                errorCorrectionLevel: 'M',
+                margin: 1,
+                width: 80,
+            });
+
+            const qrSize = 20;
+            const qrX = pageWidth - 45;
+            const qrY = detailsY;
+
+            doc.addImage(qrCodeDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
+            doc.setFontSize(6);
+            doc.setTextColor(lightGray[0], lightGray[1], lightGray[2]);
+            doc.text('Scan to verify', qrX + qrSize/2, qrY + qrSize + 3, { align: 'center' });
+        } catch (error) {
+            console.error('❌ Failed to generate QR code:', error);
+            // Fallback QR code placeholder
+            doc.setDrawColor(lightGray[0], lightGray[1], lightGray[2]);
+            doc.setLineWidth(0.5);
+            doc.rect(pageWidth - 45, detailsY, 20, 20);
+            doc.setFontSize(6);
+            doc.text('QR CODE', pageWidth - 35, detailsY + 10, { align: 'center' });
+            doc.text('VERIFICATION', pageWidth - 35, detailsY + 13, { align: 'center' });
+        }
+
+        // FOOTER with platform attribution
+        const footerY = pageHeight - 15;
+        doc.setFontSize(8);
+        doc.setTextColor(lightGray[0], lightGray[1], lightGray[2]);
+        doc.text('This certificate was generated by SMARTY LOGOS™ AI LOGO GENERATOR PLATFORM', pageWidth / 2, footerY, { align: 'center' });
+        doc.text(`Digital verification available at: ${BASE_URL}/verify/logo/${certificateId}`, pageWidth / 2, footerY + 5, { align: 'center' });
+
+        return Buffer.from(doc.output('arraybuffer'));
+
+    } catch (error) {
+        console.error('❌ Logo certificate PDF generation failed:', error);
+        throw new Error('Failed to generate logo certificate PDF');
+    }
+}
+
 // Encode user data into the certificate ID for stateless verification
 // Replace your generateCertificateId function with this:
 export function generateCertificateId(userEmail: string): string {

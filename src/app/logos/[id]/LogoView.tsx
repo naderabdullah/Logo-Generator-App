@@ -20,6 +20,13 @@ interface LogoViewProps {
   logoId: string;
 }
 
+interface Window {
+  URL: {
+    createObjectURL: (object: File | Blob | MediaSource) => string;
+    revokeObjectURL: (url: string) => void;
+  };
+}
+
 export default function LogoView({ logoId }: LogoViewProps) {
   const [logo, setLogo] = useState<StoredLogo | null>(null);
   const [originalLogo, setOriginalLogo] = useState<StoredLogo | null>(null);
@@ -40,6 +47,11 @@ export default function LogoView({ logoId }: LogoViewProps) {
   const [isInCatalog, setIsInCatalog] = useState<boolean>(false);
   const [catalogLoading, setCatalogLoading] = useState<boolean>(false);
   const [catalogCode, setCatalogCode] = useState<string | null>(null);
+
+  const [generatingCertificate, setGeneratingCertificate] = useState(false);
+  const [showCertificateModal, setShowCertificateModal] = useState(false);
+  const [clientEmail, setClientEmail] = useState('');
+  const [certificateError, setCertificateError] = useState<string | null>(null);
 
   const router = useRouter();
   const { user } = useAuth();
@@ -289,6 +301,85 @@ export default function LogoView({ logoId }: LogoViewProps) {
     });
   };
 
+  // Certificate generation function - ADD THIS ENTIRE FUNCTION
+  const handleGenerateCertificate = async () => {
+    if (!clientEmail.trim()) {
+      setCertificateError('Client email is required');
+      return;
+    }
+
+    // Add comprehensive null checks
+    if (!logo?.id || !logo?.imageDataUri) {
+      setCertificateError('Logo data is missing. Please try refreshing the page.');
+      return;
+    }
+
+    setGeneratingCertificate(true);
+    setCertificateError(null);
+
+    try {
+      // Convert logo image to base64
+      const response = await fetch(logo.imageDataUri);
+      if (!response.ok) {
+        throw new Error('Failed to fetch logo image');
+      }
+
+      const blob = await response.blob();
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const result = reader.result as string;
+          if (result) {
+            resolve(result.split(',')[1]); // Remove data:image/png;base64, prefix
+          } else {
+            reject(new Error('Failed to read image data'));
+          }
+        };
+        reader.onerror = () => reject(new Error('FileReader error'));
+        reader.readAsDataURL(blob);
+      });
+
+      // Generate certificate
+      const certResponse = await fetch('/api/certificate/logo/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientEmail: clientEmail.trim(),
+          logoId: logo.id,
+          logoImageBase64: base64,
+          resellerEmail: user?.email
+        })
+      });
+
+      if (certResponse.ok) {
+        // Download PDF
+        const pdfBlob = await certResponse.blob();
+        const url = window.URL.createObjectURL(pdfBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `logo-certificate-${logo.id}-${Date.now()}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
+        // Reset and close modal
+        setClientEmail('');
+        setShowCertificateModal(false);
+
+        // Show success message (you can add a toast notification here)
+        console.log('Certificate generated successfully');
+      } else {
+        const errorData = await certResponse.json();
+        setCertificateError(errorData.error || 'Failed to generate certificate');
+      }
+    } catch (err) {
+      console.error('Certificate generation error:', err);
+      setCertificateError('Failed to generate certificate. Please try again.');
+    } finally {
+      setGeneratingCertificate(false);
+    }
+  };
   if (loading) {
     return (
         <main className="container mx-auto px-4 pb-6 max-w-4xl">
@@ -407,7 +498,7 @@ export default function LogoView({ logoId }: LogoViewProps) {
                       {/* Original Logo Button */}
                       {originalLogo && (
                           <button
-                              onClick={() => switchLogoVersion(originalLogo.id)}
+                              onClick={() => originalLogo?.id && switchLogoVersion(originalLogo.id)}
                               className={`relative px-4 py-2 rounded-lg border-2 font-medium text-sm transition-all duration-200 ${
                                   activeLogoId === originalLogo.id
                                       ? 'bg-indigo-600 text-white border-indigo-600 shadow-md transform scale-105'
@@ -496,6 +587,29 @@ export default function LogoView({ logoId }: LogoViewProps) {
                   </button>
               )}
 
+              {/* Certificate Generation Button - ADD THIS ENTIRE BLOCK */}
+              <button
+                  onClick={() => {
+                    if (logo?.id) {
+                      setShowCertificateModal(true);
+                    } else {
+                      console.error('Logo ID is missing');
+                    }
+                  }}
+                  className="btn-revise-logo bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-medium py-3 px-6 rounded-lg shadow-md transition-all duration-200 transform hover:scale-105"
+                  style={{
+                    backgroundColor: '#3b82f6', // Force blue background
+                    color: 'white',             // White text on blue background
+                    border: 'none'
+                  }}
+              >
+                <div className="btn-icon w-8 h-8 mx-auto mb-1">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-full h-full">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </div>
+                Generate Certificate
+              </button>
               {user?.isSuperUser && (
               <button
                   onClick={handleAddToCatalog}
@@ -846,6 +960,96 @@ export default function LogoView({ logoId }: LogoViewProps) {
                     >
                       Purchase Credits
                     </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+        )}
+        {/* Certificate Generation Modal - ADD THIS ENTIRE BLOCK */}
+        {showCertificateModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-lg max-w-md w-full">
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Generate Client Certificate</h3>
+                    <button
+                        onClick={() => {
+                          setShowCertificateModal(false);
+                          setClientEmail('');
+                          setCertificateError(null);
+                        }}
+                        className="text-gray-400 hover:text-gray-600"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  <div className="mb-4">
+                    <p className="text-sm text-gray-600 mb-4">
+                      Generate a legal ownership certificate for this logo. This certificate will establish
+                      the client as the rightful owner with full commercial usage rights.
+                    </p>
+
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Client Email Address
+                      </label>
+                      <input
+                          type="email"
+                          value={clientEmail}
+                          onChange={(e) => setClientEmail(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="client@example.com"
+                          disabled={generatingCertificate}
+                      />
+                    </div>
+
+                    {certificateError && (
+                        <div className="mb-4 bg-red-50 border border-red-200 rounded-md p-3">
+                          <p className="text-red-700 text-sm">{certificateError}</p>
+                        </div>
+                    )}
+
+                    <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4">
+                      <h4 className="font-medium text-blue-900 text-sm mb-2">Certificate will include:</h4>
+                      <ul className="text-blue-800 text-xs space-y-1">
+                        <li>• Logo image and unique ID: {logo?.id}</li>
+                        <li>• Full commercial usage rights</li>
+                        <li>• Complete copyright ownership</li>
+                        <li>• Digital verification via QR code</li>
+                        <li>• Chain of custody documentation</li>
+                      </ul>
+                    </div>
+                  </div>
+
+                  <div className="flex space-x-3">
+                    <button
+                        onClick={() => {
+                          setShowCertificateModal(false);
+                          setClientEmail('');
+                          setCertificateError(null);
+                        }}
+                        className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                        disabled={generatingCertificate}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                        onClick={handleGenerateCertificate}
+                        disabled={generatingCertificate || !clientEmail.trim()}
+                        className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {generatingCertificate ? (
+                          <div className="flex items-center justify-center">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            Generating...
+                          </div>
+                      ) : (
+                          'Generate Certificate'
+                      )}
+                    </button>
                   </div>
                 </div>
               </div>
