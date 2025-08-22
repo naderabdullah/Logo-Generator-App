@@ -75,7 +75,7 @@ export function generateLogoCertificateId(
 
 // Backward compatible verification that handles both old and new certificate formats
 // Replace the verifyLogoCertificateId function in src/lib/certificateGenerator.ts
-
+// Verify logo certificate using only the certificate ID (stateless)
 export function verifyLogoCertificateId(
     certificateId: string,
     logoImageBuffer?: Buffer
@@ -83,6 +83,7 @@ export function verifyLogoCertificateId(
     isValid: boolean;
     logoId?: string;
     clientEmail?: string;
+    clientHandle?: string;
     issueDate?: string;
     logoImageVerified?: boolean;
     details?: string;
@@ -149,7 +150,8 @@ export function verifyLogoCertificateId(
             return {
                 isValid: true,
                 logoId: logoId.toLowerCase(),
-                clientEmail: `${clientPrefix.toLowerCase()}@[verified-domain]`,
+                clientEmail: `${clientPrefix.toLowerCase()}@[domain-verified-separately]`, // ✅ Generic for new certificates
+                clientHandle: clientPrefix.toLowerCase(), // ✅ Separate handle field
                 issueDate,
                 logoImageVerified: false,
                 details: 'Certificate verified using secure checksum validation (new method)'
@@ -182,7 +184,8 @@ export function verifyLogoCertificateId(
                 return {
                     isValid: true,
                     logoId: logoId.toLowerCase(),
-                    clientEmail: testEmail,
+                    clientEmail: testEmail, // ✅ Return actual discovered email
+                    clientHandle: clientPrefix.toLowerCase(), // ✅ Separate handle field
                     issueDate,
                     logoImageVerified: false,
                     details: 'Certificate verified using legacy method (with email domain detection)'
@@ -202,6 +205,7 @@ export function verifyLogoCertificateId(
         return { isValid: false, details: `Verification error: ${error}` };
     }
 }
+
 
 // Generate logo certificate PDF with embedded logo image
 // Improved generateLogoCertificate function with better formatting
@@ -243,8 +247,8 @@ export async function generateLogoCertificate(data: LogoCertificateData): Promis
         doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
         doc.text('CERTIFICATE OF LOGO OWNERSHIP', pageWidth / 2, 25, { align: 'center' });
 
-        // CHAIN OF CUSTODY SECTION (50-85mm)
-        doc.setFillColor(backgroundGray[0], backgroundGray[1], backgroundGray[2]);
+        // CHAIN OF CUSTODY SECTION (50-85mm) - Updated with larger Logo Owner font
+        doc.setFillColor(245, 247, 250);
         doc.rect(15, 50, pageWidth - 30, 35, 'F');
 
         doc.setFontSize(12);
@@ -256,22 +260,27 @@ export async function generateLogoCertificate(data: LogoCertificateData): Promis
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
 
-        // Platform Owner
+// Platform Owner
         doc.text('Platform Owner:', 20, 66);
         doc.setFont('helvetica', 'bold');
         doc.text('SMARTY LOGOS™ AI LOGO GENERATOR PLATFORM', 65, 66);
 
-        // Certificate Issuer (Reseller)
+// Certificate Issuer (Reseller)
         doc.setFont('helvetica', 'normal');
         doc.text('Certificate Issuer:', 20, 72);
         doc.setFont('helvetica', 'bold');
         doc.text(resellerEmail, 65, 72);
 
-        // Logo Owner (Client)
+// Logo Owner (Client) - LARGER FONT
         doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10); // ✅ Increased from 9 to 10 for Logo Owner
         doc.text('Logo Owner:', 20, 78);
         doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10); // ✅ Keep larger font for the email too
         doc.text(clientEmail, 65, 78);
+
+// Reset font size for subsequent content
+        doc.setFontSize(9);
 
         // LOGO IMAGE SECTION (90-155mm) - Much larger logo
         if (data.logoImageBuffer) {
@@ -290,15 +299,38 @@ export async function generateLogoCertificate(data: LogoCertificateData): Promis
         }
 
         // OWNERSHIP DECLARATION SECTION (160-185mm)
+// OWNERSHIP DECLARATION SECTION (160-185mm) - Updated with bold client and prefix
         const ownershipY = 160;
         doc.setFontSize(11);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
 
-        const ownershipText = `This certificate establishes that ${clientEmail} is the rightful and exclusive owner of the logo displayed above. This logo was created using the SMARTY LOGOS™ AI LOGO GENERATOR PLATFORM and this ownership certificate was issued by ${resellerEmail} acting as an authorized reseller.`;
+// ✅ Updated ownership text with "owner of this email" prefix and bold client email
+        const ownershipText = `This certificate establishes that the owner of this email `;
+        const boldClientEmail = clientEmail;
+        const ownershipTextEnd = ` is the rightful and exclusive owner of the logo displayed above. This logo was created using the SMARTY LOGOS™ AI LOGO GENERATOR PLATFORM and this ownership certificate was issued by ${resellerEmail} acting as an authorized reseller.`;
 
-        const splitText = doc.splitTextToSize(ownershipText, 160);
-        doc.text(splitText, pageWidth / 2, ownershipY, { align: 'center' });
+// Split the text into parts to make client email bold
+        const textWidth = 160;
+        const startText = doc.splitTextToSize(ownershipText, textWidth);
+        const endText = doc.splitTextToSize(ownershipTextEnd, textWidth);
+
+// Calculate positioning
+        let currentY = ownershipY;
+
+// Print first part
+        doc.setFont('helvetica', 'normal');
+        doc.text(startText, pageWidth / 2, currentY, { align: 'center' });
+        currentY += startText.length * 4;
+
+// Print client email in bold
+        doc.setFont('helvetica', 'bold');
+        doc.text(boldClientEmail, pageWidth / 2, currentY, { align: 'center' });
+        currentY += 4;
+
+// Print remaining text
+        doc.setFont('helvetica', 'normal');
+        doc.text(endText, pageWidth / 2, currentY, { align: 'center' });
 
         // RIGHTS GRANTED SECTION (190-220mm)
         const rightsY = 190;
