@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface CatalogLogo {
     id: number;
@@ -208,6 +209,7 @@ export default function PublicCatalogView() {
     const [copied, setCopied] = useState(false);
     
     const [currentPage, setCurrentPage] = useState(1);
+    const router = useRouter();
 
     // Fetch catalog data with pagination (page buttons only)
     const fetchCatalog = useCallback(async (page: number = 1, search: string = '') => {
@@ -376,6 +378,16 @@ export default function PublicCatalogView() {
                         </div>
                     </div>
                 )}
+
+                {/* Dashboard Button */}
+                <div className="mb-6 flex justify-end">
+                    <button
+                        onClick={() => router.push('/dashboard')}
+                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                    >
+                        Back to Dashboard
+                    </button>
+                </div>
 
                 {/* Search */}
                 <div className="mb-6">

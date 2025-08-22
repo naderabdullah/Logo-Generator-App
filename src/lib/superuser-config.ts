@@ -11,7 +11,7 @@ export const SUPERUSER_CONFIG = {
     // 'admin@yourcompany.com',
     // 'owner@yourcompany.com',
     // 'tabdullah1215@live.com',
-    'nader.abdullah@outlook.com'
+    //'nader.abdullah@outlook.com'
   ] as string[],
   
   // Superuser privilege levels (for future expansion)
