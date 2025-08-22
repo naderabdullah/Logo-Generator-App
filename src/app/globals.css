@@ -753,8 +753,6 @@ body::-webkit-scrollbar {
   }
 }
 
-/* Add this to your src/app/globals.css file */
-
 /* Fix loading spinner centering when switching tabs */
 .container .text-center.mt-lg {
   display: flex;

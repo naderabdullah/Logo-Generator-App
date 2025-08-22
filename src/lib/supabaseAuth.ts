@@ -240,62 +240,150 @@ export class SupabaseAuthService {
       throw error;
     }
   }
-// Check if logo already exists in catalog
-  async checkLogoInCatalog(logoKeyId: string): Promise<CatalogLogo | null> {
-    const { data, error } = await supabaseAdmin
-        .from('catalog_logos')
-        .select('*')
-        .eq('logo_key_id', logoKeyId)
-        .single();
+  
+  async getCatalogLogosMetadata(offset: number = 0, limit: number = 30, searchTerm: string = '') {
+      try {
+          // Build base query
+          let baseQuery = supabaseAdmin
+              .from('catalog_logos')
+              .select(`
+                  id,
+                  catalog_code,
+                  logo_key_id,
+                  parameters,
+                  created_at,
+                  created_by,
+                  original_company_name
+              `)
+              .order('created_at', { ascending: false });
 
-    if (error && error.code !== 'PGRST116') { // PGRST116 = not found
-      throw new Error(`Failed to check catalog: ${error.message}`);
-    }
+          // Build count query with same filters
+          let countQuery = supabaseAdmin
+              .from('catalog_logos')
+              .select('*', { count: 'exact', head: true });
 
-    return data as CatalogLogo | null;
+          // Apply search filter to BOTH queries if provided
+          if (searchTerm.trim()) {
+              const searchFilter = `original_company_name.ilike.%${searchTerm}%,catalog_code.ilike.%${searchTerm}%`;
+              baseQuery = baseQuery.or(searchFilter);
+              countQuery = countQuery.or(searchFilter);
+          }
+
+          // Get data with pagination
+          const { data, error } = await baseQuery
+              .range(offset, offset + limit - 1);
+
+          if (error) {
+              throw new Error(`Failed to get catalog logos metadata: ${error.message}`);
+          }
+
+          // Get total count with same filters
+          const { count: totalCount, error: countError } = await countQuery;
+
+          if (countError) {
+              throw new Error(`Failed to get total count: ${countError.message}`);
+          }
+
+          return {
+              logos: data || [],
+              total: totalCount || 0
+          };
+      } catch (error: any) {
+          console.error('Error fetching catalog logos metadata:', error);
+          throw error;
+      }
   }
 
-// Add logo to catalog
-  async addToCatalog(logoData: {
-    logoKeyId: string;
-    imageDataUri: string;
-    parameters: any;
-    originalCompanyName: string;
-    createdBy: string;
-  }): Promise<CatalogLogo> {
+  // NEW: Get total count for stats (fast query)
+  async getCatalogLogosStats(): Promise<{
+    totalLogos: number;
+    totalContributors: number;
+    latestAddition: string | null;
+  }> {
     try {
-      // Check if logo already exists
-      const existingLogo = await this.checkLogoInCatalog(logoData.logoKeyId);
-      if (existingLogo) {
-        throw new Error('Logo already exists in catalog');
-      }
-
-      // Generate next catalog code
-      const catalogCode = await this.getNextCatalogCode();
-
-      const { data, error } = await supabaseAdmin
-          .from('catalog_logos')
-          .insert({
-            catalog_code: catalogCode,
-            logo_key_id: logoData.logoKeyId,
-            image_data_uri: logoData.imageDataUri,
-            parameters: logoData.parameters,
-            created_by: logoData.createdBy,
-            original_company_name: logoData.originalCompanyName,
-            created_at: new Date().toISOString()
-          })
-          .select()
+      // Get stats from the dedicated catalog_stats table
+      const { data: statsData, error: statsError } = await supabaseAdmin
+          .from('catalog_stats')
+          .select('total_logos, total_contributors, latest_addition')
           .single();
 
-      if (error) {
-        throw new Error(`Failed to add to catalog: ${error.message}`);
+      if (statsError) {
+        console.error('Error getting catalog stats from catalog_stats table:', statsError);
+        
+        // Fallback to manual calculation if catalog_stats table doesn't exist or is empty
+        console.log('Falling back to manual calculation...');
+        
+        // Get total count
+        const { count: totalLogos, error: countError } = await supabaseAdmin
+            .from('catalog_logos')
+            .select('*', { count: 'exact', head: true });
+
+        if (countError) {
+          throw new Error(`Failed to get catalog count: ${countError.message}`);
+        }
+
+        // Get unique contributors
+        const { data: contributors, error: contributorsError } = await supabaseAdmin
+            .from('catalog_logos')
+            .select('created_by')
+            .neq('created_by', null);
+
+        if (contributorsError) {
+          throw new Error(`Failed to get contributors: ${contributorsError.message}`);
+        }
+
+        const uniqueContributors = new Set(contributors?.map(c => c.created_by)).size;
+
+        // Get latest addition
+        const { data: latest, error: latestError } = await supabaseAdmin
+            .from('catalog_logos')
+            .select('created_at')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+        if (latestError && latestError.code !== 'PGRST116') {
+          throw new Error(`Failed to get latest addition: ${latestError.message}`);
+        }
+
+        return {
+          totalLogos: totalLogos || 0,
+          totalContributors: uniqueContributors,
+          latestAddition: latest?.created_at || null
+        };
       }
 
-      return data as CatalogLogo;
+      // Return data from catalog_stats table
+      return {
+        totalLogos: statsData.total_logos || 0,
+        totalContributors: statsData.total_contributors || 0,
+        latestAddition: statsData.latest_addition || null
+      };
+
     } catch (error) {
-      console.error('Error adding to catalog:', error);
+      console.error('Error getting catalog logos stats:', error);
       throw error;
     }
+  }
+
+  // NEW: Get single logo image by ID (fast, only one image)
+  async getCatalogLogoImage(logoId: string) {
+      try {
+          const { data, error } = await supabaseAdmin
+              .from('catalog_logos')
+              .select('id, image_data_uri')
+              .eq('id', logoId)
+              .single();
+
+          if (error) {
+              throw new Error(`Failed to get logo image: ${error.message}`);
+          }
+
+          return data;
+      } catch (error: any) {
+          console.error('Error fetching logo image:', error);
+          throw error;
+      }
   }
 
 // Get all catalog logos
@@ -417,10 +505,7 @@ export class SupabaseAuthService {
       throw error;
     }
   }
-
 }
-
-
 
 // Export singleton instance
 export const supabaseAuth = new SupabaseAuthService();

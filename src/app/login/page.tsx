@@ -54,8 +54,11 @@ function LoginForm() {
           console.log('Login page: User already authenticated:', userData.email, 'redirecting to:', redirectPath);
           router.replace(redirectPath);
           return;
+        } else if (response.status === 401) {
+          setCheckingAuth(false);
+          return;
         } else {
-          console.log('Login page: User not authenticated, status:', response.status);
+          console.log('Login page: Unexpected status:', response.status);
         }
         
         // User is not authenticated (401), show login form

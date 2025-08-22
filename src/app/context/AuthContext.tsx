@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
   const hasCheckedAuth = useRef(false); // FIXED: Track if we've checked auth
 
-  const publicRoutes = ['/login', '/signup', '/auth', '/register'];
+  const publicRoutes = ['/login', '/signup', '/auth', '/register', '/public-catalog'];
   const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route));
 
   // Function to check authentication status - FIXED: Stable function
