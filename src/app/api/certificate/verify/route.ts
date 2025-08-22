@@ -1,6 +1,7 @@
 // src/app/api/certificate/verify/route.ts - STATELESS VERSION
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyCertificateId, verifyCertificateSignature } from '@/lib/certificateGenerator';
+import { getCurrentUser } from '@/lib/auth-utils';
 
 export async function GET(request: NextRequest) {
     try {
@@ -14,10 +15,20 @@ export async function GET(request: NextRequest) {
             );
         }
 
+        let userEmail: string | undefined;
+        try {
+            const user = await getCurrentUser(request);
+            if (user && typeof user === 'object' && 'email' in user) {
+                userEmail = user.email as string;
+            }
+        } catch (error) {
+            // User not logged in - that's okay, use basic verification
+        }
+
         console.log('🔍 Verifying certificate (stateless):', certificateId);
 
         // Verify the certificate ID structure and extract information
-        const verification = verifyCertificateId(certificateId);
+        const verification = verifyCertificateId(certificateId, userEmail);
 
         if (!verification.isValid) {
             console.log('❌ Certificate ID validation failed:', certificateId);
@@ -32,7 +43,7 @@ export async function GET(request: NextRequest) {
         // Return certificate details extracted from the ID itself
         return NextResponse.json({
             certificateId: certificateId,
-            userEmail: verification.estimatedEmail, // We can only show the prefix
+            userEmail: verification.userEmail || verification.emailPrefix,
             issueDate: verification.issueDate,
             digitalSignature: 'Verified via cryptographic signature',
             status: 'active',
@@ -109,7 +120,7 @@ export async function POST(request: NextRequest) {
                 message: 'Certificate ID is valid (basic verification)',
                 certificate: {
                     certificateId: certificateId,
-                    userEmail: idVerification.estimatedEmail,
+                    userEmail: idVerification.userEmail,
                     issueDate: idVerification.issueDate,
                     status: 'active',
                     createdAt: new Date(idVerification.timestamp!).toISOString(),

@@ -44,7 +44,7 @@ export function generateLogoCertificateId(
 ): string {
     try {
         const timestamp = Date.now();
-        const clientPrefix = clientEmail.split('@')[0].substring(0, 6).toLowerCase();
+        const clientPrefix = clientEmail.split('@')[0].toLowerCase();
 
         // Generate logo hash for image integrity
         const logoHash = generateLogoImageHash(logoImageBuffer);
@@ -76,6 +76,7 @@ export function generateLogoCertificateId(
 // Backward compatible verification that handles both old and new certificate formats
 // Replace the verifyLogoCertificateId function in src/lib/certificateGenerator.ts
 // Verify logo certificate using only the certificate ID (stateless)
+
 export function verifyLogoCertificateId(
     certificateId: string,
     logoImageBuffer?: Buffer
@@ -89,7 +90,7 @@ export function verifyLogoCertificateId(
     details?: string;
 } {
     try {
-        console.log('🔍 Verifying logo certificate with checksum validation:', certificateId);
+        console.log('🔍 Verifying logo certificate:', certificateId);
 
         const upperCertId = certificateId.toUpperCase();
 
@@ -115,89 +116,35 @@ export function verifyLogoCertificateId(
         const logoIdParts = parts.slice(0, parts.length - 4);
         const logoId = logoIdParts.join('-');
 
-        console.log('🔍 Parsed certificate components:', {
-            logoId,
-            timestampStr,
-            clientPrefix,
-            logoHash,
-            providedChecksum
-        });
-
         // Reconstruct baseParts exactly as in generation
         const baseParts = `logo-${logoId.toLowerCase()}-${timestampStr.toLowerCase()}-${clientPrefix.toLowerCase()}-${logoHash.toLowerCase()}`;
 
-        // TRY METHOD 1: New method (without full email - same as reseller certificate)
-        const newChecksumInput = `${baseParts}-${CERTIFICATE_SECRET}`;
-        const newExpectedChecksum = simpleHash(newChecksumInput);
+        // Generate checksum with full handle
+        const checksumInput = `${baseParts}-${CERTIFICATE_SECRET}`;
+        const expectedChecksum = simpleHash(checksumInput);
 
-        console.log('🔑 TRYING NEW METHOD (no email):', {
-            checksumInput: newChecksumInput,
-            expectedChecksum: newExpectedChecksum.toUpperCase(),
-            providedChecksum,
-            match: newExpectedChecksum.toUpperCase() === providedChecksum
-        });
-
-        if (newExpectedChecksum.toUpperCase() === providedChecksum) {
-            console.log('✅ VERIFIED using NEW method (same security as reseller certificates)');
-
-            const timestamp = parseInt(timestampStr, 36);
-            const issueDate = new Date(timestamp).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
-
+        if (expectedChecksum.toUpperCase() !== providedChecksum) {
             return {
-                isValid: true,
-                logoId: logoId.toLowerCase(),
-                clientEmail: `${clientPrefix.toLowerCase()}@[domain-verified-separately]`, // ✅ Generic for new certificates
-                clientHandle: clientPrefix.toLowerCase(), // ✅ Separate handle field
-                issueDate,
-                logoImageVerified: false,
-                details: 'Certificate verified using secure checksum validation (new method)'
+                isValid: false,
+                details: `Security verification failed. Certificate checksum mismatch.`
             };
         }
 
-        // TRY METHOD 2: Old method (with full email) for backward compatibility
-        console.log('🔄 New method failed, trying old method with common email domains...');
+        const timestamp = parseInt(timestampStr, 36);
+        const issueDate = new Date(timestamp).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
 
-        const commonDomains = [
-            'gmail.com', 'hotmail.com', 'outlook.com', 'yahoo.com', 'live.com',
-            'aol.com', 'icloud.com', 'protonmail.com', 'mail.com'
-        ];
-
-        for (const domain of commonDomains) {
-            const testEmail = `${clientPrefix.toLowerCase()}@${domain}`;
-            const oldChecksumInput = `${baseParts}-${testEmail}-${CERTIFICATE_SECRET}`;
-            const oldExpectedChecksum = simpleHash(oldChecksumInput);
-
-            if (oldExpectedChecksum.toUpperCase() === providedChecksum) {
-                console.log('✅ VERIFIED using OLD method with email:', testEmail);
-
-                const timestamp = parseInt(timestampStr, 36);
-                const issueDate = new Date(timestamp).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                });
-
-                return {
-                    isValid: true,
-                    logoId: logoId.toLowerCase(),
-                    clientEmail: testEmail, // ✅ Return actual discovered email
-                    clientHandle: clientPrefix.toLowerCase(), // ✅ Separate handle field
-                    issueDate,
-                    logoImageVerified: false,
-                    details: 'Certificate verified using legacy method (with email domain detection)'
-                };
-            }
-        }
-
-        // If neither method worked, the certificate is invalid or tampered
-        console.log('❌ SECURITY FAILURE: Neither verification method succeeded - certificate may be tampered!');
         return {
-            isValid: false,
-            details: `Security verification failed. Certificate checksum does not match any valid pattern. Expected (new method): ${newExpectedChecksum.toUpperCase()}, got: ${providedChecksum}`
+            isValid: true,
+            logoId: logoId.toLowerCase(),
+            clientEmail: `${clientPrefix.toLowerCase()}@[domain-verified-separately]`,
+            clientHandle: clientPrefix.toLowerCase(), // ✅ Full handle
+            issueDate,
+            logoImageVerified: false,
+            details: 'Certificate verified using secure checksum validation with full email handle'
         };
 
     } catch (error) {
@@ -205,7 +152,6 @@ export function verifyLogoCertificateId(
         return { isValid: false, details: `Verification error: ${error}` };
     }
 }
-
 
 // Generate logo certificate PDF with embedded logo image
 // Improved generateLogoCertificate function with better formatting
@@ -436,7 +382,7 @@ export async function generateLogoCertificate(data: LogoCertificateData): Promis
 export function generateCertificateId(userEmail: string): string {
     try {
         const timestamp = Date.now();
-        const emailPrefix = userEmail.split('@')[0].substring(0, 6).toLowerCase();
+        const emailPrefix = userEmail.split('@')[0].toLowerCase();
 
         // Create the base ID parts (keep lowercase)
         const baseParts = `cert-${timestamp.toString(36)}-${emailPrefix}`;
@@ -505,12 +451,12 @@ export function generateDigitalSignature(data: CertificateData): string {
 // Verify certificate using only the certificate ID (stateless)
 
 // Replace your verifyCertificateId function with this:
-export function verifyCertificateId(certificateId: string): {
+export function verifyCertificateId(certificateId: string, userEmail?: string): { // ✅ Added optional parameter
     isValid: boolean;
     timestamp?: number;
     issueDate?: string;
     emailPrefix?: string;
-    estimatedEmail?: string;
+    userEmail?: string;
     details?: string;
 } {
     try {
@@ -563,7 +509,7 @@ export function verifyCertificateId(certificateId: string): {
             timestamp,
             issueDate,
             emailPrefix,
-            estimatedEmail: `${emailPrefix}@[domain]`,
+            userEmail: userEmail || `${emailPrefix}@[domain]`,
             details: 'Valid'
         };
 
