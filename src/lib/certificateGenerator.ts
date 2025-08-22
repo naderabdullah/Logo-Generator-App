@@ -44,7 +44,7 @@ export function generateLogoCertificateId(
 ): string {
     try {
         const timestamp = Date.now();
-        const clientPrefix = clientEmail.split('@')[0].substring(0, 6).toLowerCase();
+        const clientPrefix = clientEmail.split('@')[0].toLowerCase();
 
         // Generate logo hash for image integrity
         const logoHash = generateLogoImageHash(logoImageBuffer);
@@ -75,6 +75,7 @@ export function generateLogoCertificateId(
 
 // Backward compatible verification that handles both old and new certificate formats
 // Replace the verifyLogoCertificateId function in src/lib/certificateGenerator.ts
+// Verify logo certificate using only the certificate ID (stateless)
 
 export function verifyLogoCertificateId(
     certificateId: string,
@@ -83,12 +84,13 @@ export function verifyLogoCertificateId(
     isValid: boolean;
     logoId?: string;
     clientEmail?: string;
+    clientHandle?: string;
     issueDate?: string;
     logoImageVerified?: boolean;
     details?: string;
 } {
     try {
-        console.log('🔍 Verifying logo certificate with checksum validation:', certificateId);
+        console.log('🔍 Verifying logo certificate:', certificateId);
 
         const upperCertId = certificateId.toUpperCase();
 
@@ -114,87 +116,35 @@ export function verifyLogoCertificateId(
         const logoIdParts = parts.slice(0, parts.length - 4);
         const logoId = logoIdParts.join('-');
 
-        console.log('🔍 Parsed certificate components:', {
-            logoId,
-            timestampStr,
-            clientPrefix,
-            logoHash,
-            providedChecksum
-        });
-
         // Reconstruct baseParts exactly as in generation
         const baseParts = `logo-${logoId.toLowerCase()}-${timestampStr.toLowerCase()}-${clientPrefix.toLowerCase()}-${logoHash.toLowerCase()}`;
 
-        // TRY METHOD 1: New method (without full email - same as reseller certificate)
-        const newChecksumInput = `${baseParts}-${CERTIFICATE_SECRET}`;
-        const newExpectedChecksum = simpleHash(newChecksumInput);
+        // Generate checksum with full handle
+        const checksumInput = `${baseParts}-${CERTIFICATE_SECRET}`;
+        const expectedChecksum = simpleHash(checksumInput);
 
-        console.log('🔑 TRYING NEW METHOD (no email):', {
-            checksumInput: newChecksumInput,
-            expectedChecksum: newExpectedChecksum.toUpperCase(),
-            providedChecksum,
-            match: newExpectedChecksum.toUpperCase() === providedChecksum
-        });
-
-        if (newExpectedChecksum.toUpperCase() === providedChecksum) {
-            console.log('✅ VERIFIED using NEW method (same security as reseller certificates)');
-
-            const timestamp = parseInt(timestampStr, 36);
-            const issueDate = new Date(timestamp).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
-
+        if (expectedChecksum.toUpperCase() !== providedChecksum) {
             return {
-                isValid: true,
-                logoId: logoId.toLowerCase(),
-                clientEmail: `${clientPrefix.toLowerCase()}@[verified-domain]`,
-                issueDate,
-                logoImageVerified: false,
-                details: 'Certificate verified using secure checksum validation (new method)'
+                isValid: false,
+                details: `Security verification failed. Certificate checksum mismatch.`
             };
         }
 
-        // TRY METHOD 2: Old method (with full email) for backward compatibility
-        console.log('🔄 New method failed, trying old method with common email domains...');
+        const timestamp = parseInt(timestampStr, 36);
+        const issueDate = new Date(timestamp).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
 
-        const commonDomains = [
-            'gmail.com', 'hotmail.com', 'outlook.com', 'yahoo.com', 'live.com',
-            'aol.com', 'icloud.com', 'protonmail.com', 'mail.com'
-        ];
-
-        for (const domain of commonDomains) {
-            const testEmail = `${clientPrefix.toLowerCase()}@${domain}`;
-            const oldChecksumInput = `${baseParts}-${testEmail}-${CERTIFICATE_SECRET}`;
-            const oldExpectedChecksum = simpleHash(oldChecksumInput);
-
-            if (oldExpectedChecksum.toUpperCase() === providedChecksum) {
-                console.log('✅ VERIFIED using OLD method with email:', testEmail);
-
-                const timestamp = parseInt(timestampStr, 36);
-                const issueDate = new Date(timestamp).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                });
-
-                return {
-                    isValid: true,
-                    logoId: logoId.toLowerCase(),
-                    clientEmail: testEmail,
-                    issueDate,
-                    logoImageVerified: false,
-                    details: 'Certificate verified using legacy method (with email domain detection)'
-                };
-            }
-        }
-
-        // If neither method worked, the certificate is invalid or tampered
-        console.log('❌ SECURITY FAILURE: Neither verification method succeeded - certificate may be tampered!');
         return {
-            isValid: false,
-            details: `Security verification failed. Certificate checksum does not match any valid pattern. Expected (new method): ${newExpectedChecksum.toUpperCase()}, got: ${providedChecksum}`
+            isValid: true,
+            logoId: logoId.toLowerCase(),
+            clientEmail: `${clientPrefix.toLowerCase()}@[domain-verified-separately]`,
+            clientHandle: clientPrefix.toLowerCase(), // ✅ Full handle
+            issueDate,
+            logoImageVerified: false,
+            details: 'Certificate verified using secure checksum validation with full email handle'
         };
 
     } catch (error) {
@@ -243,8 +193,8 @@ export async function generateLogoCertificate(data: LogoCertificateData): Promis
         doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
         doc.text('CERTIFICATE OF LOGO OWNERSHIP', pageWidth / 2, 25, { align: 'center' });
 
-        // CHAIN OF CUSTODY SECTION (50-85mm)
-        doc.setFillColor(backgroundGray[0], backgroundGray[1], backgroundGray[2]);
+        // CHAIN OF CUSTODY SECTION (50-85mm) - Updated with larger Logo Owner font
+        doc.setFillColor(245, 247, 250);
         doc.rect(15, 50, pageWidth - 30, 35, 'F');
 
         doc.setFontSize(12);
@@ -256,22 +206,27 @@ export async function generateLogoCertificate(data: LogoCertificateData): Promis
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
 
-        // Platform Owner
+// Platform Owner
         doc.text('Platform Owner:', 20, 66);
         doc.setFont('helvetica', 'bold');
         doc.text('SMARTY LOGOS™ AI LOGO GENERATOR PLATFORM', 65, 66);
 
-        // Certificate Issuer (Reseller)
+// Certificate Issuer (Reseller)
         doc.setFont('helvetica', 'normal');
         doc.text('Certificate Issuer:', 20, 72);
         doc.setFont('helvetica', 'bold');
         doc.text(resellerEmail, 65, 72);
 
-        // Logo Owner (Client)
+// Logo Owner (Client) - LARGER FONT
         doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10); // ✅ Increased from 9 to 10 for Logo Owner
         doc.text('Logo Owner:', 20, 78);
         doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10); // ✅ Keep larger font for the email too
         doc.text(clientEmail, 65, 78);
+
+// Reset font size for subsequent content
+        doc.setFontSize(9);
 
         // LOGO IMAGE SECTION (90-155mm) - Much larger logo
         if (data.logoImageBuffer) {
@@ -290,15 +245,38 @@ export async function generateLogoCertificate(data: LogoCertificateData): Promis
         }
 
         // OWNERSHIP DECLARATION SECTION (160-185mm)
+// OWNERSHIP DECLARATION SECTION (160-185mm) - Updated with bold client and prefix
         const ownershipY = 160;
         doc.setFontSize(11);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
 
-        const ownershipText = `This certificate establishes that ${clientEmail} is the rightful and exclusive owner of the logo displayed above. This logo was created using the SMARTY LOGOS™ AI LOGO GENERATOR PLATFORM and this ownership certificate was issued by ${resellerEmail} acting as an authorized reseller.`;
+// ✅ Updated ownership text with "owner of this email" prefix and bold client email
+        const ownershipText = `This certificate establishes that the owner of this email `;
+        const boldClientEmail = clientEmail;
+        const ownershipTextEnd = ` is the rightful and exclusive owner of the logo displayed above. This logo was created using the SMARTY LOGOS™ AI LOGO GENERATOR PLATFORM and this ownership certificate was issued by ${resellerEmail} acting as an authorized reseller.`;
 
-        const splitText = doc.splitTextToSize(ownershipText, 160);
-        doc.text(splitText, pageWidth / 2, ownershipY, { align: 'center' });
+// Split the text into parts to make client email bold
+        const textWidth = 160;
+        const startText = doc.splitTextToSize(ownershipText, textWidth);
+        const endText = doc.splitTextToSize(ownershipTextEnd, textWidth);
+
+// Calculate positioning
+        let currentY = ownershipY;
+
+// Print first part
+        doc.setFont('helvetica', 'normal');
+        doc.text(startText, pageWidth / 2, currentY, { align: 'center' });
+        currentY += startText.length * 4;
+
+// Print client email in bold
+        doc.setFont('helvetica', 'bold');
+        doc.text(boldClientEmail, pageWidth / 2, currentY, { align: 'center' });
+        currentY += 4;
+
+// Print remaining text
+        doc.setFont('helvetica', 'normal');
+        doc.text(endText, pageWidth / 2, currentY, { align: 'center' });
 
         // RIGHTS GRANTED SECTION (190-220mm)
         const rightsY = 190;
@@ -404,7 +382,7 @@ export async function generateLogoCertificate(data: LogoCertificateData): Promis
 export function generateCertificateId(userEmail: string): string {
     try {
         const timestamp = Date.now();
-        const emailPrefix = userEmail.split('@')[0].substring(0, 6).toLowerCase();
+        const emailPrefix = userEmail.split('@')[0].toLowerCase();
 
         // Create the base ID parts (keep lowercase)
         const baseParts = `cert-${timestamp.toString(36)}-${emailPrefix}`;
@@ -473,12 +451,12 @@ export function generateDigitalSignature(data: CertificateData): string {
 // Verify certificate using only the certificate ID (stateless)
 
 // Replace your verifyCertificateId function with this:
-export function verifyCertificateId(certificateId: string): {
+export function verifyCertificateId(certificateId: string, userEmail?: string): { // ✅ Added optional parameter
     isValid: boolean;
     timestamp?: number;
     issueDate?: string;
     emailPrefix?: string;
-    estimatedEmail?: string;
+    userEmail?: string;
     details?: string;
 } {
     try {
@@ -531,7 +509,7 @@ export function verifyCertificateId(certificateId: string): {
             timestamp,
             issueDate,
             emailPrefix,
-            estimatedEmail: `${emailPrefix}@[domain]`,
+            userEmail: userEmail || `${emailPrefix}@[domain]`,
             details: 'Valid'
         };
 

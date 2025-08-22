@@ -6,6 +6,7 @@ interface LogoCertificate {
     certificateId: string;
     logoId: string;
     clientEmail: string;
+    clientHandle?: string; // ✅ Added client handle field
     issueDate: string;
     status: string;
     verified: boolean;
@@ -113,15 +114,23 @@ export default function LogoVerificationPage({ params }: { params: { certificate
                                         </div>
                                         <div>
                                             <span className="text-sm font-medium text-gray-500">Owner:</span>
-                                            <p className="text-gray-900 font-medium">{certificate.clientEmail}</p>
+                                            <p className="text-gray-900 font-medium text-lg">{certificate.clientEmail}</p> {/* ✅ Display actual email */}
                                         </div>
+                                        {certificate.clientHandle && (
+                                            <div>
+                                                <span className="text-sm font-medium text-gray-500">Client Handle:</span> {/* ✅ Different label for handle */}
+                                                <p className="text-gray-700 font-mono">@{certificate.clientHandle}</p>
+                                            </div>
+                                        )}
                                         <div>
                                             <span className="text-sm font-medium text-gray-500">Issue Date:</span>
                                             <p className="text-gray-900">{certificate.issueDate}</p>
                                         </div>
                                         <div>
-                                            <span className="text-sm font-medium text-gray-500">Certificate ID:</span>
-                                            <p className="font-mono text-xs break-all text-gray-700">{certificate.certificateId}</p>
+                                            <span className="text-sm font-medium text-gray-500">Status:</span>
+                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                ✓ Verified & Active
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
@@ -185,8 +194,8 @@ export default function LogoVerificationPage({ params }: { params: { certificate
                                 </h4>
                                 <div className="text-sm text-indigo-800 space-y-1">
                                     <div><strong>Platform Creator:</strong> SMARTY LOGOS™ AI LOGO GENERATOR PLATFORM</div>
-                                    <div><strong>Certificate Issuer:</strong> SMARTY LOGOS™ PLATFORM</div>
-                                    <div><strong>Current Owner:</strong> {certificate.clientEmail}</div>
+                                    <div><strong>Certificate Issuer:</strong> Authorized Reseller</div>
+                                    <div><strong>Current Owner:</strong> {certificate.clientEmail}</div> {/* ✅ Show actual email */}
                                 </div>
                             </div>
                         </div>
