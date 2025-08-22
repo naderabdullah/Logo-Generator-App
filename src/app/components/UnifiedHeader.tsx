@@ -269,7 +269,7 @@ export default function UnifiedHeader() {
                       cursor: isAnyGenerationActive() ? 'not-allowed' : 'pointer'
                     }}
                 >
-                  Account
+                  Dashboard
                 </Link>
                 <Link
                     href="/purchase"
