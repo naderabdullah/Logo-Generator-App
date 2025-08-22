@@ -42,17 +42,15 @@ export default function UnifiedHeader() {
 
   // Close dropdown when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+    const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('touchstart', handleClickOutside);
+    document.addEventListener('click', handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('touchstart', handleClickOutside);
+      document.removeEventListener('click', handleClickOutside);
     };
   }, []);
 
@@ -169,19 +167,25 @@ export default function UnifiedHeader() {
                 
                 {/* Mobile Dropdown Menu */}
                 {isDropdownOpen && (
-                  <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-[9999] touch-manipulation">
+                  <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-[9999]">
                     <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-100">
                       {user.email}
                     </div>
                     <Link
                       href="/account"
                       className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                      onClick={() => setIsDropdownOpen(false)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsDropdownOpen(false);
+                      }}
                     >
                       Account Settings
                     </Link>
                     <button
-                      onClick={handleLogout}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleLogout();
+                      }}
                       className="block w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
                     >
                       Log Out
