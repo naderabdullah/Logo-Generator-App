@@ -20,9 +20,8 @@ export async function GET(request: NextRequest) {
         const verification = verifyLogoCertificateId(certificateId);
 
         if (!verification.isValid) {
-            console.log('❌ Logo certificate ID validation failed:', certificateId);
             return NextResponse.json(
-                { error: 'Certificate not found' },
+                { error: 'Certificate verification failed: ' + verification.details },
                 { status: 404 }
             );
         }
