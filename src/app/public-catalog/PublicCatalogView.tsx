@@ -41,7 +41,7 @@ const LogoSkeleton = () => (
     </div>
 );
 
-// Individual logo card component with separate image loading
+// Fixed LogoCard component - catalog code button independent from modal
 const LogoCard = ({ logo, onViewParameters }: { 
     logo: CatalogLogo; 
     onViewParameters: (logo: CatalogLogo) => void;
@@ -49,6 +49,7 @@ const LogoCard = ({ logo, onViewParameters }: {
     const [imageDataUri, setImageDataUri] = useState<string | null>(null);
     const [imageLoading, setImageLoading] = useState(false);
     const [imageError, setImageError] = useState(false);
+    const [copied, setCopied] = useState(false);
     const cardRef = useRef<HTMLDivElement>(null);
     const [isVisible, setIsVisible] = useState(false);
 
@@ -91,28 +92,53 @@ const LogoCard = ({ logo, onViewParameters }: {
         }
     };
 
+    // Handle copy catalog code - ONLY copies, no modal
+    const handleCopyCatalogCode = async () => {
+        try {
+            await navigator.clipboard.writeText(logo.catalog_code);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch (err) {
+            console.error('Failed to copy catalog code:', err);
+            const textArea = document.createElement('textarea');
+            textArea.value = logo.catalog_code;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            } catch (fallbackErr) {
+                console.error('Fallback copy failed:', fallbackErr);
+            }
+            document.body.removeChild(textArea);
+        }
+    };
+
+    // Handle modal open - separate function
+    const handleOpenModal = () => {
+        onViewParameters({ ...logo, image_data_uri: imageDataUri || undefined });
+    };
+
     return (
         <div
             ref={cardRef}
-            className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => onViewParameters({ ...logo, image_data_uri: imageDataUri || undefined })}
+            className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow"
         >
-            <div className="aspect-square mb-3 bg-gray-50 rounded-lg p-2 relative">
+            {/* Image - clickable for modal */}
+            <div 
+                className="aspect-square mb-3 bg-gray-50 rounded-lg p-2 relative cursor-pointer"
+                onClick={handleOpenModal}
+            >
                 {!isVisible || (!imageDataUri && !imageLoading && !imageError) ? (
-                    <div className="w-full h-full bg-gray-200 animate-pulse rounded flex items-center justify-center">
+                    <div className="w-full h-full bg-gray-100 rounded flex items-center justify-center">
                         <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
                         </svg>
                     </div>
                 ) : imageLoading ? (
-                    <div className="w-full h-full bg-gray-200 animate-pulse rounded flex items-center justify-center">
-                        <div className="w-6 h-6 animate-spin rounded-full border-2 border-gray-400 border-t-transparent"></div>
-                    </div>
-                ) : imageError ? (
                     <div className="w-full h-full bg-gray-100 rounded flex items-center justify-center">
-                        <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                        </svg>
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
                     </div>
                 ) : imageDataUri ? (
                     <img
@@ -121,17 +147,48 @@ const LogoCard = ({ logo, onViewParameters }: {
                         className="w-full h-full object-contain"
                         loading="lazy"
                     />
-                ) : null}
+                ) : (
+                    <div className="w-full h-full bg-gray-100 rounded flex items-center justify-center">
+                        <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                        </svg>
+                    </div>
+                )}
             </div>
+
+            {/* Catalog Code Button with Copy Icon - INDEPENDENT, only copies */}
             <div className="text-center mb-2">
-                <span className="inline-block bg-indigo-100 text-indigo-800 text-xs font-semibold px-2 py-1 rounded">
-                    {logo.catalog_code}
-                </span>
+                <button
+                    onClick={handleCopyCatalogCode}
+                    className="inline-flex items-center bg-indigo-100 text-indigo-800 text-xs font-semibold px-2 py-1 rounded hover:bg-indigo-200 transition-colors"
+                    title="Click to copy"
+                >
+                    <span className="mr-1">{logo.catalog_code}</span>
+                    {copied ? (
+                        <svg className="w-3 h-3 text-green-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                    ) : (
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                    )}
+                </button>
             </div>
-            <div className="text-sm font-medium text-gray-900 text-center truncate mb-1">
+
+            {/* Company Name - clickable for modal */}
+            <div 
+                className="text-sm font-medium text-gray-900 text-center truncate mb-1 cursor-pointer hover:text-indigo-600"
+                onClick={handleOpenModal}
+            >
                 {logo.original_company_name}
             </div>
-            <div className="text-xs text-gray-500 text-center">
+            
+            {/* Creator - clickable for modal */}
+            <div 
+                className="text-xs text-gray-500 text-center cursor-pointer hover:text-gray-700"
+                onClick={handleOpenModal}
+            >
                 By {logo.created_by.split('@')[0]}
             </div>
         </div>
@@ -419,7 +476,29 @@ export default function PublicCatalogView() {
                         <div className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
                             <div className="p-6">
                                 <div className="flex justify-between items-start mb-4">
-                                    <h3 className="text-lg font-semibold">Logo Details</h3>
+                                    <div>
+                                        <h3 className="text-lg font-semibold">Logo Details</h3>
+                                        {/* Copy button in modal header */}
+                                        <div className="flex items-center mt-2">
+                                            <span className="text-sm text-gray-600 mr-2">Catalog Code:</span>
+                                                <button
+                                                    onClick={handleCopyCatalogCode}
+                                                    className="inline-flex items-center bg-indigo-100 text-indigo-800 text-sm font-semibold px-3 py-1 rounded hover:bg-indigo-200 transition-colors"
+                                                    title="Click to copy catalog code"
+                                                >
+                                                    <span className="mr-2">{selectedLogo.catalog_code}</span>
+                                                    {copied ? (
+                                                        <svg className="w-4 h-4 text-green-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                        </svg>
+                                                    ) : (
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                        </svg>
+                                                    )}
+                                                </button>
+                                        </div>
+                                    </div>
                                     <button
                                         onClick={() => setShowParametersModal(false)}
                                         className="text-gray-400 hover:text-gray-600"
@@ -430,69 +509,66 @@ export default function PublicCatalogView() {
                                     </button>
                                 </div>
 
+                                {/* Rest of modal content remains the same */}
                                 <div className="mb-4">
                                     {selectedLogo.image_data_uri ? (
                                         <img
                                             src={selectedLogo.image_data_uri}
                                             alt={selectedLogo.original_company_name}
-                                            className="w-32 h-32 object-contain mx-auto bg-gray-50 rounded-lg p-2"
+                                            className="w-full max-w-md mx-auto h-auto object-contain bg-gray-50 rounded-lg p-4"
                                         />
                                     ) : (
-                                        <div className="w-32 h-32 bg-gray-200 rounded-lg mx-auto flex items-center justify-center">
-                                            <span className="text-gray-500 text-sm">Image loading...</span>
+                                        <div className="w-full max-w-md mx-auto h-48 bg-gray-100 rounded-lg flex items-center justify-center">
+                                            <svg className="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                                            </svg>
                                         </div>
                                     )}
                                 </div>
 
-                                <div className="space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <span className="font-medium">Catalog Code:</span> {selectedLogo.catalog_code}
+                                <div className="space-y-3 text-sm">
+                                    <div>
+                                        <span className="font-medium text-gray-700">Company:</span>
+                                        <span className="ml-2 text-gray-900">{selectedLogo.original_company_name}</span>
+                                    </div>
+                                    <div>
+                                        <span className="font-medium text-gray-700">Created by:</span>
+                                        <span className="ml-2 text-gray-900">{selectedLogo.created_by}</span>
+                                    </div>
+                                    <div>
+                                        <span className="font-medium text-gray-700">Date:</span>
+                                        <span className="ml-2 text-gray-900">
+                                            {new Date(selectedLogo.created_at).toLocaleDateString()}
+                                        </span>
+                                    </div>
+                                    
+                                    {/* Parameters */}
+                                    {selectedLogo.parameters && (
+                                        <div className="mt-4">
+                                            <h4 className="font-medium text-gray-700 mb-2">Generation Parameters:</h4>
+                                            <div className="bg-gray-50 rounded-lg p-3 space-y-2 text-xs">
+                                                {Object.entries(selectedLogo.parameters).map(([key, value]) => (
+                                                    <div key={key} className="flex">
+                                                        <span className="font-medium text-gray-600 w-1/3 capitalize">
+                                                            {key.replace(/([A-Z])/g, ' $1').trim()}:
+                                                        </span>
+                                                        <span className="text-gray-900 w-2/3 break-words">
+                                                            {value ? String(value) : 'Not specified'}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
-                                        <button
-                                            onClick={handleCopyCatalogCode}
-                                            className={`ml-2 px-3 py-1 text-xs rounded-md transition-colors ${
-                                                copied 
-                                                    ? 'bg-green-100 text-green-800' 
-                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                            }`}
-                                            title="Copy catalog code"
-                                        >
-                                            {copied ? (
-                                                <div className="flex items-center space-x-1">
-                                                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                                    </svg>
-                                                    <span>Copied</span>
-                                                </div>
-                                            ) : (
-                                                <div className="flex items-center space-x-1">
-                                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                                    </svg>
-                                                    <span>Copy</span>
-                                                </div>
-                                            )}
-                                        </button>
-                                    </div>
-                                    <div>
-                                        <span className="font-medium">Company:</span> {selectedLogo.original_company_name}
-                                    </div>
-                                    <div>
-                                        <span className="font-medium">Created by:</span> {selectedLogo.created_by}
-                                    </div>
-                                    <div>
-                                        <span className="font-medium">Date:</span> {new Date(selectedLogo.created_at).toLocaleString()}
-                                    </div>
+                                    )}
+                                </div>
 
-                                    <div className="pt-3 border-t">
-                                        <h4 className="font-medium mb-2">Generation Parameters:</h4>
-                                        <div className="bg-gray-50 rounded-lg p-3 max-h-60 overflow-y-auto">
-                                            <pre className="text-xs text-gray-700 whitespace-pre-wrap">
-                                                {JSON.stringify(selectedLogo.parameters, null, 2)}
-                                            </pre>
-                                        </div>
-                                    </div>
+                                <div className="mt-6 flex justify-end">
+                                    <button
+                                        onClick={() => setShowParametersModal(false)}
+                                        className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                                    >
+                                        Close
+                                    </button>
                                 </div>
                             </div>
                         </div>

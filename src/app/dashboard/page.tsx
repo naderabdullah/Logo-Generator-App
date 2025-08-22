@@ -43,6 +43,14 @@ export default function DashboardPage() {
     fetchUserData();
   }, [router]);
 
+  const handleCopyCatalogLink = () => {
+    const catalogUrl = `${window.location.origin}/public-catalog`;
+    navigator.clipboard.writeText(catalogUrl).then(() => {
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
+    });
+  };
+
   const generateShareableLink = () => {
     if (!userData) return;
     
@@ -183,6 +191,27 @@ export default function DashboardPage() {
                   </Link>
                 </div>
               )}
+            </div>
+
+            {/* Catalog Actions */}
+            <div className="bg-blue-50 p-6 rounded-lg">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Logo Catalog</h3>
+              <div className="flex gap-3">
+                <Link
+                  href="/public-catalog"
+                  target="_blank"
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white text-center rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  Go to Catalog
+                </Link>
+                <button
+                  onClick={handleCopyCatalogLink}
+                  className="flex-1 px-4 py-2 bg-white border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 transition-colors"
+                >
+                  {copiedLink ? 'Link Copied!' : 'Copy Catalog Link'}
+                </button>
+              </div>
+              <p className="text-xs text-gray-600 mt-2">Share the public catalog with others</p>
             </div>
 
             {/* Ownership Certificate Section */}

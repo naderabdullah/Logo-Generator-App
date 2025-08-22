@@ -21,22 +21,31 @@ import JSZip from 'jszip';
 // ADDED: Lazy loading image component
 const LazyImage = ({ src, alt, className }: {
   src: string; 
-  alt: string; className: string;
+  alt: string; 
+  className: string;
 }) => {
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [isInView, setIsInView] = useState(false);
-  const [hasError, setHasError] = useState(false);
+  const [imageDataUri, setImageDataUri] = useState<string | null>(null);
+  const [imageLoading, setImageLoading] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const imgRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
 
+  // Intersection observer for when image becomes visible (matching public catalog)
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsInView(true);
+        if (entry.isIntersecting && !imageDataUri && !imageLoading && !imageError) {
+          setIsVisible(true);
+          setImageLoading(true);
+          // Simulate the same loading pattern as public catalog
+          setTimeout(() => {
+            setImageDataUri(src);
+            setImageLoading(false);
+          }, 100);
           observer.disconnect();
         }
       },
-      { threshold: 0.1, rootMargin: '50px' }
+      { threshold: 0.1, rootMargin: '100px' }
     );
 
     if (imgRef.current) {
@@ -44,51 +53,37 @@ const LazyImage = ({ src, alt, className }: {
     }
 
     return () => observer.disconnect();
-  }, []);
-
-  const handleImageLoad = () => {
-    setIsLoaded(true);
-  };
-
-  const handleImageError = () => {
-    setHasError(true);
-    setIsLoaded(true);
-  };
+  }, [src, imageDataUri, imageLoading, imageError]);
 
   return (
     <div ref={imgRef} className={className}>
-      {!isInView ? (
-        <div className="w-full h-full bg-gray-100 animate-pulse flex items-center justify-center">
+      {!isVisible || (!imageDataUri && !imageLoading && !imageError) ? (
+        // Placeholder until visible (same as public catalog)
+        <div className="w-full h-full bg-gray-100 flex items-center justify-center">
           <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
           </svg>
         </div>
+      ) : imageLoading ? (
+        // Loading state (same as public catalog)
+        <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
+        </div>
+      ) : imageDataUri ? (
+        // Loaded image
+        <img
+          src={imageDataUri}
+          alt={alt}
+          className="w-full h-full object-contain"
+          loading="lazy"
+        />
       ) : (
-        <>
-          {!isLoaded && !hasError && (
-            <div className="w-full h-full bg-gray-100 animate-pulse flex items-center justify-center">
-              <svg className="w-6 h-6 text-gray-400 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            </div>
-          )}
-          {hasError ? (
-            <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-              <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
-            </div>
-          ) : (
-            <img
-              src={src}
-              alt={alt}
-              className={`${className} ${isLoaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
-              onLoad={handleImageLoad}
-              onError={handleImageError}
-              loading="lazy"
-            />
-          )}
-        </>
+        // Error state (same as public catalog)
+        <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+          <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+          </svg>
+        </div>
       )}
     </div>
   );

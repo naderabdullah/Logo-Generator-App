@@ -1,20 +1,20 @@
-// src/app/catalog/CatalogView.tsx
+// src/app/catalog/CatalogView.tsx - Updated with smart loading
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/app/context/AuthContext';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '../context/AuthContext';
 
-// Define the CatalogLogo interface to match the backend
 interface CatalogLogo {
     id: number;
     catalog_code: string;
     logo_key_id: string;
-    image_data_uri: string;
-    parameters: any; // LogoParameters
+    parameters: any;
     created_at: string;
     created_by: string;
     original_company_name: string;
+    // image_data_uri will be loaded separately
+    image_data_uri?: string;
 }
 
 interface CatalogStats {
@@ -23,29 +23,146 @@ interface CatalogStats {
     latestAddition: string | null;
 }
 
-export default function CatalogView() {
-    const { user } = useAuth();
-    const router = useRouter();
+interface PaginationInfo {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasMore: boolean;
+}
 
-    // State management
+// Smart loading LogoCard component with intersection observer
+const CatalogLogoCard = ({ logo, onViewParameters }: { 
+    logo: CatalogLogo; 
+    onViewParameters: (logo: CatalogLogo) => void;
+}) => {
+    const [imageDataUri, setImageDataUri] = useState<string | null>(null);
+    const [imageLoading, setImageLoading] = useState(false);
+    const [imageError, setImageError] = useState(false);
+    const cardRef = useRef<HTMLDivElement>(null);
+    const [isVisible, setIsVisible] = useState(false);
+
+    // Intersection observer for when card becomes visible
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting && !imageDataUri && !imageLoading && !imageError) {
+                    setIsVisible(true);
+                    loadImage();
+                    observer.disconnect();
+                }
+            },
+            { threshold: 0.1, rootMargin: '100px' }
+        );
+
+        if (cardRef.current) {
+            observer.observe(cardRef.current);
+        }
+
+        return () => observer.disconnect();
+    }, [imageDataUri, imageLoading, imageError]);
+
+    const loadImage = async () => {
+        setImageLoading(true);
+        try {
+            const response = await fetch(`/api/catalog/image/${logo.id}`);
+            
+            if (!response.ok) {
+                throw new Error('Failed to load image');
+            }
+            
+            const data = await response.json();
+            setImageDataUri(data.image_data_uri);
+        } catch (error) {
+            console.error('Error loading logo image:', error);
+            setImageError(true);
+        } finally {
+            setImageLoading(false);
+        }
+    };
+
+    return (
+        <div
+            ref={cardRef}
+            className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+            onClick={() => onViewParameters({ ...logo, image_data_uri: imageDataUri || undefined })}
+        >
+            <div className="aspect-square mb-3 bg-gray-50 rounded-lg p-2 relative">
+                {!isVisible || (!imageDataUri && !imageLoading && !imageError) ? (
+                    // Placeholder until visible
+                    <div className="w-full h-full bg-gray-100 rounded flex items-center justify-center">
+                        <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                        </svg>
+                    </div>
+                ) : imageLoading ? (
+                    // Loading state with spinner
+                    <div className="w-full h-full bg-gray-100 rounded flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
+                    </div>
+                ) : imageDataUri ? (
+                    // Loaded image
+                    <img
+                        src={imageDataUri}
+                        alt={logo.original_company_name}
+                        className="w-full h-full object-contain"
+                        loading="lazy"
+                    />
+                ) : (
+                    // Error state
+                    <div className="w-full h-full bg-gray-100 rounded flex items-center justify-center">
+                        <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                        </svg>
+                    </div>
+                )}
+            </div>
+
+            {/* Catalog Code */}
+            <div className="text-center mb-2">
+                <span className="inline-block bg-indigo-100 text-indigo-800 text-xs font-semibold px-2 py-1 rounded">
+                    {logo.catalog_code}
+                </span>
+            </div>
+
+            {/* Company Name */}
+            <div className="text-sm font-medium text-gray-900 text-center truncate mb-1">
+                {logo.original_company_name}
+            </div>
+
+            {/* Creator */}
+            <div className="text-xs text-gray-500 text-center">
+                By {logo.created_by.split('@')[0]}
+            </div>
+
+            {/* Date */}
+            <div className="text-xs text-gray-500 text-center mt-1">
+                {new Date(logo.created_at).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                })}
+            </div>
+        </div>
+    );
+};
+
+export default function CatalogView() {
     const [catalogLogos, setCatalogLogos] = useState<CatalogLogo[]>([]);
     const [stats, setStats] = useState<CatalogStats | null>(null);
+    const [pagination, setPagination] = useState<PaginationInfo | null>(null);
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
-    // Search and filter state
     const [searchTerm, setSearchTerm] = useState('');
-    const [filteredLogos, setFilteredLogos] = useState<CatalogLogo[]>([]);
-
-    // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(15);
-
-    // Modal state for viewing parameters
     const [selectedLogo, setSelectedLogo] = useState<CatalogLogo | null>(null);
     const [showParametersModal, setShowParametersModal] = useState(false);
 
-    // Check authorization
+    const { user } = useAuth();
+    const router = useRouter();
+
+    // Redirect if not authorized
     useEffect(() => {
         if (!user || !user.isSuperUser) {
             router.push('/');
@@ -53,68 +170,70 @@ export default function CatalogView() {
         }
     }, [user, router]);
 
-    // Fetch catalog data
-    useEffect(() => {
-        const fetchCatalogData = async () => {
-            if (!user || !user.isSuperUser) return;
-
-            try {
+    // Fetch catalog data with pagination like public catalog
+    const fetchCatalog = useCallback(async (page: number = 1, search: string = '') => {
+        try {
+            if (page === 1) {
                 setLoading(true);
-
-                // Fetch catalog logos and stats in parallel
-                const [catalogResponse, statsResponse] = await Promise.all([
-                    fetch('/api/catalog'),
-                    fetch('/api/catalog?action=stats')
-                ]);
-
-                if (!catalogResponse.ok || !statsResponse.ok) {
-                    throw new Error('Failed to fetch catalog data');
-                }
-
-                const catalogData = await catalogResponse.json();
-                const statsData = await statsResponse.json();
-
-                setCatalogLogos(catalogData.catalogLogos || []);
-                setStats(statsData.stats || null);
-                setFilteredLogos(catalogData.catalogLogos || []);
-
-            } catch (err) {
-                console.error('Error fetching catalog:', err);
-                setError('Failed to load catalog data');
-            } finally {
-                setLoading(false);
+            } else {
+                setLoadingMore(true);
             }
-        };
+            
+            const searchParams = new URLSearchParams({
+                page: page.toString(),
+                limit: '30',
+                ...(search && { search })
+            });
 
-        fetchCatalogData();
-    }, [user]);
-
-    // Handle search filtering
-    useEffect(() => {
-        if (!searchTerm.trim()) {
-            setFilteredLogos(catalogLogos);
-            setCurrentPage(1);
-            return;
+            const response = await fetch(`/api/catalog/public?${searchParams}`);
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch catalog');
+            }
+            
+            const data = await response.json();
+            
+            // Always replace content for page navigation
+            setCatalogLogos(data.logos || []);
+            setStats(data.stats || null);
+            setPagination(data.pagination || null);
+            setCurrentPage(page);
+            
+        } catch (err: any) {
+            setError(err.message || 'Failed to load catalog');
+        } finally {
+            setLoading(false);
+            setLoadingMore(false);
         }
+    }, []);
 
-        const filtered = catalogLogos.filter(logo =>
-            logo.catalog_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            logo.original_company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            logo.created_by.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (logo.parameters.industry && logo.parameters.industry.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (logo.parameters.overallStyle && logo.parameters.overallStyle.toLowerCase().includes(searchTerm.toLowerCase()))
-        );
+    // Initial load
+    useEffect(() => {
+        if (user?.isSuperUser) {
+            fetchCatalog(1, searchTerm);
+        }
+    }, [fetchCatalog, user]);
 
-        setFilteredLogos(filtered);
-        setCurrentPage(1);
-    }, [searchTerm, catalogLogos]);
+    // Search functionality with debounce
+    useEffect(() => {
+        if (!user?.isSuperUser) return;
+        
+        const timeoutId = setTimeout(() => {
+            if (currentPage === 1) {
+                fetchCatalog(1, searchTerm);
+            } else {
+                setCurrentPage(1);
+                fetchCatalog(1, searchTerm);
+            }
+        }, 300);
 
-    // Pagination calculations
-    const totalPages = Math.ceil(filteredLogos.length / itemsPerPage);
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const currentLogos = filteredLogos.slice(startIndex, endIndex);
+        return () => clearTimeout(timeoutId);
+    }, [searchTerm, fetchCatalog, user, currentPage]);
 
+    // Remove the old client-side filtering useEffect
+
+    // Remove old client-side filtering and pagination logic - now handled server-side
+    
     // Handle viewing logo parameters
     const handleViewParameters = (logo: CatalogLogo) => {
         setSelectedLogo(logo);
@@ -150,6 +269,28 @@ export default function CatalogView() {
         );
     }
 
+    if (loading) {
+        return (
+            <div className="fixed inset-0 flex items-center justify-center bg-white bg-opacity-75 z-50">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-2"></div>
+                    <p className="text-gray-600">Loading catalog...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="container mx-auto px-4 py-6">
+                <div className="text-center">
+                    <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
+                    <p className="text-gray-600">{error}</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <main className="container mx-auto px-4 pb-6 max-w-7xl">
             <div className="mt-4">
@@ -168,7 +309,6 @@ export default function CatalogView() {
                         {/* Statistics */}
                         {stats && (
                             <div className="mt-4 md:mt-0">
-                                {/* Ultra simple horizontal layout */}
                                 <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
                                     {/* Total Logos */}
                                     <div style={{ flex: 1, backgroundColor: '#e0e7ff', padding: '12px', borderRadius: '8px', textAlign: 'center' }}>
@@ -193,7 +333,10 @@ export default function CatalogView() {
                                     {/* Latest Addition */}
                                     <div style={{ flex: 1, backgroundColor: '#f3e8ff', padding: '12px', borderRadius: '8px', textAlign: 'center' }}>
                                         <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#9333ea' }}>
-                                            {stats.latestAddition ? formatDate(stats.latestAddition) : 'N/A'}
+                                            {stats.latestAddition ? 
+                                                new Date(stats.latestAddition).toLocaleDateString() : 
+                                                'N/A'
+                                            }
                                         </div>
                                         <div style={{ fontSize: '12px', color: '#9333ea' }}>
                                             Latest Addition
@@ -204,285 +347,174 @@ export default function CatalogView() {
                         )}
                     </div>
 
-                    {/* Search Bar */}
-                    <div className="relative">
+                    {/* Search */}
+                    <div className="mb-4">
                         <input
                             type="text"
-                            placeholder="Search by catalog code, company name, creator, industry, or style..."
+                            placeholder="Search by company name, catalog code, creator, industry, or style..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         />
-                        <svg
-                            className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
+                    </div>
+
+                    {/* Results count */}
+                    <div className="text-sm text-gray-600">
+                        Showing {catalogLogos.length} of {pagination?.total || 0} logos
+                        {pagination && pagination.totalPages > 1 && (
+                            <span className="ml-2">
+                                (Page {pagination.page} of {pagination.totalPages})
+                            </span>
+                        )}
                     </div>
                 </div>
 
-                {/* Loading State */}
-                {loading && (
-                    <div className="text-center py-12">
-                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-                        <p className="text-gray-600">Loading catalog...</p>
+                {/* Logo Grid with Smart Loading */}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    {catalogLogos.map((logo) => (
+                        <CatalogLogoCard 
+                            key={logo.id} 
+                            logo={logo} 
+                            onViewParameters={handleViewParameters}
+                        />
+                    ))}
+                </div>
+
+                {/* Pagination Controls like public catalog */}
+                {pagination && pagination.totalPages > 1 && (
+                    <div className="flex justify-center items-center space-x-4 mt-8">
+                        <button
+                            onClick={() => fetchCatalog(pagination.page - 1, searchTerm)}
+                            disabled={pagination.page <= 1 || loadingMore}
+                            className="px-4 py-2 bg-indigo-600 text-white rounded disabled:bg-gray-300"
+                        >
+                            Previous
+                        </button>
+                        
+                        <span className="px-3 py-2 text-sm text-gray-600">
+                            Page {pagination.page} of {pagination.totalPages}
+                        </span>
+                        
+                        <button
+                            onClick={() => fetchCatalog(pagination.page + 1, searchTerm)}
+                            disabled={pagination.page >= pagination.totalPages || loadingMore}
+                            className="px-4 py-2 bg-indigo-600 text-white rounded disabled:bg-gray-300"
+                        >
+                            Next
+                        </button>
                     </div>
                 )}
 
-                {/* Error State */}
-                {error && !loading && (
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-                        <p className="text-red-700 font-medium">{error}</p>
+                {/* Loading indicator when changing pages */}
+                {loadingMore && (
+                    <div className="flex justify-center items-center mt-4">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
+                        <span className="ml-2 text-gray-600">Loading...</span>
                     </div>
                 )}
 
                 {/* Empty State */}
-                {!loading && !error && filteredLogos.length === 0 && (
-                    <div className="text-center py-12">
-                        <div className="text-6xl mb-4">📭</div>
-                        <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                            {searchTerm ? 'No matching logos found' : 'No logos in catalog yet'}
+                {catalogLogos.length === 0 && !loading && (
+                    <div className="text-center py-8">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                            {searchTerm ? 'No matching logos found' : 'No logos in catalog'}
                         </h3>
                         <p className="text-gray-600">
-                            {searchTerm ? 'Try adjusting your search terms' : 'Logos will appear here when users add them to the catalog'}
+                            {searchTerm ? 'Try adjusting your search terms.' : 'The catalog is empty.'}
                         </p>
                     </div>
                 )}
 
-                {/* Results Info & Pagination Controls */}
-                {!loading && !error && filteredLogos.length > 0 && (
-                    <>
-                        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-                            <div className="flex items-center gap-4">
-                <span className="text-sm text-gray-600">
-                  Showing {startIndex + 1}-{Math.min(endIndex, filteredLogos.length)} of {filteredLogos.length} logos
-                    {searchTerm && ` (filtered from ${catalogLogos.length})`}
-                </span>
-
-                                <select
-                                    value={itemsPerPage}
-                                    onChange={(e) => {
-                                        setItemsPerPage(Number(e.target.value));
-                                        setCurrentPage(1);
-                                    }}
-                                    className="form-select w-auto min-w-0 py-1 px-2 text-sm"
-                                >
-                                    <option value={10}>10 per page</option>
-                                    <option value={15}>15 per page</option>
-                                    <option value={20}>20 per page</option>
-                                    <option value={25}>25 per page</option>
-                                    <option value={50}>50 per page</option>
-                                </select>
-                            </div>
-
-                            {/* Pagination */}
-                            {totalPages > 1 && (
-                                <div className="flex items-center gap-2">
-                                <button
-                                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                                        disabled={currentPage === 1}
-                                        className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        Previous
-                                    </button>
-
-                                    <span className="text-sm text-gray-600">
-                    Page {currentPage} of {totalPages}
-                  </span>
-
+                {/* Parameters Modal */}
+                {showParametersModal && selectedLogo && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                            <div className="p-6">
+                                {/* Modal Header */}
+                                <div className="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h3 className="text-lg font-semibold text-gray-900">
+                                            {selectedLogo.catalog_code}
+                                        </h3>
+                                        <p className="text-gray-600">{selectedLogo.original_company_name}</p>
+                                    </div>
                                     <button
-                                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                                        disabled={currentPage === totalPages}
-                                        className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        onClick={() => setShowParametersModal(false)}
+                                        className="text-gray-400 hover:text-gray-600"
                                     >
-                                        Next
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
                                     </button>
                                 </div>
-                            )}
-                        </div>
 
-                        {/* Logo Grid */}
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                            {currentLogos.map((logo) => (
-                                <div
-                                    key={logo.id}
-                                    className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow cursor-pointer"
-                                    onClick={() => handleViewParameters(logo)}
-                                >
-                                    {/* Logo Image */}
-                                    <div className="aspect-square mb-3 bg-gray-50 rounded-lg p-2">
-                                        <img
-                                            src={logo.image_data_uri}
-                                            alt={logo.original_company_name}
-                                            className="w-full h-full object-contain"
-                                        />
-                                    </div>
-
-                                    {/* Catalog Code */}
-                                    <div className="text-center mb-2">
-                    <span
-                        className="inline-block bg-indigo-100 text-indigo-800 text-xs font-semibold px-2 py-1 rounded">
-                      {logo.catalog_code}
-                    </span>
-                                    </div>
-
-                                    {/* Company Name */}
-                                    <div className="text-sm font-medium text-gray-900 text-center truncate mb-1">
-                                        {logo.original_company_name}
-                                    </div>
-
-                                    {/* Quick Parameters */}
-                                    <div className="text-xs text-gray-500 text-center space-y-1">
-                                        <div className="truncate">
-                                            {logo.parameters.industry || 'Unknown Industry'}
-                                        </div>
-                                        <div className="truncate">
-                                            {logo.parameters.overallStyle || 'Unknown Style'}
-                                        </div>
-                                    </div>
-
-                                    {/* Creation Info */}
-                                    <div
-                                        className="text-xs text-gray-400 text-center mt-2 pt-2 border-t border-gray-100">
-                                        <div className="truncate">By: {logo.created_by}</div>
-                                        <div>{formatDate(logo.created_at)}</div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </>
-                )}
-            </div>
-
-            {/* Parameters Modal */}
-            {showParametersModal && selectedLogo && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg shadow-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
-                        {/* Modal Header */}
-                        <div className="border-b border-gray-200 p-6">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <h2 className="text-xl font-semibold text-gray-900">
-                                        {selectedLogo.catalog_code} - {selectedLogo.original_company_name}
-                                    </h2>
-                                    <p className="text-sm text-gray-600 mt-1">
-                                        Created by {selectedLogo.created_by} on {formatDate(selectedLogo.created_at)}
-                                    </p>
-                                </div>
-                                <button
-                                    onClick={() => setShowParametersModal(false)}
-                                    className="text-gray-400 hover:text-gray-600 transition-colors"
-                                >
-                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Modal Content */}
-                        <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                 {/* Logo Image */}
-                                <div className="space-y-4">
-                                    <h3 className="text-lg font-medium text-gray-900">Logo Preview</h3>
-                                    <div className="bg-gray-50 rounded-lg p-6 text-center">
+                                {selectedLogo.image_data_uri && (
+                                    <div className="mb-6">
                                         <img
                                             src={selectedLogo.image_data_uri}
                                             alt={selectedLogo.original_company_name}
-                                            className="max-w-full max-h-80 object-contain mx-auto"
+                                            className="w-full max-w-md mx-auto h-auto object-contain bg-gray-50 rounded-lg p-4"
                                         />
+                                    </div>
+                                )}
+
+                                {/* Basic Info */}
+                                <div className="mb-6">
+                                    <h4 className="font-semibold text-gray-900 mb-2">Basic Information</h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                        <div>
+                                            <span className="font-medium text-gray-700">Catalog Code:</span>
+                                            <span className="ml-2 text-gray-900">{selectedLogo.catalog_code}</span>
+                                        </div>
+                                        <div>
+                                            <span className="font-medium text-gray-700">Company:</span>
+                                            <span className="ml-2 text-gray-900">{selectedLogo.original_company_name}</span>
+                                        </div>
+                                        <div>
+                                            <span className="font-medium text-gray-700">Created By:</span>
+                                            <span className="ml-2 text-gray-900">{selectedLogo.created_by}</span>
+                                        </div>
+                                        <div>
+                                            <span className="font-medium text-gray-700">Date:</span>
+                                            <span className="ml-2 text-gray-900">{formatDate(selectedLogo.created_at)}</span>
+                                        </div>
                                     </div>
                                 </div>
 
                                 {/* Parameters */}
-                                <div className="space-y-4">
-                                    <h3 className="text-lg font-medium text-gray-900">Generation Parameters</h3>
+                                <div>
+                                    <h4 className="font-semibold text-gray-900 mb-2">Generation Parameters</h4>
                                     <div className="bg-gray-50 rounded-lg p-4">
                                         <div className="grid grid-cols-1 gap-3 text-sm">
-                                            {/* Core Parameters */}
-                                            <div className="grid grid-cols-3 gap-2">
-                                                <div className="font-medium text-gray-700">Company:</div>
-                                                <div className="col-span-2 text-gray-900">{selectedLogo.parameters.companyName || 'Not specified'}</div>
-                                            </div>
-
-                                            {selectedLogo.parameters.slogan && (
-                                                <div className="grid grid-cols-3 gap-2">
-                                                    <div className="font-medium text-gray-700">Slogan:</div>
-                                                    <div className="col-span-2 text-gray-900">"{selectedLogo.parameters.slogan}"</div>
+                                            {Object.entries(selectedLogo.parameters || {}).map(([key, value]) => (
+                                                <div key={key} className="flex">
+                                                    <span className="font-medium text-gray-700 w-1/3 capitalize">
+                                                        {key.replace(/([A-Z])/g, ' $1').trim()}:
+                                                    </span>
+                                                    <span className="text-gray-900 w-2/3 break-words">
+                                                        {renderParameterValue(key, value)}
+                                                    </span>
                                                 </div>
-                                            )}
-
-                                            <div className="grid grid-cols-3 gap-2">
-                                                <div className="font-medium text-gray-700">Industry:</div>
-                                                <div className="col-span-2 text-gray-900">{renderParameterValue('industry', selectedLogo.parameters.industry)}</div>
-                                            </div>
-
-                                            <div className="grid grid-cols-3 gap-2">
-                                                <div className="font-medium text-gray-700">Style:</div>
-                                                <div className="col-span-2 text-gray-900">{renderParameterValue('overallStyle', selectedLogo.parameters.overallStyle)}</div>
-                                            </div>
-
-                                            <div className="grid grid-cols-3 gap-2">
-                                                <div className="font-medium text-gray-700">Colors:</div>
-                                                <div className="col-span-2 text-gray-900">{renderParameterValue('colorScheme', selectedLogo.parameters.colorScheme)}</div>
-                                            </div>
-
-                                            <div className="grid grid-cols-3 gap-2">
-                                                <div className="font-medium text-gray-700">Symbol:</div>
-                                                <div className="col-span-2 text-gray-900">{renderParameterValue('symbolFocus', selectedLogo.parameters.symbolFocus)}</div>
-                                            </div>
-
-                                            <div className="grid grid-cols-3 gap-2">
-                                                <div className="font-medium text-gray-700">Personality:</div>
-                                                <div className="col-span-2 text-gray-900">{renderParameterValue('brandPersonality', selectedLogo.parameters.brandPersonality)}</div>
-                                            </div>
-
-                                            {/* Optional Parameters */}
-                                            {Object.entries(selectedLogo.parameters).map(([key, value]) => {
-                                                // Skip already displayed parameters
-                                                if (['companyName', 'slogan', 'industry', 'overallStyle', 'colorScheme', 'symbolFocus', 'brandPersonality'].includes(key)) {
-                                                    return null;
-                                                }
-
-                                                // Skip empty values
-                                                if (!value || value === '' || value === 'undefined') {
-                                                    return null;
-                                                }
-
-                                                // Format key name for display
-                                                const displayKey = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
-
-                                                return (
-                                                    <div key={key} className="grid grid-cols-3 gap-2">
-                                                        <div className="font-medium text-gray-700">{displayKey}:</div>
-                                                        <div className="col-span-2 text-gray-900">{renderParameterValue(key, value)}</div>
-                                                    </div>
-                                                );
-                                            })}
+                                            ))}
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
 
-                        {/* Modal Footer */}
-                        <div className="border-t border-gray-200 p-6">
-                            <div className="flex justify-end">
-                                <button
-                                    onClick={() => setShowParametersModal(false)}
-                                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-                                >
-                                    Close
-                                </button>
+                                {/* Modal Actions */}
+                                <div className="mt-6 flex justify-end">
+                                    <button
+                                        onClick={() => setShowParametersModal(false)}
+                                        className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                                    >
+                                        Close
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
         </main>
     );
 }

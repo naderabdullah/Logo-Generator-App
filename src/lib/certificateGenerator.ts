@@ -865,12 +865,15 @@ doc.rect(25, rightsBlockY - 3, pageWidth - 50, rightsBlockHeight);
 
             } catch (fallbackError) {
                 console.error('❌ Fallback buffer conversion also failed:', fallbackError);
-                throw new Error(`PDF buffer conversion failed: ${bufferError.message}. Fallback also failed: ${fallbackError.message}`);
+                const bufferErrorMsg = bufferError instanceof Error ? bufferError.message : String(bufferError);
+                const fallbackErrorMsg = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
+                throw new Error(`PDF buffer conversion failed: ${bufferErrorMsg}. Fallback also failed: ${fallbackErrorMsg}`);
             }
         }
 
     } catch (error) {
         console.error('❌ Error in PDF generation:', error);
-        throw new Error(`PDF generation failed: ${error.message}`);
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        throw new Error(`PDF generation failed: ${errorMsg}`);
     }
 }
