@@ -257,13 +257,13 @@ export default function UnifiedHeader() {
                   History
                 </Link>
                 <Link
-                    href="/account"
+                    href="/dashboard"
                     className={`py-1 px-2 text-xs font-medium rounded transition-all duration-200 ${
-                        pathname === '/account'
+                        pathname === '/dashboard'
                             ? 'text-white bg-indigo-600 shadow-sm'
                             : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                     }`}
-                    onClick={(e) => handleNavClick(e, '/account')}
+                    onClick={(e) => handleNavClick(e, '/dashboard')}
                     style={{
                       opacity: isAnyGenerationActive() ? 0.5 : 1,
                       cursor: isAnyGenerationActive() ? 'not-allowed' : 'pointer'
@@ -380,19 +380,19 @@ export default function UnifiedHeader() {
                   History
                 </Link>
                 <Link
-                    href="/account"
+                    href="/dashboard"
                     className={`py-4 px-3 border-b-4 text-sm font-medium inline-flex items-center transition-all duration-200 ${
-                        pathname === '/account'
+                        pathname === '/dashboard'
                             ? 'border-indigo-600 text-indigo-700 bg-indigo-50 shadow-sm'
                             : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'
                     }`}
-                    onClick={(e) => handleNavClick(e, '/account')}
+                    onClick={(e) => handleNavClick(e, '/dashboard')}
                     style={{
                       opacity: isAnyGenerationActive() ? 0.5 : 1,
                       cursor: isAnyGenerationActive() ? 'not-allowed' : 'pointer'
                     }}
                 >
-                  Account
+                  Dashboard
                 </Link>
                 <Link
                     href="/purchase"

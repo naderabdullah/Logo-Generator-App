@@ -642,7 +642,7 @@ const handleAddToCatalog = async (displayedLogo: StoredLogo) => {
   return (
     <main className="container mx-auto px-4 pb-6 max-w-4xl history-page">
       <div className="mt-2 card">
-        <h2 className="text-xl font-semibold mb-2 text-center">Logo History</h2>
+        <h2 className="text-2xl text-indigo-600 font-semibold mb-2 text-center">Logo History</h2>
 
         {/* Bulk Actions Bar */}
         {hasSelection && (
