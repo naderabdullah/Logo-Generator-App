@@ -5,13 +5,11 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-export default function AccountPage() {
+export default function DashboardPage() {
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [generatingCertificate, setGeneratingCertificate] = useState(false);
   
@@ -45,12 +43,16 @@ export default function AccountPage() {
     fetchUserData();
   }, [router]);
 
-  const handleCopyCatalogLink = () => {
-    const catalogUrl = `${window.location.origin}/public-catalog`;
-    navigator.clipboard.writeText(catalogUrl).then(() => {
-      setCopiedLink(true);
-      setTimeout(() => setCopiedLink(false), 2000);
-    });
+  const generateShareableLink = () => {
+    if (!userData) return;
+    
+    const shareableLink = `${window.location.origin}/certificate/${userData.id}`;
+    navigator.clipboard.writeText(shareableLink);
+    setCopiedLink(true);
+    
+    setTimeout(() => {
+      setCopiedLink(false);
+    }, 2000);
   };
 
   const handleGenerateCertificate = async () => {
@@ -96,65 +98,40 @@ export default function AccountPage() {
     }
   };
 
-  // Check for payment success query param
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const success = urlParams.get('payment');
-    const quantity = urlParams.get('quantity');
-    
-    if (success === 'success' && quantity) {
-      setSuccessMessage(`Successfully purchased ${quantity} logo credit${Number(quantity) > 1 ? 's' : ''}!`);
-      
-      // Clear URL params
-      const newUrl = window.location.pathname;
-      window.history.replaceState({}, document.title, newUrl);
-      
-      // Clear message after 5 seconds
-      setTimeout(() => setSuccessMessage(null), 5000);
-    }
-  }, []);
-  
   if (loading) {
     return (
       <main className="container mx-auto px-4 pb-6 max-w-2xl">
         <div className="mt-4 text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Loading account information...</p>
+          <p className="mt-2 text-gray-600">Loading dashboard...</p>
         </div>
       </main>
     );
   }
-  
-  if (error) {
+
+  if (error && !userData) {
     return (
-      <main className="container mx-auto px-4 pb-6 max-w-2xl">
-        <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-          <p className="text-red-700 mb-4">{error}</p>
-          <div className="space-y-2">
-            <Link 
-              href="/" 
-              className="block w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-            >
-              Back to Generator
-            </Link>
-            <Link 
-              href="/login" 
-              className="block w-full px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-indigo-700"
-            >
-              Back to Login
-            </Link>
-          </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-red-600 mb-2">Error</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <Link 
+            href="/login"
+            className="text-indigo-600 hover:text-indigo-500"
+          >
+            Go to Login
+          </Link>
         </div>
-      </main>
+      </div>
     );
   }
-  
+
   return (
     <main className="container mx-auto px-4 pb-6 max-w-2xl">
-      <div className="mt-4 card">
-        <div className="text-center mb-8">
+      <div className="mt-1 card">
+        <div className="text-center mb-4">
           <h1 className="text-2xl font-bold text-indigo-600">Dashboard</h1>
-          <p className="text-gray-600 mt-2">An overview of your logo creation system</p>
+          <p className="text-gray-600 mt-0.5">Overview of your logo creation system</p>
         </div>
 
         {/* Success Message */}
@@ -165,7 +142,7 @@ export default function AccountPage() {
         )}
 
         {userData && (
-          <div className="space-y-6">
+          <div className="space-y-6">        
             {/* Usage Statistics - Using design with progress bar */}
             <div className="bg-indigo-50 p-6 rounded-lg border border-indigo-200">
               <h3 className="text-lg font-semibold text-indigo-800 mb-4">Logo Usage</h3>
@@ -192,35 +169,20 @@ export default function AccountPage() {
               </div>
               
               {userData.remainingLogos > 0 ? (
-                <p className="text-sm text-indigo-700 mt-2 text-center">
-                  You have {userData.remainingLogos} logo credit{userData.remainingLogos > 1 ? 's' : ''} remaining
+                <p className="text-sm text-indigo-600 mt-2 text-center">
+                  You have {userData.remainingLogos} logo{userData.remainingLogos !== 1 ? 's' : ''} remaining
                 </p>
               ) : (
-                <p className="text-sm text-red-600 mt-2 font-medium text-center">
-                  You've used all your logo credits
-                </p>
+                <div className="mt-4 text-center">
+                  <p className="text-sm text-red-600 mb-2">You've used all your logo credits</p>
+                  <Link 
+                    href="/purchase"
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
+                  >
+                    Purchase More Credits
+                  </Link>
+                </div>
               )}
-            </div>
-
-            {/* Catalog Actions */}
-            <div className="bg-blue-50 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Logo Catalog</h3>
-              <div className="flex gap-3">
-                <Link
-                  href="/public-catalog"
-                  target="_blank"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white text-center rounded-md hover:bg-blue-700 transition-colors"
-                >
-                  Go to Catalog
-                </Link>
-                <button
-                  onClick={handleCopyCatalogLink}
-                  className="flex-1 px-4 py-2 bg-white border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 transition-colors"
-                >
-                  {copiedLink ? 'Link Copied!' : 'Copy Catalog Link'}
-                </button>
-              </div>
-              <p className="text-xs text-gray-600 mt-2">Share the public catalog with others</p>
             </div>
 
             {/* Ownership Certificate Section */}
@@ -277,32 +239,32 @@ export default function AccountPage() {
                 </div>
               </div>
             </div>
-            
+
             {/* Action Buttons */}
-            <div className="flex flex-col space-y-4">
-              <Link 
-                href="/history" 
-                className="w-full px-4 py-3 bg-indigo-600 text-white rounded-lg text-center hover:bg-indigo-700 transition-colors font-medium"
+            <div className="flex flex-col md:flex-row gap-4">
+              <Link
+                href="/"
+                className="flex-1 inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
               >
-                View My Logos
+                Create New Logo
               </Link>
               
-              <Link 
-                href="/purchase" 
-                className="w-full px-4 py-3 bg-green-600 text-white rounded-lg text-center hover:bg-green-700 transition-colors font-medium"
+              <Link
+                href="/history"
+                className="flex-1 inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
               >
-                Purchase More Credits
+                View Logo History
               </Link>
             </div>
           </div>
         )}
-      </div>
-      
-      {/* Footer */}
-      <div className="footer-wrapper mt-6">
-        <p className="text-center text-gray-500 text-sm">
-          Logo Generation Tool • Smarty Apps • {new Date().getFullYear()}
-        </p>
+
+        {/* Error Message */}
+        {error && (
+          <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg text-center">
+            <p className="text-red-700 font-medium">{error}</p>
+          </div>
+        )}
       </div>
     </main>
   );
