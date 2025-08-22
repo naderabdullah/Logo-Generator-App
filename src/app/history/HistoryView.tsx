@@ -687,7 +687,7 @@ const handleAddToCatalog = async (displayedLogo: StoredLogo) => {
                   {/* Dropdown Menu */}
                   {showActionsDropdown && (
                     <div
-                      className="absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50 overflow-hidden"
+                      className="absolute mt-1 z-50 w-56 max-w-[calc(100vw-1rem)] sm:max-w-none bg-white rounded-md shadow-lg border border-gray-200 overflow-auto max-h-60 left-0 sm:left-auto sm:right-0"
                       role="menu"
                       aria-orientation="vertical"
                     >
