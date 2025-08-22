@@ -48,11 +48,16 @@ export default function UnifiedHeader() {
       }
     };
 
-    document.addEventListener('click', handleClickOutside);
+    // Use a small delay to avoid conflict with button click
+    const timeoutId = setTimeout(() => {
+      document.addEventListener('click', handleClickOutside);
+    }, 0);
+
     return () => {
+      clearTimeout(timeoutId);
       document.removeEventListener('click', handleClickOutside);
     };
-  }, []);
+  }, [isDropdownOpen]);
 
   if (pathname === '/public-catalog') {
     return null;
