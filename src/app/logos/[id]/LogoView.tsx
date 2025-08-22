@@ -302,9 +302,18 @@ export default function LogoView({ logoId }: LogoViewProps) {
   };
 
   // Certificate generation function - ADD THIS ENTIRE FUNCTION
+  // Updated handleGenerateCertificate function in src/app/logos/[id]/LogoView.tsx
+// Replace the existing handleGenerateCertificate function with this version
+
   const handleGenerateCertificate = async () => {
     if (!clientEmail.trim()) {
       setCertificateError('Client email is required');
+      return;
+    }
+
+    // Validate user is logged in and has email
+    if (!user?.email) {
+      setCertificateError('You must be logged in to issue certificates');
       return;
     }
 
@@ -339,7 +348,7 @@ export default function LogoView({ logoId }: LogoViewProps) {
         reader.readAsDataURL(blob);
       });
 
-      // Generate certificate
+      // Generate certificate with proper reseller hierarchy
       const certResponse = await fetch('/api/certificate/logo/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -347,7 +356,7 @@ export default function LogoView({ logoId }: LogoViewProps) {
           clientEmail: clientEmail.trim(),
           logoId: logo.id,
           logoImageBase64: base64,
-          resellerEmail: user?.email
+          resellerEmail: user.email // ✅ Ensure this is the actual reseller's email
         })
       });
 

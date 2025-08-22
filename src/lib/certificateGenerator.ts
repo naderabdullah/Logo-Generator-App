@@ -154,6 +154,9 @@ export function verifyLogoCertificateId(
 }
 
 // Generate logo certificate PDF with embedded logo image
+// Improved generateLogoCertificate function with better formatting
+// Replace the entire generateLogoCertificate function in src/lib/certificateGenerator.ts
+
 export async function generateLogoCertificate(data: LogoCertificateData): Promise<Buffer> {
     try {
         console.log('📄 Starting logo certificate PDF generation');
@@ -178,73 +181,86 @@ export async function generateLogoCertificate(data: LogoCertificateData): Promis
         const primaryBlue = [59, 130, 246];
         const darkGray = [55, 65, 81];
         const lightGray = [107, 114, 128];
+        const backgroundGray = [245, 247, 250];
 
-        // HEADER with gradient background simulation
-        doc.setFillColor(245, 247, 250);
-        doc.rect(0, 0, pageWidth, 50, 'F');
+        // HEADER SECTION (0-45mm)
+        doc.setFillColor(backgroundGray[0], backgroundGray[1], backgroundGray[2]);
+        doc.rect(0, 0, pageWidth, 45, 'F');
 
         // Main title
-        doc.setFontSize(24);
+        doc.setFontSize(22);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
-        doc.text('CERTIFICATE OF LOGO OWNERSHIP', pageWidth / 2, 30, { align: 'center' });
+        doc.text('CERTIFICATE OF LOGO OWNERSHIP', pageWidth / 2, 25, { align: 'center' });
 
-        // CHAIN OF CUSTODY SECTION - Very prominent
-        doc.setFillColor(245, 247, 250);
-        doc.rect(20, 55, pageWidth - 40, 25, 'F');
+        // CHAIN OF CUSTODY SECTION (50-85mm)
+        doc.setFillColor(backgroundGray[0], backgroundGray[1], backgroundGray[2]);
+        doc.rect(15, 50, pageWidth - 30, 35, 'F');
 
         doc.setFontSize(12);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
-        doc.text('CHAIN OF CUSTODY', pageWidth / 2, 62, { align: 'center' });
+        doc.text('CERTIFICATE HIERARCHY & CHAIN OF CUSTODY', pageWidth / 2, 58, { align: 'center' });
 
-        doc.setFontSize(10);
+        doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
-        doc.text('Platform Creator:', 25, 68);
-        doc.text('SMARTY LOGOS™ AI LOGO GENERATOR PLATFORM', 65, 68);
 
-        doc.text('Certificate Issuer:', 25, 73);
-        doc.text(resellerEmail, 65, 73);
+        // Platform Owner
+        doc.text('Platform Owner:', 20, 66);
+        doc.setFont('helvetica', 'bold');
+        doc.text('SMARTY LOGOS™ AI LOGO GENERATOR PLATFORM', 65, 66);
 
-        doc.text('Logo Owner:', 25, 78);
+        // Certificate Issuer (Reseller)
+        doc.setFont('helvetica', 'normal');
+        doc.text('Certificate Issuer:', 20, 72);
+        doc.setFont('helvetica', 'bold');
+        doc.text(resellerEmail, 65, 72);
+
+        // Logo Owner (Client)
+        doc.setFont('helvetica', 'normal');
+        doc.text('Logo Owner:', 20, 78);
+        doc.setFont('helvetica', 'bold');
         doc.text(clientEmail, 65, 78);
 
-        // Add logo image if provided
+        // LOGO IMAGE SECTION (90-155mm) - Much larger logo
         if (data.logoImageBuffer) {
             const logoDataUrl = `data:image/png;base64,${data.logoImageBuffer.toString('base64')}`;
-            const logoSize = 35;
+            const logoSize = 55; // Increased from 35 to 55mm
             const logoX = (pageWidth - logoSize) / 2;
             const logoY = 90;
 
             doc.addImage(logoDataUrl, 'PNG', logoX, logoY, logoSize, logoSize);
 
+            // Logo ID below image
             doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
+            doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
             doc.text(`Logo ID: ${logoId}`, pageWidth / 2, logoY + logoSize + 8, { align: 'center' });
         }
 
-        // OWNERSHIP DECLARATION
-        const textStartY = data.logoImageBuffer ? 145 : 100;
-        doc.setFontSize(14);
+        // OWNERSHIP DECLARATION SECTION (160-185mm)
+        const ownershipY = 160;
+        doc.setFontSize(11);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
 
-        const ownershipText = `This certificate establishes that ${clientEmail} is the rightful and exclusive owner of the logo displayed above. This logo was created using the SMARTY LOGOS™ AI LOGO GENERATOR PLATFORM and this ownership certificate was issued by ${resellerEmail}.`;
+        const ownershipText = `This certificate establishes that ${clientEmail} is the rightful and exclusive owner of the logo displayed above. This logo was created using the SMARTY LOGOS™ AI LOGO GENERATOR PLATFORM and this ownership certificate was issued by ${resellerEmail} acting as an authorized reseller.`;
 
-        const splitText = doc.splitTextToSize(ownershipText, 150);
-        doc.text(splitText, pageWidth / 2, textStartY, { align: 'center' });
+        const splitText = doc.splitTextToSize(ownershipText, 160);
+        doc.text(splitText, pageWidth / 2, ownershipY, { align: 'center' });
 
-        // RIGHTS GRANTED SECTION
-        const rightsY = textStartY + 25;
+        // RIGHTS GRANTED SECTION (190-220mm)
+        const rightsY = 190;
         doc.setFontSize(12);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
         doc.text('RIGHTS GRANTED TO OWNER', pageWidth / 2, rightsY, { align: 'center' });
 
-        doc.setFontSize(10);
+        doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+
         const rights = [
             '• Full commercial usage rights',
             '• Complete copyright ownership',
@@ -254,70 +270,85 @@ export async function generateLogoCertificate(data: LogoCertificateData): Promis
             '• Trademark usage permissions'
         ];
 
-        rights.forEach((right, index) => {
-            doc.text(right, 30, rightsY + 8 + (index * 5));
+        // Split rights into two columns for better space usage
+        const leftColumn = rights.slice(0, 3);
+        const rightColumn = rights.slice(3);
+
+        leftColumn.forEach((right, index) => {
+            doc.text(right, 25, rightsY + 8 + (index * 5));
         });
 
-        // CERTIFICATE DETAILS (Technical verification info)
-        const detailsY = rightsY + 45;
-        doc.setFillColor(249, 250, 251);
-        doc.rect(20, detailsY - 5, pageWidth - 40, 35, 'F');
+        rightColumn.forEach((right, index) => {
+            doc.text(right, 110, rightsY + 8 + (index * 5));
+        });
+
+        // CERTIFICATE VERIFICATION SECTION (225-255mm)
+        const verificationY = 225;
+        doc.setFillColor(backgroundGray[0], backgroundGray[1], backgroundGray[2]);
+        doc.rect(15, verificationY - 3, pageWidth - 30, 30, 'F');
 
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
-        doc.text('CERTIFICATE VERIFICATION DETAILS', 25, detailsY);
+        doc.text('CERTIFICATE VERIFICATION DETAILS', 20, verificationY + 3);
 
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(8);
-        doc.text(`Certificate ID: ${certificateId}`, 25, detailsY + 6);
-        doc.text(`Logo ID: ${logoId}`, 25, detailsY + 12);
-        doc.text(`Issue Date: ${issueDate}`, 25, detailsY + 18);
-        doc.text(`Verification: Cryptographically signed and verifiable`, 25, detailsY + 24);
+        doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
 
-        // QR Code for verification
+        // Certificate details in left column
+        doc.text(`Certificate ID:`, 20, verificationY + 9);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`${certificateId}`, 20, verificationY + 13);
+
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Logo ID: ${logoId}`, 20, verificationY + 17);
+        doc.text(`Issue Date: ${issueDate}`, 20, verificationY + 21);
+
+        // QR Code in right area (smaller and better positioned)
         try {
             const verificationUrl = `${BASE_URL}/verify/logo/${certificateId}`;
             const qrCodeDataUrl = await QRCode.toDataURL(verificationUrl, {
-                errorCorrectionLevel: 'M',
+                width: 200,
                 margin: 1,
-                width: 80,
+                color: { dark: '#000000', light: '#FFFFFF' }
             });
 
-            const qrSize = 20;
-            const qrX = pageWidth - 45;
-            const qrY = detailsY;
+            const qrSize = 20; // Smaller QR code
+            const qrX = pageWidth - 35;
+            const qrY = verificationY + 2;
 
             doc.addImage(qrCodeDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
-            doc.setFontSize(6);
-            doc.setTextColor(lightGray[0], lightGray[1], lightGray[2]);
-            doc.text('Scan to verify', qrX + qrSize/2, qrY + qrSize + 3, { align: 'center' });
-        } catch (error) {
-            console.error('❌ Failed to generate QR code:', error);
-            // Fallback QR code placeholder
-            doc.setDrawColor(lightGray[0], lightGray[1], lightGray[2]);
-            doc.setLineWidth(0.5);
-            doc.rect(pageWidth - 45, detailsY, 20, 20);
-            doc.setFontSize(6);
-            doc.text('QR CODE', pageWidth - 35, detailsY + 10, { align: 'center' });
-            doc.text('VERIFICATION', pageWidth - 35, detailsY + 13, { align: 'center' });
+
+            doc.setFontSize(7);
+            doc.text('Scan to verify', qrX + (qrSize/2), qrY + qrSize + 3, { align: 'center' });
+        } catch (qrError) {
+            console.warn('QR code generation failed:', qrError);
         }
 
-        // FOOTER with platform attribution
-        const footerY = pageHeight - 15;
+        // FOOTER SECTION (260-280mm)
+        const footerY = 260;
         doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
         doc.setTextColor(lightGray[0], lightGray[1], lightGray[2]);
-        doc.text('This certificate was generated by SMARTY LOGOS™ AI LOGO GENERATOR PLATFORM', pageWidth / 2, footerY, { align: 'center' });
-        doc.text(`Digital verification available at: ${BASE_URL}/verify/logo/${certificateId}`, pageWidth / 2, footerY + 5, { align: 'center' });
 
-        return Buffer.from(doc.output('arraybuffer'));
+        doc.text('This certificate was generated by SMARTY LOGOS™ AI LOGO GENERATOR PLATFORM',
+            pageWidth / 2, footerY, { align: 'center' });
+
+        const verificationUrl = `${BASE_URL}/verify/logo/${certificateId}`;
+        const urlText = doc.splitTextToSize(`Digital verification available at: ${verificationUrl}`, pageWidth - 30);
+        doc.text(urlText, pageWidth / 2, footerY + 5, { align: 'center' });
+
+        // Convert to buffer and return
+        const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
+        console.log('✅ Logo certificate PDF generated successfully');
+        return pdfBuffer;
 
     } catch (error) {
         console.error('❌ Logo certificate PDF generation failed:', error);
         throw new Error('Failed to generate logo certificate PDF');
     }
 }
-
 // Encode user data into the certificate ID for stateless verification
 // Replace your generateCertificateId function with this:
 export function generateCertificateId(userEmail: string): string {

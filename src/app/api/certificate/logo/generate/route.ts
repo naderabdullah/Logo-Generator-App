@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
 
         // Parse the request body
         const body = await request.json();
-        const { clientEmail, logoId, logoImageBase64 } = body;
+        const { clientEmail, logoId, logoImageBase64, resellerEmail } = body;
 
         if (!clientEmail || !logoId || !logoImageBase64) {
             return NextResponse.json(
@@ -17,8 +17,17 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // Validate that resellerEmail is provided
+        if (!resellerEmail) {
+            return NextResponse.json(
+                { error: 'Missing reseller email. User must be logged in to issue certificates.' },
+                { status: 400 }
+            );
+        }
+
         console.log('✅ Generating logo certificate for:', {
             clientEmail: clientEmail.substring(0, 3) + '...',
+            resellerEmail: resellerEmail.substring(0, 3) + '...',
             logoId,
             imageDataLength: logoImageBase64.length
         });
@@ -31,7 +40,7 @@ export async function POST(request: NextRequest) {
 
         const certificateData = {
             clientEmail,
-            resellerEmail: 'SMARTY LOGOS™ PLATFORM', // You can make this dynamic if needed
+            resellerEmail: resellerEmail, // ✅ Use the actual reseller email from request
             logoId,
             certificateId,
             logoImageBuffer,
@@ -44,6 +53,7 @@ export async function POST(request: NextRequest) {
 
         console.log('📝 Logo certificate data prepared:', {
             clientEmail: certificateData.clientEmail,
+            resellerEmail: certificateData.resellerEmail,
             logoId: certificateData.logoId,
             certificateId: certificateData.certificateId,
             issueDate: certificateData.issueDate
