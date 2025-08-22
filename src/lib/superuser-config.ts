@@ -10,7 +10,7 @@ export const SUPERUSER_CONFIG = {
     // Add your superuser emails here
     // 'admin@yourcompany.com',
     // 'owner@yourcompany.com',
-    'tabdullah1215@live.com',
+    // 'tabdullah1215@live.com',
     // 'nader.abdullah@outlook.com'
   ],
   
