@@ -642,20 +642,20 @@ const handleAddToCatalog = async (displayedLogo: StoredLogo) => {
         {/* Bulk Actions Bar */}
         {hasSelection && (
           <div className="mb-4 p-3 bg-indigo-50 rounded-lg border border-indigo-200">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
+            <div className="flex flex-row items-center justify-between gap-3">
+              <div className="flex items-center gap-3 order-2 sm:order-1">
                 <span className="text-sm font-medium text-indigo-800">
                   {selectedCount} logo{selectedCount !== 1 ? 's' : ''} selected
                 </span>
                 <button
                   onClick={handleDeselectAll}
-                  className="text-xs text-indigo-600 hover:text-indigo-700 underline"
+                  className="text-xs text-indigo-600 hover:text-indigo-700 underline hidden sm:block"
                 >
                   Clear selection
                 </button>
               </div>
               
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 order-1 sm:order-2">
                 {/* Actions Dropdown */}
                 <div className="relative">
                   <button
@@ -887,7 +887,7 @@ const handleAddToCatalog = async (displayedLogo: StoredLogo) => {
                 const isSelected = selectedLogos.has(displayedLogo.id);
                 
                 return (
-                  <div key={original.id} className={`border rounded-lg p-4 bg-white shadow-sm transition-all ${isSelected ? 'ring-2 ring-indigo-500 bg-indigo-50' : ''}`}>
+                  <div key={original.id} className={`relative border rounded-lg p-4 bg-white shadow-sm transition-all ${isSelected ? 'ring-2 ring-indigo-500 bg-indigo-50' : ''}`}>
                     <div className="flex flex-col md:flex-row gap-4">
                       {/* Logo Image - MODIFIED: Now uses LazyImage */}
                       <div className="flex-shrink-0">
@@ -915,6 +915,17 @@ const handleAddToCatalog = async (displayedLogo: StoredLogo) => {
                               </p>
                             )}
                           </div>
+                          
+                          {/* Selection Checkbox - moved here for top-right positioning */}
+                          <div className="flex-shrink-0 pt-1">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={(e) => handleLogoSelect(displayedLogo.id, e.target.checked)}
+                              className="absolute top-2 right-2 z-10 w-5 h-5 border-gray-300 rounded focus:ring-indigo-500 accent-indigo-600 bg-white"
+                              aria-label={`Select ${displayedLogo.name}`}
+                            />
+                          </div>
                         </div>
                         
                         {/* Company Name and Details */}
@@ -928,8 +939,7 @@ const handleAddToCatalog = async (displayedLogo: StoredLogo) => {
                             </p>
                           )}
                           <p className="text-xs text-gray-500">
-                            {displayedLogo.parameters.overallStyle} •&nbsp;
-                            {displayedLogo.parameters.colorScheme}
+                            {displayedLogo.parameters.overallStyle} • {displayedLogo.parameters.colorScheme}
                           </p>
                         </div>
                         
@@ -949,6 +959,7 @@ const handleAddToCatalog = async (displayedLogo: StoredLogo) => {
                           >
                             {revisions.length >= 3 ? "Max Revisions" : "Edit Logo"}
                           </button>
+                          
                           {user?.isSuperUser && (() => {
                             const catalogState = catalogStates[displayedLogo.id] || {
                               isInCatalog: false,
@@ -957,63 +968,50 @@ const handleAddToCatalog = async (displayedLogo: StoredLogo) => {
                             };
 
                             return (
-                                <button
-                                    onClick={() => handleAddToCatalog(displayedLogo)}
-                                    disabled={catalogState.catalogLoading || catalogState.isInCatalog}
-                                    className={`btn-action flex items-center space-x-1 text-xs ${
-                                        catalogState.isInCatalog
-                                            ? 'bg-gray-800 text-white cursor-not-allowed'
-                                            : 'bg-purple-600 hover:bg-purple-700 text-white'
-                                    }`}
-                                >
-                                  {catalogState.catalogLoading ? (
-                                      <>
-                                        <svg className="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                        </svg>
-                                        <span>Adding...</span>
-                                      </>
-                                  ) : catalogState.isInCatalog ? (
-                                      <>
-                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                        </svg>
-
-                                        {catalogState.catalogCode && (
-                                            <span className="text-xs">({catalogState.catalogCode})</span>
-                                        )}
-                                      </>
-                                  ) : (
-                                      <>
-                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                                d="M12 4v16m8-8H4"/>
-                                        </svg>
-                                        <span>Catalog</span>
-                                      </>
-                                  )}
-                                </button>
+                              <button
+                                onClick={() => handleAddToCatalog(displayedLogo)}
+                                disabled={catalogState.catalogLoading || catalogState.isInCatalog}
+                                className={`btn-action flex items-center space-x-1 text-xs ${
+                                  catalogState.isInCatalog
+                                    ? 'bg-gray-800 text-white cursor-not-allowed'
+                                    : 'bg-purple-600 hover:bg-purple-700 text-white'
+                                }`}
+                              >
+                                {catalogState.catalogLoading ? (
+                                  <>
+                                    <svg className="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                    <span>Adding...</span>
+                                  </>
+                                ) : catalogState.isInCatalog ? (
+                                  <>
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    {catalogState.catalogCode && (
+                                      <span className="text-xs">({catalogState.catalogCode})</span>
+                                    )}
+                                  </>
+                                ) : (
+                                  <>
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/>
+                                    </svg>
+                                    <span>Catalog</span>
+                                  </>
+                                )}
+                              </button>
                             );
                           })()}
 
                           <button
-                              onClick={() => confirmDeleteLogo(displayedLogo.id)}
+                            onClick={() => confirmDeleteLogo(displayedLogo.id)}
                             className="btn-action btn-danger"
                           >
                             Delete
                           </button>
                         </div>
-                      </div>
-
-                      {/* Selection Checkbox */}
-                      <div className="flex-shrink-0 flex items-start pt-1">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={(e) => handleLogoSelect(displayedLogo.id, e.target.checked)}
-                          className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                          aria-label={`Select ${displayedLogo.name}`}
-                        />
                       </div>
                     </div>
                   </div>
