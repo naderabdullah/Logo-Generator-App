@@ -51,6 +51,12 @@ export default function DashboardPage() {
     });
   };
 
+  const handleCatalogClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const catalogUrl = `${window.location.origin}/public-catalog`;
+    window.open(catalogUrl, '_blank');
+  };
+
   const generateShareableLink = () => {
     if (!userData) return;
     
@@ -200,6 +206,7 @@ export default function DashboardPage() {
                 <Link
                   href="/public-catalog"
                   target="_blank"
+                  onClick={handleCatalogClick}
                   className="flex-1 px-4 py-2 bg-blue-600 text-white text-center rounded-md hover:bg-blue-700 transition-colors"
                 >
                   Go to Catalog
