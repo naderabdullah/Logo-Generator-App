@@ -51,12 +51,6 @@ export default function DashboardPage() {
     });
   };
 
-  const handleCatalogClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    const catalogUrl = `${window.location.origin}/public-catalog`;
-    window.open(catalogUrl, '_blank');
-  };
-
   const generateShareableLink = () => {
     if (!userData) return;
     
@@ -200,12 +194,12 @@ export default function DashboardPage() {
             </div>
 
             {/* Catalog Actions */}
-            <div className="bg-blue-50 p-6 rounded-lg md:col-span-2">
+            <div className="bg-blue-50 p-6 rounded-lg">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Logo Catalog</h3>
               <div className="flex gap-3">
                 <Link
                   href="/public-catalog"
-                  onClick={handleCatalogClick}
+                  target="_blank"
                   className="flex-1 px-4 py-2 bg-blue-600 text-white text-center rounded-md hover:bg-blue-700 transition-colors"
                 >
                   Go to Catalog
@@ -214,58 +208,90 @@ export default function DashboardPage() {
                   onClick={handleCopyCatalogLink}
                   className="flex-1 px-4 py-2 bg-white border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 transition-colors"
                 >
-                  {copiedLink ? 'Link Copied!' : 'Copy Link'}
+                  {copiedLink ? 'Link Copied!' : 'Copy Catalog Link'}
                 </button>
+              </div>
+              <p className="text-xs text-gray-600 mt-2">Share the public catalog with others</p>
+            </div>
+
+            {/* Ownership Certificate Section */}
+            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-lg border border-indigo-200">
+              <div className="flex items-start space-x-4">
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 bg-indigo-600 rounded-lg flex items-center justify-center">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2">Digital Ownership Certificate</h3>
+                  <p className="text-gray-600 mb-4">
+                    Generate a professional PDF certificate that legally establishes your full ownership rights
+                    over all logos created with the SMARTY LOGOS™ AI LOGO GENERATOR PLATFORM. This certificate includes comprehensive ownership
+                    language and serves as proof of your intellectual property rights.
+                  </p>
+                  <div className="bg-white p-4 rounded-lg border border-indigo-100 mb-4">
+                    <h4 className="font-medium text-gray-800 mb-2">Certificate includes:</h4>
+                    <ul className="text-sm text-gray-600 space-y-1">
+                      <li>• Full ownership rights (create, edit, sell, transfer, display)</li>
+                      <li>• Complete copyright ownership</li>
+                      <li>• Commercial usage permissions</li>
+                      <li>• Digital signature and verification</li>
+                      <li>• Account verification details</li>
+                    </ul>
+                  </div>
+                  <button
+                    onClick={handleGenerateCertificate}
+                    disabled={generatingCertificate}
+                    className="w-full px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700
+                      disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200
+                      flex items-center justify-center space-x-2"
+                  >
+                    {generatingCertificate ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Generating Certificate...</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <span>Generate Ownership Certificate</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
 
-            {/* Certificate Generation */}
-            <div className="bg-green-50 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Ownership Certificate</h3>
-              <p className="text-sm text-gray-600 mb-4">
-                Generate a certificate proving your ownership of logos created with this account.
-              </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={handleGenerateCertificate}
-                  disabled={generatingCertificate}
-                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {generatingCertificate ? 'Generating...' : 'Generate Certificate'}
-                </button>
-                <button
-                  onClick={generateShareableLink}
-                  className="flex-1 px-4 py-2 bg-white border border-green-600 text-green-600 rounded-md hover:bg-green-50 transition-colors"
-                >
-                  {copiedLink ? 'Link Copied!' : 'Share Certificate'}
-                </button>
-              </div>
+            {/* Action Buttons */}
+            <div className="flex flex-col md:flex-row gap-4">
+              <Link
+                href="/"
+                className="flex-1 inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+              >
+                Create New Logo
+              </Link>
+              
+              <Link
+                href="/history"
+                className="flex-1 inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+              >
+                View Logo History
+              </Link>
             </div>
+          </div>
+        )}
 
-            {/* Quick Actions */}
-            <div className="bg-gray-50 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <Link
-                  href="/"
-                  className="px-4 py-2 bg-indigo-600 text-white text-center rounded-md hover:bg-indigo-700 transition-colors"
-                >
-                  Create Logo
-                </Link>
-                <Link
-                  href="/history"
-                  className="px-4 py-2 bg-gray-600 text-white text-center rounded-md hover:bg-gray-700 transition-colors"
-                >
-                  View History
-                </Link>
-                <Link
-                  href="/purchase"
-                  className="px-4 py-2 bg-green-600 text-white text-center rounded-md hover:bg-green-700 transition-colors"
-                >
-                  Buy Credits
-                </Link>
-              </div>
-            </div>
+        {/* Error Message */}
+        {error && (
+          <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg text-center">
+            <p className="text-red-700 font-medium">{error}</p>
           </div>
         )}
       </div>
