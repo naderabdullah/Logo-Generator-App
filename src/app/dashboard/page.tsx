@@ -54,7 +54,14 @@ export default function DashboardPage() {
   const handleCatalogClick = (e: React.MouseEvent) => {
     e.preventDefault();
     const catalogUrl = `${window.location.origin}/public-catalog`;
-    window.open(catalogUrl, '_blank');
+    
+    // For iOS 17+, use x-safari scheme to force system Safari
+    if (navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad')) {
+      window.open(`x-safari-${catalogUrl}`, '_blank');
+    } else {
+      // Fallback for other devices
+      window.open(catalogUrl, '_blank');
+    }
   };
 
   const generateShareableLink = () => {
@@ -205,7 +212,6 @@ export default function DashboardPage() {
               <div className="flex gap-3">
                 <Link
                   href="/public-catalog"
-                  target="_blank"
                   onClick={handleCatalogClick}
                   className="flex-1 px-4 py-2 bg-blue-600 text-white text-center rounded-md hover:bg-blue-700 transition-colors"
                 >
