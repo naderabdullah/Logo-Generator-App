@@ -207,65 +207,170 @@ export default function PublicCatalogView() {
     const [selectedLogo, setSelectedLogo] = useState<CatalogLogo | null>(null);
     const [showParametersModal, setShowParametersModal] = useState(false);
     const [copied, setCopied] = useState(false);
-    
     const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(15);
+    
+    // Cache for storing previously loaded results
+    const cacheRef = useRef<Map<string, {
+        logos: CatalogLogo[];
+        stats: CatalogStats | null;
+        pagination: PaginationInfo | null;
+    }>>(new Map());
+    
     const router = useRouter();
 
-    // Fetch catalog data with pagination (page buttons only)
-    const fetchCatalog = useCallback(async (page: number = 1, search: string = '') => {
-        try {
-            if (page === 1) {
-                setInitialLoading(true);
-            } else {
-                setLoadingMore(true);
-            }
-            
-            const searchParams = new URLSearchParams({
-                page: page.toString(),
-                limit: '30',
-                ...(search && { search })
-            });
+    const perPageOptions = [5, 10, 15, 20, 30];
 
-            const response = await fetch(`/api/catalog/public?${searchParams}`);
-            
-            if (!response.ok) {
-                throw new Error('Failed to fetch catalog');
-            }
-            
-            const data = await response.json();
-            
-            // Always replace content for page navigation
-            setCatalogLogos(data.logos || []);
-            setStats(data.stats || null);
-            setPagination(data.pagination || null);
-            setCurrentPage(page);
-            
-        } catch (err: any) {
-            setError(err.message || 'Failed to load catalog');
-        } finally {
-            setInitialLoading(false);
-            setLoadingMore(false);
-        }
-    }, []);
+    // Generate cache key for current request
+    const getCacheKey = (page: number, search: string, limit: number) => {
+        return `${search || 'all'}_${page}_${limit}`;
+    };
 
-    // Initial load
-    useEffect(() => {
-        fetchCatalog(1, searchTerm);
-    }, [fetchCatalog]);
+    // Pagination Controls Component
+    const PaginationControls = () => {
+        if (!pagination || pagination.totalPages <= 1) return null;
+
+        return (
+            <div className="flex justify-center items-center space-x-4">
+                <button
+                    onClick={() => fetchCatalog(pagination.page - 1, searchTerm, itemsPerPage, true)}
+                    disabled={pagination.page <= 1 || loadingMore}
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    Previous
+                </button>
+                
+                <div className="flex space-x-2">
+                    {/* Show page numbers */}
+                    {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                        const pageNum = Math.max(1, pagination.page - 2) + i;
+                        if (pageNum > pagination.totalPages) return null;
+                        
+                        return (
+                            <button
+                                key={pageNum}
+                                onClick={() => fetchCatalog(pageNum, searchTerm, itemsPerPage, true)}
+                                disabled={loadingMore}
+                                className={`px-3 py-2 rounded-md ${
+                                    pageNum === pagination.page
+                                        ? 'bg-indigo-600 text-white'
+                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                } disabled:opacity-50`}
+                            >
+                                {pageNum}
+                            </button>
+                        );
+                    })}
+                </div>
+                
+                <button
+                    onClick={() => fetchCatalog(pagination.page + 1, searchTerm, itemsPerPage, true)}
+                    disabled={!pagination.hasMore || loadingMore}
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    Next
+                </button>
+            </div>
+        );
+    };
+
+    // Fetch catalog data with pagination and caching
+    const fetchCatalog = useCallback(
+        async (
+            page: number = 1,
+            search: string = '',
+            limit?: number,
+            shouldScrollToTop: boolean = true
+        ) => {
+            const effectiveLimit = typeof limit === 'number' ? limit : itemsPerPage;
+            const cacheKey = getCacheKey(page, search, effectiveLimit);
+
+            const cachedData = cacheRef.current.get(cacheKey);
+            if (cachedData) {
+                setCatalogLogos(cachedData.logos);
+                if (cachedData.stats && (!stats || cachedData.stats.totalLogos > 0)) {
+                    setStats(cachedData.stats);
+                }
+                setPagination(cachedData.pagination);
+
+                if (shouldScrollToTop && page !== currentPage) {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+
+                setCurrentPage(page);
+                return;
+            }
+
+            try {
+                if (page === 1 && catalogLogos.length === 0) {
+                    setInitialLoading(true);
+                } else {
+                    setLoadingMore(true);
+                }
+
+                const searchParams = new URLSearchParams({
+                    page: page.toString(),
+                    limit: effectiveLimit.toString(),
+                    ...(search && { search })
+                });
+
+                const response = await fetch(`/api/catalog/public?${searchParams}`);
+                if (!response.ok) throw new Error('Failed to fetch catalog');
+                const data = await response.json();
+
+                const newCacheData = {
+                    logos: data.logos || [],
+                    stats: data.stats || null,
+                    pagination: data.pagination || null
+                };
+
+                cacheRef.current.set(cacheKey, newCacheData);
+                if (cacheRef.current.size > 50) {
+                    const firstKey = cacheRef.current.keys().next().value;
+                    if (typeof firstKey === 'string') {
+                        cacheRef.current.delete(firstKey);
+                    }
+                }
+
+                setCatalogLogos(data.logos || []);
+                if (data.stats) setStats(data.stats);
+                setPagination(data.pagination || null);
+
+                if (shouldScrollToTop && page !== currentPage) {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+
+                setCurrentPage(page);
+            } catch (err: any) {
+                setError(err.message || 'Failed to load catalog');
+            } finally {
+                setInitialLoading(false);
+                setLoadingMore(false);
+            }
+        },
+        [itemsPerPage]
+    );
 
     // Search functionality with debounce
     useEffect(() => {
         const timeoutId = setTimeout(() => {
             if (currentPage === 1) {
-                fetchCatalog(1, searchTerm);
+                fetchCatalog(1, searchTerm, itemsPerPage, false); // Don't scroll to top on search
             } else {
                 setCurrentPage(1);
-                fetchCatalog(1, searchTerm);
+                fetchCatalog(1, searchTerm, itemsPerPage, false); // Don't scroll to top on search
             }
         }, 300);
 
         return () => clearTimeout(timeoutId);
     }, [searchTerm, fetchCatalog]);
+
+    // Handle items per page change
+    const handleItemsPerPageChange = (newItemsPerPage: number) => {
+        setItemsPerPage(newItemsPerPage);
+        setCurrentPage(1);
+        fetchCatalog(1, searchTerm, newItemsPerPage, false); // Don't scroll to top on per-page change
+    };
 
     const handleViewParameters = (logo: CatalogLogo) => {
         setSelectedLogo(logo);
@@ -294,43 +399,6 @@ export default function PublicCatalogView() {
         }
     };
 
-    // Show initial loading
-    if (initialLoading) {
-        return (
-            <div className="min-h-screen bg-gray-50">
-                <div className="container mx-auto px-4 py-8 max-w-7xl">
-                    {/* Header skeleton */}
-                    <div className="mb-8 text-center">
-                        <div className="h-9 bg-gray-300 rounded w-64 mx-auto mb-2 animate-pulse"></div>
-                        <div className="h-5 bg-gray-200 rounded w-96 mx-auto animate-pulse"></div>
-                    </div>
-
-                    {/* Stats skeleton */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                        {[1, 2, 3].map((i) => (
-                            <div key={i} className="bg-white rounded-lg shadow p-4 animate-pulse">
-                                <div className="h-8 bg-gray-300 rounded w-16 mx-auto mb-2"></div>
-                                <div className="h-4 bg-gray-200 rounded w-24 mx-auto"></div>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Search skeleton */}
-                    <div className="mb-6">
-                        <div className="h-10 bg-gray-200 rounded-lg animate-pulse"></div>
-                    </div>
-
-                    {/* Grid skeleton */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                        {Array.from({ length: 15 }, (_, i) => (
-                            <LogoSkeleton key={i} />
-                        ))}
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
     if (error) {
         return (
             <div className="flex items-center justify-center min-h-screen">
@@ -356,8 +424,17 @@ export default function PublicCatalogView() {
                     <p className="text-gray-600">Browse our collection of AI-generated logos</p>
                 </div>
 
-                {/* Stats */}
-                {stats && (
+                {/* Stats - Always show once loaded */}
+                {(initialLoading && !stats) ? (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                        {[1, 2, 3].map((i) => (
+                            <div key={i} className="bg-white rounded-lg shadow p-4 animate-pulse">
+                                <div className="h-8 bg-gray-300 rounded w-16 mx-auto mb-2"></div>
+                                <div className="h-4 bg-gray-200 rounded w-24 mx-auto"></div>
+                            </div>
+                        ))}
+                    </div>
+                ) : stats ? (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                         <div className="bg-white rounded-lg shadow p-4 text-center">
                             <div className="text-3xl font-bold text-indigo-600">{stats.totalLogos}</div>
@@ -377,91 +454,68 @@ export default function PublicCatalogView() {
                             <div className="text-sm text-gray-600">Latest Addition</div>
                         </div>
                     </div>
-                )}
+                ) : null}
 
-                {/* Dashboard Button */}
-                <div className="mb-6 flex justify-end">
-                    <button
-                        onClick={() => router.push('/dashboard')}
-                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-                    >
-                        Back to Dashboard
-                    </button>
-                </div>
-
-                {/* Search */}
-                <div className="mb-6">
-                    <input
-                        type="text"
-                        placeholder="Search by company name or catalog code..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
-                </div>
-
-                {/* Results count */}
-                <div className="mb-4 text-sm text-gray-600">
-                    Showing {catalogLogos.length} of {pagination?.total || 0} logos
-                    {pagination && pagination.totalPages > 1 && (
-                        <span className="ml-2">
-                            (Page {pagination.page} of {pagination.totalPages})
-                        </span>
-                    )}
-                </div>
-
-                {/* Logo Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                    {catalogLogos.map((logo) => (
-                        <LogoCard 
-                            key={logo.id} 
-                            logo={logo} 
-                            onViewParameters={handleViewParameters}
+                {/* Search and Per Page Controls - Always Visible */}
+                <div className="mb-6 flex flex-col sm:flex-row gap-4">
+                    <div className="flex-1">
+                        <input
+                            type="text"
+                            placeholder="Search by company name or catalog code..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         />
-                    ))}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600 whitespace-nowrap">Per page:</span>
+                        <select
+                            value={itemsPerPage}
+                            onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                        >
+                            {perPageOptions.map(option => (
+                                <option key={option} value={option}>{option}</option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
 
-                {/* Page Navigation Buttons */}
-                {pagination && pagination.totalPages > 1 && (
-                    <div className="flex justify-center items-center space-x-4 mt-8">
-                        <button
-                            onClick={() => fetchCatalog(pagination.page - 1, searchTerm)}
-                            disabled={pagination.page <= 1 || loadingMore}
-                            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            Previous
-                        </button>
-                        
-                        <div className="flex space-x-2">
-                            {/* Show page numbers */}
-                            {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                                const pageNum = Math.max(1, pagination.page - 2) + i;
-                                if (pageNum > pagination.totalPages) return null;
-                                
-                                return (
-                                    <button
-                                        key={pageNum}
-                                        onClick={() => fetchCatalog(pageNum, searchTerm)}
-                                        disabled={loadingMore}
-                                        className={`px-3 py-2 rounded-md ${
-                                            pageNum === pagination.page
-                                                ? 'bg-indigo-600 text-white'
-                                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                                        } disabled:opacity-50`}
-                                    >
-                                        {pageNum}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                        
-                        <button
-                            onClick={() => fetchCatalog(pagination.page + 1, searchTerm)}
-                            disabled={!pagination.hasMore || loadingMore}
-                            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            Next
-                        </button>
+                {/* Results count and Top Pagination - Always Visible */}
+                <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div className="text-sm text-gray-600">
+                        {(initialLoading && catalogLogos.length === 0) ? (
+                            <span>Loading logos...</span>
+                        ) : (
+                            <>
+                                Showing {catalogLogos.length} of {pagination?.total || 0} logos
+                                {pagination && pagination.totalPages > 1 && (
+                                    <span className="ml-2">
+                                        (Page {pagination.page} of {pagination.totalPages})
+                                    </span>
+                                )}
+                            </>
+                        )}
+                    </div>
+                    <PaginationControls />
+                </div>
+
+                {/* Logo Grid - Show loading skeletons only here when needed */}
+                {(initialLoading && catalogLogos.length === 0) ? (
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                        {Array.from({ length: itemsPerPage }, (_, i) => (
+                            <LogoSkeleton key={i} />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                        {catalogLogos.map((logo) => (
+                            <LogoCard 
+                                key={logo.id} 
+                                logo={logo} 
+                                onViewParameters={handleViewParameters}
+                            />
+                        ))}
                     </div>
                 )}
 
@@ -481,6 +535,11 @@ export default function PublicCatalogView() {
                         <p className="text-gray-500">No logos found matching your search.</p>
                     </div>
                 )}
+
+                {/* Bottom Page Navigation - Always Visible */}
+                <div className="mt-8 mb-8">
+                    <PaginationControls />
+                </div>
 
                 {/* Parameters Modal */}
                 {showParametersModal && selectedLogo && (
@@ -505,7 +564,7 @@ export default function PublicCatalogView() {
                                                         </svg>
                                                     ) : (
                                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                                         </svg>
                                                     )}
                                                 </button>
@@ -521,7 +580,7 @@ export default function PublicCatalogView() {
                                     </button>
                                 </div>
 
-                                {/* Rest of modal content remains the same */}
+                                {/* Logo preview in modal */}
                                 <div className="mb-4">
                                     {selectedLogo.image_data_uri ? (
                                         <img
