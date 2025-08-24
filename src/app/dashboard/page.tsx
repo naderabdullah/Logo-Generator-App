@@ -12,8 +12,21 @@ export default function DashboardPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
   const [generatingCertificate, setGeneratingCertificate] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   
   const router = useRouter();
+  
+  // Check if device is mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 767);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   
   useEffect(() => {
     // Fetch user data when component mounts
@@ -49,6 +62,14 @@ export default function DashboardPage() {
       setCopiedLink(true);
       setTimeout(() => setCopiedLink(false), 2000);
     });
+  };
+
+  const handleCatalogClick = (e: React.MouseEvent) => {
+    if (isMobile) {
+      e.preventDefault();
+      const catalogUrl = `${window.location.origin}/public-catalog`;
+      window.open(catalogUrl, '_blank');
+    }
   };
 
   const generateShareableLink = () => {
@@ -93,14 +114,11 @@ export default function DashboardPage() {
         window.URL.revokeObjectURL(url);
 
         setSuccessMessage('Ownership certificate generated and downloaded successfully!');
-        setTimeout(() => setSuccessMessage(null), 5000);
       } else {
-        const errorData = await response.json();
-        setError(errorData.error || 'Failed to generate certificate');
+        throw new Error('Failed to generate certificate');
       }
-    } catch (err) {
-      console.error('Certificate generation failed:', err);
-      setError('Failed to generate certificate. Please try again.');
+    } catch (err: any) {
+      setError(err.message || 'Failed to generate certificate');
     } finally {
       setGeneratingCertificate(false);
     }
@@ -108,193 +126,192 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <main className="container mx-auto px-4 pb-6 max-w-2xl">
-        <div className="mt-4 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Loading dashboard...</p>
-        </div>
-      </main>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
+      </div>
     );
   }
 
-  if (error && !userData) {
+  if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-red-600 mb-2">Error</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <Link 
-            href="/login"
-            className="text-indigo-600 hover:text-indigo-500"
-          >
-            Go to Login
-          </Link>
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
+          <p className="text-gray-600">{error}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <main className="container mx-auto px-4 pb-6 max-w-2xl">
-      <div className="mt-1 card">
-        <div className="text-center mb-4">
-          <h1 className="text-2xl font-bold text-indigo-600">Dashboard</h1>
-          <p className="text-gray-600 mt-0.5">Overview of your logo creation system</p>
-        </div>
+    <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
+        <p className="text-gray-600">Welcome back, {userData?.email}</p>
+      </div>
 
-        {/* Success Message */}
-        {successMessage && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-center">
-            <p className="text-green-700 font-medium">{successMessage}</p>
-          </div>
-        )}
-
-        {userData && (
-          <div className="space-y-6">        
-            {/* Usage Statistics - Using design with progress bar */}
-            <div className="bg-indigo-50 p-6 rounded-lg border border-indigo-200">
-              <h3 className="text-lg font-semibold text-indigo-800 mb-4">Logo Usage</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-indigo-600">{userData.logosCreated || 0}</div>
-                  <div className="text-sm text-indigo-600">Logos Created</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-indigo-600">{userData.logosLimit || 0}</div>
-                  <div className="text-sm text-indigo-600">Total Credits</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">{userData.remainingLogos || 0}</div>
-                  <div className="text-sm text-green-600">Remaining</div>
-                </div>
-              </div>
-              
-              <div className="w-full bg-gray-200 rounded-full h-3">
-                <div 
-                  className="bg-indigo-600 h-3 rounded-full transition-all duration-300" 
-                  style={{ width: `${Math.min(100, ((userData.logosCreated || 0) / Math.max(1, userData.logosLimit || 1)) * 100)}%` }}
-                ></div>
-              </div>
-              
-              {userData.remainingLogos > 0 ? (
-                <p className="text-sm text-indigo-600 mt-2 text-center">
-                  You have {userData.remainingLogos} logo{userData.remainingLogos !== 1 ? 's' : ''} remaining
-                </p>
-              ) : (
-                <div className="mt-4 text-center">
-                  <p className="text-sm text-red-600 mb-2">You've used all your logo credits</p>
-                  <Link 
-                    href="/purchase"
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
-                  >
-                    Purchase More Credits
-                  </Link>
-                </div>
-              )}
+      {successMessage && (
+        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
             </div>
-
-            {/* Catalog Actions */}
-            <div className="bg-blue-50 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Logo Catalog</h3>
-              <div className="flex gap-3">
-                <Link
-                  href="/public-catalog"
-                  target="_blank"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white text-center rounded-md hover:bg-blue-700 transition-colors"
-                >
-                  Go to Catalog
-                </Link>
+            <div className="ml-3">
+              <p className="text-sm text-green-800">{successMessage}</p>
+            </div>
+            <div className="ml-auto pl-3">
+              <div className="-mx-1.5 -my-1.5">
                 <button
-                  onClick={handleCopyCatalogLink}
-                  className="flex-1 px-4 py-2 bg-white border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 transition-colors"
+                  onClick={() => setSuccessMessage(null)}
+                  className="inline-flex bg-green-50 rounded-md p-1.5 text-green-500 hover:bg-green-100"
                 >
-                  {copiedLink ? 'Link Copied!' : 'Copy Catalog Link'}
+                  <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
                 </button>
               </div>
-              <p className="text-xs text-gray-600 mt-2">Share the public catalog with others</p>
-            </div>
-
-            {/* Ownership Certificate Section */}
-            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-lg border border-indigo-200">
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0">
-                  <div className="w-12 h-12 bg-indigo-600 rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-2">Digital Ownership Certificate</h3>
-                  <p className="text-gray-600 mb-4">
-                    Generate a professional PDF certificate that legally establishes your full ownership rights
-                    over all logos created with the SMARTY LOGOS™ AI LOGO GENERATOR PLATFORM. This certificate includes comprehensive ownership
-                    language and serves as proof of your intellectual property rights.
-                  </p>
-                  <div className="bg-white p-4 rounded-lg border border-indigo-100 mb-4">
-                    <h4 className="font-medium text-gray-800 mb-2">Certificate includes:</h4>
-                    <ul className="text-sm text-gray-600 space-y-1">
-                      <li>• Full ownership rights (create, edit, sell, transfer, display)</li>
-                      <li>• Complete copyright ownership</li>
-                      <li>• Commercial usage permissions</li>
-                      <li>• Digital signature and verification</li>
-                      <li>• Account verification details</li>
-                    </ul>
-                  </div>
-                  <button
-                    onClick={handleGenerateCertificate}
-                    disabled={generatingCertificate}
-                    className="w-full px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700
-                      disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200
-                      flex items-center justify-center space-x-2"
-                  >
-                    {generatingCertificate ? (
-                      <>
-                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        <span>Generating Certificate...</span>
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        <span>Generate Ownership Certificate</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex flex-col md:flex-row gap-4">
-              <Link
-                href="/"
-                className="flex-1 inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-              >
-                Create New Logo
-              </Link>
-              
-              <Link
-                href="/history"
-                className="flex-1 inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-              >
-                View Logo History
-              </Link>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Error Message */}
-        {error && (
-          <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg text-center">
-            <p className="text-red-700 font-medium">{error}</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Account Information */}
+        <div className="bg-white shadow-sm rounded-lg p-6 border border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Account Information</h2>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Email</label>
+              <p className="mt-1 text-sm text-gray-900">{userData?.email}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Account Type</label>
+              <p className="mt-1 text-sm text-gray-900">
+                {userData?.isSuperUser ? 'Super User' : 'Regular User'}
+              </p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Member Since</label>
+              <p className="mt-1 text-sm text-gray-900">
+                {userData?.createdAt ? new Date(userData.createdAt).toLocaleDateString() : 'N/A'}
+              </p>
+            </div>
           </div>
-        )}
+        </div>
+
+        {/* Usage Statistics */}
+        <div className="bg-white shadow-sm rounded-lg p-6 border border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Usage Statistics</h2>
+          
+          <div className="flex justify-between mb-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-gray-900">{userData?.logosCreated || 0}</div>
+              <div className="text-sm text-indigo-600">Logos Created</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-indigo-600">{userData?.logosLimit || 0}</div>
+              <div className="text-sm text-indigo-600">Total Credits</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-600">{userData?.remainingLogos || 0}</div>
+              <div className="text-sm text-green-600">Remaining</div>
+            </div>
+          </div>
+          
+          <div className="w-full bg-gray-200 rounded-full h-3">
+            <div 
+              className="bg-indigo-600 h-3 rounded-full transition-all duration-300" 
+              style={{ width: `${Math.min(100, ((userData?.logosCreated || 0) / Math.max(1, userData?.logosLimit || 1)) * 100)}%` }}
+            ></div>
+          </div>
+          
+          {userData?.remainingLogos > 0 ? (
+            <p className="text-sm text-indigo-600 mt-2 text-center">
+              You have {userData.remainingLogos} logo{userData.remainingLogos !== 1 ? 's' : ''} remaining
+            </p>
+          ) : (
+            <div className="mt-4 text-center">
+              <p className="text-sm text-red-600 mb-2">You've used all your logo credits</p>
+              <Link 
+                href="/purchase"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
+              >
+                Purchase More Credits
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {/* Catalog Actions */}
+        <div className="bg-blue-50 p-6 rounded-lg md:col-span-2">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Logo Catalog</h3>
+          <div className="flex gap-3">
+            <Link
+              href="/public-catalog"
+              onClick={handleCatalogClick}
+              className="flex-1 px-4 py-2 bg-blue-600 text-white text-center rounded-md hover:bg-blue-700 transition-colors"
+            >
+              Go to Catalog
+            </Link>
+            <button
+              onClick={handleCopyCatalogLink}
+              className="flex-1 px-4 py-2 bg-white border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 transition-colors"
+            >
+              {copiedLink ? 'Link Copied!' : 'Copy Link'}
+            </button>
+          </div>
+        </div>
+
+        {/* Certificate Generation */}
+        <div className="bg-green-50 p-6 rounded-lg md:col-span-2">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Ownership Certificate</h3>
+          <p className="text-sm text-gray-600 mb-4">
+            Generate a certificate proving your ownership of logos created with this account.
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={handleGenerateCertificate}
+              disabled={generatingCertificate}
+              className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {generatingCertificate ? 'Generating...' : 'Generate Certificate'}
+            </button>
+            <button
+              onClick={generateShareableLink}
+              className="flex-1 px-4 py-2 bg-white border border-green-600 text-green-600 rounded-md hover:bg-green-50 transition-colors"
+            >
+              {copiedLink ? 'Link Copied!' : 'Share Certificate'}
+            </button>
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="bg-gray-50 p-6 rounded-lg md:col-span-2">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <Link
+              href="/"
+              className="px-4 py-2 bg-indigo-600 text-white text-center rounded-md hover:bg-indigo-700 transition-colors"
+            >
+              Create Logo
+            </Link>
+            <Link
+              href="/history"
+              className="px-4 py-2 bg-gray-600 text-white text-center rounded-md hover:bg-gray-700 transition-colors"
+            >
+              View History
+            </Link>
+            <Link
+              href="/purchase"
+              className="px-4 py-2 bg-green-600 text-white text-center rounded-md hover:bg-green-700 transition-colors"
+            >
+              Buy Credits
+            </Link>
+          </div>
+        </div>
       </div>
-    </main>
+    </div>
   );
 }
