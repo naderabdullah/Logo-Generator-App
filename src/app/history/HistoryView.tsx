@@ -89,6 +89,38 @@ const LazyImage = ({ src, alt, className }: {
   );
 };
 
+const PaginationControls = ({ currentPage, totalPages, setCurrentPage }: {
+  currentPage: number;
+  totalPages: number;
+  setCurrentPage: (page: number) => void;
+}) => {
+  if (totalPages <= 1) return null;
+  
+  return (
+    <div className="flex justify-center items-center gap-2">
+      <button
+        onClick={() => setCurrentPage(Math.max(currentPage - 1, 1))}
+        disabled={currentPage === 1}
+        className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        Previous
+      </button>
+
+      <span className="text-sm text-gray-600">
+        Page {currentPage} of {totalPages}
+      </span>
+
+      <button
+        onClick={() => setCurrentPage(Math.min(currentPage + 1, totalPages))}
+        disabled={currentPage === totalPages}
+        className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        Next
+      </button>
+    </div>
+  );
+};
+
 export default function HistoryView() {
   const { user } = useAuth();
   const [logosWithRevisions, setLogosWithRevisions] = useState<{
@@ -97,6 +129,7 @@ export default function HistoryView() {
   }[]>([]);
   
   const [loading, setLoading] = useState(true);
+  const [loadingButton, setLoadingButton] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedLogo, setSelectedLogo] = useState<string | null>(null);
   const [usage, setUsage] = useState<{ used: number, limit: number } | null>(null);
@@ -195,10 +228,12 @@ export default function HistoryView() {
   };
   
   const handleViewLogo = (id: string) => {
+    setLoadingButton(`view-${id}`);
     router.push(`/logos/${id}`);
   };
   
   const handleEditLogo = (id: string) => {
+    setLoadingButton(`edit-${id}`);
     router.push(`/?edit=${id}`);
   };
   
@@ -881,6 +916,17 @@ export default function HistoryView() {
           </div>
         )}
 
+        {/* Top Pagination Controls */}
+        {!loading && !error && filteredLogosWithRevisions.length > 0 && (
+          <div className="mb-4">
+            <PaginationControls 
+              currentPage={currentPage} 
+              totalPages={totalPages} 
+              setCurrentPage={setCurrentPage} 
+            />
+          </div>
+        )}
+
         {/* Logos Grid */}
         {!loading && !error && filteredLogosWithRevisions.length > 0 && (
           <>
@@ -953,17 +999,36 @@ export default function HistoryView() {
                         <div className="flex flex-wrap gap-2">
                           <button
                             onClick={() => handleViewLogo(displayedLogo.id)}
-                            className="btn-action btn-primary"
+                            className="btn-action btn-primary flex items-center justify-center gap-1"
+                            disabled={loadingButton === `view-${displayedLogo.id}`}
                           >
-                            {hasRevisions ? "View All" : "View Logo"}
+                            {loadingButton === `view-${displayedLogo.id}` ? (
+                              <>
+                                <svg className="w-3 h-3 animate-spin mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                Loading...
+                              </>
+                            ) : (
+                              hasRevisions ? "View All" : "View Logo"
+                            )}
                           </button>
-                          
+
                           <button
                             onClick={() => handleEditLogo(displayedLogo.id)}
                             className="btn-action btn-secondary"
-                            disabled={revisions.length >= 3}
+                            disabled={revisions.length >= 3 || loadingButton === `edit-${displayedLogo.id}`}
                           >
-                            {revisions.length >= 3 ? "Max Revisions" : "Edit Logo"}
+                            {loadingButton === `edit-${displayedLogo.id}` ? (
+                              <>
+                                <svg className="w-3 h-3 animate-spin mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                Loading...
+                              </>
+                            ) : (
+                              revisions.length >= 3 ? "Max Revisions" : "Edit Logo"
+                            )}
                           </button>
                           
                           {user?.isSuperUser && (() => {
@@ -1027,26 +1092,12 @@ export default function HistoryView() {
 
             {/* Pagination Controls - Bottom - UPDATED: Simple pagination like catalog */}
             {totalPages > 1 && (
-              <div className="flex justify-center items-center mt-6 gap-2">
-                <button
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
-                  className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Previous
-                </button>
-
-                <span className="text-sm text-gray-600">
-                  Page {currentPage} of {totalPages}
-                </span>
-
-                <button
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                  className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Next
-                </button>
+              <div className="mt-6">
+                <PaginationControls 
+                  currentPage={currentPage} 
+                  totalPages={totalPages} 
+                  setCurrentPage={setCurrentPage} 
+                />
               </div>
             )}
           </>
