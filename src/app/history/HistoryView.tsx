@@ -236,75 +236,81 @@ export default function HistoryView() {
     }
   };
   
+  // replace your formatDate with this
   const formatDate = (timestamp: number) => {
-    return new Date(timestamp).toLocaleDateString();
+    return new Intl.DateTimeFormat('en-CA', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      timeZone: 'UTC',
+    }).format(new Date(timestamp));
   };
 
-const handleAddToCatalog = async (displayedLogo: StoredLogo) => {
-    if (!user?.isSuperUser) return;
+  const handleAddToCatalog = async (displayedLogo: StoredLogo) => {
+      if (!user?.isSuperUser) return;
 
-    const logoId = displayedLogo.id;
-    const currentState = catalogStates[logoId];
+      const logoId = displayedLogo.id;
+      const currentState = catalogStates[logoId];
 
-    if (currentState?.isInCatalog) return;
+      if (currentState?.isInCatalog) return;
 
-    setCatalogStates(prev => ({
-        ...prev,
-        [logoId]: {
-            ...prev[logoId],
-            catalogLoading: true
-        }
-    }));
+      setCatalogStates(prev => ({
+          ...prev,
+          [logoId]: {
+              ...prev[logoId],
+              catalogLoading: true
+          }
+      }));
 
-    try {
-        const response = await fetch('/api/catalog', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                logoKeyId: displayedLogo.id,
-                imageDataUri: displayedLogo.imageDataUri,
-                parameters: displayedLogo.parameters,
-                originalCompanyName: displayedLogo.parameters.companyName || 'Unknown Company'
-            }),
-        });
+      try {
+          const response = await fetch('/api/catalog', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                  logoKeyId: displayedLogo.id,
+                  imageDataUri: displayedLogo.imageDataUri,
+                  parameters: displayedLogo.parameters,
+                  originalCompanyName: displayedLogo.parameters.companyName || 'Unknown Company'
+              }),
+          });
 
-        if (response.ok) {
-            const data = await response.json();
-            setCatalogStates(prev => ({
-                ...prev,
-                [logoId]: {
-                    isInCatalog: true,
-                    catalogLoading: false,
-                    catalogCode: data.catalogLogo.catalog_code
-                }
-            }));
-        } else if (response.status === 409) {
-            // Logo already in catalog
-            const data = await response.json();
-            setCatalogStates(prev => ({
-                ...prev,
-                [logoId]: {
-                    isInCatalog: true,
-                    catalogLoading: false,
-                    catalogCode: data.catalogCode
-                }
-            }));
-        } else {
-            throw new Error('Failed to add to catalog');
-        }
-    } catch (error) {
-        console.error('Error adding to catalog:', error);
-        setCatalogStates(prev => ({
-            ...prev,
-            [logoId]: {
-                ...prev[logoId],
-                catalogLoading: false
-            }
-        }));
-    }
-};
+          if (response.ok) {
+              const data = await response.json();
+              setCatalogStates(prev => ({
+                  ...prev,
+                  [logoId]: {
+                      isInCatalog: true,
+                      catalogLoading: false,
+                      catalogCode: data.catalogLogo.catalog_code
+                  }
+              }));
+          } else if (response.status === 409) {
+              // Logo already in catalog
+              const data = await response.json();
+              setCatalogStates(prev => ({
+                  ...prev,
+                  [logoId]: {
+                      isInCatalog: true,
+                      catalogLoading: false,
+                      catalogCode: data.catalogCode
+                  }
+              }));
+          } else {
+              throw new Error('Failed to add to catalog');
+          }
+      } catch (error) {
+          console.error('Error adding to catalog:', error);
+          setCatalogStates(prev => ({
+              ...prev,
+              [logoId]: {
+                  ...prev[logoId],
+                  catalogLoading: false
+              }
+          }));
+      }
+  };
 
   // ADD: Filtered logos based on search query
   const filteredLogosWithRevisions = useMemo(() => {

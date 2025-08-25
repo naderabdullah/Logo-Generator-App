@@ -30,6 +30,23 @@ interface PaginationInfo {
     hasMore: boolean;
 }
 
+// --- Simple in-memory cache manager for logo images ---
+type LogoCacheEntry = {
+    data: string;
+    timestamp: number;
+    expires: number;
+};
+const MAX_CACHE_SIZE = 50;
+const CACHE_DURATION = 1000 * 60 * 10; // 10 minutes
+
+let _logoCache: Map<string, LogoCacheEntry> | null = null;
+function getCacheManager(): Map<string, LogoCacheEntry> {
+    if (!_logoCache) {
+        _logoCache = new Map();
+    }
+    return _logoCache;
+}
+
 // Skeleton placeholder component
 const LogoSkeleton = () => (
     <div className="bg-white border border-gray-200 rounded-lg p-3 animate-pulse">
@@ -42,7 +59,10 @@ const LogoSkeleton = () => (
     </div>
 );
 
-// Fixed LogoCard component - catalog code button independent from modal
+// FIXED: LogoCard component with better error handling to prevent infinite loops
+
+// SIMPLIFIED: LogoCard component without aggressive abort handling
+
 const LogoCard = ({ logo, onViewParameters }: { 
     logo: CatalogLogo; 
     onViewParameters: (logo: CatalogLogo) => void;
@@ -51,49 +71,138 @@ const LogoCard = ({ logo, onViewParameters }: {
     const [imageLoading, setImageLoading] = useState(false);
     const [imageError, setImageError] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [mounted, setMounted] = useState(false);
     const cardRef = useRef<HTMLDivElement>(null);
-    const [isVisible, setIsVisible] = useState(false);
+    const observerRef = useRef<IntersectionObserver | null>(null);
+    const loadAttemptedRef = useRef(false);
 
-    // Intersection observer for when card becomes visible
-    useEffect(() => {
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                if (entry.isIntersecting && !imageDataUri && !imageLoading && !imageError) {
-                    setIsVisible(true);
-                    loadImage();
-                    observer.disconnect();
-                }
-            },
-            { threshold: 0.1, rootMargin: '100px' }
-        );
-
-        if (cardRef.current) {
-            observer.observe(cardRef.current);
+    // Simplified load image function
+    const loadImage = useCallback(async () => {
+        // Prevent multiple simultaneous loads
+        if (imageLoading || imageDataUri || imageError || loadAttemptedRef.current) {
+            return;
+        }
+        
+        loadAttemptedRef.current = true;
+        
+        const cache = getCacheManager();
+        const cacheKey = `logo-${logo.id}`;
+        
+        // Check cache first
+        if (cache) {
+            const cached = cache.get(cacheKey);
+            if (cached && Date.now() < cached.expires) {
+                setImageDataUri(cached.data);
+                return;
+            }
+            // Remove expired cache entry
+            if (cached) {
+                cache.delete(cacheKey);
+            }
         }
 
-        return () => observer.disconnect();
-    }, [imageDataUri, imageLoading, imageError]);
-
-    const loadImage = async () => {
         setImageLoading(true);
+        setImageError(false);
+        
         try {
-            const response = await fetch(`/api/catalog/image/${logo.id}`);
+            // Simple fetch without AbortController for now
+            const response = await fetch(`/api/catalog/image/${logo.id}`, {
+                cache: 'default'
+            });
             
             if (!response.ok) {
-                throw new Error('Failed to load image');
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
             
             const data = await response.json();
-            setImageDataUri(data.image_data_uri);
-        } catch (error) {
-            console.error('Error loading logo image:', error);
+            const imageData = data.image_data_uri;
+            
+            if (!imageData) {
+                throw new Error('No image data received');
+            }
+            
+            // Store in client-side cache
+            if (cache) {
+                const now = Date.now();
+                
+                // Enforce cache size limit
+                if (cache.size >= MAX_CACHE_SIZE) {
+                    const entries = Array.from(cache.entries())
+                        .sort(([, a], [, b]) => a.timestamp - b.timestamp);
+                    cache.delete(entries[0][0]);
+                }
+                
+                cache.set(cacheKey, {
+                    data: imageData,
+                    timestamp: now,
+                    expires: now + CACHE_DURATION
+                });
+            }
+            
+            setImageDataUri(imageData);
+            setImageError(false);
+            
+        } catch (error: any) {
+            console.error(`Error loading logo image ${logo.id}:`, error.message);
             setImageError(true);
         } finally {
             setImageLoading(false);
         }
-    };
+    }, [logo.id, imageLoading, imageDataUri, imageError]);
 
-    // Handle copy catalog code - ONLY copies, no modal
+    // Mount effect - check cache and set up intersection observer
+    useEffect(() => {
+        setMounted(true);
+        
+        // Reset load attempted flag when logo ID changes
+        loadAttemptedRef.current = false;
+        
+        // Check cache when component mounts
+        const cache = getCacheManager();
+        if (cache) {
+            const cacheKey = `logo-${logo.id}`;
+            const cached = cache.get(cacheKey);
+            
+            if (cached && Date.now() < cached.expires) {
+                setImageDataUri(cached.data);
+                loadAttemptedRef.current = true;
+                return;
+            }
+            
+            if (cached) {
+                cache.delete(cacheKey);
+            }
+        }
+        
+        // Set up intersection observer
+        if (cardRef.current && !loadAttemptedRef.current) {
+            observerRef.current = new IntersectionObserver(
+                ([entry]) => {
+                    if (entry.isIntersecting && !loadAttemptedRef.current) {
+                        loadImage();
+                        // Disconnect after triggering
+                        if (observerRef.current) {
+                            observerRef.current.disconnect();
+                            observerRef.current = null;
+                        }
+                    }
+                },
+                { threshold: 0.1, rootMargin: '100px' }
+            );
+
+            observerRef.current.observe(cardRef.current);
+        }
+
+        // Cleanup function - only cleanup observer
+        return () => {
+            if (observerRef.current) {
+                observerRef.current.disconnect();
+                observerRef.current = null;
+            }
+        };
+    }, [logo.id, loadImage]);
+
+    // Handle copy catalog code
     const handleCopyCatalogCode = async () => {
         try {
             await navigator.clipboard.writeText(logo.catalog_code);
@@ -116,7 +225,7 @@ const LogoCard = ({ logo, onViewParameters }: {
         }
     };
 
-    // Handle modal open - separate function
+    // Handle modal open
     const handleOpenModal = () => {
         onViewParameters({ ...logo, image_data_uri: imageDataUri || undefined });
     };
@@ -131,17 +240,30 @@ const LogoCard = ({ logo, onViewParameters }: {
                 className="aspect-square mb-3 bg-gray-50 rounded-lg p-2 relative cursor-pointer"
                 onClick={handleOpenModal}
             >
-                {!isVisible || (!imageDataUri && !imageLoading && !imageError) ? (
+                {!mounted ? (
+                    // Not mounted yet - show placeholder
                     <div className="w-full h-full bg-gray-100 rounded flex items-center justify-center">
                         <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
                         </svg>
                     </div>
+                ) : imageError ? (
+                    // Error state
+                    <div className="w-full h-full bg-red-50 rounded flex items-center justify-center">
+                        <div className="text-center">
+                            <svg className="w-8 h-8 text-red-400 mx-auto mb-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                            <p className="text-xs text-red-600">Failed to load</p>
+                        </div>
+                    </div>
                 ) : imageLoading ? (
+                    // Loading state
                     <div className="w-full h-full bg-gray-100 rounded flex items-center justify-center">
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
                     </div>
                 ) : imageDataUri ? (
+                    // Loaded image
                     <img
                         src={imageDataUri}
                         alt={logo.original_company_name}
@@ -149,6 +271,7 @@ const LogoCard = ({ logo, onViewParameters }: {
                         loading="lazy"
                     />
                 ) : (
+                    // Default placeholder
                     <div className="w-full h-full bg-gray-100 rounded flex items-center justify-center">
                         <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
@@ -157,7 +280,7 @@ const LogoCard = ({ logo, onViewParameters }: {
                 )}
             </div>
 
-            {/* Catalog Code Button with Copy Icon - INDEPENDENT, only copies */}
+            {/* Catalog Code Button with Copy Icon */}
             <div className="text-center mb-2">
                 <button
                     onClick={handleCopyCatalogCode}

@@ -158,6 +158,9 @@ export default function CatalogView() {
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedLogo, setSelectedLogo] = useState<CatalogLogo | null>(null);
     const [showParametersModal, setShowParametersModal] = useState(false);
+    const [logoToRemove, setLogoToRemove] = useState<CatalogLogo | null>(null);
+    const [showRemoveModal, setShowRemoveModal] = useState(false);
+    const [removing, setRemoving] = useState(false);
 
     const { user } = useAuth();
     const router = useRouter();
@@ -238,6 +241,37 @@ export default function CatalogView() {
     const handleViewParameters = (logo: CatalogLogo) => {
         setSelectedLogo(logo);
         setShowParametersModal(true);
+    };
+
+    // open confirm
+    const handleAskRemove = (logo: CatalogLogo) => {
+    setLogoToRemove(logo);
+    setShowRemoveModal(true);
+    };
+
+    // do the delete
+    const handleConfirmRemove = async () => {
+    if (!logoToRemove) return;
+    setRemoving(true);
+    try {
+        const res = await fetch(`/api/catalog/delete/${logoToRemove.id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        });
+        if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to remove from catalog');
+        }
+        // close both modals if they’re up and refresh data
+        setShowRemoveModal(false);
+        setLogoToRemove(null);
+        setShowParametersModal(false);
+        await fetchCatalog(currentPage, searchTerm);
+    } catch (e: any) {
+        alert(e.message || 'Failed to remove from catalog');
+    } finally {
+        setRemoving(false);
+    }
     };
 
     // Format date for display
@@ -370,7 +404,7 @@ export default function CatalogView() {
                 </div>
 
                 {/* Logo Grid with Smart Loading */}
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-6">
                     {catalogLogos.map((logo) => (
                         <CatalogLogoCard 
                             key={logo.id} 
@@ -502,17 +536,70 @@ export default function CatalogView() {
                                 </div>
 
                                 {/* Modal Actions */}
-                                <div className="mt-6 flex justify-end">
-                                    <button
-                                        onClick={() => setShowParametersModal(false)}
-                                        className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
-                                    >
-                                        Close
-                                    </button>
+                                <div className="mt-6 flex justify-end gap-2">
+                                <button
+                                    onClick={() => setShowParametersModal(false)}
+                                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                                >
+                                    Close
+                                </button>
+                                <button
+                                    onClick={() => handleAskRemove(selectedLogo)}
+                                    className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                                >
+                                    Remove from Catalog
+                                </button>
                                 </div>
                             </div>
                         </div>
                     </div>
+                )}
+                {/* Catalog Removal Modal */}
+                {showRemoveModal && logoToRemove && (
+                <div
+                    className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4"
+                    role="dialog"
+                    aria-modal="true"
+                >
+                    <div className="relative z-[101] bg-white rounded-lg max-w-md w-full">
+                    <div className="p-6">
+                        <div className="flex items-center mb-4">
+                        <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                        </svg>
+                        <h3 className="ml-3 text-lg font-semibold text-gray-900">Remove from Catalog</h3>
+                        </div>
+
+                        <div className="bg-gray-50 rounded-lg p-3 mb-4">
+                        <div className="text-sm">
+                            <div className="font-medium text-gray-900">{logoToRemove.original_company_name}</div>
+                            <div className="text-gray-600">Catalog Code: {logoToRemove.catalog_code}</div>
+                        </div>
+                        </div>
+
+                        <p className="text-sm text-gray-700 mb-6">
+                        This will permanently remove the logo from the catalog.
+                        </p>
+
+                        <div className="flex gap-3">
+                        <button
+                            onClick={() => { setShowRemoveModal(false); setLogoToRemove(null); }}
+                            className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200"
+                            disabled={removing}
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleConfirmRemove}
+                            className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50"
+                            disabled={removing}
+                        >
+                            {removing ? 'Removing…' : 'Remove'}
+                        </button>
+                        </div>
+                    </div>
+                    </div>
+                </div>
                 )}
             </div>
         </main>

@@ -240,6 +240,57 @@ export class SupabaseAuthService {
       throw error;
     }
   }
+
+  // Delete catalog logo (admin only)
+  async deleteCatalogLogo(logoId: number): Promise<{success: boolean; error?: string}> {
+    try {
+      console.log(`Attempting to delete catalog logo with ID: ${logoId}`);
+      
+      // First, check if the logo exists
+      const { data: existingLogo, error: checkError } = await supabaseAdmin
+        .from('catalog_logos')
+        .select('id, catalog_code, original_company_name, created_by')
+        .eq('id', logoId)
+        .single();
+
+      if (checkError || !existingLogo) {
+        console.error('Logo not found for deletion:', checkError);
+        return {
+          success: false,
+          error: checkError?.code === 'PGRST116' ? 'Logo not found' : 'Failed to find logo'
+        };
+      }
+
+      console.log(`Found logo to delete: ${existingLogo.catalog_code} - ${existingLogo.original_company_name}`);
+
+      // Delete the logo from catalog_logos table
+      const { error: deleteError } = await supabaseAdmin
+        .from('catalog_logos')
+        .delete()
+        .eq('id', logoId);
+
+      if (deleteError) {
+        console.error('Error deleting catalog logo:', deleteError);
+        return {
+          success: false,
+          error: `Failed to delete logo: ${deleteError.message}`
+        };
+      }
+
+      console.log(`Successfully deleted catalog logo ${logoId} (${existingLogo.catalog_code})`);
+      
+      return {
+        success: true
+      };
+      
+    } catch (error: any) {
+      console.error('Unexpected error deleting catalog logo:', error);
+      return {
+        success: false,
+        error: error.message || 'Unexpected error occurred while deleting logo'
+      };
+    }
+  }
   
   async getCatalogLogosMetadata(offset: number = 0, limit: number = 30, searchTerm: string = '') {
       try {

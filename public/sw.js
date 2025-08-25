@@ -1,4 +1,4 @@
-// public/sw.js
+// public/sw.js - FIXED: Exclude API routes to prevent conflicts
 // Service Worker for AI Logo Generator PWA
 const CACHE_NAME = 'logo-generator-v3';
 
@@ -33,7 +33,7 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch event - network first strategy for Next.js assets
+// Fetch event - FIXED: Exclude API routes to prevent infinite loops
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -43,20 +43,25 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // CRITICAL FIX: Never intercept API routes - let them go directly to network
+  if (url.pathname.startsWith('/api/')) {
+    // Let API requests go straight to network without any service worker interference
+    return;
+  }
+
   // Skip caching for Next.js specific paths
   if (
     url.pathname.startsWith('/_next/') ||
-    url.pathname.startsWith('/api/') ||
     url.pathname.includes('.json') ||
     url.pathname === '/sw.js' ||
     url.pathname === '/sw-register.js'
   ) {
-    // Network only for Next.js assets and API calls
+    // Network only for Next.js assets
     event.respondWith(fetch(request));
     return;
   }
 
-  // For other requests, use network-first strategy
+  // For other requests (static files, pages), use network-first strategy
   event.respondWith(
     fetch(request)
       .then((response) => {
