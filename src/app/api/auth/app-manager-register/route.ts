@@ -2,7 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { DynamoDB } from 'aws-sdk';
 import bcrypt from 'bcryptjs';
-import { supabaseAuth } from '../../../../lib/supabaseAuth';
+import { supabaseAuth } from '@/lib/supabaseAuth';
+import { getInitialLogoCredits } from '@/lib/logoCreditsHelper'; // ADDED: Logo credits helper
 
 // Initialize DynamoDB client
 const dynamoDB = new DynamoDB.DocumentClient({
@@ -63,11 +64,11 @@ async function generateNewUserId(): Promise<number> {
       TableName: process.env.DYNAMODB_USERS_TABLE || 'users',
       ProjectionExpression: 'id'
     }).promise();
-    
+
     if (!result.Items || result.Items.length === 0) {
       return 1;
     }
-    
+
     const maxId = Math.max(...result.Items.map(item => item.id || 0));
     return maxId + 1;
   } catch (error) {
@@ -89,12 +90,12 @@ interface DynamoUser {
 
 // Function to save user credentials to DynamoDB
 async function saveToDynamoDB(
-  registrationData: AppManagerRegistrationData, 
-  appManagerResponse: any
+    registrationData: AppManagerRegistrationData,
+    appManagerResponse: any
 ): Promise<DynamoUser> {
   try {
     console.log('Saving user to DynamoDB...');
-    
+
     // Check if user already exists
     const existingUserResult = await dynamoDB.scan({
       TableName: process.env.DYNAMODB_USERS_TABLE || 'users',
@@ -106,12 +107,12 @@ async function saveToDynamoDB(
 
     // Hash the password for secure storage
     const hashedPassword = await bcrypt.hash(registrationData.password, 12);
-    
+
     if (existingUserResult.Items && existingUserResult.Items.length > 0) {
       // Update existing user
       const existingUser = existingUserResult.Items[0];
       console.log(`Updating existing DynamoDB user: ${registrationData.email}`);
-      
+
       await dynamoDB.update({
         TableName: process.env.DYNAMODB_USERS_TABLE || 'users',
         Key: { id: existingUser.id },
@@ -127,7 +128,7 @@ async function saveToDynamoDB(
           ':status': 'active'
         }
       }).promise();
-      
+
       // Return the updated user object
       const updatedUser: DynamoUser = {
         id: existingUser.id,
@@ -138,14 +139,14 @@ async function saveToDynamoDB(
         appManagerData: appManagerResponse,
         Status: 'active'
       };
-      
+
       return updatedUser;
     } else {
       // Create new user
       console.log(`Creating new DynamoDB user: ${registrationData.email}`);
-      
+
       const newUserId = await generateNewUserId();
-      
+
       const newUser: DynamoUser = {
         id: newUserId,
         email: registrationData.email.toLowerCase(),
@@ -155,12 +156,12 @@ async function saveToDynamoDB(
         appManagerData: appManagerResponse,
         Status: 'active'
       };
-      
+
       await dynamoDB.put({
         TableName: process.env.DYNAMODB_USERS_TABLE || 'users',
         Item: newUser
       }).promise();
-      
+
       console.log(`✅ Successfully created DynamoDB user: ${registrationData.email} with active status`);
       return newUser;
     }
@@ -172,35 +173,39 @@ async function saveToDynamoDB(
 
 // Function to save logo credits tracking to Supabase only
 async function saveToSupabaseForCredits(
-  email: string,
-  dynamoUserId: number
+    email: string,
+    dynamoUserId: number,
+    subAppId?: string // ADDED: Optional subAppId parameter
 ) {
   try {
     console.log('Saving logo credits tracking to Supabase...');
-    
+
+    // ADDED: Get credits based on subapp lookup, fallback to 5 if no subAppId
+    const logoCredits = subAppId ? await getInitialLogoCredits(subAppId) : 5;
+
     // Check if user already exists in Supabase
     const existingUser = await supabaseAuth.getUserByEmail(email.toLowerCase());
-    
+
     if (existingUser) {
       console.log(`Updating Supabase credits tracking for: ${email}`);
-      
+
       const updatedUser = await supabaseAuth.updateUser(existingUser.id, {
         logosCreated: 0, // Reset to 0 for new registration
-        logosLimit: 5 // Everyone gets 5 logos
+        logosLimit: logoCredits // CHANGED: Dynamic based on subapp (was hardcoded 5)
       });
-      
+
       return updatedUser;
     } else {
-      console.log(`Creating new Supabase credits tracking for: ${email}`);
-      
+      console.log(`Creating new Supabase credits tracking for: ${email} with ${logoCredits} credits`);
+
       const newUser = await supabaseAuth.createUser({
         email: email.toLowerCase(),
         // Note: No password stored in Supabase - only for logo credits tracking
         logosCreated: 0,
-        logosLimit: 5 // Everyone gets 5 free logos
+        logosLimit: logoCredits // CHANGED: Dynamic based on subapp (was hardcoded 5)
       });
-      
-      console.log(`✅ Successfully created Supabase credits tracking: ${email} (5 free logos)`);
+
+      console.log(`✅ Successfully created Supabase credits tracking: ${email} (${logoCredits} logos)`);
       return newUser;
     }
   } catch (error) {
@@ -212,18 +217,18 @@ async function saveToSupabaseForCredits(
 export async function POST(request: NextRequest) {
   try {
     const registrationData: AppManagerRegistrationData = await request.json();
-    
+
     console.log('Processing app manager registration for:', registrationData.email);
     console.log('App Manager type:', registrationData.linkType, registrationData.subappId);
-    
+
     // Validate required fields
     if (!registrationData.email || !registrationData.password || !registrationData.token) {
       return NextResponse.json(
-        { error: 'Missing required fields: email, password, or token' },
-        { status: 400 }
+          { error: 'Missing required fields: email, password, or token' },
+          { status: 400 }
       );
     }
-    
+
     // Step 1: Register with App Manager (verify token and registration)
     console.log('Step 1: Registering with App Manager...');
     let appManagerResponse;
@@ -233,14 +238,14 @@ export async function POST(request: NextRequest) {
     } catch (appManagerError: any) {
       console.error('App Manager registration failed:', appManagerError);
       return NextResponse.json(
-        { 
-          error: 'App Manager registration failed', 
-          details: appManagerError.message || 'Unknown error'
-        },
-        { status: 400 }
+          {
+            error: 'App Manager registration failed',
+            details: appManagerError.message || 'Unknown error'
+          },
+          { status: 400 }
       );
     }
-    
+
     // Step 2: Save user credentials to DynamoDB (primary auth database)
     console.log('Step 2: Saving user credentials to DynamoDB...');
     let dynamoUser;
@@ -249,38 +254,43 @@ export async function POST(request: NextRequest) {
       console.log('✅ DynamoDB user creation successful');
     } catch (dynamoError: any) {
       console.error('DynamoDB user creation failed:', dynamoError);
-      
+
       return NextResponse.json(
-        { 
-          error: 'Registration partially completed. Please contact support.',
-          details: 'App Manager registration succeeded but user credential storage failed.'
-        },
-        { status: 500 }
+          {
+            error: 'Registration partially completed. Please contact support.',
+            details: 'App Manager registration succeeded but user credential storage failed.'
+          },
+          { status: 500 }
       );
     }
-    
+
     // Step 3: Create logo credits tracking in Supabase (required - for logo management)
     console.log('Step 3: Setting up logo credits tracking in Supabase...');
     let supabaseUser;
     try {
-      supabaseUser = await saveToSupabaseForCredits(registrationData.email, dynamoUser.id);
+      // CHANGED: Pass subappId to the function (was just email and dynamoUser.id)
+      supabaseUser = await saveToSupabaseForCredits(
+          registrationData.email,
+          dynamoUser.id,
+          registrationData.subappId
+      );
       console.log('✅ Supabase credits tracking setup successful');
     } catch (supabaseError: any) {
       console.error('Supabase credits tracking setup failed:', supabaseError);
       // This is critical since we need logo tracking
       return NextResponse.json(
-        { 
-          error: 'Registration partially completed. Please contact support.',
-          details: 'User credentials saved but logo tracking setup failed.'
-        },
-        { status: 500 }
+          {
+            error: 'Registration partially completed. Please contact support.',
+            details: 'User credentials saved but logo tracking setup failed.'
+          },
+          { status: 500 }
       );
     }
-    
+
     // Step 4: Return success response
     return NextResponse.json({
       success: true,
-      message: 'Registration completed successfully - 5 free logos included!',
+      message: `Registration completed successfully - ${supabaseUser.logosLimit} free logos included!`, // CHANGED: Dynamic message (was hardcoded "5 free logos")
       appManager: {
         status: 'registered',
         response: appManagerResponse
@@ -292,15 +302,15 @@ export async function POST(request: NextRequest) {
         logosLimit: supabaseUser.logosLimit // Logo data from Supabase
       }
     });
-    
+
   } catch (error: any) {
     console.error('Error in app manager registration:', error);
     return NextResponse.json(
-      { 
-        error: 'Registration failed', 
-        details: error.message || 'Unknown error occurred'
-      },
-      { status: 500 }
+        {
+          error: 'Registration failed',
+          details: error.message || 'Unknown error occurred'
+        },
+        { status: 500 }
     );
   }
 }
