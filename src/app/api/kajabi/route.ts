@@ -1,8 +1,8 @@
-// src/app/api/kajabi/route.ts - SIMPLE VERSION USING REGISTRATION PATTERN
+// src/app/api/kajabi/route.ts - UPDATED with kajabi-direct authentication
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
-    console.log('=== KAJABI WEBHOOK ===');
+    console.log('=== KAJABI WEBHOOK WITH AUTH ===');
 
     try {
         const body = await request.text();
@@ -23,8 +23,11 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Missing required data' }, { status: 400 });
         }
 
-        // Call App Manager API using EXACT same pattern as registration
-        const result = await callAppManagerAPI(orderNumber, kajabiData);
+        // Step 1: Authenticate as kajabi-direct@system.com to get JWT token
+        const authToken = await authenticateKajabiDistributor();
+
+        // Step 2: Call App Manager API with proper JWT authentication
+        const result = await callAppManagerAPIWithAuth(orderNumber, kajabiData, authToken);
 
         console.log('✅ Order created successfully:', orderNumber);
         return NextResponse.json({
@@ -43,20 +46,55 @@ export async function POST(request: NextRequest) {
     }
 }
 
-// Use EXACT same pattern as successful registration route
-async function callAppManagerAPI(orderNumber: string, kajabiData: any) {
+// NEW: Authenticate as kajabi-direct@system.com distributor
+async function authenticateKajabiDistributor() {
     if (!process.env.API_ENDPOINT || !process.env.API_KEY) {
-        throw new Error('Missing API configuration (same as registration)');
+        throw new Error('Missing API configuration');
     }
 
-    console.log('Calling App Manager API with same credentials as registration...');
+    if (!process.env.KAJABI_DISTRIBUTOR_PASSWORD) {
+        throw new Error('Missing KAJABI_DISTRIBUTOR_PASSWORD environment variable');
+    }
 
-    // Try the insertAppPurchaseOrder with system authentication
+    console.log('Authenticating as kajabi-direct@system.com...');
+
+    const loginResponse = await fetch(`${process.env.API_ENDPOINT}/app-manager?action=verifyCredentials`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Api-Key': process.env.API_KEY,
+        },
+        body: JSON.stringify({
+            email: 'kajabi-direct@system.com',
+            password: process.env.KAJABI_DISTRIBUTOR_PASSWORD
+        }),
+    });
+
+    const loginResponseText = await loginResponse.text();
+    console.log('Login response:', loginResponse.status, loginResponseText);
+
+    if (!loginResponse.ok) {
+        throw new Error(`Authentication failed: ${loginResponse.status} - ${loginResponseText}`);
+    }
+
+    const loginData = JSON.parse(loginResponseText);
+    return loginData.token;
+}
+
+// UPDATED: Call App Manager API with JWT authentication
+async function callAppManagerAPIWithAuth(orderNumber: string, kajabiData: any, authToken: string) {
+    if (!process.env.API_ENDPOINT || !process.env.API_KEY) {
+        throw new Error('Missing API configuration');
+    }
+
+    console.log('Calling App Manager API with JWT authentication...');
+
     const response = await fetch(`${process.env.API_ENDPOINT}/app-manager?action=insertAppPurchaseOrder`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'X-Api-Key': process.env.API_KEY,
+            'Authorization': `Bearer ${authToken}`, // 🔑 This provides the distributorId
         },
         body: JSON.stringify({
             orderNumber: orderNumber,
@@ -73,10 +111,6 @@ async function callAppManagerAPI(orderNumber: string, kajabiData: any) {
     console.log('App Manager API response:', response.status, responseText);
 
     if (!response.ok) {
-        // If insertAppPurchaseOrder fails due to auth, the issue is missing kajabi-direct distributor
-        if (response.status === 401) {
-            throw new Error('Authentication failed - need to create kajabi-direct@system.com distributor in your system');
-        }
         throw new Error(`API error: ${response.status} - ${responseText}`);
     }
 
@@ -85,9 +119,12 @@ async function callAppManagerAPI(orderNumber: string, kajabiData: any) {
 
 export async function GET() {
     return NextResponse.json({
-        message: 'Kajabi webhook ready',
-        status: 'Using same API pattern as successful registrations',
-        solution: 'Create kajabi-direct@system.com distributor to enable authentication',
+        message: 'Kajabi webhook ready with authentication',
+        status: 'Will authenticate as kajabi-direct@system.com',
+        requirements: [
+            'kajabi-direct@system.com distributor must exist',
+            'KAJABI_DISTRIBUTOR_PASSWORD environment variable must be set'
+        ],
         test: 'POST Kajabi webhook data to this endpoint'
     });
 }
