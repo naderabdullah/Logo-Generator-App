@@ -43,6 +43,7 @@ export async function GET(request: NextRequest) {
                 tableCount: tablesResult.TableNames.length,
                 hasAppPurchaseOrders: tablesResult.TableNames.includes(tableName)
             };
+            console.log('📋 Tables visible to webhook credentials:', tablesResult.TableNames);
         } catch (err: any) {
             permissionTests.listTables = { success: false, error: err.message };
         }
