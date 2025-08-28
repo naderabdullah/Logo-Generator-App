@@ -1016,7 +1016,7 @@ export default function HistoryView() {
 
                           <button
                             onClick={() => handleEditLogo(displayedLogo.id)}
-                            className="btn-action btn-secondary"
+                            className="btn-action btn-secondary flex items-center justify-center gap-1 "
                             disabled={revisions.length >= 3 || loadingButton === `edit-${displayedLogo.id}`}
                           >
                             {loadingButton === `edit-${displayedLogo.id}` ? (
