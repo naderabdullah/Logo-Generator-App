@@ -10,17 +10,29 @@ const dynamoDB = new DynamoDB.DocumentClient({
 });
 
 export async function POST(request: NextRequest) {
-    try {
-        console.log('📥 Received Kajabi webhook');
+    console.log('=== KAJABI WEBHOOK CALLED ===');
+    console.log('Timestamp:', new Date().toISOString());
 
-        // Get the raw body for signature verification
+    try {
+        // Debug headers and request info
+        console.log('📥 Received webhook request');
+        console.log('User-Agent:', request.headers.get('user-agent'));
+        console.log('Method:', request.method);
+        console.log('URL:', request.url);
+        console.log('Content-Type:', request.headers.get('content-type'));
+
+        // Get the raw body
         const body = await request.text();
+        console.log('Raw body length:', body.length);
+        console.log('Raw body preview:', body.substring(0, 200) + '...');
+
         const kajabiData = JSON.parse(body);
 
         console.log('Webhook data:', {
             orderId: kajabiData.id,
             customerEmail: kajabiData.contact?.email,
-            offerName: kajabiData.offer?.name
+            offerName: kajabiData.offer?.name,
+            timestamp: new Date().toISOString()
         });
 
         // Note: Kajabi doesn't provide signature verification
@@ -39,8 +51,9 @@ export async function POST(request: NextRequest) {
         console.log('✅ Successfully processed Kajabi purchase');
         return NextResponse.json({
             success: true,
+            message: "Order processed successfully",
             orderNumber: purchaseData.orderNumber
-        });
+        }, { status: 200 }); // Explicitly set 200 status
 
     } catch (error: any) {
         console.error('❌ Webhook processing error:', error);
@@ -81,42 +94,51 @@ function extractPurchaseData(kajabiData: any) {
 async function storePurchaseOrder(purchaseData: any) {
     console.log('Storing purchase order in DynamoDB...');
 
-    // Minimal record - just what's needed for order verification
+    // Match EXACT AppPurchaseOrders table structure (only 4 fields!)
     const orderRecord = {
-        orderNumber: purchaseData.orderNumber,           // Primary key for matching
-        email: purchaseData.email,                       // For email verification
-        productId: purchaseData.productId,               // Kajabi offer ID (for reference)
-        productName: purchaseData.productName,           // Human readable (for reference)
-        amount: purchaseData.amount,
-        currency: purchaseData.currency,
-        affiliateId: purchaseData.affiliateId,           // For tracking
-        affiliateEmail: purchaseData.affiliateEmail,
-        source: 'kajabi',                                // Track source
-        status: 'completed',                             // Payment confirmed
-        verified: false,                                 // Will be true after registration
-        verifiedAt: null,
-        verifiedBy: null,
-        purchaseDate: purchaseData.purchaseDate,
-        createdAt: new Date().toISOString(),
-
-        // TTL for cleanup (optional - 1 year)
-        ttl: Math.floor(Date.now() / 1000) + (86400 * 365)
-
-        // NOTE: No subappId here - let existing registration logic handle it!
+        OrderNumber: purchaseData.orderNumber,      // Primary key
+        CreatedAt: new Date().toISOString(),        // Timestamp
+        Status: 'completed',                        // Order status (completed vs pending)
+        DistributorId: 'kajabi-direct'              // Special ID for Kajabi orders
     };
 
     await dynamoDB.put({
-        TableName: process.env.DYNAMODB_PURCHASE_ORDERS_TABLE || 'purchase_orders',
+        TableName: process.env.DYNAMODB_PURCHASE_ORDERS_TABLE || 'AppPurchaseOrders',
         Item: orderRecord
     }).promise();
 
     console.log('✅ Order stored:', purchaseData.orderNumber);
+    console.log('Order record:', orderRecord);
 }
 
 // Optional: Handle other HTTP methods
 export async function GET() {
+    console.log('📥 Received GET request to webhook endpoint');
+    console.log('Current time:', new Date().toISOString());
+    console.log('Environment:', process.env.NODE_ENV);
+
     return NextResponse.json({
         message: 'Kajabi webhook endpoint is active',
-        timestamp: new Date().toISOString()
+        status: 'ready',
+        environment: process.env.NODE_ENV || 'unknown',
+        timestamp: new Date().toISOString(),
+        url: 'This endpoint is ready to receive Kajabi webhooks'
+    }, {
+        status: 200,
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    });
+}
+
+export async function OPTIONS() {
+    // Handle preflight requests
+    return NextResponse.json({}, {
+        status: 200,
+        headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type'
+        }
     });
 }
