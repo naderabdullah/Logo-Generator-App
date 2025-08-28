@@ -1,4 +1,4 @@
-// src/app/api/kajabi-debug/route.ts - Create this new file for debugging
+// src/app/api/kajabi-debug/route.ts - UPDATED with Kajabi password check
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
@@ -24,11 +24,18 @@ export async function GET(request: NextRequest) {
                 hasTableEnvVar: !!process.env.DYNAMODB_PURCHASE_ORDERS_TABLE
             },
 
-            // Other API Configuration
+            // API Configuration
             api: {
                 hasApiEndpoint: !!process.env.API_ENDPOINT,
                 hasApiKey: !!process.env.API_KEY,
                 endpoint: process.env.API_ENDPOINT ? 'configured' : 'missing'
+            },
+
+            // 🆕 KAJABI-SPECIFIC Configuration
+            kajabi: {
+                hasDistributorPassword: !!process.env.KAJABI_DISTRIBUTOR_PASSWORD,
+                passwordLength: process.env.KAJABI_DISTRIBUTOR_PASSWORD ? process.env.KAJABI_DISTRIBUTOR_PASSWORD.length : 0,
+                webhookReady: !!(process.env.API_ENDPOINT && process.env.API_KEY && process.env.KAJABI_DISTRIBUTOR_PASSWORD)
             }
         };
 
@@ -87,8 +94,26 @@ export async function GET(request: NextRequest) {
 function generateRecommendations(envCheck: any, awsSdkStatus: string) {
     const recommendations = [];
 
+    // 🆕 KAJABI-SPECIFIC Checks
+    if (!envCheck.kajabi.hasDistributorPassword) {
+        recommendations.push('🚨 CRITICAL: Set KAJABI_DISTRIBUTOR_PASSWORD environment variable for webhook authentication');
+    } else {
+        recommendations.push('✅ KAJABI_DISTRIBUTOR_PASSWORD is configured');
+    }
+
+    if (!envCheck.kajabi.webhookReady) {
+        recommendations.push('❌ Kajabi webhook not ready - missing required environment variables');
+    } else {
+        recommendations.push('🎉 Kajabi webhook is ready for production!');
+    }
+
+    // Existing checks
     if (!envCheck.aws.hasAccessKey || !envCheck.aws.hasSecretKey) {
         recommendations.push('❌ Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables');
+    }
+
+    if (!envCheck.api.hasApiEndpoint || !envCheck.api.hasApiKey) {
+        recommendations.push('❌ Set API_ENDPOINT and API_KEY environment variables');
     }
 
     if (!envCheck.dynamodb.hasTableEnvVar) {
@@ -103,7 +128,7 @@ function generateRecommendations(envCheck: any, awsSdkStatus: string) {
         recommendations.push('ℹ️ Running in non-production environment');
     }
 
-    if (recommendations.length === 0) {
+    if (recommendations.length === 1 && recommendations[0].includes('non-production')) {
         recommendations.push('✅ Environment looks good - ready to test webhook');
     }
 
