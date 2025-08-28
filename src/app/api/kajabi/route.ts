@@ -92,23 +92,53 @@ function extractPurchaseData(kajabiData: any) {
 }
 
 async function storePurchaseOrder(purchaseData: any) {
-    console.log('Storing purchase order in DynamoDB...');
+    console.log('=== STORING TO DYNAMODB ===');
+    console.log('Table name:', process.env.DYNAMODB_PURCHASE_ORDERS_TABLE || 'AppPurchaseOrders');
+    console.log('AWS Region:', process.env.AWS_REGION || 'us-east-1');
+    console.log('Has AWS credentials:', !!(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY));
 
-    // Match EXACT AppPurchaseOrders table structure (only 4 fields!)
+    const distributorId = 'kajabi-direct';
+    const orderNumber = purchaseData.orderNumber;
+
+    // Match composite key structure (DistributorId + OrderNumber)
     const orderRecord = {
-        OrderNumber: purchaseData.orderNumber,      // Primary key
-        CreatedAt: new Date().toISOString(),        // Timestamp
-        Status: 'completed',                        // Order status (completed vs pending)
-        DistributorId: 'kajabi-direct'              // Special ID for Kajabi orders
+        DistributorId: distributorId,               // Partition Key
+        OrderNumber: orderNumber,                   // Sort Key
+        CreatedAt: new Date().toISOString(),        // Additional attribute
+        Status: 'completed'                         // Additional attribute
     };
 
-    await dynamoDB.put({
-        TableName: process.env.DYNAMODB_PURCHASE_ORDERS_TABLE || 'AppPurchaseOrders',
-        Item: orderRecord
-    }).promise();
+    console.log('Attempting to store order with composite key:', orderRecord);
 
-    console.log('✅ Order stored:', purchaseData.orderNumber);
-    console.log('Order record:', orderRecord);
+    try {
+        const result = await dynamoDB.put({
+            TableName: process.env.DYNAMODB_PURCHASE_ORDERS_TABLE || 'AppPurchaseOrders',
+            Item: orderRecord,
+            // FIXED: Condition expression for composite key table
+            ConditionExpression: 'attribute_not_exists(DistributorId) AND attribute_not_exists(OrderNumber)',
+            // Alternative approach - check the composite key doesn't exist:
+            // ConditionExpression: 'attribute_not_exists(#pk) AND attribute_not_exists(#sk)',
+            // ExpressionAttributeNames: {
+            //   '#pk': 'DistributorId',
+            //   '#sk': 'OrderNumber'
+            // }
+        }).promise();
+
+        console.log('✅ DynamoDB PUT successful:', result);
+        console.log('✅ Order stored with composite key - DistributorId:', distributorId, 'OrderNumber:', orderNumber);
+
+    } catch (dynamoError: any) {
+        console.error('❌ DYNAMODB ERROR DETAILS:');
+        console.error('Error name:', dynamoError.name);
+        console.error('Error code:', dynamoError.code);
+        console.error('Error message:', dynamoError.message);
+
+        // Log the exact key combination that failed
+        console.error('Failed composite key - DistributorId:', distributorId, 'OrderNumber:', orderNumber);
+
+        // Re-throw so the main function can handle it
+        throw new Error(`DynamoDB write failed: ${dynamoError.message}`);
+    }
 }
 
 // Optional: Handle other HTTP methods
