@@ -190,13 +190,61 @@ export default function AppManagerRegistration({ params }: RegistrationPageProps
       }, 2000);
 
     } catch (error) {
-      console.error('Registration failed:', error);
-      
+      console.error('🔍 Frontend registration error:', error);
+      console.log('🔍 Frontend error type:', typeof error);
+
+      if (error instanceof Error) {
+        console.log('🔍 Frontend Error.message:', error.message);
+      }
+
+      // Extract clean error message from various error formats
+      const extractCleanError = (error: any): string => {
+        console.log('🔧 Extracting error from:', error);
+
+        // Check if it's a direct string
+        if (typeof error === 'string') {
+          console.log('✅ Using direct string');
+          return error;
+        }
+
+        // Check if it's an Error object
+        if (error instanceof Error) {
+          console.log('✅ Using Error.message:', error.message);
+          return error.message;
+        }
+
+        // Check various nested properties
+        if (error.message) {
+          console.log('✅ Using error.message:', error.message);
+          return error.message;
+        }
+
+        if (error.error) {
+          console.log('✅ Using error.error:', error.error);
+          return error.error;
+        }
+
+        // Check fetch response errors
+        if (error.response?.data?.error) {
+          console.log('✅ Using response.data.error:', error.response.data.error);
+          return error.response.data.error;
+        }
+
+        if (error.response?.data?.message) {
+          console.log('✅ Using response.data.message:', error.response.data.message);
+          return error.response.data.message;
+        }
+
+        console.log('❌ Using fallback message');
+        return 'Registration failed. Please try again.';
+      };
+
+      const cleanError = extractCleanError(error);
+      console.log('🎯 Final frontend error message:', cleanError);
+
       setStatus({
         loading: false,
-        error: error instanceof Error 
-          ? error.message 
-          : 'Registration failed. Please try again.',
+        error: cleanError,
         success: false
       });
     }

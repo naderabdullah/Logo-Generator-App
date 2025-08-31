@@ -22,7 +22,7 @@ interface AppManagerRegistrationData {
   orderNumber?: string;
 }
 
-// Function to call App Manager API for registration verification
+// Complete callAppManagerAPI function - REPLACE THE ENTIRE FUNCTION
 async function callAppManagerAPI(registrationData: AppManagerRegistrationData) {
   if (!process.env.API_ENDPOINT || !process.env.API_KEY) {
     throw new Error('App Manager API configuration missing');
@@ -50,14 +50,72 @@ async function callAppManagerAPI(registrationData: AppManagerRegistrationData) {
   });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-    throw new Error(errorData.error || `App Manager API error: ${response.status}`);
+    let errorData;
+    let rawErrorText;
+
+    try {
+      rawErrorText = await response.text();
+      console.log('🔍 Raw Lambda error response:', rawErrorText);
+      errorData = JSON.parse(rawErrorText);
+      console.log('🔍 Parsed Lambda error data:', errorData);
+    } catch (parseError) {
+      console.log('🔍 Could not parse JSON, using raw text');
+      throw new Error(rawErrorText || `HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    // Extract ONLY the clean message string - no JSON objects
+    let userFriendlyMessage = 'Registration failed. Please try again.';
+
+    // Debug: Show what we're checking
+    console.log('🔍 Checking errorData.error:', errorData.error, typeof errorData.error);
+    console.log('🔍 Checking errorData.message:', errorData.message, typeof errorData.message);
+    console.log('🔍 Checking errorData.code:', errorData.code);
+
+    // Priority order: error > message > code-based message
+    if (errorData.error && typeof errorData.error === 'string') {
+      userFriendlyMessage = errorData.error;
+      console.log('✅ Using errorData.error:', userFriendlyMessage);
+    } else if (errorData.message && typeof errorData.message === 'string') {
+      userFriendlyMessage = errorData.message;
+      console.log('✅ Using errorData.message:', userFriendlyMessage);
+    } else if (errorData.code) {
+      console.log('✅ Using code-based message for:', errorData.code);
+      // Convert technical codes to user-friendly messages
+      switch (errorData.code) {
+        case 'ORDER_ALREADY_USED':
+          userFriendlyMessage = 'This order number has already been used. Please use a different order number.';
+          break;
+        case 'INVALID_ORDER_NUMBER':
+          userFriendlyMessage = 'Invalid order number format. Please check your order number and try again.';
+          break;
+        case 'DUPLICATE_ORDER':
+          userFriendlyMessage = 'This order number already exists. Please use a different order number.';
+          break;
+        case 'GLOBAL_DUPLICATE_ORDER':
+          userFriendlyMessage = 'This order number is already in use. Please use a different order number.';
+          break;
+        default:
+          userFriendlyMessage = errorData.details || errorData.message || 'Registration failed. Please check your information and try again.';
+      }
+    } else {
+      console.log('❌ Could not extract error message, using fallback');
+    }
+
+    // Final safety check
+    if (typeof userFriendlyMessage !== 'string') {
+      console.error('❌ Non-string error message detected:', userFriendlyMessage);
+      userFriendlyMessage = 'Registration failed. Please try again.';
+    }
+
+    console.log('🎯 Final user-friendly message to throw:', userFriendlyMessage);
+    console.log('🎯 Message type:', typeof userFriendlyMessage);
+
+    throw new Error(userFriendlyMessage);
   }
 
   return await response.json();
 }
 
-// Function to generate a new user ID for DynamoDB
 async function generateNewUserId(): Promise<number> {
   try {
     const result = await dynamoDB.scan({
@@ -236,16 +294,68 @@ export async function POST(request: NextRequest) {
       appManagerResponse = await callAppManagerAPI(registrationData);
       console.log('✅ App Manager registration successful');
     } catch (appManagerError: any) {
-      console.error('App Manager registration failed:', appManagerError);
+      console.error('🔍 App Manager registration failed:', appManagerError);
+      console.log('🔍 Error type:', typeof appManagerError);
+      console.log('🔍 Is Error instance:', appManagerError instanceof Error);
+
+      if (appManagerError instanceof Error) {
+        console.log('🔍 Error.message:', appManagerError.message);
+        console.log('🔍 Message type:', typeof appManagerError.message);
+      }
+
+      // Extract the clean error message with multiple fallback strategies
+      let cleanErrorMessage = 'Registration failed. Please try again.';
+
+      if (appManagerError instanceof Error) {
+        cleanErrorMessage = appManagerError.message;
+        console.log('✅ Using Error.message:', cleanErrorMessage);
+      } else if (typeof appManagerError === 'string') {
+        cleanErrorMessage = appManagerError;
+        console.log('✅ Using string error:', cleanErrorMessage);
+      } else if (appManagerError.message) {
+        cleanErrorMessage = appManagerError.message;
+        console.log('✅ Using appManagerError.message:', cleanErrorMessage);
+      }
+
+      // Aggressive JSON cleaning - multiple strategies
+      if (typeof cleanErrorMessage === 'string' && cleanErrorMessage.startsWith('{')) {
+        console.log('🔧 Attempting to clean JSON string:', cleanErrorMessage);
+
+        try {
+          const parsed = JSON.parse(cleanErrorMessage);
+          if (parsed.error && typeof parsed.error === 'string') {
+            cleanErrorMessage = parsed.error;
+            console.log('✅ Extracted from parsed.error:', cleanErrorMessage);
+          } else if (parsed.message && typeof parsed.message === 'string') {
+            cleanErrorMessage = parsed.message;
+            console.log('✅ Extracted from parsed.message:', cleanErrorMessage);
+          }
+        } catch (parseError) {
+          console.log('🔧 JSON parse failed, trying regex extraction');
+          // Fallback: regex extraction
+          const errorMatch = cleanErrorMessage.match(/"error":"([^"]+)"/);
+          const messageMatch = cleanErrorMessage.match(/"message":"([^"]+)"/);
+
+          if (errorMatch && errorMatch[1]) {
+            cleanErrorMessage = errorMatch[1];
+            console.log('✅ Extracted via regex from error field:', cleanErrorMessage);
+          } else if (messageMatch && messageMatch[1]) {
+            cleanErrorMessage = messageMatch[1];
+            console.log('✅ Extracted via regex from message field:', cleanErrorMessage);
+          }
+        }
+      }
+
+      console.log('🎯 Final clean error message being returned:', cleanErrorMessage);
+      console.log('🎯 Final message type:', typeof cleanErrorMessage);
+
       return NextResponse.json(
           {
-            error: 'App Manager registration failed',
-            details: appManagerError.message || 'Unknown error'
+            error: cleanErrorMessage
           },
           { status: 400 }
       );
     }
-
     // Step 2: Save user credentials to DynamoDB (primary auth database)
     console.log('Step 2: Saving user credentials to DynamoDB...');
     let dynamoUser;

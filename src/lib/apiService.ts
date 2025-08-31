@@ -74,11 +74,11 @@ const createApiCall = async (url: string, data: any, params?: Record<string, str
 };
 
 export const appManagerApiService = {
-  // Registration API - calls the full registration endpoint
+
   async verifyRegistration(registrationData: RegistrationData): Promise<ApiResponse> {
     try {
-      console.log('Sending registration request:', registrationData);
-      
+      console.log('🔍 API Service: Sending registration request:', registrationData);
+
       const response = await fetch('/api/auth/app-manager-register', {
         method: 'POST',
         headers: {
@@ -87,15 +87,54 @@ export const appManagerApiService = {
         body: JSON.stringify(registrationData)
       });
 
+      console.log('🔍 API Service: Response status:', response.status);
+      console.log('🔍 API Service: Response ok:', response.ok);
+
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || `HTTP ${response.status}`);
+        const responseText = await response.text();
+        console.log('🔍 API Service: Raw error response text:', responseText);
+
+        let errorData;
+        try {
+          errorData = JSON.parse(responseText);
+          console.log('🔍 API Service: Parsed error data:', errorData);
+        } catch (parseError) {
+          console.log('🔍 API Service: Could not parse JSON, using raw text');
+          throw new Error(responseText || `Registration failed with status ${response.status}`);
+        }
+
+        // Extract the clean error message
+        let errorMessage = 'Registration failed. Please try again.';
+
+        if (errorData.error && typeof errorData.error === 'string') {
+          errorMessage = errorData.error;
+          console.log('✅ API Service: Using errorData.error:', errorMessage);
+        } else if (errorData.message && typeof errorData.message === 'string') {
+          errorMessage = errorData.message;
+          console.log('✅ API Service: Using errorData.message:', errorMessage);
+        } else if (errorData.details && typeof errorData.details === 'string') {
+          errorMessage = errorData.details;
+          console.log('✅ API Service: Using errorData.details:', errorMessage);
+        }
+
+        console.log('🎯 API Service: Final error message to throw:', errorMessage);
+        throw new Error(errorMessage);
       }
 
-      return response.json();
+      const result = await response.json();
+      console.log('✅ API Service: Registration successful');
+      return result;
     } catch (error) {
-      console.error('Registration API Error:', error);
-      throw this.handleApiError(error);
+      console.error('🔍 API Service: Error caught:', error);
+
+      // Re-throw the error as-is to preserve the message
+      if (error instanceof Error) {
+        console.log('✅ API Service: Re-throwing Error object');
+        throw error;
+      }
+
+      console.log('❌ API Service: Throwing generic network error');
+      throw new Error('Network error - please check your connection');
     }
   },
 
