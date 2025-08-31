@@ -26,14 +26,14 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
 
     // Call your Lambda function to reset the password
-    const lambdaResponse = await fetch(process.env.LAMBDA_PASSWORD_RESET_URL || '', {
+    const lambdaResponse = await fetch(`${process.env.API_ENDPOINT}/app-manager?action=resetPassword`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': process.env.LAMBDA_API_KEY || '',
+        'X-Api-Key': process.env.API_KEY || '',
       },
       body: JSON.stringify({
-        action: 'resetPassword',
+        // ✅ NO action in body
         email,
         resetToken: token,
         newPasswordHash: hashedPassword,

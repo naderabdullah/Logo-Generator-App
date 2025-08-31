@@ -13,14 +13,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Call your Lambda function to verify the token
-    const lambdaResponse = await fetch(process.env.LAMBDA_PASSWORD_RESET_URL || '', {
+    const lambdaResponse = await fetch(`${process.env.API_ENDPOINT}/app-manager?action=verifyResetToken`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': process.env.LAMBDA_API_KEY || '',
+        'X-Api-Key': process.env.API_KEY || '',
       },
       body: JSON.stringify({
-        action: 'verifyResetToken',
+        // ✅ NO action in body
         email,
         resetToken: token,
       }),

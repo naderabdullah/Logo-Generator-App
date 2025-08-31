@@ -3,59 +3,86 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 
 // This will call your Lambda function to handle the password reset
+// Quick debug - replace your password reset route temporarily
 export async function POST(request: NextRequest) {
   try {
     const { email } = await request.json();
 
     if (!email) {
-      return NextResponse.json(
-        { error: 'Email is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
 
-    // Generate a secure reset token
-    const resetToken = crypto.randomBytes(32).toString('hex');
-    const tokenExpiry = Date.now() + 3600000; // 1 hour from now
-
-    // Call your Lambda function to handle the password reset
-    // The Lambda should:
-    // 1. Check if user exists in DynamoDB
-    // 2. Store the reset token and expiry in the user's record
-    // 3. Send the email with the reset link
-    const lambdaResponse = await fetch(process.env.LAMBDA_PASSWORD_RESET_URL || '', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.LAMBDA_API_KEY || '',
-      },
-      body: JSON.stringify({
-        action: 'sendPasswordReset',
-        email,
-        resetToken,
-        tokenExpiry,
-        resetUrl: `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`,
-      }),
+    console.log('🔍 Environment check:', {
+      hasApiEndpoint: !!process.env.API_ENDPOINT,
+      hasApiKey: !!process.env.API_KEY,
+      endpoint: process.env.API_ENDPOINT,
+      apiKey: process.env.API_KEY
     });
 
-    if (!lambdaResponse.ok) {
-      const error = await lambdaResponse.json();
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const tokenExpiry = Date.now() + 3600000;
+
+    console.log('🔍 About to call Lambda...');
+
+// In your password reset route:
+    let lambdaResponse;
+    try {
+      console.log('🔍 About to call Lambda...');
+
+      lambdaResponse = await fetch(`${process.env.API_ENDPOINT}/app-manager?action=sendPasswordReset`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Api-Key': process.env.API_KEY || '',
+        },
+        body: JSON.stringify({
+          email,
+          resetToken,
+          tokenExpiry,
+          resetUrl: `${process.env.NEXTAUTH_URL}/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`,
+        }),
+      });
+
+      console.log('✅ Fetch completed, status:', lambdaResponse.status);
+
+    } catch (fetchError) {
+      console.error('❌ Fetch failed completely:', fetchError);
+      console.error('❌ Error details:', {
+        name: fetchError.name,
+        message: fetchError.message,
+        stack: fetchError.stack
+      });
+
       return NextResponse.json(
-        { error: error.message || 'Failed to send reset email' },
-        { status: lambdaResponse.status }
+          { error: 'Network error: ' + fetchError.message },
+          { status: 500 }
       );
     }
 
-    return NextResponse.json(
-      { message: 'Password reset link sent to your email' },
-      { status: 200 }
-    );
+    console.log('🔍 Lambda response status:', lambdaResponse.status);
+    console.log('🔍 Lambda response headers:', Object.fromEntries(lambdaResponse.headers.entries()));
+
+    // Get the RAW response text first
+    const responseText = await lambdaResponse.text();
+    console.log('🔍 Lambda RAW response:', responseText);
+
+    if (!lambdaResponse.ok) {
+      // Return the actual Lambda error for debugging
+      return NextResponse.json({
+        error: 'Lambda Error Details',
+        lambdaStatus: lambdaResponse.status,
+        lambdaResponse: responseText,
+        debugInfo: 'Check server console for full details'
+      }, { status: 500 });
+    }
+
+    return NextResponse.json({ message: 'Success' });
 
   } catch (error) {
-    console.error('Send password reset error:', error);
-    return NextResponse.json(
-      { error: 'Failed to send password reset email' },
-      { status: 500 }
-    );
+    console.error('❌ Outer catch error:', error);
+    return NextResponse.json({
+      error: 'Network/Connection Error',
+      details: error.message
+    }, { status: 500 });
   }
 }
