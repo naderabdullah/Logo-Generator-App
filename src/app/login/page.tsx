@@ -1,4 +1,4 @@
-// src/app/login/page.tsx - Fixed with authentication check and auto-redirect
+// src/app/login/page.tsx - Updated with Forgot Password link
 'use client';
 
 import { useState, useEffect, FormEvent, Suspense } from 'react';
@@ -33,7 +33,7 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const [checkingAuth, setCheckingAuth] = useState(true); // NEW: Auth check loading state
+  const [checkingAuth, setCheckingAuth] = useState(true);
   
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -41,7 +41,7 @@ function LoginForm() {
   
   const { refreshAuth } = useAuth();
   
-  // NEW: Check if user is already authenticated
+  // Check if user is already authenticated
   useEffect(() => {
     const checkAuthentication = async () => {
       try {
@@ -72,7 +72,7 @@ function LoginForm() {
     
     // Always check authentication immediately
     checkAuthentication();
-  }, []); // Remove router and redirectPath dependencies to prevent loops
+  }, []);
   
   useEffect(() => {
     // Only run these effects if we're not checking auth
@@ -87,6 +87,10 @@ function LoginForm() {
     const message = searchParams?.get('message');
     if (message === 'account-deleted') {
       setMessage('Your account has been successfully deactivated.');
+    } else if (message === 'password-reset-sent') {
+      setMessage('Password reset link has been sent to your email.');
+    } else if (message === 'password-reset-success') {
+      setMessage('Your password has been reset successfully. Please log in with your new password.');
     }
     
     // Check for registration success message from app manager
@@ -150,7 +154,7 @@ function LoginForm() {
     }
   };
 
-  // NEW: Show loading spinner while checking authentication
+  // Show loading spinner while checking authentication
   if (checkingAuth) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-gray-50 overflow-hidden">
@@ -217,6 +221,15 @@ function LoginForm() {
                 required
                 disabled={loading}
               />
+              {/* Forgot Password Link - Added Here */}
+              <div className="mt-1 text-right">
+                <Link 
+                  href="/forgot-password" 
+                  className="text-sm text-indigo-600 hover:text-indigo-500"
+                >
+                  Forgot password?
+                </Link>
+              </div>
             </div>
 
             <button
