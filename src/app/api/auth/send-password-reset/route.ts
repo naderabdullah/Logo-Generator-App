@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Api-Key': process.env.API_KEY || '',
+          'X-Api-Key': process.env.API_KEY,
         },
         body: JSON.stringify({
           email,
