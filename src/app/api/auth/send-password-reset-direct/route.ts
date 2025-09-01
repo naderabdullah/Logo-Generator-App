@@ -1,7 +1,7 @@
 // src/app/api/auth/send-password-reset-direct/route.ts - ENHANCED DEBUG VERSION
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { DynamoDB } from 'aws-sdk';
+import { DynamoDB, SES } from 'aws-sdk';
 
 // Initialize both DynamoDB clients
 const dynamoDBClient = new DynamoDB({
@@ -15,6 +15,15 @@ const dynamoDB = new DynamoDB.DocumentClient({
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
 });
+
+const ses = new SES({
+    region: process.env.AWS_REGION || 'us-east-1',
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+});
+
+const FROM_EMAIL = process.env.SES_FROM_EMAIL || 'noreply@smartylogos.com';
+const TOKEN_EXPIRY_HOURS = 1;
 
 // Configuration constants
 const APPUSERS_TABLE = 'AppUsers';
@@ -121,6 +130,26 @@ async function findUsersByEmail(email: string): Promise<{ success: boolean; user
     }
 }
 
+function getPasswordResetEmailTemplate(resetUrl: string) {
+    return {
+        subject: 'Password Reset Request',
+        html: `
+        <!DOCTYPE html>
+        <html>
+          <body style="font-family: Arial, sans-serif;">
+            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+              <h2>Password Reset Request</h2>
+              <p>Click the button below to reset your password:</p>
+              <a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 6px;">Reset Password</a>
+              <p>This link expires in ${TOKEN_EXPIRY_HOURS} hour(s).</p>
+              <p>If you didn't request this, please ignore this email.</p>
+            </div>
+          </body>
+        </html>
+        `
+    };
+}
+
 // Main POST handler - ENHANCED DEBUG VERSION
 export async function POST(request: NextRequest) {
     console.log('🧪 === DEBUG MODE: Direct AppUsers Password Reset ===');
@@ -175,23 +204,76 @@ export async function POST(request: NextRequest) {
             });
         }
 
-        // For now, just return success with debug info (no actual email sending until query works)
-        return NextResponse.json({
-            message: 'Password reset would be sent successfully',
-            debug: {
-                method: 'Direct AppUsers query',
-                usersFound: users.length,
-                tableUsed: APPUSERS_TABLE,
-                querySuccessful: true,
-                userPreview: users.map(u => ({
-                    AppId: u.AppId,
-                    Status: u.Status,
-                    SubAppId: u.SubAppId
-                })),
-                debugInfo: result.debugInfo
-            }
-        });
+        // Generate reset token
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        const tokenExpiry = Date.now() + 3600000; // 1 hour
 
+        // Update each found user with reset token
+        for (const user of users) {
+            await dynamoDB.update({
+                TableName: APPUSERS_TABLE,
+                Key: {
+                    AppId: user.AppId,
+                    EmailSubAppId: user.EmailSubAppId
+                },
+                UpdateExpression: 'SET resetToken = :token, resetTokenExpiry = :expiry',
+                ExpressionAttributeValues: {
+                    ':token': resetToken,
+                    ':expiry': tokenExpiry
+                }
+            }).promise();
+        }
+
+        console.log(`✅ Reset token generated and stored for ${users.length} registrations`);
+
+        console.log('📧 Sending password reset email...');
+        const resetUrl = `${process.env.NEXTAUTH_URL}/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
+        const template = getPasswordResetEmailTemplate(resetUrl);
+
+        try {
+            await ses.sendEmail({
+                Source: FROM_EMAIL,
+                Destination: { ToAddresses: [email] },
+                Message: {
+                    Subject: { Data: template.subject },
+                    Body: { Html: { Data: template.html } }
+                }
+            }).promise();
+
+            console.log('✅ Password reset email sent successfully');
+
+            return NextResponse.json({
+                message: 'Password reset email sent successfully',
+                debug: {
+                    method: 'Direct AppUsers query',
+                    usersFound: users.length,
+                    tokenGenerated: true,
+                    emailSent: true,
+                    tokenExpiry: new Date(tokenExpiry).toISOString(),
+                    resetUrl: resetUrl,
+                    tableUsed: APPUSERS_TABLE,
+                    querySuccessful: true
+                }
+            });
+
+        } catch (emailError: any) {
+            console.error('❌ Failed to send email:', emailError);
+
+            // Token was stored but email failed - still return success to user for security
+            return NextResponse.json({
+                message: 'If the email exists in our system, a reset link has been sent',
+                debug: {
+                    method: 'Direct AppUsers query',
+                    usersFound: users.length,
+                    tokenGenerated: true,
+                    emailSent: false,
+                    emailError: emailError.message,
+                    tokenExpiry: new Date(tokenExpiry).toISOString(),
+                    tableUsed: APPUSERS_TABLE,
+                    querySuccessful: true
+                }
+            });
+        } 
     } catch (error: any) {
         console.error('❌ Outer catch error:', error);
         console.error('❌ Error stack:', error.stack);
