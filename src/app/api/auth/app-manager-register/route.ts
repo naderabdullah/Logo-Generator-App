@@ -147,92 +147,92 @@ interface DynamoUser {
 }
 
 // Function to save user credentials to DynamoDB
-async function saveToDynamoDB(
-    registrationData: AppManagerRegistrationData,
-    appManagerResponse: any
-): Promise<DynamoUser> {
-  try {
-    console.log('Saving user to DynamoDB...');
-
-    // Check if user already exists
-    const existingUserResult = await dynamoDB.scan({
-      TableName: process.env.DYNAMODB_USERS_TABLE || 'users',
-      FilterExpression: 'email = :email',
-      ExpressionAttributeValues: {
-        ':email': registrationData.email.toLowerCase()
-      }
-    }).promise();
-
-    // Hash the password for secure storage
-    const hashedPassword = await bcrypt.hash(registrationData.password, 12);
-
-    if (existingUserResult.Items && existingUserResult.Items.length > 0) {
-      // Update existing user
-      const existingUser = existingUserResult.Items[0];
-      console.log(`Updating existing DynamoDB user: ${registrationData.email}`);
-
-      await dynamoDB.update({
-        TableName: process.env.DYNAMODB_USERS_TABLE || 'users',
-        Key: { id: existingUser.id },
-        UpdateExpression: 'SET #pwd = :password, lastLogin = :lastLogin, appManagerData = :appManagerData, #status = :status',
-        ExpressionAttributeNames: {
-          '#pwd': 'password',
-          '#status': 'Status'
-        },
-        ExpressionAttributeValues: {
-          ':password': hashedPassword,
-          ':lastLogin': new Date().toISOString(),
-          ':appManagerData': appManagerResponse,
-          ':status': 'active'
-        }
-      }).promise();
-
-      // Return the updated user object
-      const updatedUser: DynamoUser = {
-        id: existingUser.id,
-        email: existingUser.email,
-        password: hashedPassword,
-        createdAt: existingUser.createdAt || new Date().toISOString(),
-        lastLogin: new Date().toISOString(),
-        appManagerData: appManagerResponse,
-        Status: 'active'
-      };
-
-      return updatedUser;
-    } else {
-      // Create new user
-      console.log(`Creating new DynamoDB user: ${registrationData.email}`);
-
-      const newUserId = await generateNewUserId();
-
-      const newUser: DynamoUser = {
-        id: newUserId,
-        email: registrationData.email.toLowerCase(),
-        password: hashedPassword,
-        createdAt: new Date().toISOString(),
-        lastLogin: new Date().toISOString(),
-        appManagerData: appManagerResponse,
-        Status: 'active'
-      };
-
-      await dynamoDB.put({
-        TableName: process.env.DYNAMODB_USERS_TABLE || 'users',
-        Item: newUser
-      }).promise();
-
-      console.log(`✅ Successfully created DynamoDB user: ${registrationData.email} with active status`);
-      return newUser;
-    }
-  } catch (error) {
-    console.error('Error saving to DynamoDB:', error);
-    throw error;
-  }
-}
+// async function saveToDynamoDB(
+//     registrationData: AppManagerRegistrationData,
+//     appManagerResponse: any
+// ): Promise<DynamoUser> {
+//   try {
+//     console.log('Saving user to DynamoDB...');
+//
+//     // Check if user already exists
+//     const existingUserResult = await dynamoDB.scan({
+//       TableName: process.env.DYNAMODB_USERS_TABLE || 'users',
+//       FilterExpression: 'email = :email',
+//       ExpressionAttributeValues: {
+//         ':email': registrationData.email.toLowerCase()
+//       }
+//     }).promise();
+//
+//     // Hash the password for secure storage
+//     const hashedPassword = await bcrypt.hash(registrationData.password, 12);
+//
+//     if (existingUserResult.Items && existingUserResult.Items.length > 0) {
+//       // Update existing user
+//       const existingUser = existingUserResult.Items[0];
+//       console.log(`Updating existing DynamoDB user: ${registrationData.email}`);
+//
+//       await dynamoDB.update({
+//         TableName: process.env.DYNAMODB_USERS_TABLE || 'users',
+//         Key: { id: existingUser.id },
+//         UpdateExpression: 'SET #pwd = :password, lastLogin = :lastLogin, appManagerData = :appManagerData, #status = :status',
+//         ExpressionAttributeNames: {
+//           '#pwd': 'password',
+//           '#status': 'Status'
+//         },
+//         ExpressionAttributeValues: {
+//           ':password': hashedPassword,
+//           ':lastLogin': new Date().toISOString(),
+//           ':appManagerData': appManagerResponse,
+//           ':status': 'active'
+//         }
+//       }).promise();
+//
+//       // Return the updated user object
+//       const updatedUser: DynamoUser = {
+//         id: existingUser.id,
+//         email: existingUser.email,
+//         password: hashedPassword,
+//         createdAt: existingUser.createdAt || new Date().toISOString(),
+//         lastLogin: new Date().toISOString(),
+//         appManagerData: appManagerResponse,
+//         Status: 'active'
+//       };
+//
+//       return updatedUser;
+//     } else {
+//       // Create new user
+//       console.log(`Creating new DynamoDB user: ${registrationData.email}`);
+//
+//       const newUserId = await generateNewUserId();
+//
+//       const newUser: DynamoUser = {
+//         id: newUserId,
+//         email: registrationData.email.toLowerCase(),
+//         password: hashedPassword,
+//         createdAt: new Date().toISOString(),
+//         lastLogin: new Date().toISOString(),
+//         appManagerData: appManagerResponse,
+//         Status: 'active'
+//       };
+//
+//       await dynamoDB.put({
+//         TableName: process.env.DYNAMODB_USERS_TABLE || 'users',
+//         Item: newUser
+//       }).promise();
+//
+//       console.log(`✅ Successfully created DynamoDB user: ${registrationData.email} with active status`);
+//       return newUser;
+//     }
+//   } catch (error) {
+//     console.error('Error saving to DynamoDB:', error);
+//     throw error;
+//   }
+// }
 
 // Function to save logo credits tracking to Supabase only
 async function saveToSupabaseForCredits(
     email: string,
-    dynamoUserId: number,
+    // dynamoUserId: number,
     subAppId?: string // ADDED: Optional subAppId parameter
 ) {
   try {
@@ -357,22 +357,22 @@ export async function POST(request: NextRequest) {
       );
     }
     // Step 2: Save user credentials to DynamoDB (primary auth database)
-    console.log('Step 2: Saving user credentials to DynamoDB...');
-    let dynamoUser;
-    try {
-      dynamoUser = await saveToDynamoDB(registrationData, appManagerResponse);
-      console.log('✅ DynamoDB user creation successful');
-    } catch (dynamoError: any) {
-      console.error('DynamoDB user creation failed:', dynamoError);
-
-      return NextResponse.json(
-          {
-            error: 'Registration partially completed. Please contact support.',
-            details: 'App Manager registration succeeded but user credential storage failed.'
-          },
-          { status: 500 }
-      );
-    }
+    console.log('Step 2: **** SKIPPING **** Saving user credentials to DynamoDB...');
+    // let dynamoUser;
+    // try {
+    //   dynamoUser = await saveToDynamoDB(registrationData, appManagerResponse);
+    //   console.log('✅ DynamoDB user creation successful');
+    // } catch (dynamoError: any) {
+    //   console.error('DynamoDB user creation failed:', dynamoError);
+    //
+    //   return NextResponse.json(
+    //       {
+    //         error: 'Registration partially completed. Please contact support.',
+    //         details: 'App Manager registration succeeded but user credential storage failed.'
+    //       },
+    //       { status: 500 }
+    //   );
+    // }
 
     // Step 3: Create logo credits tracking in Supabase (required - for logo management)
     console.log('Step 3: Setting up logo credits tracking in Supabase...');
@@ -381,7 +381,7 @@ export async function POST(request: NextRequest) {
       // CHANGED: Pass subappId to the function (was just email and dynamoUser.id)
       supabaseUser = await saveToSupabaseForCredits(
           registrationData.email,
-          dynamoUser.id,
+          // dynamoUser.id,
           registrationData.subappId
       );
       console.log('✅ Supabase credits tracking setup successful');
@@ -406,8 +406,8 @@ export async function POST(request: NextRequest) {
         response: appManagerResponse
       },
       user: {
-        id: dynamoUser.id,
-        email: dynamoUser.email,
+        // id: dynamoUser.id,
+        // email: dynamoUser.email,
         logosCreated: supabaseUser.logosCreated,
         logosLimit: supabaseUser.logosLimit // Logo data from Supabase
       }

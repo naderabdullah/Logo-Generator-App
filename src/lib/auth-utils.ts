@@ -5,6 +5,8 @@ import { DynamoDB } from 'aws-sdk';
 import { supabaseAuth } from './supabaseAuth';
 import { isSuperUser, getSuperUserStatus } from './superuser-config';
 
+const APP_ID = 'logo-generator';
+
 // Initialize DynamoDB client
 const dynamoDB = new DynamoDB.DocumentClient({
   region: process.env.AWS_REGION || 'us-east-1',
@@ -51,9 +53,10 @@ export async function getCurrentUser(request: NextRequest): Promise<Authenticate
     const result = await dynamoDB.query({
       TableName: 'AppUsers',
       IndexName: 'EmailIndex',
-      KeyConditionExpression: 'Email = :email',
+      KeyConditionExpression: 'Email = :email AND AppId = :appId',  // ADDED: AppId filter
       ExpressionAttributeValues: {
-        ':email': decoded.email.toLowerCase()
+        ':email': decoded.email.toLowerCase(),
+        ':appId': APP_ID
       }
     }).promise();
 

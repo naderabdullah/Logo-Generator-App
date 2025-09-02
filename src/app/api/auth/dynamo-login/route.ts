@@ -2,9 +2,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { DynamoDB } from 'aws-sdk';
 import jwt from 'jsonwebtoken';
-import bcrypt from 'bcryptjs';
-import { supabaseAuth } from '../../../../lib/supabaseAuth';
+// import bcrypt from 'bcryptjs';
+import { supabaseAuth } from '@/lib/supabaseAuth';
 
+const APP_ID = 'logo-generator';
 // Initialize DynamoDB client
 const dynamoDB = new DynamoDB.DocumentClient({
   region: process.env.AWS_REGION || 'us-east-1',
@@ -60,9 +61,10 @@ export async function POST(request: NextRequest) {
     const result = await dynamoDB.query({
       TableName: 'AppUsers',
       IndexName: 'EmailIndex',
-      KeyConditionExpression: 'Email = :email',
+      KeyConditionExpression: 'Email = :email AND AppId = :appId',
       ExpressionAttributeValues: {
-        ':email': email.toLowerCase()
+        ':email': email.toLowerCase(),
+        ':appId': APP_ID
       }
     }).promise();
 
