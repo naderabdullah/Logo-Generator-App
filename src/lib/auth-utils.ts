@@ -14,7 +14,7 @@ const dynamoDB = new DynamoDB.DocumentClient({
 
 // Enhanced user interface with superuser information
 export interface AuthenticatedUser {
-  id: number;
+  id: string;
   supabaseId?: number;
   email: string;
   logosCreated: number;
@@ -28,6 +28,10 @@ export interface AuthenticatedUser {
  * Enhanced getCurrentUser with superuser support
  * This replaces the existing getCurrentUser functions across your API routes
  */
+/**
+ * Enhanced getCurrentUser with superuser support - Updated for AppUsers table
+ * This replaces the existing getCurrentUser functions across your API routes
+ */
 export async function getCurrentUser(request: NextRequest): Promise<AuthenticatedUser | null | 'not_allowed'> {
   try {
     // Get access token from cookies
@@ -37,25 +41,37 @@ export async function getCurrentUser(request: NextRequest): Promise<Authenticate
       return null;
     }
 
-    // Verify token
+    // Verify token - id is now AppId (string) from AppUsers table
     const decoded = jwt.verify(
-      accessToken,
-      process.env.JWT_ACCESS_TOKEN_SECRET || 'access-token-secret'
-    ) as { id: number, email: string };
+        accessToken,
+        process.env.JWT_ACCESS_TOKEN_SECRET || 'access-token-secret'
+    ) as { id: string, email: string };
 
-    // Get user auth data from DynamoDB
-    const dynamoResult = await dynamoDB.get({
-      TableName: process.env.DYNAMODB_USERS_TABLE || 'users',
-      Key: { id: decoded.id }
+    // Find user by email using EmailIndex GSI in AppUsers table
+    const result = await dynamoDB.query({
+      TableName: 'AppUsers',
+      IndexName: 'EmailIndex',
+      KeyConditionExpression: 'Email = :email',
+      ExpressionAttributeValues: {
+        ':email': decoded.email.toLowerCase()
+      }
     }).promise();
 
-    if (!dynamoResult.Item) {
+    if (!result.Items || result.Items.length === 0) {
       return null;
     }
 
-    const user = dynamoResult.Item;
+    // If multiple SubAppIds for same email, find the one matching AppId from JWT
+    let user = result.Items[0];
+    if (result.Items.length > 1) {
+      const matchingUser = result.Items.find(item => item.AppId === decoded.id);
+      if (matchingUser) {
+        user = matchingUser;
+      }
+    }
+
     const userStatus = user.Status || user.status;
-    const email = user.email;
+    const email = user.Email || user.email;
 
     // Check superuser status
     const superUserStatus = getSuperUserStatus(email);
@@ -64,9 +80,9 @@ export async function getCurrentUser(request: NextRequest): Promise<Authenticate
     if (superUserStatus.isSuperUser) {
       // Still get Supabase data if available
       const supabaseUser = await supabaseAuth.getUserByEmail(email);
-      
+
       return {
-        id: user.id,
+        id: user.AppId, // Using AppId as the identifier
         supabaseId: supabaseUser?.id,
         email: email,
         logosCreated: supabaseUser?.logosCreated || 0,
@@ -92,7 +108,7 @@ export async function getCurrentUser(request: NextRequest): Promise<Authenticate
 
     // Return regular user data
     return {
-      id: user.id,
+      id: user.AppId, // Using AppId as the identifier
       supabaseId: supabaseUser.id,
       email: email,
       logosCreated: supabaseUser.logosCreated,
@@ -106,7 +122,6 @@ export async function getCurrentUser(request: NextRequest): Promise<Authenticate
     return null;
   }
 }
-
 /**
  * Simple helper to check if current user is a superuser
  */
