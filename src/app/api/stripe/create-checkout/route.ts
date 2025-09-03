@@ -1,8 +1,6 @@
-// src/app/api/stripe/create-checkout/route.ts
+// src/app/api/stripe/create-checkout/route.ts - REFACTORED FOR APPUSERS
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { DynamoDB } from 'aws-sdk';
-import jwt from 'jsonwebtoken';
 import { getCurrentUser } from '../../../../lib/auth-utils';
 
 // Initialize Stripe only if the API key is available
@@ -13,43 +11,44 @@ if (process.env.STRIPE_SECRET_KEY) {
   });
 }
 
-// Initialize DynamoDB client
-const dynamoDB = new DynamoDB.DocumentClient({
-  region: process.env.AWS_REGION || 'us-east-1',
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-});
-
 export async function POST(request: NextRequest) {
   try {
     // Check if Stripe is initialized
     if (!stripe) {
       return NextResponse.json(
-        { error: 'Stripe is not configured. Please set STRIPE_SECRET_KEY environment variable.' },
-        { status: 500 }
+          { error: 'Stripe is not configured. Please set STRIPE_SECRET_KEY environment variable.' },
+          { status: 500 }
       );
     }
+
     // Get the current user
     const user = await getCurrentUser(request);
-    
+
     if (!user) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+          { error: 'Unauthorized' },
+          { status: 401 }
       );
     }
-    
+
+    if (user === 'not_allowed') {
+      return NextResponse.json(
+          { error: 'Account not active' },
+          { status: 403 }
+      );
+    }
+
     // Parse request body
     const { quantity, priceUsd, email } = await request.json();
-    
+
     // Validate input
     if (!quantity || !priceUsd) {
       return NextResponse.json(
-        { error: 'Quantity and price are required' },
-        { status: 400 }
+          { error: 'Quantity and price are required' },
+          { status: 400 }
       );
     }
-    
+
     // Ensure the quantity and price match our allowed options
     const validOptions = [
       { quantity: 1, price: 4.95 },
@@ -57,24 +56,26 @@ export async function POST(request: NextRequest) {
       { quantity: 6, price: 14.95 },
       { quantity: 9, price: 19.95 }
     ];
-    
+
     const isValidOption = validOptions.some(
-      option => option.quantity === quantity && option.price === priceUsd
+        option => option.quantity === quantity && option.price === priceUsd
     );
-    
+
     if (!isValidOption) {
       return NextResponse.json(
-        { error: 'Invalid quantity or price' },
-        { status: 400 }
+          { error: 'Invalid quantity or price' },
+          { status: 400 }
       );
     }
-    
+
     // Convert price to cents for Stripe
     const priceInCents = Math.round(priceUsd * 100);
-    
+
     // Get the domain URL for success/cancel URLs
     const domainURL = process.env.SITE_URL || 'http://localhost:3000';
-    
+
+    console.log(`💳 Creating Stripe session for user: ${user.email} (AppId: ${user.id})`);
+
     // Create a checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -94,20 +95,24 @@ export async function POST(request: NextRequest) {
       mode: 'payment',
       success_url: `${domainURL}/purchase?payment=success&quantity=${quantity}`,
       cancel_url: `${domainURL}/account?payment=cancelled`,
-      customer_email: email || (typeof user === 'object' && 'email' in user ? user.email : undefined),
+      customer_email: email || user.email,
       metadata: {
-        userId: (typeof user === 'object' && 'id' in user && user.id ? user.id.toString() : ''),
+        // Store email and appId for AppUsers table lookup
+        userEmail: user.email,  // Email for AppUsers lookup
+        appId: user.id,         // AppId for verification
         quantity: quantity.toString(),
       },
     });
-    
+
+    console.log(`✅ Stripe session created: ${session.id} for ${user.email}`);
+
     // Return the checkout session URL
     return NextResponse.json({ url: session.url });
   } catch (error: any) {
-    console.error('Error creating checkout session:', error);
+    console.error('❌ Error creating checkout session:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to create checkout session' },
-      { status: 500 }
+        { error: error.message || 'Failed to create checkout session' },
+        { status: 500 }
     );
   }
 }
