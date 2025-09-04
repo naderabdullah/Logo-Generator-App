@@ -8,10 +8,11 @@ export async function GET(request: NextRequest) {
         const page = parseInt(searchParams.get('page') || '1');
         const limit = parseInt(searchParams.get('limit') || '30');
         const search = searchParams.get('search') || '';
+        const industry = searchParams.get('industry') || '';
         const offset = (page - 1) * limit;
         
         // Fetch paginated catalog logos metadata (fast, no images)
-        const { logos, total } = await supabaseAuth.getCatalogLogosMetadata(offset, limit, search);
+        const { logos, total } = await supabaseAuth.getCatalogLogosMetadata(offset, limit, search, industry);
         
         // Calculate stats only on first page
         let stats = null;

@@ -292,7 +292,7 @@ export class SupabaseAuthService {
     }
   }
   
-  async getCatalogLogosMetadata(offset: number = 0, limit: number = 30, searchTerm: string = '') {
+  async getCatalogLogosMetadata(offset: number = 0, limit: number = 30, searchTerm: string = '', industryFilter: string = '') {
       try {
           // Build base query
           let baseQuery = supabaseAdmin
@@ -318,6 +318,13 @@ export class SupabaseAuthService {
               const searchFilter = `original_company_name.ilike.%${searchTerm}%,catalog_code.ilike.%${searchTerm}%`;
               baseQuery = baseQuery.or(searchFilter);
               countQuery = countQuery.or(searchFilter);
+          }
+
+          // Apply industry filter to BOTH queries if provided
+          if (industryFilter.trim() && industryFilter !== 'all') {
+              const industryFilterCondition = `parameters->>'industry'.eq.${industryFilter}`;
+              baseQuery = baseQuery.filter('parameters->>industry', 'eq', industryFilter);
+              countQuery = countQuery.filter('parameters->>industry', 'eq', industryFilter);
           }
 
           // Get data with pagination

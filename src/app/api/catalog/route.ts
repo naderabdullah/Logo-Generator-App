@@ -32,9 +32,11 @@ export async function GET(request: NextRequest) {
         const url = new URL(request.url);
         const action = url.searchParams.get('action');
         const catalogCode = url.searchParams.get('code');
-        const searchTerm = url.searchParams.get('search');
-        const limit = url.searchParams.get('limit');
-        const offset = url.searchParams.get('offset');
+        const searchTerm = url.searchParams.get('search') || '';
+        const industry = url.searchParams.get('industry') || '';
+        const page = parseInt(url.searchParams.get('page') || '1');
+        const limit = parseInt(url.searchParams.get('limit') || '30');
+        const offset = (page - 1) * limit;
 
         switch (action) {
             case 'get_by_code':
@@ -65,11 +67,18 @@ export async function GET(request: NextRequest) {
 
             default:
                 // Get all catalog logos with pagination
-                const catalogLogos = await supabaseAuth.getCatalogLogos(
-                    limit ? parseInt(limit) : undefined,
-                    offset ? parseInt(offset) : undefined
-                );
-                return NextResponse.json({ catalogLogos });
+                const { logos, total } = await supabaseAuth.getCatalogLogosMetadata(offset, limit, searchTerm, industry);
+                
+                return NextResponse.json({
+                    logos: logos,
+                    pagination: {
+                        page,
+                        limit,
+                        total: total,
+                        totalPages: Math.ceil(total / limit),
+                        hasMore: offset + logos.length < total
+                    }
+                });
         }
     } catch (error: any) {
         console.error('Error in catalog GET:', error);

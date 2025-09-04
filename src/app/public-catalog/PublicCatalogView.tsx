@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { INDUSTRIES } from '@/app/constants/industries';
 
 interface CatalogLogo {
     id: number;
@@ -332,6 +333,7 @@ export default function PublicCatalogView() {
     const [copied, setCopied] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(15);
+    const [industryFilter, setIndustryFilter] = useState<string>('all');
     
     // Cache for storing previously loaded results
     const cacheRef = useRef<Map<string, {
@@ -356,7 +358,7 @@ export default function PublicCatalogView() {
         return (
             <div className="flex justify-center items-center space-x-4">
                 <button
-                    onClick={() => fetchCatalog(pagination.page - 1, searchTerm, itemsPerPage, true)}
+                    onClick={() => fetchCatalog(pagination.page - 1, searchTerm, industryFilter)}
                     disabled={pagination.page <= 1 || loadingMore}
                     className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -372,7 +374,7 @@ export default function PublicCatalogView() {
                         return (
                             <button
                                 key={pageNum}
-                                onClick={() => fetchCatalog(pageNum, searchTerm, itemsPerPage, true)}
+                                onClick={() => fetchCatalog(pageNum, searchTerm, industryFilter)}
                                 disabled={loadingMore}
                                 className={`px-3 py-2 rounded-md ${
                                     pageNum === pagination.page
@@ -387,7 +389,7 @@ export default function PublicCatalogView() {
                 </div>
                 
                 <button
-                    onClick={() => fetchCatalog(pagination.page + 1, searchTerm, itemsPerPage, true)}
+                    onClick={() => fetchCatalog(pagination.page + 1, searchTerm, industryFilter)}
                     disabled={!pagination.hasMore || loadingMore}
                     className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -398,101 +400,80 @@ export default function PublicCatalogView() {
     };
 
     // Fetch catalog data with pagination and caching
-    const fetchCatalog = useCallback(
-        async (
-            page: number = 1,
-            search: string = '',
-            limit?: number,
-            shouldScrollToTop: boolean = true
-        ) => {
-            const effectiveLimit = typeof limit === 'number' ? limit : itemsPerPage;
-            const cacheKey = getCacheKey(page, search, effectiveLimit);
+    const fetchCatalog = useCallback(async (page: number, search: string = '', industry: string = 'all') => {
+        if (loadingMore && page > 1) return;
+        
+        setLoadingMore(page > 1);
+        if (page === 1) {
+            setInitialLoading(true);
+        }
 
-            const cachedData = cacheRef.current.get(cacheKey);
-            if (cachedData) {
-                setCatalogLogos(cachedData.logos);
-                if (cachedData.stats && (!stats || cachedData.stats.totalLogos > 0)) {
-                    setStats(cachedData.stats);
-                }
-                setPagination(cachedData.pagination);
+        try {
+            const searchParams = new URLSearchParams({
+                page: page.toString(),
+                limit: itemsPerPage.toString(),
+                ...(search && { search }),
+                ...(industry !== 'all' && { industry })
+            });
 
-                if (shouldScrollToTop && page !== currentPage) {
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                }
-
-                setCurrentPage(page);
-                return;
+            const response = await fetch(`/api/catalog/public?${searchParams}`);
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch catalog');
             }
-
-            try {
-                if (page === 1 && catalogLogos.length === 0) {
-                    setInitialLoading(true);
-                } else {
-                    setLoadingMore(true);
-                }
-
-                const searchParams = new URLSearchParams({
-                    page: page.toString(),
-                    limit: effectiveLimit.toString(),
-                    ...(search && { search })
-                });
-
-                const response = await fetch(`/api/catalog/public?${searchParams}`);
-                if (!response.ok) throw new Error('Failed to fetch catalog');
-                const data = await response.json();
-
-                const newCacheData = {
-                    logos: data.logos || [],
-                    stats: data.stats || null,
-                    pagination: data.pagination || null
-                };
-
-                cacheRef.current.set(cacheKey, newCacheData);
-                if (cacheRef.current.size > 50) {
-                    const firstKey = cacheRef.current.keys().next().value;
-                    if (typeof firstKey === 'string') {
-                        cacheRef.current.delete(firstKey);
-                    }
-                }
-
-                setCatalogLogos(data.logos || []);
-                if (data.stats) setStats(data.stats);
-                setPagination(data.pagination || null);
-
-                if (shouldScrollToTop && page !== currentPage) {
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                }
-
-                setCurrentPage(page);
-            } catch (err: any) {
-                setError(err.message || 'Failed to load catalog');
-            } finally {
-                setInitialLoading(false);
-                setLoadingMore(false);
-            }
-        },
-        [itemsPerPage]
-    );
+            
+            const data = await response.json();
+            
+            // Always replace content for page navigation
+            setCatalogLogos(data.logos || []);
+            setStats(data.stats || null);
+            setPagination(data.pagination || null);
+            setCurrentPage(page);
+            
+        } catch (err: any) {
+            setError(err.message || 'Failed to load catalog');
+        } finally {
+            setInitialLoading(false);
+            setLoadingMore(false);
+        }
+    }, [itemsPerPage, loadingMore]);
 
     // Search functionality with debounce
     useEffect(() => {
         const timeoutId = setTimeout(() => {
             if (currentPage === 1) {
-                fetchCatalog(1, searchTerm, itemsPerPage, false); // Don't scroll to top on search
+                fetchCatalog(1, searchTerm, industryFilter);
             } else {
                 setCurrentPage(1);
-                fetchCatalog(1, searchTerm, itemsPerPage, false); // Don't scroll to top on search
+                fetchCatalog(1, searchTerm, industryFilter);
             }
         }, 300);
 
         return () => clearTimeout(timeoutId);
-    }, [searchTerm, fetchCatalog]);
+    }, [searchTerm, industryFilter, fetchCatalog, currentPage]);
+
+    useEffect(() => {
+        fetchCatalog(1, searchTerm, industryFilter);
+    }, [fetchCatalog]);
+
+    const handlePrevPage = () => {
+        if (currentPage > 1) {
+            const prevPage = currentPage - 1;
+            setCurrentPage(prevPage);
+            fetchCatalog(prevPage, searchTerm, industryFilter);
+        }
+    };
+
+    const handlePageClick = (page: number) => {
+        setCurrentPage(page);
+        fetchCatalog(page, searchTerm, industryFilter);
+    };
 
     // Handle items per page change
     const handleItemsPerPageChange = (newItemsPerPage: number) => {
         setItemsPerPage(newItemsPerPage);
         setCurrentPage(1);
-        fetchCatalog(1, searchTerm, newItemsPerPage, false); // Don't scroll to top on per-page change
+        fetchCatalog(1, searchTerm, industryFilter);
     };
 
     const handleViewParameters = (logo: CatalogLogo) => {
@@ -580,28 +561,58 @@ export default function PublicCatalogView() {
                 ) : null}
 
                 {/* Search and Per Page Controls - Always Visible */}
-                <div className="mb-6 flex flex-col sm:flex-row gap-4">
-                    <div className="flex-1">
-                        <input
-                            type="text"
-                            placeholder="Search by company name or catalog code..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
+                <div className="mb-6 space-y-4">
+                    <div className="flex flex-col sm:flex-row gap-4">
+                        <div className="flex-1">
+                            <input
+                                type="text"
+                                placeholder="Search by company name or catalog code..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-600 whitespace-nowrap">Industry:</span>
+                            <select
+                                value={industryFilter}
+                                onChange={(e) => setIndustryFilter(e.target.value)}
+                                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm min-w-[160px]"
+                            >
+                                <option value="all">All Industries</option>
+                                {INDUSTRIES.map(industry => (
+                                    <option key={industry} value={industry}>{industry}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-600 whitespace-nowrap">Per page:</span>
+                            <select
+                                value={itemsPerPage}
+                                onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                            >
+                                {perPageOptions.map(option => (
+                                    <option key={option} value={option}>{option}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-600 whitespace-nowrap">Per page:</span>
-                        <select
-                            value={itemsPerPage}
-                            onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
-                            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-                        >
-                            {perPageOptions.map(option => (
-                                <option key={option} value={option}>{option}</option>
-                            ))}
-                        </select>
-                    </div>
+                    
+                    {/* Clear Filters Button */}
+                    {(searchTerm.trim() || industryFilter !== 'all') && (
+                        <div className="flex justify-end">
+                            <button
+                                onClick={() => {
+                                    setSearchTerm('');
+                                    setIndustryFilter('all');
+                                }}
+                                className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                            >
+                                Clear Filters
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Results count and Top Pagination - Always Visible */}

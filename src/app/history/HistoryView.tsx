@@ -5,7 +5,6 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
 
-
 import ImageDisplay from '@/app/components/ImageDisplay';
 import { 
   getAllLogosWithRevisions, 
@@ -17,6 +16,7 @@ import {
 import Link from 'next/link';
 // @ts-ignore - JSZip might not have perfect types
 import JSZip from 'jszip';
+import { INDUSTRIES } from '@/app/constants/industries';
 
 // ADDED: Lazy loading image component
 const LazyImage = ({ src, alt, className }: {
@@ -141,6 +141,7 @@ export default function HistoryView() {
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
+  const [industryFilter, setIndustryFilter] = useState<string>('all');
 
   // Bulk selection state
   const [selectedLogos, setSelectedLogos] = useState<Set<string>>(new Set());
@@ -349,27 +350,52 @@ export default function HistoryView() {
 
   // ADD: Filtered logos based on search query
   const filteredLogosWithRevisions = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return logosWithRevisions;
-    }
-    
-    const query = searchQuery.toLowerCase().trim();
-    
-    return logosWithRevisions.filter(({ original, revisions }) => {
-      // Search in original logo name and company name
-      const originalMatches = 
-        original.name?.toLowerCase().includes(query) ||
-        original.parameters.companyName?.toLowerCase().includes(query);
-      
-      // Search in revision names
-      const revisionMatches = revisions.some(revision => 
-        revision.name?.toLowerCase().includes(query) ||
-        revision.parameters.companyName?.toLowerCase().includes(query)
-      );
-      
-      return originalMatches || revisionMatches;
-    });
-  }, [logosWithRevisions, searchQuery]);
+      let filtered = logosWithRevisions;
+
+      // Apply search filter
+      if (searchQuery.trim()) {
+          const query = searchQuery.toLowerCase().trim();
+          
+          filtered = filtered.filter(({ original, revisions }) => {
+              // Search in original logo name, company name, and catalog code
+              const originalMatches = 
+                  original.name?.toLowerCase().includes(query) ||
+                  original.parameters.companyName?.toLowerCase().includes(query);
+              
+              // Check if original has catalog code in catalogStates
+              const originalCatalogCode = catalogStates[original.id]?.catalogCode?.toLowerCase();
+              const originalCatalogMatches = originalCatalogCode?.includes(query);
+              
+              // Search in revision names and catalog codes
+              const revisionMatches = revisions.some(revision => {
+                  const nameMatch = revision.name?.toLowerCase().includes(query) ||
+                      revision.parameters.companyName?.toLowerCase().includes(query);
+                  const catalogCode = catalogStates[revision.id]?.catalogCode?.toLowerCase();
+                  const catalogMatch = catalogCode?.includes(query);
+                  return nameMatch || catalogMatch;
+              });
+              
+              return originalMatches || originalCatalogMatches || revisionMatches;
+          });
+      }
+
+      // Apply industry filter
+      if (industryFilter !== 'all') {
+          filtered = filtered.filter(({ original, revisions }) => {
+              // Check if original logo matches industry
+              const originalMatches = original.parameters.industry === industryFilter;
+              
+              // Check if any revision matches industry
+              const revisionMatches = revisions.some(revision => 
+                  revision.parameters.industry === industryFilter
+              );
+              
+              return originalMatches || revisionMatches;
+          });
+      }
+
+      return filtered;
+  }, [logosWithRevisions, searchQuery, industryFilter, catalogStates]);
 
   // ADD: Clear search function
   const clearSearch = () => {
@@ -806,27 +832,46 @@ export default function HistoryView() {
         )}
 
         {/* Search Bar */}
-        <div className="mb-4 relative">
-          <input
-            type="text"
-            placeholder="Search logos by name or company..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent pl-10"
-          />
-          <svg className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-          {searchQuery && (
-            <button
-              onClick={clearSearch}
-              className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
-            >
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          )}
+        <div className="mb-6 space-y-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex-1">
+                    <input
+                        type="text"
+                        placeholder="Search by company name, or logo name..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                </div>
+                <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600 whitespace-nowrap">Industry:</span>
+                    <select
+                        value={industryFilter}
+                        onChange={(e) => setIndustryFilter(e.target.value)}
+                        className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm min-w-[160px]"
+                    >
+                        <option value="all">All Industries</option>
+                        {INDUSTRIES.map(industry => (
+                            <option key={industry} value={industry}>{industry}</option>
+                        ))}
+                    </select>
+                </div>
+            </div>
+            
+            {/* Clear Filters Button */}
+            {(searchQuery.trim() || industryFilter !== 'all') && (
+                <div className="flex justify-end">
+                    <button
+                        onClick={() => {
+                            setSearchQuery('');
+                            setIndustryFilter('all');
+                        }}
+                        className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                    >
+                        Clear Filters
+                    </button>
+                </div>
+            )}
         </div>
 
         {/* Pagination Controls Top */}

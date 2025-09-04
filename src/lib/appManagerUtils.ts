@@ -5,19 +5,19 @@ import { APP_ID } from './appManagerConfig';
  * Generate the App Manager registration URL
  * For production, you would get the token from your admin or API
  */
-// export const getAppManagerRegistrationUrl = (token?: string): string => {
-//   const registrationToken = token || process.env.APP_MANAGER_REGISTRATION_TOKEN;
-//
-//   if (!registrationToken) {
-//     throw new Error('Registration token is missing. Make sure APP_MANAGER_REGISTRATION_TOKEN is set.');
-//   }
-//
-//   const appId = APP_ID || 'logo-generator';
-//   const subappId = 'premium';
-//   const linkType = 'generic';
-//
-//   return `/register/${appId}/${subappId}/${linkType}/${registrationToken}`;
-// };
+export const getAppManagerRegistrationUrl = (token?: string): string => {
+  const registrationToken = token || process.env.APP_MANAGER_REGISTRATION_TOKEN;
+
+  if (!registrationToken) {
+    throw new Error('Registration token is missing. Make sure APP_MANAGER_REGISTRATION_TOKEN is set.');
+  }
+
+  const appId = APP_ID || 'logo-generator';
+  const subappId = 'premium';
+  const linkType = 'generic';
+
+  return `/register/${appId}/${subappId}/${linkType}/${registrationToken}`;
+};
 
 
 /**
