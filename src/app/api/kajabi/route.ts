@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
         const amount = kajabiData.payment_transaction?.amount_paid || 0;
         const offerTitle = kajabiData.offer?.title || '';
         const orderNumber = `${kajabiData.id}`; // No kaj_ prefix
-        const transactionId = kajabiData.payment_transaction?.transaction_id || '';
+        const transactionId = kajabiData.payment_transaction?.id || '';
         const currency = kajabiData.payment_transaction?.currency || 'USD';
 
         console.log('Extracted data:', {
