@@ -28,45 +28,74 @@ const LazyImage = ({ src, alt, className }: {
   const [imageLoading, setImageLoading] = useState(false);
   const [imageError, setImageError] = useState(false);
   const imgRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
-  // Intersection observer for when image becomes visible (matching public catalog)
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && !imageDataUri && !imageLoading && !imageError) {
-          setIsVisible(true);
+        if (entry.isIntersecting && !hasLoaded) {
+          setHasLoaded(true);
           setImageLoading(true);
-          // Simulate the same loading pattern as public catalog
+          
+          // Load image with a small delay to prevent overwhelming the browser
           setTimeout(() => {
             setImageDataUri(src);
             setImageLoading(false);
-          }, 100);
+          }, 50);
+          
           observer.disconnect();
         }
       },
-      { threshold: 0.1, rootMargin: '100px' }
+      { 
+        threshold: 0.1, 
+        rootMargin: '200px' // Start loading when 200px away from viewport
+      }
     );
 
     if (imgRef.current) {
       observer.observe(imgRef.current);
     }
 
-    return () => observer.disconnect();
-  }, [src, imageDataUri, imageLoading, imageError]);
+    return () => {
+      observer.disconnect();
+      // Clean up image data when component unmounts to free memory
+      if (imageDataUri && imageDataUri.startsWith('data:')) {
+        setImageDataUri(null);
+      }
+    };
+  }, [src, hasLoaded]);
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      if (imageDataUri) {
+        setImageDataUri(null);
+      }
+    };
+  }, []);
 
   return (
     <div ref={imgRef} className={className}>
-      {!isVisible || (!imageDataUri && !imageLoading && !imageError) ? (
-        // Placeholder until visible (same as public catalog)
-        <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+      {!hasLoaded ? (
+        // Placeholder - very lightweight
+        <div className="w-full h-full bg-gray-100 flex items-center justify-center border border-gray-200 rounded">
           <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
           </svg>
         </div>
+      ) : imageError ? (
+        // Error state
+        <div className="w-full h-full bg-red-50 flex items-center justify-center border border-red-200 rounded">
+          <div className="text-center">
+            <svg className="w-6 h-6 text-red-400 mx-auto mb-1" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+            <p className="text-xs text-red-600">Failed</p>
+          </div>
+        </div>
       ) : imageLoading ? (
-        // Loading state (same as public catalog)
-        <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+        // Loading state
+        <div className="w-full h-full bg-gray-100 flex items-center justify-center border border-gray-200 rounded">
           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
         </div>
       ) : imageDataUri ? (
@@ -74,17 +103,11 @@ const LazyImage = ({ src, alt, className }: {
         <img
           src={imageDataUri}
           alt={alt}
-          className="w-full h-full object-contain"
+          className="w-full h-full object-contain border border-gray-200 rounded"
           loading="lazy"
+          onError={() => setImageError(true)}
         />
-      ) : (
-        // Error state (same as public catalog)
-        <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-          <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-          </svg>
-        </div>
-      )}
+      ) : null}
     </div>
   );
 };
@@ -990,7 +1013,7 @@ export default function HistoryView() {
                       <div className="flex-shrink-0">
                         <LazyImage
                           src={displayedLogo.imageDataUri}
-                          alt={displayedLogo.name}
+                          alt={displayedLogo.name || 'Logo Image'}
                           className="w-32 h-32 object-contain border border-gray-200 rounded"
                         />
                       </div>
