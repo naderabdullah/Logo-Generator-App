@@ -941,38 +941,51 @@ const LogoGrid = ({
                         )}
                       </button>
 
-                      {isSuperUser && (
-                        <button
-                          onClick={() => addToCatalog(displayed)}
-                          disabled={cat.catalogLoading || cat.isInCatalog}
-                          className={`btn-action flex items-center space-x-1 text-xs ${
-                            cat.isInCatalog ? 'bg-gray-800 text-white cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700 text-white'
-                          }`}
-                        >
-                          {cat.catalogLoading ? (
-                            <>
-                              <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                              </svg>
-                              <span>Adding...</span>
-                            </>
-                          ) : cat.isInCatalog ? (
-                            <>
-                              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                              </svg>
-                              {cat.catalogCode && <span className="text-xs">({cat.catalogCode})</span>}
-                            </>
-                          ) : (
-                            <>
-                              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                              </svg>
-                              <span>Catalog</span>
-                            </>
-                          )}
-                        </button>
-                      )}
+                      {isSuperUser && (() => {
+                        const catalogState = catalogStates[displayed.id] || {
+                          isInCatalog: false,
+                          catalogLoading: false,
+                          catalogCode: null
+                        };
+
+                        return (
+                          <button
+                            onClick={() => addToCatalog(displayed)}
+                            disabled={catalogState.catalogLoading || catalogState.isInCatalog}
+                            className={`btn-action relative flex items-center space-x-1 text-xs ${
+                              catalogState.isInCatalog
+                                ? 'bg-gray-800 text-white cursor-not-allowed'
+                                : 'bg-purple-600 hover:bg-purple-700 text-white'
+                            }`}
+                          >
+                            {catalogState.catalogLoading ? (
+                              <>
+                                <svg className="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                <span>Adding...</span>
+                              </>
+                            ) : catalogState.isInCatalog ? (
+                              <>
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                                {catalogState.catalogCode && <span className="text-xs">({catalogState.catalogCode})</span>}
+                              </>
+                            ) : (
+                              <>
+                                <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/>
+                                </svg>
+                                <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                  Catalog
+                                </span>
+                                <span className="opacity-0">Catalog</span>
+                              </>
+                            )}
+                          </button>
+                        );
+                      })()}
 
                       <button onClick={() => confirmDelete(displayed.id)} className="btn-action btn-danger">
                         Delete
