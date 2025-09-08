@@ -1,891 +1,1145 @@
-// src/app/history/HistoryView.tsx - COMPLETE with search, bulk selection, and actions dropdown + ONLY lazy loading and simple pagination
+// src/app/history/HistoryView.tsx
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
-
-import ImageDisplay from '@/app/components/ImageDisplay';
-import { 
-  getAllLogosWithRevisions, 
-  deleteLogo, 
+import {
+  deleteLogo,
   StoredLogo,
-  getUserUsage,
-  syncUserUsageWithDynamoDB
+  syncUserUsageWithDynamoDB,
+  getLogo,
+  getOriginalLogos,
+  getRevisionsForLogo
 } from '@/app/utils/indexedDBUtils';
 import Link from 'next/link';
-// @ts-ignore - JSZip might not have perfect types
+// @ts-ignore
 import JSZip from 'jszip';
 import { INDUSTRIES } from '@/app/constants/industries';
 
-// ADDED: Lazy loading image component
-const LazyImage = ({ src, alt, className }: {
-  src: string; 
-  alt: string; 
+/** Types kept lean for page-only payloads */
+interface LogoMetadata {
+  id: string;
+  userId: string;
+  name: string;
+  createdAt: number;
+  parameters: any;
+  isRevision: boolean;
+  originalLogoId?: string;
+  revisionNumber?: number;
+}
+interface LogoWithRevisions {
+  original: LogoMetadata;
+  revisions: LogoMetadata[];
+}
+interface PaginationInfo {
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasMore: boolean;
+}
+
+// catalog status cache
+const CATALOG_CACHE_KEY = 'catalogFlags:v1';
+type CatalogFlag = { isInCatalog: boolean; catalogCode: string | null };
+
+function readCatalogCache(): Record<string, CatalogFlag> {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = localStorage.getItem(CATALOG_CACHE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeCatalogCache(update: Record<string, CatalogFlag>) {
+  if (typeof window === 'undefined') return;
+  try {
+    const cur = readCatalogCache();
+    localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify({ ...cur, ...update }));
+  } catch {}
+}
+
+/** Small in-memory image cache */
+const MAX_CACHE_SIZE = 20;
+const CACHE_DURATION = 5 * 60 * 1000;
+let imageCache: Map<string, { data: string; expires: number; ts: number }> | null = null;
+const cacheMgr = () => {
+  if (typeof window === 'undefined') return null;
+  if (!imageCache) imageCache = new Map();
+  return imageCache;
+};
+
+/** Lazy image pulls imageDataUri on demand via getLogo(id, email) */
+const LazyLogoImage = ({
+  logoId,
+  userEmail,
+  alt,
+  className
+}: {
+  logoId: string;
+  userEmail: string;
+  alt: string;
   className: string;
 }) => {
-  const [imageDataUri, setImageDataUri] = useState<string | null>(null);
-  const [imageLoading, setImageLoading] = useState(false);
-  const [imageError, setImageError] = useState(false);
-  const imgRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
+  const [src, setSrc] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const seenRef = useRef(false);
+  const ioRef = useRef<IntersectionObserver | null>(null);
 
-  // Intersection observer for when image becomes visible (matching public catalog)
+  const load = useCallback(async () => {
+    if (seenRef.current || loading || src || err) return;
+    seenRef.current = true;
+
+    const cache = cacheMgr();
+    const key = `logo-${logoId}`;
+    if (cache) {
+      const hit = cache.get(key);
+      if (hit && Date.now() < hit.expires) {
+        setSrc(hit.data);
+        return;
+      }
+      if (hit) cache.delete(key);
+    }
+
+    setLoading(true);
+    setErr(false);
+    try {
+      const data = await getLogo(logoId, userEmail);
+      if (!data?.imageDataUri) throw new Error('no image');
+      const uri = data.imageDataUri;
+
+      if (cache) {
+        const now = Date.now();
+        if (cache.size >= MAX_CACHE_SIZE) {
+          // evict oldest
+          const oldest = [...cache.entries()].sort((a, b) => a[1].ts - b[1].ts)[0]?.[0];
+          if (oldest) cache.delete(oldest);
+        }
+        cache.set(key, { data: uri, ts: now, expires: now + CACHE_DURATION });
+      }
+
+      setSrc(uri);
+    } catch (e) {
+      setErr(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [logoId, userEmail, loading, src, err]);
+
   useEffect(() => {
-    const observer = new IntersectionObserver(
+    if (!rootRef.current) return;
+    ioRef.current = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && !imageDataUri && !imageLoading && !imageError) {
-          setIsVisible(true);
-          setImageLoading(true);
-          // Simulate the same loading pattern as public catalog
-          setTimeout(() => {
-            setImageDataUri(src);
-            setImageLoading(false);
-          }, 100);
-          observer.disconnect();
+        if (entry.isIntersecting) {
+          load();
+          ioRef.current?.disconnect();
         }
       },
       { threshold: 0.1, rootMargin: '100px' }
     );
-
-    if (imgRef.current) {
-      observer.observe(imgRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, [src, imageDataUri, imageLoading, imageError]);
+    ioRef.current.observe(rootRef.current);
+    return () => ioRef.current?.disconnect();
+  }, [load]);
 
   return (
-    <div ref={imgRef} className={className}>
-      {!isVisible || (!imageDataUri && !imageLoading && !imageError) ? (
-        // Placeholder until visible (same as public catalog)
-        <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-          <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+    <div ref={rootRef} className={className}>
+      {!src && !loading && !err ? (
+        <div className="w-full h-full bg-gray-100 flex items-center justify-center border border-gray-200 rounded">
+          <svg className="w-8 h-8 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+            <path
+              fillRule="evenodd"
+              d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
+              clipRule="evenodd"
+            />
           </svg>
         </div>
-      ) : imageLoading ? (
-        // Loading state (same as public catalog)
-        <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
+      ) : err ? (
+        <div className="w-full h-full bg-red-50 flex items-center justify-center border border-red-200 rounded">
+          <span className="text-xs text-red-600">Failed</span>
         </div>
-      ) : imageDataUri ? (
-        // Loaded image
-        <img
-          src={imageDataUri}
-          alt={alt}
-          className="w-full h-full object-contain"
-          loading="lazy"
-        />
+      ) : loading ? (
+        <div className="w-full h-full bg-gray-100 flex items-center justify-center border border-gray-200 rounded">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600" />
+        </div>
       ) : (
-        // Error state (same as public catalog)
-        <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-          <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-          </svg>
-        </div>
+        <img src={src!} alt={alt} className="w-full h-full object-contain border border-gray-200 rounded" loading="lazy" />
       )}
     </div>
   );
 };
 
-const PaginationControls = ({ currentPage, totalPages, setCurrentPage }: {
-  currentPage: number;
-  totalPages: number;
-  setCurrentPage: (page: number) => void;
-}) => {
-  if (totalPages <= 1) return null;
-  
-  return (
-    <div className="flex justify-center items-center gap-2">
-      <button
-        onClick={() => setCurrentPage(Math.max(currentPage - 1, 1))}
-        disabled={currentPage === 1}
-        className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        Previous
-      </button>
-
-      <span className="text-sm text-gray-600">
-        Page {currentPage} of {totalPages}
-      </span>
-
-      <button
-        onClick={() => setCurrentPage(Math.min(currentPage + 1, totalPages))}
-        disabled={currentPage === totalPages}
-        className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        Next
-      </button>
+const LogoSkeleton = () => (
+  <div className="border rounded-lg p-4 bg-white shadow-sm animate-pulse">
+    <div className="flex flex-col md:flex-row gap-4">
+      <div className="flex-shrink-0">
+        <div className="w-32 h-32 bg-gray-200 rounded" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="h-6 bg-gray-200 rounded w-3/4 mb-2" />
+        <div className="h-4 bg-gray-200 rounded w-1/2 mb-2" />
+        <div className="h-4 bg-gray-200 rounded w-2/3 mb-4" />
+        <div className="flex gap-2">
+          <div className="h-8 bg-gray-200 rounded w-20" />
+          <div className="h-8 bg-gray-200 rounded w-20" />
+          <div className="h-8 bg-gray-200 rounded w-20" />
+        </div>
+      </div>
     </div>
+  </div>
+);
+
+function formatDate(ts: number) {
+  return new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'UTC' }).format(
+    new Date(ts)
+  );
+}
+
+function safeName(name?: string, fallback = 'logo') {
+  if (!name || name.trim() === '' || name === 'Untitled') return fallback;
+  return name.trim().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').toLowerCase();
+}
+
+/** Grid with page-only fetch + admin Catalog actions merged in */
+const LogoGrid = ({
+  userEmail,
+  isSuperUser,
+  searchTerm,
+  industryFilter,
+  itemsPerPage
+}: {
+  userEmail: string;
+  isSuperUser: boolean;
+  searchTerm: string;
+  industryFilter: string;
+  itemsPerPage: number;
+}) => {
+  const router = useRouter();
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPageLogos, setCurrentPageLogos] = useState<LogoWithRevisions[]>([]);
+  const [pagination, setPagination] = useState<PaginationInfo | null>(null);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [selectedLogos, setSelectedLogos] = useState<Set<string>>(new Set());
+  const [loadingButton, setLoadingButton] = useState<string | null>(null);
+  const [selectedLogo, setSelectedLogo] = useState<string | null>(null);
+  const [showActionsDropdown, setShowActionsDropdown] = useState(false);
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // request guard to kill stale responses
+  const reqSeqRef = useRef(0);
+
+  // Catalog admin state (per displayed logo)
+  const [catalogStates, setCatalogStates] = useState<
+    Record<string, { isInCatalog: boolean; catalogLoading: boolean; catalogCode: string | null }>
+  >({});
+
+  const getLatestRevision = (revs: LogoMetadata[]) => {
+    if (!revs.length) return null;
+    return [...revs].sort((a, b) => (b.revisionNumber || 0) - (a.revisionNumber || 0))[0];
+  };
+
+  const fetchLogosPage = useCallback(
+    async (page: number, search = '', industry = 'all', limit = 3) => {
+      const seq = ++reqSeqRef.current;
+      setError(null);
+      setLoadingMore(page > 1);
+      if (page === 1) setInitialLoading(true);
+
+      try {
+        const originals = await getOriginalLogos(userEmail);
+
+        // stable sort for consistent paging
+        let filtered = [...originals].sort((a, b) => b.createdAt - a.createdAt);
+
+        const q = search.trim().toLowerCase();
+        if (q) {
+          filtered = filtered.filter((o) => {
+            const nm = o.name?.toLowerCase() || '';
+            const co = o.parameters?.companyName?.toLowerCase() || '';
+            return nm.includes(q) || co.includes(q);
+          });
+        }
+        if (industry !== 'all') {
+          filtered = filtered.filter((o) => o.parameters?.industry === industry);
+        }
+
+        const total = filtered.length;
+        const totalPages = Math.max(1, Math.ceil(total / limit));
+        const clamped = Math.min(Math.max(1, page), totalPages);
+        const offset = (clamped - 1) * limit;
+        const originalsForPage = filtered.slice(offset, offset + limit);
+
+        const withRevs: LogoWithRevisions[] = [];
+        for (const o of originalsForPage) {
+          const revs = await getRevisionsForLogo(o.id, userEmail);
+          withRevs.push({
+            original: {
+              id: o.id,
+              userId: o.userId,
+              name: o.name,
+              createdAt: o.createdAt,
+              parameters: o.parameters,
+              isRevision: o.isRevision,
+              originalLogoId: o.originalLogoId,
+              revisionNumber: o.revisionNumber
+            },
+            revisions: revs.map((r) => ({
+              id: r.id,
+              userId: r.userId,
+              name: r.name,
+              createdAt: r.createdAt,
+              parameters: r.parameters,
+              isRevision: r.isRevision,
+              originalLogoId: r.originalLogoId,
+              revisionNumber: r.revisionNumber
+            }))
+          });
+        }
+
+        if (seq !== reqSeqRef.current) return; // stale
+
+        setCurrentPageLogos(withRevs);
+        setPagination({
+          limit,
+          total,
+          totalPages,
+          hasMore: offset + originalsForPage.length < total
+        });
+      } catch (e: any) {
+        if (seq !== reqSeqRef.current) return;
+        setError(e?.message || 'Failed to load logos');
+      } finally {
+        if (seq === reqSeqRef.current) {
+          setInitialLoading(false);
+          setLoadingMore(false);
+        }
+      }
+    },
+    [userEmail]
+  );
+
+  // drive fetch by state changes
+  useEffect(() => {
+    fetchLogosPage(currentPage, searchTerm, industryFilter, itemsPerPage);
+  }, [currentPage, searchTerm, industryFilter, itemsPerPage, fetchLogosPage]);
+
+  // when filters change, snap to page 1 after tiny debounce to avoid double fetch churn
+  useEffect(() => {
+    const t = setTimeout(() => setCurrentPage(1), 250);
+    return () => clearTimeout(t);
+  }, [searchTerm, industryFilter, itemsPerPage]);
+
+  // close dropdown on outside click
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowActionsDropdown(false);
+      }
+    };
+    if (showActionsDropdown) {
+      document.addEventListener('click', onClick);
+      return () => document.removeEventListener('click', onClick);
+    }
+  }, [showActionsDropdown]);
+
+  // pre-seed and then check Catalog state for currently displayed items
+  useEffect(() => {
+    if (!isSuperUser || currentPageLogos.length === 0) return;
+
+    const displayIds = currentPageLogos.map(({ original, revisions }) => (getLatestRevision(revisions) || original).id);
+
+    // hydrate from local cache first so the pill is instant on refresh
+    const cache = readCatalogCache();
+    const primed: Record<string, { isInCatalog: boolean; catalogLoading: boolean; catalogCode: string | null }> = {};
+    for (const id of displayIds) {
+      if (cache[id]) {
+        primed[id] = {
+          isInCatalog: !!cache[id].isInCatalog,
+          catalogLoading: false,
+          catalogCode: cache[id].catalogCode || null
+        };
+      }
+    }
+    if (Object.keys(primed).length) {
+      setCatalogStates((prev) => ({ ...primed, ...prev }));
+    }
+
+    // then validate via API
+    let cancelled = false;
+    (async () => {
+      for (const id of displayIds) {
+        try {
+          const res = await fetch('/api/catalog', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ logoKeyId: id })
+          });
+          if (!res.ok) continue;
+          const data = await res.json();
+          if (cancelled) return;
+
+          const next = {
+            isInCatalog: !!data.isInCatalog,
+            catalogLoading: false,
+            catalogCode: data.catalogLogo?.catalog_code || null
+          };
+
+          setCatalogStates((prev) => ({ ...prev, [id]: next }));
+          writeCatalogCache({ [id]: { isInCatalog: next.isInCatalog, catalogCode: next.catalogCode } });
+        } catch {
+          if (cancelled) return;
+          const fallback = { isInCatalog: false, catalogLoading: false, catalogCode: null };
+          setCatalogStates((prev) => ({ ...prev, [id]: fallback }));
+          // do not write negatives to cache to avoid wiping a known true state on transient error
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isSuperUser, currentPageLogos]);
+
+  const addToCatalog = async (logo: LogoMetadata) => {
+    if (!isSuperUser) return;
+    const id = logo.id;
+
+    setCatalogStates((p) => ({
+      ...p,
+      [id]: { ...(p[id] || { isInCatalog: false, catalogCode: null }), catalogLoading: true }
+    }));
+
+    try {
+      // need the image data for POST; fetch full logo
+      const full = await getLogo(id, userEmail);
+      const res = await fetch('/api/catalog', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          logoKeyId: id,
+          imageDataUri: full?.imageDataUri,
+          parameters: full?.parameters,
+          originalCompanyName: full?.parameters?.companyName || 'Unknown Company'
+        })
+      });
+
+      if (res.status === 409) {
+        const data = await res.json();
+        const next = { isInCatalog: true, catalogLoading: false, catalogCode: data.catalogCode || null };
+        setCatalogStates((p) => ({ ...p, [id]: next }));
+        writeCatalogCache({ [id]: { isInCatalog: next.isInCatalog, catalogCode: next.catalogCode } });
+        return;
+      }
+
+      if (!res.ok) throw new Error('catalog add failed');
+      const data = await res.json();
+      const next = {
+        isInCatalog: true,
+        catalogLoading: false,
+        catalogCode: data.catalogLogo?.catalog_code || null
+      };
+      setCatalogStates((p) => ({ ...p, [id]: next }));
+      writeCatalogCache({ [id]: { isInCatalog: next.isInCatalog, catalogCode: next.catalogCode } });
+    } catch (e) {
+      setCatalogStates((p) => ({ ...p, [id]: { ...(p[id] || {}), catalogLoading: false } }));
+    }
+  };
+
+  const handleViewLogo = (id: string) => {
+    setLoadingButton(`view-${id}`);
+    router.push(`/logos/${id}`);
+  };
+  const handleEditLogo = (id: string) => {
+    setLoadingButton(`edit-${id}`);
+    router.push(`/?edit=${id}`);
+  };
+
+  const handleLogoSelect = (id: string, checked: boolean) =>
+    setSelectedLogos((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+
+  const selectPage = () => {
+    const ids = currentPageLogos.map(({ original, revisions }) => (getLatestRevision(revisions) || original).id);
+    setSelectedLogos((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => next.add(id));
+      return next;
+    });
+  };
+
+  const selectAllFiltered = async () => {
+    try {
+      const originals = await getOriginalLogos(userEmail);
+      let filtered = [...originals];
+
+      const q = searchTerm.trim().toLowerCase();
+      if (q) {
+        filtered = filtered.filter((o) => {
+          const nm = o.name?.toLowerCase() || '';
+          const co = o.parameters?.companyName?.toLowerCase() || '';
+          return nm.includes(q) || co.includes(q);
+        });
+      }
+      if (industryFilter !== 'all') filtered = filtered.filter((o) => o.parameters?.industry === industryFilter);
+
+      const revIds: string[] = [];
+      for (const o of filtered) {
+        const revs = await getRevisionsForLogo(o.id, userEmail);
+        const latest = [...revs].sort((a, b) => (b.revisionNumber || 0) - (a.revisionNumber || 0))[0];
+        revIds.push((latest || o).id);
+      }
+      setSelectedLogos(new Set(revIds));
+    } catch (e) {
+      // noop
+    }
+  };
+
+  const deselectAll = () => setSelectedLogos(new Set());
+
+  const confirmDelete = (id: string) => setSelectedLogo(id);
+
+  const removeOne = async () => {
+    if (!selectedLogo) return;
+    try {
+      await deleteLogo(selectedLogo, userEmail);
+      setSelectedLogo(null);
+      setSelectedLogos((prev) => {
+        const next = new Set(prev);
+        next.delete(selectedLogo);
+        return next;
+      });
+      await fetchLogosPage(currentPage, searchTerm, industryFilter, itemsPerPage);
+    } catch {
+      // surfaced in UI already
+    }
+  };
+
+  const readSelectedFull = async () => {
+    const out: Array<{ logo: StoredLogo; filename: string }> = [];
+    for (const id of selectedLogos) {
+      try {
+        const full = await getLogo(id, userEmail);
+        if (full) {
+          const base = safeName(full.name, `logo-${full.parameters?.companyName || 'untitled'}`);
+          out.push({ logo: full, filename: base });
+        }
+      } catch {
+        // skip bad item
+      }
+    }
+    return out;
+  };
+
+  const download = async (fmt: 'png' | 'jpg' | 'svg') => {
+    setBulkActionLoading(true);
+    try {
+      const picked = await readSelectedFull();
+      if (picked.length === 0) return;
+
+      const zip = new JSZip();
+      for (const { logo, filename } of picked) {
+        if (fmt === 'png') {
+          const blob = await (await fetch(logo.imageDataUri)).blob();
+          zip.file(`${filename}.png`, blob);
+        } else if (fmt === 'jpg') {
+          const blob = await (await fetch(logo.imageDataUri)).blob();
+          await new Promise<void>((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+              const c = document.createElement('canvas');
+              c.width = img.width;
+              c.height = img.height;
+              const ctx = c.getContext('2d')!;
+              ctx.fillStyle = '#FFF';
+              ctx.fillRect(0, 0, c.width, c.height);
+              ctx.drawImage(img, 0, 0);
+              c.toBlob((b) => {
+                if (b) zip.file(`${filename}.jpg`, b);
+                resolve();
+              }, 'image/jpeg', 0.9);
+            };
+            img.src = URL.createObjectURL(blob);
+          });
+        } else {
+          try {
+            const blob = await (await fetch(logo.imageDataUri)).blob();
+            const fd = new FormData();
+            fd.append('image', new File([blob], 'logo.png', { type: blob.type }));
+            fd.append(
+              'options',
+              JSON.stringify({ type: 'simple', width: 1000, height: 1000, threshold: 128, color: '#000000' })
+            );
+            const res = await fetch('/api/convert-to-svg', { method: 'POST', body: fd });
+            if (res.ok) {
+              const r = await res.json();
+              if (r.svg && r.svg.includes('<svg')) zip.file(`${filename}.svg`, r.svg);
+            }
+          } catch {
+            // continue
+          }
+        }
+      }
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(zipBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `selected-logos-${fmt}-${Date.now()}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } finally {
+      setBulkActionLoading(false);
+      setShowActionsDropdown(false);
+    }
+  };
+
+  const bulkDelete = async () => {
+    if (selectedLogos.size === 0) return;
+    setBulkActionLoading(true);
+    setShowBulkDeleteModal(false);
+    try {
+      for (const id of selectedLogos) {
+        try {
+          await deleteLogo(id, userEmail);
+        } catch {
+          // skip failed deletes to keep batch going
+        }
+      }
+      setSelectedLogos(new Set());
+      await fetchLogosPage(currentPage, searchTerm, industryFilter, itemsPerPage);
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  const PaginationControls = () => {
+    if (!pagination || pagination.totalPages <= 1) return null;
+    return (
+      <div className="flex justify-center items-center space-x-4">
+        <button
+          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+          disabled={currentPage <= 1 || loadingMore}
+          className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Previous
+        </button>
+
+        <div className="flex space-x-2">
+          {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+            const pg = Math.max(1, currentPage - 2) + i;
+            if (pg > pagination.totalPages) return null;
+            return (
+              <button
+                key={pg}
+                onClick={() => setCurrentPage(pg)}
+                disabled={loadingMore}
+                className={`px-3 py-2 rounded-md ${
+                  pg === currentPage ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                {pg}
+              </button>
+            );
+          })}
+        </div>
+
+        <button
+          onClick={() => setCurrentPage((p) => Math.min((pagination?.totalPages || p) as number, p + 1))}
+          disabled={currentPage >= (pagination?.totalPages || 1) || loadingMore}
+          className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Next
+        </button>
+      </div>
+    );
+  };
+
+  const selectedCount = selectedLogos.size;
+  const hasSelection = selectedCount > 0;
+
+  return (
+    <>
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 sm:gap-2">
+            <button onClick={selectPage} className="text-xs sm:text-sm text-indigo-600 hover:text-indigo-700 underline whitespace-nowrap">
+              Select page
+            </button>
+            <button onClick={selectAllFiltered} className="text-xs sm:text-sm text-indigo-600 hover:text-indigo-700 underline whitespace-nowrap">
+              Select all
+            </button>
+          </div>
+        </div>
+
+        <div className="text-sm text-gray-600">
+          {initialLoading && currentPageLogos.length === 0 ? (
+            <span>Loading logos...</span>
+          ) : (
+            <>
+              Showing {currentPageLogos.length} of {pagination?.total || 0} logos
+              {pagination && pagination.totalPages > 1 && (
+                <span className="ml-2">(Page {currentPage} of {pagination.totalPages})</span>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="mb-4">
+        <PaginationControls />
+      </div>
+
+      {hasSelection && (
+        <div className="mb-4 p-3 bg-indigo-50 rounded-lg border border-indigo-200">
+          <div className="flex flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-3 order-2 sm:order-1">
+              <span className="text-sm font-medium text-indigo-800">
+                {selectedCount} logo{selectedCount !== 1 ? 's' : ''}
+              </span>
+              <button onClick={deselectAll} className="text-xs text-indigo-600 hover:text-indigo-700 underline hidden sm:block">
+                Clear selection
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2 order-1 sm:order-2">
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowActionsDropdown((v) => !v);
+                  }}
+                  disabled={bulkActionLoading}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                >
+                  {bulkActionLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-3 w-3 border-t border-white" />
+                      <span>Processing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Actions</span>
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </>
+                  )}
+                </button>
+
+                {showActionsDropdown && (
+                  <div className="absolute mt-1 z-50 w-56 bg-white rounded-md shadow-lg border border-gray-200 right-0">
+                    <div className="group w-full cursor-pointer transition-colors hover:bg-gray-100" onClick={() => download('png')}>
+                      <button className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 text-left">
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                        </svg>
+                        Download as PNG
+                      </button>
+                    </div>
+
+                    <div className="group w-full cursor-pointer transition-colors hover:bg-gray-100" onClick={() => download('jpg')}>
+                      <button className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 text-left">
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                        </svg>
+                        Download as JPG
+                      </button>
+                    </div>
+
+                    <div className="group w-full cursor-pointer transition-colors hover:bg-gray-100" onClick={() => download('svg')}>
+                      <button className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 text-left">
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                        </svg>
+                        Download as SVG
+                      </button>
+                    </div>
+
+                    <div className="h-px bg-gray-200" />
+
+                    <div className="group w-full cursor-pointer transition-colors hover:bg-red-50" onClick={() => setShowBulkDeleteModal(true)}>
+                      <button className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-700 text-left">
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Delete Selected
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {initialLoading && currentPageLogos.length === 0 && (
+        <div className="space-y-4">
+          {Array.from({ length: itemsPerPage }, (_, i) => (
+            <LogoSkeleton key={i} />
+          ))}
+        </div>
+      )}
+
+      {error && !initialLoading && (
+        <div className="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg text-center">
+          <p className="font-bold">Error</p>
+          <p>{error}</p>
+        </div>
+      )}
+
+      {!initialLoading && !error && currentPageLogos.length === 0 && !searchTerm && (
+        <div className="text-center py-8">
+          <p className="text-gray-600 mb-4">You haven't created any logos yet.</p>
+          <Link href="/" className="btn btn-primary">
+            Create Your First Logo
+          </Link>
+        </div>
+      )}
+
+      {!initialLoading && !error && currentPageLogos.length > 0 && (
+        <div className="space-y-4">
+          {currentPageLogos.map(({ original, revisions }) => {
+            const latest = getLatestRevision(revisions);
+            const displayed = latest || original;
+            const selected = selectedLogos.has(displayed.id);
+            const catState = catalogStates[displayed.id];
+            const cached = readCatalogCache()[displayed.id]; // light read; tiny map
+            const cat = catState
+              ? catState
+              : cached
+              ? { isInCatalog: cached.isInCatalog, catalogLoading: false, catalogCode: cached.catalogCode }
+              : { isInCatalog: false, catalogLoading: false, catalogCode: null };
+
+            return (
+              <div
+                key={original.id}
+                className={`relative border rounded-lg p-4 bg-white shadow-sm transition-all ${
+                  selected ? 'ring-2 ring-indigo-500 bg-indigo-50' : ''
+                }`}
+              >
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="flex-shrink-0 relative">
+                    {cat.isInCatalog && (
+                      <div
+                        className="absolute -top-2 -left-2 z-10 select-none"
+                        title={cat.catalogCode ? `In Catalog • ${cat.catalogCode}` : 'In Catalog'}
+                      >
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold tracking-wide bg-purple-600 text-white shadow">
+                          In Catalog{cat.catalogCode ? ` • ${cat.catalogCode}` : ''}
+                        </span>
+                      </div>
+                    )}
+                    <LazyLogoImage
+                      logoId={displayed.id}
+                      userEmail={userEmail}
+                      alt={displayed.name || 'Logo'}
+                      className="w-32 h-32"
+                    />
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-2">
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 truncate flex items-center gap-2">
+                          <span>{displayed.name}</span>
+                          {cat.isInCatalog && (
+                            <span
+                              className="inline-flex items-center"
+                              aria-label={cat.catalogCode ? `In Catalog • ${cat.catalogCode}` : 'In Catalog'}
+                              title={cat.catalogCode ? `In Catalog • ${cat.catalogCode}` : 'In Catalog'}
+                            >
+                              <span className="w-2 h-2 rounded-full bg-purple-600" />
+                            </span>
+                          )}
+                        </h3>
+                        <p className="text-sm text-gray-500">Created: {formatDate(original.createdAt)}</p>
+                        {revisions.length > 0 && (
+                          <p className="text-sm text-indigo-600 font-medium">
+                            Showing: Revision {latest?.revisionNumber}
+                            <span className="text-gray-500"> ({3 - revisions.length} remaining)</span>
+                          </p>
+                        )}
+                        {isSuperUser && cat.isInCatalog && (
+                          <p className="text-xs mt-1 px-2 py-0.5 inline-block rounded bg-gray-800 text-white">
+                            In Catalog{cat.catalogCode ? ` • ${cat.catalogCode}` : ''}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="flex-shrink-0 pt-1">
+                        <input
+                          type="checkbox"
+                          checked={selected}
+                          onChange={(e) => handleLogoSelect(displayed.id, e.target.checked)}
+                          className="absolute top-2 right-2 z-10 w-5 h-5 border-gray-300 rounded focus:ring-indigo-500 accent-indigo-600 bg-white"
+                          aria-label={`Select ${displayed.name}`}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mb-3">
+                      <p className="text-sm font-medium text-gray-700">Company: {displayed.parameters.companyName}</p>
+                      {displayed.parameters.slogan && (
+                        <p className="text-sm text-gray-600">Slogan: "{displayed.parameters.slogan}"</p>
+                      )}
+                      <p className="text-xs text-gray-500">
+                        {displayed.parameters.overallStyle} • {displayed.parameters.colorScheme}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() => handleViewLogo(displayed.id)}
+                        className="btn-action btn-primary flex items-center justify-center gap-1"
+                        disabled={loadingButton === `view-${displayed.id}`}
+                      >
+                        {loadingButton === `view-${displayed.id}` ? (
+                          <>
+                            <svg className="w-3 h-3 animate-spin mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Loading...
+                          </>
+                        ) : revisions.length > 0 ? (
+                          'View All'
+                        ) : (
+                          'View Logo'
+                        )}
+                      </button>
+
+                      <button
+                        onClick={() => handleEditLogo(displayed.id)}
+                        className="btn-action btn-secondary flex items-center justify-center gap-1"
+                        disabled={revisions.length >= 3 || loadingButton === `edit-${displayed.id}`}
+                      >
+                        {loadingButton === `edit-${displayed.id}` ? (
+                          <>
+                            <svg className="w-3 h-3 animate-spin mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Loading...
+                          </>
+                        ) : revisions.length >= 3 ? (
+                          'Max Revisions'
+                        ) : (
+                          'Create Revision'
+                        )}
+                      </button>
+
+                      {isSuperUser && (() => {
+                        const catalogState = catalogStates[displayed.id] || {
+                          isInCatalog: false,
+                          catalogLoading: false,
+                          catalogCode: null
+                        };
+
+                        return (
+                          <button
+                            onClick={() => addToCatalog(displayed)}
+                            disabled={catalogState.catalogLoading || catalogState.isInCatalog}
+                            className={`btn-action relative flex items-center space-x-1 text-xs ${
+                              catalogState.isInCatalog
+                                ? 'bg-gray-800 text-white cursor-not-allowed'
+                                : 'bg-purple-600 hover:bg-purple-700 text-white'
+                            }`}
+                          >
+                            {catalogState.catalogLoading ? (
+                              <>
+                                <svg className="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                <span>Adding...</span>
+                              </>
+                            ) : catalogState.isInCatalog ? (
+                              <>
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                                {catalogState.catalogCode && <span className="text-xs">({catalogState.catalogCode})</span>}
+                              </>
+                            ) : (
+                              <>
+                                <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/>
+                                </svg>
+                                <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                  Catalog
+                                </span>
+                                <span className="opacity-0">Catalog</span>
+                              </>
+                            )}
+                          </button>
+                        );
+                      })()}
+
+                      <button onClick={() => confirmDelete(displayed.id)} className="btn-action btn-danger">
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {pagination && pagination.totalPages > 1 && (
+        <div className="mt-8">
+          <PaginationControls />
+        </div>
+      )}
+
+      {loadingMore && (
+        <div className="flex justify-center mt-8">
+          <div className="flex items-center space-x-2">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-600" />
+            <span className="text-sm text-gray-600">Loading page...</span>
+          </div>
+        </div>
+      )}
+
+      {selectedLogo && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-sm mx-4">
+            <h3 className="text-lg font-semibold mb-2">Confirm Delete</h3>
+            <p className="text-gray-600 mb-4">Delete this logo and all revisions? This cannot be undone.</p>
+            <div className="flex gap-2">
+              <button onClick={removeOne} className="btn-action btn-danger flex-1">
+                Delete
+              </button>
+              <button onClick={() => setSelectedLogo(null)} className="btn-action btn-secondary flex-1">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showBulkDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-sm mx-4">
+            <h3 className="text-lg font-semibold mb-2">Delete Selected Logos</h3>
+            <p className="text-gray-600 mb-4">
+              Delete {selectedCount} selected logo{selectedCount !== 1 ? 's' : ''} and all their revisions? This cannot be undone.
+            </p>
+            <div className="flex gap-2">
+              <button onClick={bulkDelete} className="btn-action btn-danger flex-1" disabled={bulkActionLoading}>
+                {bulkActionLoading ? 'Deleting...' : 'Delete All'}
+              </button>
+              <button onClick={() => setShowBulkDeleteModal(false)} className="btn-action btn-secondary flex-1" disabled={bulkActionLoading}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
 export default function HistoryView() {
   const { user } = useAuth();
-  const [logosWithRevisions, setLogosWithRevisions] = useState<{
-    original: StoredLogo;
-    revisions: StoredLogo[];
-  }[]>([]);
-  
-  const [loading, setLoading] = useState(true);
-  const [loadingButton, setLoadingButton] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedLogo, setSelectedLogo] = useState<string | null>(null);
-  const [usage, setUsage] = useState<{ used: number, limit: number } | null>(null);
+  const router = useRouter();
+
   const [userEmail, setUserEmail] = useState<string | null>(null);
-  
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
+  const [usage, setUsage] = useState<{ used: number; limit: number } | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [industryFilter, setIndustryFilter] = useState('all');
+  const [userLoading, setUserLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [itemsPerPage, setItemsPerPage] = useState(3);
 
-  // Search state
-  const [searchQuery, setSearchQuery] = useState('');
-  const [industryFilter, setIndustryFilter] = useState<string>('all');
-
-  // Bulk selection state
-  const [selectedLogos, setSelectedLogos] = useState<Set<string>>(new Set());
-  const [bulkActionLoading, setBulkActionLoading] = useState(false);
-  const [showActionsDropdown, setShowActionsDropdown] = useState(false);
-  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
-
-  const [catalogStates, setCatalogStates] = useState<{[logoId: string]: {
-      isInCatalog: boolean;
-      catalogLoading: boolean;
-      catalogCode: string | null;
-    }}>({});
-  
-  const router = useRouter();
-  
   useEffect(() => {
-    const fetchLogos = async () => {
+    const run = async () => {
       try {
-        setLoading(true);
-        
-        const userResponse = await fetch('/api/user');
-        
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
-          const email = userData.email;
+        setUserLoading(true);
+        const res = await fetch('/api/user');
+        if (res.ok) {
+          const data = await res.json();
+          const email = data.email;
           setUserEmail(email);
-          
+
           await syncUserUsageWithDynamoDB(email, {
-            logosCreated: userData.logosCreated,
-            logosLimit: userData.logosLimit
+            logosCreated: data.logosCreated,
+            logosLimit: data.logosLimit
           });
-          
-          setUsage({
-            used: userData.logosCreated,
-            limit: userData.logosLimit
-          });
-          
-          // FIXED: Pass userId (email) to getAllLogosWithRevisions
-          const allLogosWithRevisions = await getAllLogosWithRevisions(email);
-          setLogosWithRevisions(allLogosWithRevisions);
-        } else if (userResponse.status === 401) {
+
+          setUsage({ used: data.logosCreated, limit: data.logosLimit });
+        } else if (res.status === 401) {
           router.push('/login?redirect=/history');
           return;
         } else {
           throw new Error('Failed to fetch user data');
         }
-      } catch (err) {
-        console.error('Error fetching logos:', err);
-        setError('Failed to load logo history');
+      } catch (e) {
+        setError('Failed to load user data');
       } finally {
-        setLoading(false);
+        setUserLoading(false);
       }
     };
-    
-    fetchLogos();
+    run();
   }, [router]);
 
-  // Reset to page 1 when items per page changes or search query changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [itemsPerPage, searchQuery]);
-
-  // Clear selection when search changes
-  useEffect(() => {
-    setSelectedLogos(new Set());
-  }, [searchQuery]);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = () => {
-      setShowActionsDropdown(false);
-    };
-    
-    if (showActionsDropdown) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
-    }
-  }, [showActionsDropdown]);
-
-  const getLatestRevision = (revisions: StoredLogo[]): StoredLogo | null => {
-    if (revisions.length === 0) return null;
-    return [...revisions].sort((a, b) => 
-      (b.revisionNumber || 0) - (a.revisionNumber || 0)
-    )[0];
-  };
-  
-  const handleViewLogo = (id: string) => {
-    setLoadingButton(`view-${id}`);
-    router.push(`/logos/${id}`);
-  };
-  
-  const handleEditLogo = (id: string) => {
-    setLoadingButton(`edit-${id}`);
-    router.push(`/?edit=${id}`);
-  };
-  
-  const confirmDeleteLogo = (id: string) => {
-    setSelectedLogo(id);
-  };
-  
-  const handleDeleteLogo = async () => {
-    if (!selectedLogo || !userEmail) return;
-    
-    try {
-      // FIXED: Pass userId (email) to deleteLogo
-      await deleteLogo(selectedLogo, userEmail);
-      
-      // FIXED: Pass userId (email) to getAllLogosWithRevisions
-      const allLogosWithRevisions = await getAllLogosWithRevisions(userEmail);
-      setLogosWithRevisions(allLogosWithRevisions);
-      setSelectedLogo(null);
-      
-      // Remove from selection if it was selected
-      setSelectedLogos(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(selectedLogo);
-        return newSet;
-      });
-      
-      // Adjust current page if needed after deletion
-      const totalPages = Math.ceil((filteredLogosWithRevisions.length) / itemsPerPage);
-      if (currentPage > totalPages && totalPages > 0) {
-        setCurrentPage(totalPages);
-      }
-    } catch (err) {
-      console.error('Error deleting logo:', err);
-      setError('Failed to delete logo');
-    }
-  };
-  
-  // replace your formatDate with this
-  const formatDate = (timestamp: number) => {
-    return new Intl.DateTimeFormat('en-CA', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      timeZone: 'UTC',
-    }).format(new Date(timestamp));
+  const clearFilters = () => {
+    setSearchTerm('');
+    setIndustryFilter('all');
   };
 
-  const handleAddToCatalog = async (displayedLogo: StoredLogo) => {
-      if (!user?.isSuperUser) return;
-
-      const logoId = displayedLogo.id;
-      const currentState = catalogStates[logoId];
-
-      if (currentState?.isInCatalog) return;
-
-      setCatalogStates(prev => ({
-          ...prev,
-          [logoId]: {
-              ...prev[logoId],
-              catalogLoading: true
-          }
-      }));
-
-      try {
-          const response = await fetch('/api/catalog', {
-              method: 'POST',
-              headers: {
-                  'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                  logoKeyId: displayedLogo.id,
-                  imageDataUri: displayedLogo.imageDataUri,
-                  parameters: displayedLogo.parameters,
-                  originalCompanyName: displayedLogo.parameters.companyName || 'Unknown Company'
-              }),
-          });
-
-          if (response.ok) {
-              const data = await response.json();
-              setCatalogStates(prev => ({
-                  ...prev,
-                  [logoId]: {
-                      isInCatalog: true,
-                      catalogLoading: false,
-                      catalogCode: data.catalogLogo.catalog_code
-                  }
-              }));
-          } else if (response.status === 409) {
-              // Logo already in catalog
-              const data = await response.json();
-              setCatalogStates(prev => ({
-                  ...prev,
-                  [logoId]: {
-                      isInCatalog: true,
-                      catalogLoading: false,
-                      catalogCode: data.catalogCode
-                  }
-              }));
-          } else {
-              throw new Error('Failed to add to catalog');
-          }
-      } catch (error) {
-          console.error('Error adding to catalog:', error);
-          setCatalogStates(prev => ({
-              ...prev,
-              [logoId]: {
-                  ...prev[logoId],
-                  catalogLoading: false
-              }
-          }));
-      }
-  };
-
-  // ADD: Filtered logos based on search query
-  const filteredLogosWithRevisions = useMemo(() => {
-      let filtered = logosWithRevisions;
-
-      // Apply search filter
-      if (searchQuery.trim()) {
-          const query = searchQuery.toLowerCase().trim();
-          
-          filtered = filtered.filter(({ original, revisions }) => {
-              // Search in original logo name, company name, and catalog code
-              const originalMatches = 
-                  original.name?.toLowerCase().includes(query) ||
-                  original.parameters.companyName?.toLowerCase().includes(query);
-              
-              // Check if original has catalog code in catalogStates
-              const originalCatalogCode = catalogStates[original.id]?.catalogCode?.toLowerCase();
-              const originalCatalogMatches = originalCatalogCode?.includes(query);
-              
-              // Search in revision names and catalog codes
-              const revisionMatches = revisions.some(revision => {
-                  const nameMatch = revision.name?.toLowerCase().includes(query) ||
-                      revision.parameters.companyName?.toLowerCase().includes(query);
-                  const catalogCode = catalogStates[revision.id]?.catalogCode?.toLowerCase();
-                  const catalogMatch = catalogCode?.includes(query);
-                  return nameMatch || catalogMatch;
-              });
-              
-              return originalMatches || originalCatalogMatches || revisionMatches;
-          });
-      }
-
-      // Apply industry filter
-      if (industryFilter !== 'all') {
-          filtered = filtered.filter(({ original, revisions }) => {
-              // Check if original logo matches industry
-              const originalMatches = original.parameters.industry === industryFilter;
-              
-              // Check if any revision matches industry
-              const revisionMatches = revisions.some(revision => 
-                  revision.parameters.industry === industryFilter
-              );
-              
-              return originalMatches || revisionMatches;
-          });
-      }
-
-      return filtered;
-  }, [logosWithRevisions, searchQuery, industryFilter, catalogStates]);
-
-  // ADD: Clear search function
-  const clearSearch = () => {
-    setSearchQuery('');
-  };
-
-  // Pagination calculations - use filtered logos
-  const totalLogos = filteredLogosWithRevisions.length;
-  const totalPages = Math.ceil(totalLogos / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentLogos = useMemo(() => {
-    return filteredLogosWithRevisions.slice(startIndex, endIndex);
-  }, [filteredLogosWithRevisions, startIndex, endIndex]);
-
-  const currentLogoIds = useMemo(() => {
-    return currentLogos.map(({ original, revisions }) => {
-      const latestRevision = getLatestRevision(revisions);
-      const displayedLogo = latestRevision || original;
-      return displayedLogo.id;
-    });
-  }, [currentLogos]);
-
-  useEffect(() => {
-    const checkAllCatalogStatuses = async () => {
-      if (!user?.isSuperUser) return;
-
-      const logoIds = currentLogos.map(({ original, revisions }) => {
-        const latestRevision = getLatestRevision(revisions);
-        const displayedLogo = latestRevision || original;
-        return displayedLogo.id;
-      });
-
-      // Check catalog status for each displayed logo
-      for (const logoId of logoIds) {
-        try {
-          const response = await fetch('/api/catalog', {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ logoKeyId: logoId }),
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            setCatalogStates(prev => ({
-              ...prev,
-              [logoId]: {
-                isInCatalog: data.isInCatalog,
-                catalogLoading: false,
-                catalogCode: data.catalogLogo?.catalog_code || null
-              }
-            }));
-          }
-        } catch (error) {
-          console.error(`Error checking catalog status for logo ${logoId}:`, error);
-          setCatalogStates(prev => ({
-            ...prev,
-            [logoId]: {
-              isInCatalog: false,
-              catalogLoading: false,
-              catalogCode: null
-            }
-          }));
-        }
-      }
-    };
-
-    if (currentLogos.length > 0) {
-      checkAllCatalogStatuses();
-    }
-  }, [currentLogoIds, user?.isSuperUser]);
-
-  const handleItemsPerPageChange = (newItemsPerPage: number) => {
-    setItemsPerPage(newItemsPerPage);
-  };
-
-  // Bulk selection functions
-  const handleLogoSelect = (logoId: string, checked: boolean) => {
-    setSelectedLogos(prev => {
-      const newSet = new Set(prev);
-      if (checked) {
-        newSet.add(logoId);
-      } else {
-        newSet.delete(logoId);
-      }
-      return newSet;
-    });
-  };
-
-  const handleSelectAllCurrentPage = () => {
-    const currentPageLogoIds = currentLogos.map(({ original, revisions }) => {
-      const latestRevision = getLatestRevision(revisions);
-      const displayedLogo = latestRevision || original;
-      return displayedLogo.id;
-    });
-    
-    setSelectedLogos(prev => {
-      const newSet = new Set(prev);
-      currentPageLogoIds.forEach(id => newSet.add(id));
-      return newSet;
-    });
-  };
-
-  const handleDeselectAll = () => {
-    setSelectedLogos(new Set());
-  };
-
-  const handleSelectAllFiltered = () => {
-    const allFilteredLogoIds = filteredLogosWithRevisions.map(({ original, revisions }) => {
-      const latestRevision = getLatestRevision(revisions);
-      const displayedLogo = latestRevision || original;
-      return displayedLogo.id;
-    });
-    
-    setSelectedLogos(new Set(allFilteredLogoIds));
-  };
-
-  // Helper function to create safe filename from logo name
-  const createSafeFilename = (name: string | undefined, fallback: string = 'logo'): string => {
-    if (!name || name.trim() === '' || name === 'Untitled') {
-      return fallback;
-    }
-    
-    // Remove special characters and replace spaces with hyphens
-    return name
-      .trim()
-      .replace(/[^\w\s-]/g, '') // Remove special characters except spaces and hyphens
-      .replace(/\s+/g, '-') // Replace spaces with hyphens
-      .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
-      .toLowerCase();
-  };
-
-  // Get selected logos data
-  const getSelectedLogosData = () => {
-    const selectedData: Array<{ logo: StoredLogo; filename: string }> = [];
-    
-    for (const { original, revisions } of filteredLogosWithRevisions) {
-      const latestRevision = getLatestRevision(revisions);
-      const displayedLogo = latestRevision || original;
-      
-      if (selectedLogos.has(displayedLogo.id)) {
-        const baseFileName = createSafeFilename(displayedLogo.name, `logo-${displayedLogo.parameters.companyName || 'untitled'}`);
-        selectedData.push({
-          logo: displayedLogo,
-          filename: baseFileName
-        });
-      }
-    }
-    
-    return selectedData;
-  };
-
-  // Handle bulk download
-  const handleBulkDownload = async (format: 'png' | 'svg' | 'jpg') => {
-    setBulkActionLoading(true);
-    
-    try {
-      const selectedData = getSelectedLogosData();
-      
-      if (selectedData.length === 0) {
-        return;
-      }
-
-      const zip = new JSZip();
-      
-      for (const { logo, filename } of selectedData) {
-        if (format === 'png') {
-          // Convert data URI to blob and add to ZIP
-          const response = await fetch(logo.imageDataUri);
-          const blob = await response.blob();
-          zip.file(`${filename}.png`, blob);
-        } else if (format === 'jpg') {
-          // Convert PNG to JPG
-          const response = await fetch(logo.imageDataUri);
-          const blob = await response.blob();
-          
-          // Create a canvas to convert to JPG
-          const img = new Image();
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          
-          await new Promise((resolve) => {
-            img.onload = () => {
-              canvas.width = img.width;
-              canvas.height = img.height;
-              
-              // Fill with white background for JPG
-              ctx!.fillStyle = '#FFFFFF';
-              ctx!.fillRect(0, 0, canvas.width, canvas.height);
-              
-              // Draw the image
-              ctx!.drawImage(img, 0, 0);
-              
-              canvas.toBlob((jpgBlob) => {
-                if (jpgBlob) {
-                  zip.file(`${filename}.jpg`, jpgBlob);
-                }
-                resolve(void 0);
-              }, 'image/jpeg', 0.9);
-            };
-            img.src = logo.imageDataUri;
-          });
-        } else if (format === 'svg') {
-          try {
-            // Convert data URI to blob
-            const response = await fetch(logo.imageDataUri);
-            const blob = await response.blob();
-            
-            // Create form data for SVG conversion
-            const formData = new FormData();
-            const file = new File([blob], 'logo.png', { type: blob.type });
-            formData.append('image', file);
-            
-            // Set options for SVG conversion
-            const options = {
-              type: 'simple',
-              width: 1000,
-              height: 1000,
-              threshold: 128,
-              color: '#000000'
-            };
-            
-            formData.append('options', JSON.stringify(options));
-            
-            // Call SVG conversion API
-            const serverResponse = await fetch('/api/convert-to-svg', {
-              method: 'POST',
-              body: formData
-            });
-            
-            if (serverResponse.ok) {
-              const result = await serverResponse.json();
-              if (result.svg && result.svg.includes('<svg')) {
-                zip.file(`${filename}.svg`, result.svg);
-              } else {
-                console.warn(`Failed to convert ${filename} to SVG`);
-              }
-            }
-          } catch (error) {
-            console.warn(`Failed to process ${filename}:`, error);
-          }
-        }
-      }
-      
-      // Generate and download ZIP file
-      const zipBlob = await zip.generateAsync({ type: 'blob' });
-      const url = URL.createObjectURL(zipBlob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `selected-logos-${format}-${Date.now()}.zip`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
-    } catch (error) {
-      console.error(`${format.toUpperCase()} bulk download failed:`, error);
-    } finally {
-      setBulkActionLoading(false);
-      setShowActionsDropdown(false);
-    }
-  };
-
-  // Handle bulk delete
-  const handleBulkDelete = async () => {
-    if (selectedLogos.size === 0 || !userEmail) return;
-    
-    setBulkActionLoading(true);
-    setShowBulkDeleteModal(false);
-    
-    try {
-      // Delete each selected logo
-      for (const logoId of selectedLogos) {
-        try {
-          await deleteLogo(logoId, userEmail);
-        } catch (error) {
-          console.error(`Error deleting logo ${logoId}:`, error);
-        }
-      }
-      
-      // Refresh the logos list
-      const allLogosWithRevisions = await getAllLogosWithRevisions(userEmail);
-      setLogosWithRevisions(allLogosWithRevisions);
-      setSelectedLogos(new Set());
-      
-      // Adjust current page if needed after deletion
-      const newTotalLogos = allLogosWithRevisions.length;
-      const newTotalPages = Math.ceil(newTotalLogos / itemsPerPage);
-      if (currentPage > newTotalPages && newTotalPages > 0) {
-        setCurrentPage(newTotalPages);
-      }
-      
-    } catch (error) {
-      console.error('Error in bulk delete:', error);
-      setError('Failed to delete some logos');
-    } finally {
-      setBulkActionLoading(false);
-    }
-  };
-
-  const selectedCount = selectedLogos.size;
-  const hasSelection = selectedCount > 0;
-  
   return (
     <main className="container mx-auto px-4 pb-6 max-w-4xl history-page">
       <div className="mt-2 card">
-        <h2 className="text-2xl text-indigo-600 font-semibold mb-2 text-center">Logo History</h2>
+        <h2 className="text-2xl text-indigo-600 font-semibold mb-4 text-center">Logo History</h2>
 
-        {/* Bulk Actions Bar */}
-        {hasSelection && (
-          <div className="mb-4 p-3 bg-indigo-50 rounded-lg border border-indigo-200">
-            <div className="flex flex-row items-center justify-between gap-3">
-              <div className="flex items-center gap-3 order-2 sm:order-1">
-                <span className="text-sm font-medium text-indigo-800">
-                  {selectedCount} logo{selectedCount !== 1 ? 's' : ''} selected
-                </span>
-                <button
-                  onClick={handleDeselectAll}
-                  className="text-xs text-indigo-600 hover:text-indigo-700 underline hidden sm:block"
-                >
-                  Clear selection
-                </button>
-              </div>
-              
-              <div className="flex items-center gap-2 order-1 sm:order-2">
-                {/* Actions Dropdown */}
-                <div className="relative">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowActionsDropdown(!showActionsDropdown);
-                    }}
-                    disabled={bulkActionLoading}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-                  >
-                    {bulkActionLoading ? (
-                      <>
-                        <div className="animate-spin rounded-full h-3 w-3 border-t border-white"></div>
-                        <span>Processing...</span>
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                        </svg>
-                        <span>Actions</span>
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </>
-                    )}
-                  </button>
-                  
-                  {/* Dropdown Menu */}
-                  {showActionsDropdown && (
-                    <div
-                      className="absolute mt-1 z-50 w-56 max-w-[calc(100vw-1rem)] sm:max-w-none bg-white rounded-md shadow-lg border border-gray-200 overflow-auto max-h-60 left-0 sm:left-auto sm:right-0"
-                      role="menu"
-                      aria-orientation="vertical"
-                    >
-                      <div
-                        className="group w-full cursor-pointer transition-colors hover:bg-gray-100"
-                        onClick={() => handleBulkDownload('png')}
-                        role="menuitem"
-                      >
-                        <button
-                          className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 group-hover:text-gray-900 bg-transparent appearance-none outline-none text-left"
-                          type="button"
-                        >
-                          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                          </svg>
-                          <span className="flex-1">Download as PNG</span>
-                        </button>
-                      </div>
-
-                      <div
-                        className="group w-full cursor-pointer transition-colors hover:bg-gray-100"
-                        onClick={() => handleBulkDownload('jpg')}
-                        role="menuitem"
-                      >
-                        <button
-                          className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 group-hover:text-gray-900 bg-transparent appearance-none outline-none text-left"
-                          type="button"
-                        >
-                          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                          </svg>
-                          <span className="flex-1">Download as JPG</span>
-                        </button>
-                      </div>
-
-                      <div
-                        className="group w-full cursor-pointer transition-colors hover:bg-gray-100"
-                        onClick={() => handleBulkDownload('svg')}
-                        role="menuitem"
-                      >
-                        <button
-                          className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 group-hover:text-gray-900 bg-transparent appearance-none outline-none text-left"
-                          type="button"
-                        >
-                          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                          </svg>
-                          <span className="flex-1">Download as SVG</span>
-                        </button>
-                      </div>
-
-                      <div className="h-px bg-gray-200" />
-
-                      <div
-                        className="group w-full cursor-pointer transition-colors hover:bg-red-50"
-                        onClick={() => setShowBulkDeleteModal(true)}
-                        role="menuitem"
-                      >
-                        <button
-                          className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-700 group-hover:text-red-800 bg-transparent appearance-none outline-none text-left"
-                          type="button"
-                        >
-                          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                          <span className="flex-1">Delete Selected</span>
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Search Bar */}
         <div className="mb-6 space-y-4">
-            <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-1">
-                    <input
-                        type="text"
-                        placeholder="Search by company name, or logo name..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
-                </div>
-                <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600 whitespace-nowrap">Industry:</span>
-                    <select
-                        value={industryFilter}
-                        onChange={(e) => setIndustryFilter(e.target.value)}
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm min-w-[160px]"
-                    >
-                        <option value="all">All Industries</option>
-                        {INDUSTRIES.map(industry => (
-                            <option key={industry} value={industry}>{industry}</option>
-                        ))}
-                    </select>
-                </div>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <input
+                type="text"
+                placeholder="Search by company name or logo name..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
             </div>
-            
-            {/* Clear Filters Button */}
-            {(searchQuery.trim() || industryFilter !== 'all') && (
-                <div className="flex justify-end">
-                    <button
-                        onClick={() => {
-                            setSearchQuery('');
-                            setIndustryFilter('all');
-                        }}
-                        className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
-                    >
-                        Clear Filters
-                    </button>
-                </div>
-            )}
-        </div>
 
-        {/* Pagination Controls Top */}
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3">
-          <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
-              <label htmlFor="itemsPerPage" className="text-sm font-medium text-gray-700">
-                Show:
-              </label>
+              <span className="text-sm text-gray-600 whitespace-nowrap">Industry:</span>
               <select
-                id="itemsPerPage"
+                value={industryFilter}
+                onChange={(e) => setIndustryFilter(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm min-w-[160px]"
+              >
+                <option value="all">All Industries</option>
+                {INDUSTRIES.map((ind) => (
+                  <option key={ind} value={ind}>
+                    {ind}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600 whitespace-nowrap">Show:</span>
+              <select
                 value={itemsPerPage}
-                onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
-                className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
               >
                 <option value={1}>1 per page</option>
                 <option value={3}>3 per page</option>
@@ -894,314 +1148,41 @@ export default function HistoryView() {
                 <option value={20}>20 per page</option>
               </select>
             </div>
+          </div>
 
-            <div className="flex items-center gap-1 sm:gap-2">
-              <button
-                onClick={handleSelectAllCurrentPage}
-                className="text-xs sm:text-sm text-indigo-600 hover:text-indigo-700 underline whitespace-nowrap"
-              >
-                Select page
-              </button>
-              <button
-                onClick={handleSelectAllFiltered}
-                className="text-xs sm:text-sm text-indigo-600 hover:text-indigo-700 underline whitespace-nowrap"
-              >
-                Select all
+          {(searchTerm.trim() || industryFilter !== 'all') && (
+            <div className="flex justify-end">
+              <button onClick={clearFilters} className="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+                Clear Filters
               </button>
             </div>
-          </div>
-
-          <div className="text-sm text-gray-600">
-            {searchQuery ? (
-              <>
-                Showing {filteredLogosWithRevisions.length} of {logosWithRevisions.length} logos
-                {filteredLogosWithRevisions.length === 0 && (
-                  <span className="text-red-600 ml-2">No matches found</span>
-                )}
-              </>
-            ) : (
-              `${logosWithRevisions.length} total logos`
-            )}
-          </div>
+          )}
         </div>
 
-        {/* Loading State */}
-        {loading && (
+        {userLoading && (
           <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading your logos...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600 mx-auto" />
+            <p className="mt-4 text-gray-600">Loading user data...</p>
           </div>
         )}
-        
-        {/* Error State */}
-        {error && !loading && (
+
+        {error && !userLoading && (
           <div className="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg text-center">
             <p className="font-bold">Error</p>
             <p>{error}</p>
           </div>
         )}
-        
-        {/* No Logos State */}
-        {!loading && !error && logosWithRevisions.length === 0 && (
-          <div className="text-center py-8">
-            <p className="text-gray-600 mb-4">You haven't created any logos yet.</p>
-            <Link href="/" className="btn btn-primary">
-              Create Your First Logo
-            </Link>
-          </div>
-        )}
 
-        {/* No Search Results State */}
-        {!loading && !error && logosWithRevisions.length > 0 && filteredLogosWithRevisions.length === 0 && (
-          <div className="text-center py-8">
-            <p className="text-gray-600 mb-4">No logos match your search.</p>
-            <button onClick={clearSearch} className="btn btn-secondary">
-              Clear Search
-            </button>
-          </div>
-        )}
-
-        {/* Top Pagination Controls */}
-        {!loading && !error && filteredLogosWithRevisions.length > 0 && (
-          <div className="mb-4">
-            <PaginationControls 
-              currentPage={currentPage} 
-              totalPages={totalPages} 
-              setCurrentPage={setCurrentPage} 
-            />
-          </div>
-        )}
-
-        {/* Logos Grid */}
-        {!loading && !error && filteredLogosWithRevisions.length > 0 && (
-          <>
-            <div className="grid gap-2">
-              {currentLogos.map(({ original, revisions }) => {
-                // Determine which logo to display (latest revision or original)
-                const latestRevision = getLatestRevision(revisions);
-                const displayedLogo = latestRevision || original;
-                const hasRevisions = revisions.length > 0;
-                const isSelected = selectedLogos.has(displayedLogo.id);
-                
-                return (
-                  <div key={original.id} className={`relative border rounded-lg p-4 bg-white shadow-sm transition-all ${isSelected ? 'ring-2 ring-indigo-500 bg-indigo-50' : ''}`}>
-                    <div className="flex flex-col md:flex-row gap-4">
-                      {/* Logo Image - MODIFIED: Now uses LazyImage */}
-                      <div className="flex-shrink-0">
-                        <LazyImage
-                          src={displayedLogo.imageDataUri}
-                          alt={displayedLogo.name}
-                          className="w-32 h-32 object-contain border border-gray-200 rounded"
-                        />
-                      </div>
-                      
-                      {/* Logo Details */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-2">
-                          <div>
-                            <h3 className="text-lg font-semibold text-gray-900 truncate">
-                              {displayedLogo.name}
-                            </h3>
-                            <p className="text-sm text-gray-500">
-                              Created: {formatDate(original.createdAt)}
-                            </p>
-                            {hasRevisions && (
-                              <p className="text-sm text-indigo-600 font-medium">
-                                Showing: Revision {latestRevision?.revisionNumber} 
-                                <span className="text-gray-500"> ({3 - revisions.length} remaining)</span>
-                              </p>
-                            )}
-                          </div>
-                          
-                          {/* Selection Checkbox - moved here for top-right positioning */}
-                          <div className="flex-shrink-0 pt-1">
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={(e) => handleLogoSelect(displayedLogo.id, e.target.checked)}
-                              className="absolute top-2 right-2 z-10 w-5 h-5 border-gray-300 rounded focus:ring-indigo-500 accent-indigo-600 bg-white"
-                              aria-label={`Select ${displayedLogo.name}`}
-                            />
-                          </div>
-                        </div>
-                        
-                        {/* Company Name and Details */}
-                        <div className="mb-3">
-                          <p className="text-sm font-medium text-gray-700">
-                            Company: {displayedLogo.parameters.companyName}
-                          </p>
-                          {displayedLogo.parameters.slogan && (
-                            <p className="text-sm text-gray-600">
-                              Slogan: "{displayedLogo.parameters.slogan}"
-                            </p>
-                          )}
-                          <p className="text-xs text-gray-500">
-                            {displayedLogo.parameters.overallStyle} • {displayedLogo.parameters.colorScheme}
-                          </p>
-                        </div>
-                        
-                        {/* Action Buttons */}
-                        <div className="flex flex-wrap gap-2">
-                          <button
-                            onClick={() => handleViewLogo(displayedLogo.id)}
-                            className="btn-action btn-primary flex items-center justify-center gap-1"
-                            disabled={loadingButton === `view-${displayedLogo.id}`}
-                          >
-                            {loadingButton === `view-${displayedLogo.id}` ? (
-                              <>
-                                <svg className="w-3 h-3 animate-spin mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                </svg>
-                                Loading...
-                              </>
-                            ) : (
-                              hasRevisions ? "View All" : "View Logo"
-                            )}
-                          </button>
-
-                          <button
-                            onClick={() => handleEditLogo(displayedLogo.id)}
-                            className="btn-action btn-secondary flex items-center justify-center gap-1 "
-                            disabled={revisions.length >= 3 || loadingButton === `edit-${displayedLogo.id}`}
-                          >
-                            {loadingButton === `edit-${displayedLogo.id}` ? (
-                              <>
-                                <svg className="w-3 h-3 animate-spin mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                </svg>
-                                Loading...
-                              </>
-                            ) : (
-                              revisions.length >= 3 ? "Max Revisions" : "Edit Logo"
-                            )}
-                          </button>
-                          
-                          {user?.isSuperUser && (() => {
-                            const catalogState = catalogStates[displayedLogo.id] || {
-                              isInCatalog: false,
-                              catalogLoading: false,
-                              catalogCode: null
-                            };
-
-                            return (
-                              <button
-                                onClick={() => handleAddToCatalog(displayedLogo)}
-                                disabled={catalogState.catalogLoading || catalogState.isInCatalog}
-                                className={`btn-action flex items-center space-x-1 text-xs ${
-                                  catalogState.isInCatalog
-                                    ? 'bg-gray-800 text-white cursor-not-allowed'
-                                    : 'bg-purple-600 hover:bg-purple-700 text-white'
-                                }`}
-                              >
-                                {catalogState.catalogLoading ? (
-                                  <>
-                                    <svg className="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                    </svg>
-                                    <span>Adding...</span>
-                                  </>
-                                ) : catalogState.isInCatalog ? (
-                                  <>
-                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                    </svg>
-                                    {catalogState.catalogCode && (
-                                      <span className="text-xs">({catalogState.catalogCode})</span>
-                                    )}
-                                  </>
-                                ) : (
-                                  <>
-                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/>
-                                    </svg>
-                                    <span>Catalog</span>
-                                  </>
-                                )}
-                              </button>
-                            );
-                          })()}
-
-                          <button
-                            onClick={() => confirmDeleteLogo(displayedLogo.id)}
-                            className="btn-action btn-danger"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Pagination Controls - Bottom - UPDATED: Simple pagination like catalog */}
-            {totalPages > 1 && (
-              <div className="mt-6">
-                <PaginationControls 
-                  currentPage={currentPage} 
-                  totalPages={totalPages} 
-                  setCurrentPage={setCurrentPage} 
-                />
-              </div>
-            )}
-          </>
+        {!userLoading && !error && userEmail && (
+          <LogoGrid
+            userEmail={userEmail}
+            isSuperUser={!!user?.isSuperUser}
+            searchTerm={searchTerm}
+            industryFilter={industryFilter}
+            itemsPerPage={itemsPerPage}
+          />
         )}
       </div>
-      
-      {/* Delete Confirmation Modal */}
-      {selectedLogo && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-sm mx-4">
-            <h3 className="text-lg font-semibold mb-2">Delete Logo</h3>
-            <p className="text-gray-600 mb-4">
-              Are you sure you want to delete this logo and all its revisions? This action cannot be undone.
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={handleDeleteLogo}
-                className="btn-action btn-danger flex-1"
-              >
-                Delete
-              </button>
-              <button
-                onClick={() => setSelectedLogo(null)}
-                className="btn-action btn-secondary flex-1"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Bulk Delete Confirmation Modal */}
-      {showBulkDeleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-sm mx-4">
-            <h3 className="text-lg font-semibold mb-2">Delete Selected Logos</h3>
-            <p className="text-gray-600 mb-4">
-              Are you sure you want to delete {selectedCount} selected logo{selectedCount !== 1 ? 's' : ''} and all their revisions? This action cannot be undone.
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={handleBulkDelete}
-                className="btn-action btn-danger flex-1"
-                disabled={bulkActionLoading}
-              >
-                {bulkActionLoading ? 'Deleting...' : 'Delete All'}
-              </button>
-              <button
-                onClick={() => setShowBulkDeleteModal(false)}
-                className="btn-action btn-secondary flex-1"
-                disabled={bulkActionLoading}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </main>
   );
 }
