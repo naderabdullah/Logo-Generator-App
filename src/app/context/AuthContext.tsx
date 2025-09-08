@@ -10,6 +10,7 @@ interface User {
   logosCreated: number;
   logosLimit: number;
   remainingLogos?: number;
+  status?: string;
   isSuperUser?: boolean;
   superUserPrivilege?: string;
 }
@@ -71,6 +72,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           logosCreated: userData.logosCreated || 0,
           logosLimit: userData.logosLimit || 5,
           remainingLogos: Math.max(0, (userData.logosLimit || 5) - (userData.logosCreated || 0)),
+          status: userData.status,
           isSuperUser: userData.isSuperUser || false,
           superUserPrivilege: userData.superUserPrivilege
         };

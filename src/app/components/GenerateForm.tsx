@@ -825,9 +825,9 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
             )}
           </div>
 
-          <div style={{ marginBottom: 'var(--space-sm)' }}>
-            <label htmlFor="company-name" className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
-              Company Name <span style={{ color: 'var(--color-error)' }}>*</span>
+          <div style={{marginBottom: 'var(--space-sm)'}}>
+            <label htmlFor="company-name" className="form-label" style={{marginBottom: 'var(--space-xs)'}}>
+              Company Name <span style={{color: 'var(--color-error)'}}>*</span>
             </label>
             <input
                 type="text"
@@ -841,8 +841,8 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
             />
           </div>
 
-          <div style={{ marginBottom: 'var(--space-sm)' }}>
-            <label htmlFor="slogan" className="form-label" style={{ marginBottom: 'var(--space-xs)' }}>
+          <div style={{marginBottom: 'var(--space-sm)'}}>
+            <label htmlFor="slogan" className="form-label" style={{marginBottom: 'var(--space-xs)'}}>
               Slogan/Subtitle (Optional)
             </label>
             <input
@@ -1283,7 +1283,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                   Advanced Options
                 </h3>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0', margin: '0 auto' }}>
+                <div style={{display: 'grid', gridTemplateColumns: '1fr', gap: '0', margin: '0 auto'}}>
 
                   {renderDropdown(
                       "typography",
@@ -1414,22 +1414,33 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               className="btn btn-primary"
               style={{
                 width: '100%',
-                marginBottom: '0'
+                marginBottom: '0',
+                // Special styling for pending users
+                ...(user?.status === 'pending' && {
+                  backgroundColor: '#f59e0b', // Amber color
+                  borderColor: '#f59e0b',
+                  cursor: 'not-allowed',
+                  opacity: 0.8
+                })
               }}
               disabled={
                   (isGenerating || isRevising) ||
                   !areRequiredFieldsFilled() ||
-                  !user
+                  !user ||
+                  user?.status === 'pending'  // PROACTIVE DISABLE
               }
               onClick={handleGenerateLogo}
           >
-            {(isGenerating || isRevising)
-                ? 'Generating Logo...'
-                : !user
-                    ? 'Login to Generate'
-                    : isRevision
-                        ? 'Generate Revision'
-                        : 'Generate Logo'}
+            {/* UPDATED BUTTON TEXT WITH PENDING STATE */}
+            {user?.status === 'pending'
+                ? '🕒 Account Verification Required'
+                : (isGenerating || isRevising)
+                    ? 'Generating Logo...'
+                    : !user
+                        ? 'Login to Generate'
+                        : isRevision
+                            ? 'Generate Revision'
+                            : 'Generate Logo'}
           </button>
 
           {(isGenerating || isRevising) && (
