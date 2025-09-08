@@ -66,7 +66,8 @@ export async function POST(request: NextRequest) {
             offerTitle,
             transactionId,
             currency,
-            source: 'kajabi'
+            source: 'kajabi',
+            appId: 'logo-generator'
         }, authToken);
 
         console.log('✅ Kajabi order processed:', orderNumber);

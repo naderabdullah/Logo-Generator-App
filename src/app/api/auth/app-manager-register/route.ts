@@ -40,7 +40,9 @@ async function callAppManagerAPI(registrationData: AppManagerRegistrationData) {
 
   console.log('Calling App Manager API with:', { ...requestBody, password: '[REDACTED]' });
 
-  const response = await fetch(`${process.env.API_ENDPOINT}/app-manager?action=verifyAppPurchase`, {
+  const action = registrationData.linkType === 'email' ? 'verifyEmailAppPurchase' : 'verifyAppPurchase';
+
+  const response = await fetch(`${process.env.API_ENDPOINT}/app-manager?action=${action}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
