@@ -400,7 +400,7 @@ export default function AccountPage() {
                 <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
                   <h4 className="font-medium text-purple-800 mb-2">AI Intelligence</h4>
                   <p className="text-purple-700">
-                    This app leverages OpenAI's advanced models including DALL-E 3 for image generation and GPT-4 for intelligent prompt creation. 
+                    This app leverages OpenAI's advanced model, gpt-image-1 for intelligent prompt creation. 
                     The AI models assist in creating visual content and interpreting design requirements based on user specifications.
                   </p>
                 </div>
