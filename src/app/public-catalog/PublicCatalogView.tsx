@@ -36,7 +36,7 @@ type LogoCacheEntry = {
     timestamp: number;
     expires: number;
 };
-const MAX_CACHE_SIZE = 50;
+const MAX_CACHE_SIZE = 30;
 const CACHE_DURATION = 1000 * 60 * 10;
 
 let _logoCache: Map<string, LogoCacheEntry> | null = null;

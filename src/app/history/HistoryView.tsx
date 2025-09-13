@@ -62,7 +62,7 @@ function writeCatalogCache(update: Record<string, CatalogFlag>) {
 }
 
 /** Small in-memory image cache */
-const MAX_CACHE_SIZE = 20;
+const MAX_CACHE_SIZE = 30;
 const CACHE_DURATION = 5 * 60 * 1000;
 let imageCache: Map<string, { data: string; expires: number; ts: number }> | null = null;
 const cacheMgr = () => {
