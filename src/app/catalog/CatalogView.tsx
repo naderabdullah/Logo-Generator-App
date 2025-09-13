@@ -1,5 +1,4 @@
-// src/app/catalog/CatalogView.tsx - Restructured to match public catalog pattern exactly
-
+// src/app/catalog/CatalogView.tsx
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -15,7 +14,6 @@ interface CatalogLogo {
     created_at: string;
     created_by: string;
     original_company_name: string;
-    // image_data_uri will be loaded separately
     image_data_uri?: string;
 }
 
@@ -33,7 +31,6 @@ interface PaginationInfo {
     hasMore: boolean;
 }
 
-// Skeleton placeholder component (same as public catalog)
 const LogoSkeleton = () => (
     <div className="bg-white border border-gray-200 rounded-lg p-3 animate-pulse">
         <div className="aspect-square mb-3 bg-gray-200 rounded-lg"></div>
@@ -45,7 +42,6 @@ const LogoSkeleton = () => (
     </div>
 );
 
-// LogoCard component with lazy loading (same pattern as public catalog)
 const CatalogLogoCard = ({ logo, onViewParameters }: { 
     logo: CatalogLogo; 
     onViewParameters: (logo: CatalogLogo) => void;
@@ -58,7 +54,6 @@ const CatalogLogoCard = ({ logo, onViewParameters }: {
     const observerRef = useRef<IntersectionObserver | null>(null);
     const loadAttemptedRef = useRef(false);
 
-    // Simplified load image function (same as public catalog)
     const loadImage = useCallback(async () => {
         if (imageLoading || imageDataUri || imageError || loadAttemptedRef.current) {
             return;
@@ -95,12 +90,10 @@ const CatalogLogoCard = ({ logo, onViewParameters }: {
         }
     }, [logo.id, imageLoading, imageDataUri, imageError]);
 
-    // Mount effect - check cache and set up intersection observer (same as public catalog)
     useEffect(() => {
         setMounted(true);
         loadAttemptedRef.current = false;
         
-        // Set up intersection observer
         if (cardRef.current && !loadAttemptedRef.current) {
             observerRef.current = new IntersectionObserver(
                 ([entry]) => {
@@ -132,7 +125,6 @@ const CatalogLogoCard = ({ logo, onViewParameters }: {
             className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow cursor-pointer"
             onClick={() => onViewParameters({ ...logo, image_data_uri: imageDataUri || undefined })}
         >
-            {/* Image */}
             <div className="aspect-square mb-3 bg-gray-50 rounded-lg p-2 relative">
                 {!mounted ? (
                     <div className="w-full h-full bg-gray-100 rounded flex items-center justify-center">
@@ -169,19 +161,16 @@ const CatalogLogoCard = ({ logo, onViewParameters }: {
                 )}
             </div>
 
-            {/* Catalog Code */}
             <div className="text-center mb-2">
                 <span className="inline-block bg-indigo-100 text-indigo-800 text-xs font-semibold px-2 py-1 rounded">
                     {logo.catalog_code}
                 </span>
             </div>
 
-            {/* Company Name */}
             <div className="text-sm font-medium text-gray-900 text-center truncate mb-1">
                 {logo.original_company_name}
             </div>
             
-            {/* Creator */}
             <div className="text-xs text-gray-500 text-center">
                 By {logo.created_by.split('@')[0]}
             </div>
@@ -204,61 +193,13 @@ export default function CatalogView() {
     const [removing, setRemoving] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [industryFilter, setIndustryFilter] = useState<string>('all');
+    const [itemsPerPage, setItemsPerPage] = useState(30);
 
     const { user } = useAuth();
     const router = useRouter();
+    const perPageOptions = [10, 20, 30, 50];
 
-    // Pagination Controls Component (same as public catalog)
-    const PaginationControls = () => {
-        if (!pagination || pagination.totalPages <= 1) return null;
-
-        return (
-            <div className="flex justify-center items-center space-x-4">
-                <button
-                    onClick={() => fetchCatalog(pagination.page - 1, searchTerm, industryFilter)}
-                    disabled={pagination.page <= 1 || loadingMore}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    Previous
-                </button>
-                
-                <div className="flex space-x-2">
-                    {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                        const pageNum = Math.max(1, pagination.page - 2) + i;
-                        if (pageNum > pagination.totalPages) return null;
-                        
-                        return (
-                            <button
-                                key={pageNum}
-                                onClick={() => fetchCatalog(pageNum, searchTerm, industryFilter)}
-                                disabled={loadingMore}
-                                className={`px-3 py-2 rounded-md ${
-                                    pageNum === pagination.page
-                                        ? 'bg-indigo-600 text-white'
-                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                                } disabled:opacity-50`}
-                            >
-                                {pageNum}
-                            </button>
-                        );
-                    })}
-                </div>
-                
-                <button
-                    onClick={() => fetchCatalog(pagination.page + 1, searchTerm, industryFilter)}
-                    disabled={!pagination.hasMore || loadingMore}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    Next
-                </button>
-            </div>
-        );
-    };
-
-    // Fetch catalog data (EXACT same pattern as public catalog)
-    const fetchCatalog = useCallback(async (page: number, search: string = '', industry: string = 'all') => {
-        if (loadingMore && page > 1) return;
-        
+    const fetchCatalog = useCallback(async (page: number, search: string, industry: string, limit: number) => {
         setLoadingMore(page > 1);
         if (page === 1) {
             setInitialLoading(true);
@@ -267,7 +208,7 @@ export default function CatalogView() {
         try {
             const searchParams = new URLSearchParams({
                 page: page.toString(),
-                limit: '30',
+                limit: limit.toString(),
                 ...(search && { search }),
                 ...(industry !== 'all' && { industry })
             });
@@ -280,11 +221,9 @@ export default function CatalogView() {
             
             const data = await response.json();
             
-            // Always replace content for page navigation
             setCatalogLogos(data.logos || []);
             setStats(data.stats || null);
             setPagination(data.pagination || null);
-            setCurrentPage(page);
             
         } catch (err: any) {
             setError(err.message || 'Failed to load catalog');
@@ -292,26 +231,31 @@ export default function CatalogView() {
             setInitialLoading(false);
             setLoadingMore(false);
         }
-    }, [loadingMore]);
+    }, []);
 
-    // Search functionality with debounce (EXACT same as public catalog)
+    // Fetch data when page, search, industry, or limit changes
     useEffect(() => {
-        const timeoutId = setTimeout(() => {
-            if (currentPage === 1) {
-                fetchCatalog(1, searchTerm, industryFilter);
-            } else {
-                setCurrentPage(1);
-                fetchCatalog(1, searchTerm, industryFilter);
-            }
-        }, 300);
+        fetchCatalog(currentPage, searchTerm, industryFilter, itemsPerPage);
+    }, [currentPage, searchTerm, industryFilter, itemsPerPage, fetchCatalog]);
 
-        return () => clearTimeout(timeoutId);
-    }, [searchTerm, industryFilter, fetchCatalog, currentPage]);
+    const handleSearchChange = (value: string) => {
+        setSearchTerm(value);
+        setCurrentPage(1); // Reset to page 1 when search changes
+    };
 
-    // Initial load (EXACT same as public catalog)
-    useEffect(() => {
-        fetchCatalog(1, searchTerm, industryFilter);
-    }, [fetchCatalog]);
+    const handleIndustryChange = (value: string) => {
+        setIndustryFilter(value);
+        setCurrentPage(1); // Reset to page 1 when filter changes
+    };
+
+    const handleItemsPerPageChange = (newItemsPerPage: number) => {
+        // Calculate which page we should be on to maintain approximate position
+        const currentFirstItem = (currentPage - 1) * itemsPerPage + 1;
+        const newPage = Math.max(1, Math.ceil(currentFirstItem / newItemsPerPage));
+        
+        setItemsPerPage(newItemsPerPage);
+        setCurrentPage(newPage);
+    };
 
     const handleViewParameters = (logo: CatalogLogo) => {
         setSelectedLogo(logo);
@@ -338,7 +282,7 @@ export default function CatalogView() {
             setShowRemoveModal(false);
             setLogoToRemove(null);
             setShowParametersModal(false);
-            await fetchCatalog(currentPage, searchTerm, industryFilter);
+            await fetchCatalog(currentPage, searchTerm, industryFilter, itemsPerPage);
         } catch (e: any) {
             alert(e.message || 'Failed to remove from catalog');
         } finally {
@@ -353,7 +297,85 @@ export default function CatalogView() {
         return JSON.stringify(value);
     };
 
-    // Authorization check (no router redirect)
+    const PaginationControls = () => {
+        if (!pagination || pagination.totalPages <= 1) return null;
+
+        const getPageNumbers = () => {
+            const pages = [];
+            const totalPages = pagination.totalPages;
+            const current = currentPage;
+            
+            // Always show first page
+            pages.push(1);
+            
+            // Show pages around current page
+            const start = Math.max(2, current - 1);
+            const end = Math.min(totalPages - 1, current + 1);
+            
+            // Add ellipsis if needed
+            if (start > 2) pages.push(-1); // -1 represents ellipsis
+            
+            for (let i = start; i <= end; i++) {
+                pages.push(i);
+            }
+            
+            // Add ellipsis if needed
+            if (end < totalPages - 1) pages.push(-1);
+            
+            // Always show last page if more than 1 page
+            if (totalPages > 1) pages.push(totalPages);
+            
+            return pages;
+        };
+
+        return (
+            <div className="flex justify-center items-center space-x-2">
+                <button
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage <= 1 || loadingMore}
+                    className="px-3 py-2 text-sm bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    Previous
+                </button>
+                
+                <div className="flex space-x-1">
+                    {getPageNumbers().map((pageNum, idx) => {
+                        if (pageNum === -1) {
+                            return (
+                                <span key={`ellipsis-${idx}`} className="px-2 py-2 text-gray-400">
+                                    ...
+                                </span>
+                            );
+                        }
+                        
+                        return (
+                            <button
+                                key={pageNum}
+                                onClick={() => setCurrentPage(pageNum)}
+                                disabled={loadingMore}
+                                className={`px-3 py-2 text-sm rounded-md transition-colors ${
+                                    pageNum === currentPage
+                                        ? 'bg-indigo-600 text-white'
+                                        : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                                } disabled:opacity-50`}
+                            >
+                                {pageNum}
+                            </button>
+                        );
+                    })}
+                </div>
+                
+                <button
+                    onClick={() => setCurrentPage(p => Math.min(pagination.totalPages, p + 1))}
+                    disabled={currentPage >= pagination.totalPages || loadingMore}
+                    className="px-3 py-2 text-sm bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    Next
+                </button>
+            </div>
+        );
+    };
+
     if (!user || !user.isSuperUser) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -384,15 +406,33 @@ export default function CatalogView() {
     return (
         <div className="min-h-screen bg-gray-50">
             <div className="container mx-auto px-4 py-8 max-w-7xl">
-                {/* Header */}
                 <div className="mb-8 text-center">
                     <h1 className="text-3xl font-bold text-indigo-600 mt-8 mb-2">Admin Logo Catalog</h1>
                     <p className="text-gray-600">Manage the comprehensive logo catalog</p>
                 </div>
 
-                {/* No stats section for private catalog - prevents visual jump */}
+                {stats && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                        <div className="bg-white rounded-lg shadow p-4 text-center">
+                            <div className="text-3xl font-bold text-indigo-600">{stats.totalLogos}</div>
+                            <div className="text-sm text-gray-600">Total Logos</div>
+                        </div>
+                        <div className="bg-white rounded-lg shadow p-4 text-center">
+                            <div className="text-3xl font-bold text-green-600">{stats.totalContributors}</div>
+                            <div className="text-sm text-gray-600">Contributors</div>
+                        </div>
+                        <div className="bg-white rounded-lg shadow p-4 text-center">
+                            <div className="text-lg font-semibold text-gray-700">
+                                {stats.latestAddition ? 
+                                    new Date(stats.latestAddition).toLocaleDateString() : 
+                                    'N/A'
+                                }
+                            </div>
+                            <div className="text-sm text-gray-600">Latest Addition</div>
+                        </div>
+                    </div>
+                )}
 
-                {/* Search and Filter Controls (EXACT same as public catalog) */}
                 <div className="mb-6 space-y-4">
                     <div className="flex flex-col sm:flex-row gap-4">
                         <div className="flex-1">
@@ -400,7 +440,7 @@ export default function CatalogView() {
                                 type="text"
                                 placeholder="Search by company name, catalog code, creator, industry, or style..."
                                 value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onChange={(e) => handleSearchChange(e.target.value)}
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             />
                         </div>
@@ -408,12 +448,24 @@ export default function CatalogView() {
                             <span className="text-sm text-gray-600 whitespace-nowrap">Industry:</span>
                             <select
                                 value={industryFilter}
-                                onChange={(e) => setIndustryFilter(e.target.value)}
+                                onChange={(e) => handleIndustryChange(e.target.value)}
                                 className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm min-w-[160px]"
                             >
                                 <option value="all">All Industries</option>
                                 {INDUSTRIES.map(industry => (
                                     <option key={industry} value={industry}>{industry}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-600 whitespace-nowrap">Per page:</span>
+                            <select
+                                value={itemsPerPage}
+                                onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                            >
+                                {perPageOptions.map(option => (
+                                    <option key={option} value={option}>{option}</option>
                                 ))}
                             </select>
                         </div>
@@ -425,6 +477,7 @@ export default function CatalogView() {
                                 onClick={() => {
                                     setSearchTerm('');
                                     setIndustryFilter('all');
+                                    setCurrentPage(1);
                                 }}
                                 className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
                             >
@@ -434,18 +487,18 @@ export default function CatalogView() {
                     )}
                 </div>
 
-                {/* Results count and Top Pagination */}
                 <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="text-sm text-gray-600">
                         {(initialLoading && catalogLogos.length === 0) ? (
                             <span>Loading logos...</span>
                         ) : (
                             <>
-                                Showing {catalogLogos.length} of {pagination?.total || 0} logos
-                                {pagination && pagination.totalPages > 1 && (
-                                    <span className="ml-2">
-                                        (Page {pagination.page} of {pagination.totalPages})
-                                    </span>
+                                {pagination && pagination.total > 0 ? (
+                                    <>
+                                        Showing {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, pagination.total)} of {pagination.total} logos
+                                    </>
+                                ) : (
+                                    'No logos found'
                                 )}
                             </>
                         )}
@@ -453,10 +506,9 @@ export default function CatalogView() {
                     <PaginationControls />
                 </div>
 
-                {/* Logo Grid - EXACT same pattern as public catalog */}
                 {(initialLoading && catalogLogos.length === 0) ? (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                        {Array.from({ length: 30 }, (_, i) => (
+                        {Array.from({ length: itemsPerPage }, (_, i) => (
                             <LogoSkeleton key={i} />
                         ))}
                     </div>
@@ -472,7 +524,6 @@ export default function CatalogView() {
                     </div>
                 )}
 
-                {/* Loading indicator when changing pages */}
                 {loadingMore && (
                     <div className="flex justify-center mt-8">
                         <div className="flex items-center space-x-2">
@@ -482,19 +533,16 @@ export default function CatalogView() {
                     </div>
                 )}
 
-                {/* Empty state */}
                 {catalogLogos.length === 0 && !initialLoading && (
                     <div className="text-center py-12">
                         <p className="text-gray-500">No logos found matching your search.</p>
                     </div>
                 )}
 
-                {/* Bottom Page Navigation */}
                 <div className="mt-8 mb-8">
                     <PaginationControls />
                 </div>
 
-                {/* Parameters Modal */}
                 {showParametersModal && selectedLogo && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
                         <div className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
@@ -526,26 +574,28 @@ export default function CatalogView() {
 
                                 <div className="space-y-3 text-sm">
                                     <div>
-                                        <span className="font-medium text-gray-700">Company:</span>
+                                        <span className="font-medium text-gray-700">Company Name:</span>
                                         <span className="ml-2 text-gray-900">{selectedLogo.original_company_name}</span>
                                     </div>
                                     <div>
-                                        <span className="font-medium text-gray-700">Created by:</span>
+                                        <span className="font-medium text-gray-700">Catalog Code:</span>
+                                        <span className="ml-2 text-gray-900">{selectedLogo.catalog_code}</span>
+                                    </div>
+                                    <div>
+                                        <span className="font-medium text-gray-700">Created By:</span>
                                         <span className="ml-2 text-gray-900">{selectedLogo.created_by}</span>
                                     </div>
                                     <div>
-                                        <span className="font-medium text-gray-700">Date:</span>
-                                        <span className="ml-2 text-gray-900">
-                                            {new Date(selectedLogo.created_at).toLocaleDateString()}
-                                        </span>
+                                        <span className="font-medium text-gray-700">Date Added:</span>
+                                        <span className="ml-2 text-gray-900">{new Date(selectedLogo.created_at).toLocaleDateString()}</span>
                                     </div>
-                                    
+
                                     {selectedLogo.parameters && (
                                         <div className="mt-4">
-                                            <h4 className="font-medium text-gray-700 mb-2">Generation Parameters:</h4>
-                                            <div className="bg-gray-50 rounded-lg p-3 space-y-2 text-xs">
+                                            <h4 className="font-medium text-gray-700 mb-2">Parameters:</h4>
+                                            <div className="bg-gray-50 rounded-lg p-3 space-y-2">
                                                 {Object.entries(selectedLogo.parameters).map(([key, value]) => (
-                                                    <div key={key} className="flex">
+                                                    <div key={key} className="flex text-xs">
                                                         <span className="font-medium text-gray-600 w-1/3 capitalize">
                                                             {key.replace(/([A-Z])/g, ' $1').trim()}:
                                                         </span>
@@ -578,7 +628,6 @@ export default function CatalogView() {
                     </div>
                 )}
 
-                {/* Remove Modal */}
                 {showRemoveModal && logoToRemove && (
                     <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4">
                         <div className="bg-white rounded-lg max-w-md w-full">
