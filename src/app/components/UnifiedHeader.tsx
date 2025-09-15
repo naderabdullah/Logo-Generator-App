@@ -430,7 +430,7 @@ export default function UnifiedHeader() {
                 className="flex items-center text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
               >
                 <div className="mr-2 text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                  <span className="font-medium">{user.logosCreated || 0}</span>/<span className="font-medium">{user.logosLimit || 0}</span>
+                  {/* <span className="font-medium">{user.logosCreated || 0}</span>/<span className="font-medium">{user.logosLimit || 0}</span>*/}<span className="font-medium">{user.logosLimit - user.logosCreated || 0}</span>
                 </div>
                 <span className="mr-1">{user.email.split('@')[0]}</span>
                 <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
