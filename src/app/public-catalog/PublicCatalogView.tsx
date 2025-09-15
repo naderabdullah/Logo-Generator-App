@@ -280,7 +280,7 @@ const LogoCard = ({ logo, onViewParameters }: {
                 className="text-xs text-gray-500 text-center cursor-pointer hover:text-gray-700"
                 onClick={handleOpenModal}
             >
-                By {logo.created_by.split('@')[0]}
+                {logo.parameters?.industry || 'Unknown Industry'}
             </div>
         </div>
     );
@@ -685,7 +685,7 @@ export default function PublicCatalogView() {
 
                                 <div className="text-sm text-gray-600 mb-4">
                                     <p><strong>Company:</strong> {selectedLogo.original_company_name}</p>
-                                    <p><strong>Created by:</strong> {selectedLogo.created_by.split('@')[0]}</p>
+                                    <p><strong>Industry:</strong> {selectedLogo.parameters.industry}</p>
                                     <p><strong>Date:</strong> {new Date(selectedLogo.created_at).toLocaleDateString()}</p>
                                 </div>
 

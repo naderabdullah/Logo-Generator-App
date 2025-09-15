@@ -172,7 +172,7 @@ const CatalogLogoCard = ({ logo, onViewParameters }: {
             </div>
             
             <div className="text-xs text-gray-500 text-center">
-                By {logo.created_by.split('@')[0]}
+                {logo.parameters?.industry || 'Unknown Industry'}
             </div>
         </div>
     );

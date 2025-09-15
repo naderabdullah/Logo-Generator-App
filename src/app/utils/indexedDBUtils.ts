@@ -826,3 +826,190 @@ export const getOriginalLogo = async (logoId: string, userId: string): Promise<S
 export const updateLogoName = async (id: string, newName: string, userId: string): Promise<void> => {
   return renameLogo(id, newName, userId);
 };
+
+// Storage monitoring types
+export interface StorageInfo {
+  used: number;
+  available: number;
+  total: number;
+  percentUsed: number;
+  isLow: boolean;
+  isCritical: boolean;
+}
+
+// Check storage capacity using Storage API
+export const checkStorageCapacity = async (): Promise<StorageInfo | null> => {
+  try {
+    // Check if Storage API is available
+    if (!navigator.storage || !navigator.storage.estimate) {
+      console.warn('Storage API not available');
+      return null;
+    }
+
+    const estimate = await navigator.storage.estimate();
+    
+    if (!estimate.usage || !estimate.quota) {
+      console.warn('Storage estimate incomplete');
+      return null;
+    }
+
+    const used = estimate.usage;
+    const total = estimate.quota;
+    const available = total - used;
+    const percentUsed = (used / total) * 100;
+    
+    // Define thresholds
+    const LOW_STORAGE_THRESHOLD = 90; // 90% used
+    const CRITICAL_STORAGE_THRESHOLD = 95; // 95% used
+    
+    return {
+      used,
+      available,
+      total,
+      percentUsed,
+      isLow: percentUsed >= LOW_STORAGE_THRESHOLD,
+      isCritical: percentUsed >= CRITICAL_STORAGE_THRESHOLD
+    };
+  } catch (error) {
+    console.error('Error checking storage capacity:', error);
+    return null;
+  }
+};
+
+// Format bytes to human readable format
+export const formatBytes = (bytes: number): string => {
+  if (bytes === 0) return '0 Bytes';
+  
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
+
+// Estimate size of a logo in IndexedDB
+export const estimateLogoSize = (imageDataUri: string): number => {
+  // Base64 data URI overhead estimation
+  const base64Overhead = 1.37; // Base64 increases size by ~37%
+  const stringLength = new Blob([imageDataUri]).size;
+  const metadataOverhead = 2048; // Estimated overhead for parameters and metadata
+  
+  return Math.ceil(stringLength * base64Overhead + metadataOverhead);
+};
+
+// Check if there's enough space for a new logo
+export const canStoreNewLogo = async (estimatedLogoSize?: number): Promise<{
+  canStore: boolean;
+  storageInfo: StorageInfo | null;
+  message?: string;
+}> => {
+  const storageInfo = await checkStorageCapacity();
+  
+  if (!storageInfo) {
+    // Can't determine, allow storage but warn
+    return {
+      canStore: true,
+      storageInfo: null,
+      message: 'Unable to check storage capacity'
+    };
+  }
+  
+  // Use average logo size if not provided (2MB estimate)
+  const logoSize = estimatedLogoSize || 2 * 1024 * 1024;
+  
+  if (storageInfo.isCritical) {
+    return {
+      canStore: false,
+      storageInfo,
+      message: `Storage is critically low! Only ${formatBytes(storageInfo.available)} remaining. Please delete some logos from your history before generating new ones.`
+    };
+  }
+  
+  if (storageInfo.isLow) {
+    return {
+      canStore: true,
+      storageInfo,
+      message: `Storage space is running low. Only ${formatBytes(storageInfo.available)} remaining. Consider deleting old logos soon.`
+    };
+  }
+  
+  if (storageInfo.available < logoSize) {
+    return {
+      canStore: false,
+      storageInfo,
+      message: `Not enough storage space. Available: ${formatBytes(storageInfo.available)}, Required: ~${formatBytes(logoSize)}`
+    };
+  }
+  
+  return {
+    canStore: true,
+    storageInfo
+  };
+};
+
+// Clean up old logos to free space (optional utility function)
+export const cleanupOldLogos = async (userId: string, keepCount: number = 50): Promise<{
+  deletedCount: number;
+  freedSpace: number;
+}> => {
+  try {
+    const db = await initDB();
+    
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction([LOGOS_STORE], 'readwrite');
+      const store = transaction.objectStore(LOGOS_STORE);
+      const userIndex = store.index('userId');
+      
+      // Get all user's logos
+      const request = userIndex.getAll(userId);
+      
+      request.onsuccess = async (event) => {
+        const userLogos = (event.target as IDBRequest).result as StoredLogo[];
+        
+        // Sort by creation date (oldest first)
+        userLogos.sort((a, b) => a.createdAt - b.createdAt);
+        
+        // Keep only the most recent 'keepCount' logos
+        const logosToDelete = userLogos.slice(0, Math.max(0, userLogos.length - keepCount));
+        
+        let deletedCount = 0;
+        let freedSpace = 0;
+        
+        for (const logo of logosToDelete) {
+          try {
+            // Estimate size before deletion
+            const logoSize = estimateLogoSize(logo.imageDataUri);
+            
+            // Delete the logo
+            await new Promise<void>((deleteResolve, deleteReject) => {
+              const deleteRequest = store.delete(logo.id);
+              
+              deleteRequest.onsuccess = () => {
+                deletedCount++;
+                freedSpace += logoSize;
+                deleteResolve();
+              };
+              
+              deleteRequest.onerror = () => deleteReject(deleteRequest.error);
+            });
+          } catch (error) {
+            console.error(`Error deleting logo ${logo.id}:`, error);
+          }
+        }
+        
+        resolve({ deletedCount, freedSpace });
+      };
+      
+      request.onerror = (event) => {
+        reject((event.target as IDBRequest).error);
+      };
+      
+      transaction.oncomplete = () => {
+        db.close();
+      };
+    });
+  } catch (error) {
+    console.error('Error cleaning up old logos:', error);
+    throw error;
+  }
+};

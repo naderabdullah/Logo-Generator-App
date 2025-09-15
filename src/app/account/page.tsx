@@ -390,8 +390,8 @@ export default function AccountPage() {
                   <h4 className="font-medium text-yellow-800 mb-2">Need Help?</h4>
                   <p className="text-yellow-700">
                     If you have any questions, concerns, or need assistance with your account or logos, please don't hesitate to contact us at:{' '}
-                    <a href="mailto:support@smartyapps.net" className="font-medium underline hover:text-yellow-800">
-                      support@smartyapps.net
+                    <a href="mailto:info@smartylogos.com" className="font-medium underline hover:text-yellow-800">
+                      info@smartylogos.com
                     </a>
                   </p>
                 </div>
