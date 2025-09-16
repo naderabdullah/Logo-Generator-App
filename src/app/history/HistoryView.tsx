@@ -16,7 +16,7 @@ import Link from 'next/link';
 // @ts-ignore
 import JSZip from 'jszip';
 import { INDUSTRIES } from '@/app/constants/industries';
-import { BusinessCardModal } from '../components/BusinessCardModal';
+// REMOVED: BusinessCardModal import - no longer needed
 
 /** Types kept lean for page-only payloads */
 interface LogoMetadata {
@@ -243,8 +243,9 @@ const LogoGrid = ({
       Record<string, { isInCatalog: boolean; catalogLoading: boolean; catalogCode: string | null }>
   >({});
 
-  const [showBusinessCardModal, setShowBusinessCardModal] = useState(false);
-  const [selectedLogoForCards, setSelectedLogoForCards] = useState<StoredLogo | null>(null);
+  // REMOVED: Business cards state variables - no longer needed
+  // const [showBusinessCardModal, setShowBusinessCardModal] = useState(false);
+  // const [selectedLogoForCards, setSelectedLogoForCards] = useState<StoredLogo | null>(null);
 
   const getLatestRevision = (revs: LogoMetadata[]) => {
     if (!revs.length) return null;
@@ -965,45 +966,7 @@ const LogoGrid = ({
                               )}
                             </button>
 
-                            <button
-                                onClick={async () => {
-                                  try {
-                                    console.log('🎴 Fetching full logo data for business cards...');
-                                    console.log('🔍 Logo ID:', displayed.id);
-
-                                    // Fetch the FULL logo data including imageDataUri
-                                    const fullLogo = await getLogo(displayed.id, userEmail);
-
-                                    if (fullLogo) {
-                                      console.log('✅ Full logo data retrieved:', {
-                                        logoId: fullLogo.id,
-                                        hasImageDataUri: !!fullLogo.imageDataUri,
-                                        imageDataLength: fullLogo.imageDataUri?.length,
-                                        name: fullLogo.name
-                                      });
-
-                                      setSelectedLogoForCards(fullLogo);
-                                      setShowBusinessCardModal(true);
-                                    } else {
-                                      console.error('❌ Failed to fetch full logo data');
-                                      // Optional: show error message to user
-                                      alert('Failed to load logo data. Please try again.');
-                                    }
-                                  } catch (error) {
-                                    console.error('❌ Error fetching logo for business cards:', error);
-                                    alert('Error loading logo. Please try again.');
-                                  }
-                                }}
-                                className="btn-action bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center gap-1"
-                                title="Create Business Cards"
-                            >
-                              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd"
-                                      d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
-                                      clipRule="evenodd"/>
-                              </svg>
-                              <span>Business Cards</span>
-                            </button>
+                            {/* REMOVED: Business Cards Button - moved to detailed view */}
 
                             {isSuperUser && (() => {
                               const catalogState = catalogStates[displayed.id] || {
@@ -1123,17 +1086,8 @@ const LogoGrid = ({
               </div>
             </div>
         )}
-        {/* Business Card Modal - Add at the end before closing tag */}
-        {showBusinessCardModal && selectedLogoForCards && (
-            <BusinessCardModal
-                logo={selectedLogoForCards}
-                isOpen={showBusinessCardModal}
-                onClose={() => {
-                  setShowBusinessCardModal(false);
-                  setSelectedLogoForCards(null);
-                }}
-            />
-        )}
+
+        {/* REMOVED: Business Card Modal - no longer needed in HistoryView */}
       </>
   );
 };
