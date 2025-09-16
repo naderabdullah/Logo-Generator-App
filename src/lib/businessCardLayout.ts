@@ -48,8 +48,14 @@ export function calculateAvery8371Positions(): CardPosition[] {
         for (let col = 0; col < 2; col++) {
             const cardNumber = row * 2 + col + 1;
 
-            const x = MARGIN_LEFT + col * (CARD_WIDTH + GAP_X);
-            const y = MARGIN_TOP + row * (CARD_HEIGHT + GAP_Y);
+            let x = MARGIN_LEFT + col * (CARD_WIDTH + GAP_X);
+            let y = MARGIN_TOP + row * (CARD_HEIGHT + GAP_Y);
+
+            if (col === 0) {
+                x += 5.0; // Add 3mm offset to first column cards only
+            } else {
+                x -= 5.0; // Reduce second column offset by 3mm to match first column
+            }
 
             positions.push({
                 x,
