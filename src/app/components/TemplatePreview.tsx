@@ -1,12 +1,61 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { TemplatePreviewProps } from '../../../types/businessCard';
+import { generateBusinessCardPreview } from '../../lib/businessCardGenerator';
 
 export const TemplatePreview = ({
                                     template,
+                                    templateId,
                                     cardData,
                                     scale = 1
                                 }: TemplatePreviewProps) => {
+
+    // State for PDF preview
+    const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    // Use PDF previews for large scales (step 3) and when templateId is provided, HTML for small scales (step 2)
+    const usePdfPreview = scale >= 0.8 && templateId;
+
+    useEffect(() => {
+        if (!template || !templateId || !usePdfPreview) return;
+
+        const generatePreview = async () => {
+            setIsLoading(true);
+            setError(null);
+
+            try {
+                const pdfDataUri = await generateBusinessCardPreview(templateId, cardData, scale);
+
+                if (pdfDataUri) {
+                    const base64Data = pdfDataUri.split(',')[1];
+                    const binaryString = atob(base64Data);
+                    const bytes = new Uint8Array(binaryString.length);
+                    for (let i = 0; i < binaryString.length; i++) {
+                        bytes[i] = binaryString.charCodeAt(i);
+                    }
+                    const blob = new Blob([bytes], { type: 'application/pdf' });
+                    const blobUrl = URL.createObjectURL(blob);
+                    setPdfBlobUrl(blobUrl);
+                }
+            } catch (err) {
+                console.error('PDF preview generation failed:', err);
+                setError('Preview generation failed');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        generatePreview();
+
+        return () => {
+            if (pdfBlobUrl) {
+                URL.revokeObjectURL(pdfBlobUrl);
+            }
+        };
+    }, [template, templateId, cardData, scale, usePdfPreview]);
 
     if (!template) {
         return (
@@ -16,55 +65,102 @@ export const TemplatePreview = ({
         );
     }
 
-    const cardWidth = template.cardWidth * scale * 4; // Convert mm to pixels (approximate)
-    const cardHeight = template.cardHeight * scale * 4;
+    // PDF Preview for large scales (step 3)
+    if (usePdfPreview) {
+        if (isLoading) {
+            return (
+                <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                    <div className="text-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+                        <p className="text-gray-500 text-sm mt-2">Generating preview...</p>
+                    </div>
+                </div>
+            );
+        }
+
+        if (error || !pdfBlobUrl) {
+            return (
+                <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-500 text-sm">
+                    {error || 'Preview unavailable'}
+                </div>
+            );
+        }
+
+        // Calculate dimensions that properly fit the container
+        const aspectRatio = template.cardWidth / template.cardHeight;
+        const MM_TO_PX = 3.7795;
+
+        // Calculate the actual rendered size based on the scale and template dimensions
+        const actualWidth = template.cardWidth * MM_TO_PX * scale;
+        const actualHeight = template.cardHeight * MM_TO_PX * scale;
+
+        return (
+            <div className="w-full h-full flex items-center justify-center">
+                <iframe
+                    src={pdfBlobUrl}
+                    style={{
+                        width: `${actualWidth}px`,
+                        height: `${actualHeight}px`,
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '4px'
+                    }}
+                    title="Business Card Preview"
+                />
+            </div>
+        );
+    }
+
+    // HTML Preview for small scales (step 2)
+    const mmToPixels = 4;
+    const cardWidth = template.cardWidth * mmToPixels * scale;
+    const cardHeight = template.cardHeight * mmToPixels * scale;
 
     return (
         <div
-            className="relative bg-white border overflow-hidden"
+            className="relative bg-white border"
             style={{
                 width: `${cardWidth}px`,
                 height: `${cardHeight}px`,
                 backgroundColor: template.globalStyles.backgroundColor || '#FFFFFF',
                 borderColor: template.globalStyles.borderColor || '#E5E7EB',
-                borderWidth: template.globalStyles.borderWidth ? `${template.globalStyles.borderWidth * scale}px` : '1px',
-                borderRadius: template.globalStyles.borderRadius ? `${template.globalStyles.borderRadius * scale}px` : '0px',
-                padding: `${(template.globalStyles.padding || 0) * scale * 4}px`
+                borderWidth: '1px'
             }}
         >
-            {template.zones.map(zone => (
-                <div
-                    key={zone.id}
-                    className="absolute"
-                    style={{
-                        left: `${zone.position.x * scale * 4}px`,
-                        top: `${zone.position.y * scale * 4}px`,
-                        width: `${zone.dimensions.width * scale * 4}px`,
-                        height: `${zone.dimensions.height * scale * 4}px`,
-                        fontSize: `${(zone.styles.fontSize || 10) * scale * 4}px`,
-                        color: zone.styles.color || '#000000',
-                        fontWeight: zone.styles.fontWeight || 'normal',
-                        fontStyle: zone.styles.fontStyle || 'normal',
-                        textAlign: zone.alignment,
-                        lineHeight: zone.styles.lineHeight || 1.2,
-                        textTransform: zone.styles.textTransform || 'none',
-                        fontFamily: 'system-ui, -apple-system, sans-serif',
-                        overflow: 'hidden'
-                    }}
-                >
-                    <ZoneContent zone={zone} cardData={cardData} scale={scale} />
-                </div>
-            ))}
+            {template.zones.map(zone => {
+                const zoneX = zone.position.x * mmToPixels * scale;
+                const zoneY = zone.position.y * mmToPixels * scale;
+                const zoneWidth = zone.dimensions.width * mmToPixels * scale;
+                const zoneHeight = zone.dimensions.height * mmToPixels * scale;
+                const fontSize = Math.max(6, (zone.styles.fontSize || 10) * scale);
+
+                return (
+                    <div
+                        key={zone.id}
+                        className="absolute"
+                        style={{
+                            left: `${zoneX}px`,
+                            top: `${zoneY}px`,
+                            width: `${zoneWidth}px`,
+                            height: `${zoneHeight}px`,
+                            fontSize: `${fontSize}px`,
+                            color: zone.styles.color || '#000000',
+                            fontWeight: zone.styles.fontWeight || 'normal',
+                            textAlign: zone.alignment,
+                            lineHeight: zone.styles.lineHeight || 1.2,
+                            fontFamily: 'helvetica, sans-serif',
+                            overflow: 'hidden'
+                        }}
+                    >
+                        {renderZoneContent(zone, cardData, fontSize)}
+                    </div>
+                );
+            })}
         </div>
     );
 };
 
-// Helper component to render different zone types
-const ZoneContent = ({ zone, cardData, scale }: {
-    zone: any,
-    cardData: any,
-    scale: number
-}) => {
+// Zone content rendering for HTML preview
+function renderZoneContent(zone: any, cardData: any, fontSize: number) {
     switch (zone.type) {
         case 'logo':
             if (cardData.logo.logoDataUri) {
@@ -72,86 +168,80 @@ const ZoneContent = ({ zone, cardData, scale }: {
                     <img
                         src={cardData.logo.logoDataUri}
                         alt="Logo"
-                        className="w-full h-full object-contain"
-                        style={{ maxWidth: '100%', maxHeight: '100%' }}
+                        style={{
+                            width: '90%',
+                            height: '90%',
+                            objectFit: 'contain',
+                            margin: '5%'
+                        }}
                     />
                 );
             }
             return (
-                <div className="w-full h-full bg-gray-200 rounded flex items-center justify-center text-gray-500 text-xs">
+                <div style={{
+                    width: '100%',
+                    height: '100%',
+                    backgroundColor: '#f3f4f6',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: `${fontSize * 0.6}px`,
+                    color: '#9ca3af'
+                }}>
                     Logo
                 </div>
             );
 
         case 'company-name':
             return (
-                <div className="w-full h-full flex items-start">
-                    <span className="truncate">{cardData.companyName || 'Company Name'}</span>
+                <div style={{ paddingTop: `${fontSize * 0.7}px`, fontSize: `${fontSize}px` }}>
+                    {cardData.companyName}
                 </div>
             );
 
         case 'personal-info':
             return (
-                <div className="w-full h-full flex flex-col justify-start space-y-1">
-                    {cardData.name && (
-                        <div className="truncate">{cardData.name}</div>
-                    )}
-                    {cardData.title && (
-                        <div className="truncate text-sm opacity-80">{cardData.title}</div>
-                    )}
+                <div style={{ fontSize: `${fontSize * 0.8}px`, lineHeight: 1.3 }}>
+                    <div>{cardData.name}</div>
+                    {cardData.title && <div>{cardData.title}</div>}
+                    {cardData.emails[0]?.value && <div>{cardData.emails[0].value}</div>}
+                    {cardData.phones[0]?.value && <div>{cardData.phones[0].value}</div>}
+                    {cardData.websites[0]?.value && <div>{cardData.websites[0].value}</div>}
                 </div>
             );
 
-        case 'contact-block':
-            const contactLines = buildPreviewContactLines(zone.contactBlock, cardData);
+        case 'contact-info':
             return (
-                <div className="w-full h-full flex flex-col justify-start space-y-1 text-xs">
-                    {contactLines.slice(0, zone.contactBlock?.maxLines || 6).map((line, index) => (
-                        <div key={index} className="truncate">
-                            {line}
-                        </div>
-                    ))}
+                <div style={{ fontSize: `${fontSize * 0.8}px`, lineHeight: 1.3 }}>
+                    {cardData.emails[0]?.value && <div>{cardData.emails[0].value}</div>}
+                    {cardData.phones[0]?.value && <div>{cardData.phones[0].value}</div>}
+                    {cardData.websites[0]?.value && <div>{cardData.websites[0].value}</div>}
+                </div>
+            );
+
+        case 'address':
+            return (
+                <div style={{ fontSize: `${fontSize * 0.8}px`, lineHeight: 1.3 }}>
+                    {cardData.address && (
+                        <>
+                            {cardData.address.street && <div>{cardData.address.street}</div>}
+                            {(cardData.address.city || cardData.address.state || cardData.address.zipCode) && (
+                                <div>
+                                    {[cardData.address.city, cardData.address.state, cardData.address.zipCode]
+                                        .filter(Boolean)
+                                        .join(', ')}
+                                </div>
+                            )}
+                        </>
+                    )}
                 </div>
             );
 
         default:
-            return null;
+            return (
+                <div style={{ fontSize: `${fontSize * 0.8}px` }}>
+                    {zone.fieldMapping?.primary && cardData[zone.fieldMapping.primary]}
+                </div>
+            );
     }
-};
-
-// Helper function to build contact lines for preview
-function buildPreviewContactLines(contactBlock: any, cardData: any): string[] {
-    if (!contactBlock) return [];
-
-    const lines: string[] = [];
-
-    // Add phones
-    if (contactBlock.fields.includes('phones') && cardData.phones.length > 0) {
-        cardData.phones.forEach((phone: any) => {
-            if (phone.value) {
-                const line = phone.label ? `${phone.label}: ${phone.value}` : phone.value;
-                lines.push(line);
-            }
-        });
-    }
-
-    // Add emails
-    if (contactBlock.fields.includes('emails') && cardData.emails.length > 0) {
-        const primaryEmail = cardData.emails.find((e: any) => e.isPrimary)?.value || cardData.emails[0].value;
-        if (primaryEmail) {
-            lines.push(primaryEmail);
-        }
-    }
-
-    // Add websites
-    if (contactBlock.fields.includes('websites') && cardData.websites.length > 0) {
-        cardData.websites.forEach((site: any) => {
-            if (site.value) {
-                const cleanUrl = site.value.replace(/^https?:\/\//, '').replace(/\/$/, '');
-                lines.push(cleanUrl);
-            }
-        });
-    }
-
-    return lines;
 }

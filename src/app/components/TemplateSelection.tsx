@@ -35,6 +35,7 @@ export const TemplateSelection = ({
                             <div className="p-2">
                                 <TemplatePreview
                                     template={template.template}
+                                    templateId={template.id}
                                     cardData={formData}
                                     scale={0.4} // Small preview for selection
                                 />
@@ -45,40 +46,41 @@ export const TemplateSelection = ({
                         <div className="space-y-3">
                             <div className="flex items-center justify-between">
                                 <h4 className="font-semibold text-gray-900">{template.name}</h4>
-                                {selectedTemplate === template.id && (
-                                    <div className="w-6 h-6 bg-purple-600 text-white rounded-full flex items-center justify-center">
-                                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                        </svg>
-                                    </div>
+                                {template.isDefault && (
+                                    <span className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">
+                                        Popular
+                                    </span>
                                 )}
                             </div>
                             <p className="text-sm text-gray-600">{template.description}</p>
-                            {template.isDefault && (
-                                <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">
-                  Most Popular
-                </span>
-                            )}
+                            <div className="flex items-center justify-center">
+                                <button className={`w-full py-2 px-4 rounded-lg transition-colors ${
+                                    selectedTemplate === template.id
+                                        ? 'bg-purple-600 text-white'
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}>
+                                    {selectedTemplate === template.id ? 'Selected' : 'Select Template'}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 ))}
             </div>
 
             {/* Navigation */}
-            <div className="flex justify-between pt-6 border-t">
+            <div className="flex justify-between pt-6">
                 <button
                     onClick={onBack}
-                    className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium transition-colors flex items-center space-x-2"
+                    className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                    <span>←</span>
-                    <span>Back</span>
+                    ← Back to Info
                 </button>
+
                 <button
                     onClick={onNext}
-                    className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-lg font-medium transition-colors flex items-center space-x-2"
+                    className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
                 >
-                    <span>Preview & Generate</span>
-                    <span>→</span>
+                    Preview Card →
                 </button>
             </div>
         </div>

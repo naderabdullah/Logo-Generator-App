@@ -128,7 +128,7 @@ export async function generateBusinessCardPreview(
 
     // Create small PDF for preview
     const doc = new jsPDF({
-        orientation: 'portrait',
+        orientation: 'landscape',
         unit: 'mm',
         format: [template.template.cardWidth * scale, template.template.cardHeight * scale]
     });

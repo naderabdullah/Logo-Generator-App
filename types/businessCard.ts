@@ -112,6 +112,7 @@ export interface CardPosition {
 // Component prop types
 export interface TemplatePreviewProps {
     template?: BusinessCardTemplate;
+    templateId?: string;  // Add this prop
     cardData: BusinessCardData;
     scale?: number;
 }
