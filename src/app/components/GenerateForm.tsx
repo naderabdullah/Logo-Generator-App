@@ -13,7 +13,11 @@ import {
   LogoParameters,
   canCreateOriginalLogo,
   canCreateRevision,
-  syncUserUsageWithDynamoDB
+  syncUserUsageWithDynamoDB,
+  canStoreNewLogo, 
+  checkStorageCapacity, 
+  formatBytes,
+  StorageInfo 
 } from '@/app/utils/indexedDBUtils';
 import { INDUSTRIES } from '@/app/constants/industries';
 import CatalogModeToggle from './CatalogModeToggle';
@@ -75,12 +79,35 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
   const [catalogData, setCatalogData] = useState<any>(null);
   const [catalogError, setCatalogError] = useState<string | null>(null);
 
+  const [storageWarning, setStorageWarning] = useState<string | null>(null);
+  const [storageInfo, setStorageInfo] = useState<StorageInfo | null>(null);
+  const [isStorageCritical, setIsStorageCritical] = useState(false);
+
   const getFieldsDisabled = useCallback(() => {
     if (catalogMode) {
       return true;
     }
     return isGenerating || isRevising;
   }, [catalogMode, isGenerating, isRevising]);
+
+  const checkStorage = async () => {
+    const result = await canStoreNewLogo();
+    
+    if (result.storageInfo) {
+      setStorageInfo(result.storageInfo);
+      
+      if (result.storageInfo.isCritical) {
+        setIsStorageCritical(true);
+        setStorageWarning(result.message || 'Storage is critically low!');
+      } else if (result.storageInfo.isLow) {
+        setStorageWarning(result.message || 'Storage space is running low.');
+        setIsStorageCritical(false);
+      } else {
+        setStorageWarning(null);
+        setIsStorageCritical(false);
+      }
+    }
+  };
 
   const useReferenceParam = () => {
     const searchParams = useSearchParams();
@@ -217,6 +244,10 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
     loadReferenceData();
   }, [referenceLogoId, user?.email]);
 
+  useEffect(() => {
+    checkStorage();
+  }, []);
+
   const toggleAdvancedOptions = useCallback(() => {
     if (showAdvanced) {
       setIsAnimating(true);
@@ -345,6 +376,19 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       return;
     }
 
+    const storageCheck = await canStoreNewLogo();
+    
+    if (!storageCheck.canStore) {
+      setLocalError(storageCheck.message || 'Insufficient storage space');
+      setShowLimitModal(true);
+      return;
+    }
+    
+    // Show warning if storage is low but not critical
+    if (storageCheck.storageInfo?.isLow && !storageCheck.storageInfo?.isCritical) {
+      setStorageWarning(storageCheck.message || 'Storage space is running low');
+    }
+
     if ((isGenerating || isRevising) || !areRequiredFieldsFilled()) {
       return;
     }
@@ -429,6 +473,8 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
           isRevision ? originalLogoId : undefined,
           companyName
       );
+
+      checkStorage();
 
       setImageDataUri(imageDataUriString);
 
@@ -682,6 +728,56 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       }
     }
   }, [companyName, slogan]);
+
+  const StorageWarningBanner = () => {
+    if (!storageWarning) return null;
+    
+    return (
+      <div className={`rounded-lg p-3 mb-4 ${
+        isStorageCritical 
+          ? 'bg-red-50 border border-red-200' 
+          : 'bg-yellow-50 border border-yellow-200'
+      }`}>
+        <div className="flex items-start">
+          <svg 
+            className={`w-5 h-5 ${isStorageCritical ? 'text-red-600' : 'text-yellow-600'} mt-0.5 mr-2 flex-shrink-0`} 
+            fill="currentColor" 
+            viewBox="0 0 20 20"
+          >
+            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
+          <div className="flex-1">
+            <h3 className={`text-sm font-medium ${
+              isStorageCritical ? 'text-red-800' : 'text-yellow-800'
+            }`}>
+              {isStorageCritical ? 'Critical Storage Warning' : 'Storage Warning'}
+            </h3>
+            <p className={`text-sm mt-1 ${
+              isStorageCritical ? 'text-red-700' : 'text-yellow-700'
+            }`}>
+              {storageWarning}
+            </p>
+            {storageInfo && (
+              <p className={`text-xs mt-2 ${
+                isStorageCritical ? 'text-red-600' : 'text-yellow-600'
+              }`}>
+                Storage used: {formatBytes(storageInfo.used)} / {formatBytes(storageInfo.total)} 
+                ({storageInfo.percentUsed.toFixed(1)}%)
+              </p>
+            )}
+            {isStorageCritical && (
+              <button
+                onClick={() => router.push('/history')}
+                className="mt-2 text-sm text-red-700 underline hover:text-red-800"
+              >
+                Go to History to delete old logos →
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   const overallStyleOptions = [
     'Modern', 'Contemporary', 'Abstract', 'Classical',
@@ -1409,6 +1505,8 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               </button>
           )}
 
+          <StorageWarningBanner />
+
           <button
               type="button"
               className="btn btn-primary"
@@ -1427,20 +1525,23 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                   (isGenerating || isRevising) ||
                   !areRequiredFieldsFilled() ||
                   !user ||
-                  user?.status === 'pending'  // PROACTIVE DISABLE
+                  user?.status === 'pending' ||  // PROACTIVE DISABLE
+                  isStorageCritical
               }
               onClick={handleGenerateLogo}
           >
             {/* UPDATED BUTTON TEXT WITH PENDING STATE */}
-            {user?.status === 'pending'
-                ? '🕒 Account Verification Required'
-                : (isGenerating || isRevising)
-                    ? 'Generating Logo...'
-                    : !user
-                        ? 'Login to Generate'
-                        : isRevision
-                            ? 'Generate Revision'
-                            : 'Generate Logo'}
+            {isStorageCritical
+                ? 'Storage Full - Delete Logos First'
+                : user?.status === 'pending'
+                    ? '🕒 Account Verification Required'
+                    : (isGenerating || isRevising)
+                        ? 'Generating Logo...'
+                        : !user
+                            ? 'Login to Generate'
+                            : isRevision
+                                ? 'Generate Revision'
+                                : 'Generate Logo'}
           </button>
 
           {(isGenerating || isRevising) && (
@@ -1455,36 +1556,50 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
           )}
 
           {showLimitModal && (
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+              onClick={() => setShowLimitModal(false)}
+            >
               <div
-                  className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-                  onClick={() => setShowLimitModal(false)}
+                className="bg-white rounded-lg shadow-lg max-w-md w-full p-6"
+                onClick={(e) => e.stopPropagation()}
               >
-                <div
-                    className="bg-white rounded-lg shadow-lg max-w-md w-full p-6"
-                    onClick={(e) => e.stopPropagation()}
-                >
-                  <h3 className="text-lg font-semibold mb-4">Logo Limit Reached</h3>
-                  <p className="mb-6">
-                    {isRevision
-                        ? 'You have reached the maximum number of revisions (3) for this logo.'
-                        : 'You have reached your logo generation limit.'}
-                  </p>
-                  <div className="flex justify-center gap-3">
+                <h3 className="text-lg font-bold mb-4">
+                  {isStorageCritical ? 'Storage Full' : 'Logo Limit Reached'}
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  {isStorageCritical 
+                    ? 'Your browser storage is full. Please delete some logos from your history to continue generating new logos.'
+                    : isRevision
+                      ? 'You have reached the maximum number of revisions (3) for this logo.'
+                      : 'You have reached your logo generation limit.'
+                  }
+                </p>
+                <div className="flex justify-center gap-3">
+                  <button
+                    onClick={() => setShowLimitModal(false)}
+                    className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    Close
+                  </button>
+                  {isStorageCritical ? (
                     <button
-                        onClick={() => setShowLimitModal(false)}
-                        className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
+                      onClick={() => router.push('/history')}
+                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
                     >
-                      Close
+                      Go to History
                     </button>
+                  ) : (
                     <Link
-                        href="/purchase"
-                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                      href="/purchase"
+                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
                     >
                       Buy More Credits
                     </Link>
-                  </div>
+                  )}
                 </div>
               </div>
+            </div>
           )}
         </div>
       </div>
