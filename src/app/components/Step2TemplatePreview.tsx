@@ -25,17 +25,7 @@ const Step2TemplatePreview = ({ template, templateId, cardData, scale }: any) =>
             setError(null);
 
             try {
-                // Force unique PDF generation for step 2 by modifying the cardData slightly
-                const step2CardData = {
-                    ...cardData,
-                    customFields: {
-                        ...cardData.customFields,
-                        _stepIdentifier: 'step2',
-                        _timestamp: Date.now()
-                    }
-                };
-
-                const pdfDataUri = await generateBusinessCardPreview(templateId, step2CardData, scale);
+                const pdfDataUri = await generateBusinessCardPreview(templateId, cardData, scale);
 
                 if (!isMounted) return;
 
@@ -110,7 +100,7 @@ const Step2TemplatePreview = ({ template, templateId, cardData, scale }: any) =>
     return (
         <div className="w-full h-full flex items-center justify-center">
             <iframe
-                src={`${pdfBlobUrl}#view=FitH&toolbar=1&navpanes=0&step=2`}
+                src={pdfBlobUrl}
                 style={{
                     width: `${actualWidth}px`,
                     height: `${actualHeight}px`,
@@ -118,7 +108,6 @@ const Step2TemplatePreview = ({ template, templateId, cardData, scale }: any) =>
                     borderRadius: '4px'
                 }}
                 title="Step 2 Business Card Preview"
-                key={`step2-${pdfBlobUrl}`}
             />
         </div>
     );
@@ -134,7 +123,7 @@ export const TemplateSelection = ({
 
     // Simple scale that triggers PDF preview - increased to make preview larger
     const getPreviewScale = () => {
-        return 1.0; // Increased from 1.0 to enlarge preview
+        return 1.4; // Increased from 1.0 to enlarge preview
     };
 
     return (

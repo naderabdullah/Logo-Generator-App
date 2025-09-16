@@ -16,8 +16,8 @@ export const TemplatePreview = ({
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // Use PDF previews for large scales (step 3) and when templateId is provided, HTML for small scales (step 2)
-    const usePdfPreview = scale >= 0.8 && templateId;
+// Use PDF previews when templateId is provided (both step 2 and 3), HTML for fallback
+    const usePdfPreview = templateId !== undefined;
 
     useEffect(() => {
         if (!template || !templateId || !usePdfPreview) return;

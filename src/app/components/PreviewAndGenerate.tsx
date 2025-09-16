@@ -49,6 +49,7 @@ export const PreviewAndGenerate = ({
                     <div className="bg-white shadow-xl rounded-lg overflow-hidden transform rotate-1 hover:rotate-0 transition-transform duration-300">
                         {/* Remove fixed dimensions to allow full container usage */}
                         <TemplatePreview
+                            key={`step3-${selectedTemplate}`}
                             template={template.template}
                             templateId={selectedTemplate}
                             cardData={formData}
