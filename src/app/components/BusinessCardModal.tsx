@@ -40,6 +40,7 @@ export const BusinessCardModal = ({ logo, isOpen, onClose }: BusinessCardModalPr
     const [isGenerating, setIsGenerating] = useState(false);
     const [currentStep, setCurrentStep] = useState<ModalStep>('info');
     const [error, setError] = useState<string | null>(null);
+    const [isClosing, setIsClosing] = useState(false);
 
     useEffect(() => {
         console.log('🔍 BusinessCardModal initialized with logo:', {
@@ -150,11 +151,17 @@ export const BusinessCardModal = ({ logo, isOpen, onClose }: BusinessCardModalPr
         }
     };
     // Reset form when modal closes
-    const handleClose = () => {
+    const handleClose = async () => {
+        setIsClosing(true);
         setCurrentStep('info');
         setError(null);
         setIsGenerating(false);
-        onClose();
+
+        // Small delay for smooth animation
+        setTimeout(() => {
+            onClose();
+            setIsClosing(false);
+        }, 500);
     };
 
     if (!isOpen) return null;
@@ -176,12 +183,48 @@ export const BusinessCardModal = ({ logo, isOpen, onClose }: BusinessCardModalPr
                             <p className="text-gray-600 text-sm">Using logo: {logo.name}</p>
                         </div>
                     </div>
+
                     <button
                         onClick={handleClose}
-                        disabled={isGenerating}
-                        className="text-gray-400 hover:text-gray-600 text-2xl font-bold disabled:opacity-50"
+                        disabled={isGenerating || isClosing}
+                        className="group relative flex items-center justify-center w-10 h-10 bg-gray-100 hover:bg-red-50 text-gray-500 hover:text-red-600 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-100 disabled:hover:text-red-600 disabled:hover:scale-100"
+                        aria-label={isClosing ? "Closing..." : "Close modal"}
                     >
-                        ×
+                        {isClosing ? (
+                            // Spinning loader during close
+                            <svg
+                                className="w-5 h-5 animate-spin"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                                />
+                            </svg>
+                        ) : (
+                            // Regular X icon with rotation animation
+                            <svg
+                                className="w-5 h-5 transition-transform duration-200 group-hover:rotate-90"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M6 18L18 6M6 6l12 12"
+                                />
+                            </svg>
+                        )}
+
+                        {/* Subtle background animation */}
+                        <div
+                            className="absolute inset-0 rounded-lg bg-red-100 scale-0 group-hover:scale-100 transition-transform duration-200 ease-out opacity-20 -z-10"></div>
                     </button>
                 </div>
 

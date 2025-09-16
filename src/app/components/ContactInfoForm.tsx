@@ -1,6 +1,15 @@
+// src/app/components/ContactInfoForm.tsx - Updated with inline required message
 'use client';
 
-import { ContactInfoFormProps } from '../../../types/businessCard';
+import { BusinessCardData } from '../../../types/businessCard';
+
+interface ContactInfoFormProps {
+    formData: BusinessCardData;
+    setFormData: (data: BusinessCardData) => void;
+    onNext: () => void;
+    onAddField: (fieldType: 'phones' | 'emails' | 'websites') => void;
+    onRemoveField: (fieldType: 'phones' | 'emails' | 'websites', index: number) => void;
+}
 
 export const ContactInfoForm = ({
                                     formData,
@@ -10,19 +19,19 @@ export const ContactInfoForm = ({
                                     onRemoveField
                                 }: ContactInfoFormProps) => {
 
-    const handleFieldChange = (field: keyof typeof formData, value: any) => {
+    const handleFieldChange = (field: keyof BusinessCardData, value: any) => {
         setFormData({ ...formData, [field]: value });
     };
 
     const handleContactChange = (
-        fieldType: 'phones' | 'emails' | 'websites',
+        type: 'phones' | 'emails' | 'websites',
         index: number,
-        property: 'value' | 'label' | 'isPrimary',
-        value: any
+        property: 'value' | 'label',
+        value: string
     ) => {
         setFormData(prev => ({
             ...prev,
-            [fieldType]: prev[fieldType].map((item, i) =>
+            [type]: prev[type].map((item, i) =>
                 i === index ? { ...item, [property]: value } : item
             )
         }));
@@ -91,9 +100,9 @@ export const ContactInfoForm = ({
                     </div>
                 </div>
 
-                {/* Contact Methods */}
+                {/* Contact Information */}
                 <div className="space-y-6">
-                    <h4 className="text-lg font-semibold text-gray-900 border-b pb-2">Contact Methods</h4>
+                    <h4 className="text-lg font-semibold text-gray-900 border-b pb-2">Contact Details</h4>
 
                     {/* Phone Numbers */}
                     <div>
@@ -102,37 +111,35 @@ export const ContactInfoForm = ({
                             <button
                                 type="button"
                                 onClick={() => onAddField('phones')}
-                                className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+                                className="text-purple-600 hover:text-purple-700 text-sm font-medium"
                             >
                                 + Add Phone
                             </button>
                         </div>
-                        <div className="space-y-3">
+                        <div className="space-y-2">
                             {formData.phones.map((phone, index) => (
-                                <div key={index} className="flex space-x-3">
+                                <div key={index} className="flex items-center space-x-2">
                                     <input
                                         type="text"
-                                        placeholder="Label"
+                                        placeholder="Label (Mobile, Office, etc.)"
                                         value={phone.label}
                                         onChange={(e) => handleContactChange('phones', index, 'label', e.target.value)}
-                                        className="w-24 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                        className="w-32 px-2 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                                     />
                                     <input
                                         type="tel"
-                                        placeholder="(555) 123-4567"
+                                        placeholder="+1 (555) 123-4567"
                                         value={phone.value}
                                         onChange={(e) => handleContactChange('phones', index, 'value', e.target.value)}
                                         className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                                     />
-                                    {formData.phones.length > 1 && (
-                                        <button
-                                            type="button"
-                                            onClick={() => onRemoveField('phones', index)}
-                                            className="text-red-500 hover:text-red-700 px-2 text-sm font-bold"
-                                        >
-                                            ×
-                                        </button>
-                                    )}
+                                    <button
+                                        type="button"
+                                        onClick={() => onRemoveField('phones', index)}
+                                        className="text-red-500 hover:text-red-700 px-2 text-sm font-bold"
+                                    >
+                                        ×
+                                    </button>
                                 </div>
                             ))}
                         </div>
@@ -141,55 +148,60 @@ export const ContactInfoForm = ({
                     {/* Email Addresses */}
                     <div>
                         <div className="flex items-center justify-between mb-3">
-                            <label className="text-sm font-medium text-gray-700">Email Addresses *</label>
+                            <label className="text-sm font-medium text-gray-700">Email Addresses</label>
                             <button
                                 type="button"
                                 onClick={() => onAddField('emails')}
-                                className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+                                className="text-purple-600 hover:text-purple-700 text-sm font-medium"
                             >
                                 + Add Email
                             </button>
                         </div>
-                        <div className="space-y-3">
+                        <div className="space-y-2">
                             {formData.emails.map((email, index) => (
-                                <div key={index} className="flex space-x-3">
+                                <div key={index} className="flex items-center space-x-2">
+                                    <input
+                                        type="text"
+                                        placeholder="Label (Work, Personal, etc.)"
+                                        value={email.label}
+                                        onChange={(e) => handleContactChange('emails', index, 'label', e.target.value)}
+                                        className="w-32 px-2 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                    />
                                     <input
                                         type="email"
-                                        placeholder="email@company.com"
+                                        placeholder="name@company.com"
                                         value={email.value}
                                         onChange={(e) => handleContactChange('emails', index, 'value', e.target.value)}
                                         className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                                     />
-                                    {formData.emails.length > 1 && (
-                                        <button
-                                            type="button"
-                                            onClick={() => onRemoveField('emails', index)}
-                                            className="text-red-500 hover:text-red-700 px-2 text-sm font-bold"
-                                        >
-                                            ×
-                                        </button>
-                                    )}
+                                    <button
+                                        type="button"
+                                        onClick={() => onRemoveField('emails', index)}
+                                        className="text-red-500 hover:text-red-700 px-2 text-sm font-bold"
+                                    >
+                                        ×
+                                    </button>
                                 </div>
                             ))}
                         </div>
                     </div>
 
-                    {/* Websites */}
+                    {/* Websites (Optional) */}
                     <div>
                         <div className="flex items-center justify-between mb-3">
-                            <label className="text-sm font-medium text-gray-700">Websites</label>
+                            <label className="text-sm font-medium text-gray-700">Websites (Optional)</label>
                             <button
                                 type="button"
                                 onClick={() => onAddField('websites')}
-                                className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+                                className="text-purple-600 hover:text-purple-700 text-sm font-medium"
                             >
                                 + Add Website
                             </button>
                         </div>
                         {formData.websites.length > 0 && (
-                            <div className="space-y-3">
+                            <div className="space-y-2">
                                 {formData.websites.map((website, index) => (
-                                    <div key={index} className="flex space-x-3">
+                                    <div key={index} className="flex items-center space-x-3">
                                         <input
                                             type="url"
                                             placeholder="www.company.com"
@@ -212,25 +224,55 @@ export const ContactInfoForm = ({
                 </div>
             </div>
 
-            {/* Validation Message */}
-            {!isFormValid() && (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                    <p className="text-amber-800 text-sm">
-                        <strong>Required:</strong> Name, Company Name, and at least one contact method (phone or email)
-                    </p>
-                </div>
-            )}
+            {/* Updated Button Row with Inline Required Message */}
+            <div className="pt-6 border-t">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    {/* Required Message - Always visible to prevent jumping */}
+                    <div className={`flex-1 transition-opacity duration-200 ${
+                        isFormValid() ? 'opacity-40' : 'opacity-100'
+                    }`}>
+                        <div className="flex items-start space-x-2">
+                            <svg
+                                className={`w-5 h-5 mt-0.5 flex-shrink-0 transition-colors duration-200 ${
+                                    isFormValid() ? 'text-green-500' : 'text-amber-500'
+                                }`}
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                {isFormValid() ? (
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                ) : (
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                )}
+                            </svg>
+                            <div>
+                                <p className={`text-sm font-medium transition-colors duration-200 ${
+                                    isFormValid() ? 'text-green-700' : 'text-amber-700'
+                                }`}>
+                                    {isFormValid() ? 'Ready to proceed!' : 'Required fields:'}
+                                </p>
+                                {!isFormValid() && (
+                                    <p className="text-sm text-amber-600 mt-1">
+                                        Name, Company Name, and at least one contact method (phone or email)
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
 
-            {/* Next Button */}
-            <div className="flex justify-end pt-6 border-t">
-                <button
-                    onClick={onNext}
-                    disabled={!isFormValid()}
-                    className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-8 py-3 rounded-lg font-medium transition-colors flex items-center space-x-2"
-                >
-                    <span>Choose Template</span>
-                    <span>→</span>
-                </button>
+                    {/* Choose Template Button */}
+                    <div className="flex-shrink-0">
+                        <button
+                            onClick={onNext}
+                            disabled={!isFormValid()}
+                            className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-8 py-3 rounded-lg font-medium transition-colors flex items-center space-x-2"
+                        >
+                            <span>Choose Template</span>
+                            <span>→</span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     );

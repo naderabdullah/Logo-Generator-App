@@ -59,9 +59,9 @@ export const PreviewAndGenerate = ({
                 </div>
             </div>
 
-            {/* Template Info */}
+            {/* Template Info - UPDATED: Now 3 columns with "What you'll get" inline */}
             <div className="bg-gray-50 rounded-lg p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                         <h4 className="font-semibold text-gray-900 mb-2">Selected Template</h4>
                         <p className="text-gray-700">{template.name}</p>
@@ -77,38 +77,36 @@ export const PreviewAndGenerate = ({
                             {formData.title && <p><strong>Title:</strong> {formData.title}</p>}
                         </div>
                     </div>
+                    <div>
+                        <h4 className="font-semibold text-blue-900 mb-3">What you'll get:</h4>
+                        <ul className="text-blue-800 space-y-2 text-sm">
+                            <li className="flex items-start">
+                                <svg className="w-4 h-4 mr-2 mt-0.5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                                <span>PDF with 10 business cards per sheet (Avery 8371 compatible)</span>
+                            </li>
+                            <li className="flex items-start">
+                                <svg className="w-4 h-4 mr-2 mt-0.5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                                <span>Ready to print on standard 8.5" × 11" paper or card stock</span>
+                            </li>
+                            <li className="flex items-start">
+                                <svg className="w-4 h-4 mr-2 mt-0.5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                                <span>High-quality resolution (300 DPI) for professional printing</span>
+                            </li>
+                            <li className="flex items-start">
+                                <svg className="w-4 h-4 mr-2 mt-0.5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                                <span>Accurate preview - what you see is what you print</span>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
-            </div>
-
-            {/* Generation Info */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                <h4 className="font-semibold text-blue-900 mb-3">What you'll get:</h4>
-                <ul className="text-blue-800 space-y-2 text-sm">
-                    <li className="flex items-start">
-                        <svg className="w-4 h-4 mr-2 mt-0.5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                        <span>PDF with 10 business cards per sheet (Avery 8371 compatible)</span>
-                    </li>
-                    <li className="flex items-start">
-                        <svg className="w-4 h-4 mr-2 mt-0.5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                        <span>Ready to print on standard 8.5" × 11" paper or card stock</span>
-                    </li>
-                    <li className="flex items-start">
-                        <svg className="w-4 h-4 mr-2 mt-0.5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                        <span>High-quality resolution (300 DPI) for professional printing</span>
-                    </li>
-                    <li className="flex items-start">
-                        <svg className="w-4 h-4 mr-2 mt-0.5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                        <span>Accurate preview - what you see is what you print</span>
-                    </li>
-                </ul>
             </div>
 
             {/* Action Buttons */}
