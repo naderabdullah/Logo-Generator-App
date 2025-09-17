@@ -378,8 +378,9 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
 
     const storageCheck = await canStoreNewLogo();
     
-    if (!storageCheck.canStore) {
+    if (!storageCheck.canStore || 'true') {
       setLocalError(storageCheck.message || 'Insufficient storage space');
+      setIsStorageCritical(true);
       setShowLimitModal(true);
       return;
     }
@@ -850,6 +851,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
       <div className="generator-form-container">
         {error && (
             <div style={{
+              width: '100%',
               marginBottom: 'var(--space-md)',
               padding: 'var(--space-md)',
               backgroundColor: 'var(--color-error-50, #fef2f2)',
@@ -1558,7 +1560,10 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
           {showLimitModal && (
             <div
               className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-              onClick={() => setShowLimitModal(false)}
+              onClick={() => {
+                setShowLimitModal(false);
+                setIsStorageCritical(false);
+              }}
             >
               <div
                 className="bg-white rounded-lg shadow-lg max-w-md w-full p-6"
@@ -1577,7 +1582,10 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                 </p>
                 <div className="flex justify-center gap-3">
                   <button
-                    onClick={() => setShowLimitModal(false)}
+                    onClick={() => {
+                      setShowLimitModal(false);
+                    setIsStorageCritical(false);
+                    }}
                     className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
                   >
                     Close
