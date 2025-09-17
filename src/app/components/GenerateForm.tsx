@@ -378,7 +378,7 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
 
     const storageCheck = await canStoreNewLogo();
     
-    if (!storageCheck.canStore || 'true') {
+    if (!storageCheck.canStore) {
       setLocalError(storageCheck.message || 'Insufficient storage space');
       setIsStorageCritical(true);
       setShowLimitModal(true);
