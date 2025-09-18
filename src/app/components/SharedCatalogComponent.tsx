@@ -36,6 +36,7 @@ interface SharedCatalogProps {
     defaultItemsPerPage?: number;
     canRemoveLogos?: boolean;
     onRemoveLogo?: (logoId: number) => Promise<void>;
+    hasHeader?: boolean; // Whether the page has a header
 }
 
 // Cache manager for logo images
@@ -252,7 +253,8 @@ export default function SharedCatalogComponent({
     title,
     defaultItemsPerPage = 15,
     canRemoveLogos = false,
-    onRemoveLogo
+    onRemoveLogo,
+    hasHeader = false
 }: SharedCatalogProps) {
     const [catalogLogos, setCatalogLogos] = useState<CatalogLogo[]>([]);
     const [stats, setStats] = useState<CatalogStats | null>(null);
@@ -488,10 +490,10 @@ export default function SharedCatalogComponent({
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className={`min-h-screen bg-gray-50 ${hasHeader ? 'pt-16' : ''}`}>
             <div className="container mx-auto px-4 py-8 max-w-7xl">
                 <div className="mb-8 text-center">
-                    <h1 className="text-3xl font-bold text-indigo-600 mt-8 mb-2">{title}</h1>
+                    <h1 className={`text-3xl font-bold text-indigo-600 ${hasHeader ? 'mt-8' : 'mt-4'} mb-2`}>{title}</h1>
                     
                     {stats && (
                         <div className="text-gray-600 space-y-1">
@@ -692,10 +694,6 @@ export default function SharedCatalogComponent({
                                 
                                 <div>
                                     <span className="font-medium">Created:</span> {new Date(selectedLogo.created_at).toLocaleString()}
-                                </div>
-                                
-                                <div>
-                                    <span className="font-medium">Created By:</span> {selectedLogo.created_by}
                                 </div>
                             </div>
                             

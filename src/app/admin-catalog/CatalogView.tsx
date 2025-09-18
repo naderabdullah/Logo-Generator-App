@@ -1,4 +1,4 @@
-// src/app/catalog/CatalogView.tsx
+// src/app/admin-catalog/CatalogView.tsx
 'use client';
 
 import { useAuth } from '../context/AuthContext';
@@ -38,6 +38,7 @@ export default function CatalogView() {
             defaultItemsPerPage={30}
             canRemoveLogos={true}
             onRemoveLogo={handleRemoveLogo}
+            hasHeader={true}  // Has header on admin catalog
         />
     );
 }
