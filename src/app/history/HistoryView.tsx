@@ -633,6 +633,35 @@ const LogoGrid = ({
 
   const PaginationControls = () => {
     if (!pagination || pagination.totalPages <= 1) return null;
+
+    const getPageNumbers = () => {
+      const pages = [];
+      const totalPages = pagination.totalPages;
+      const current = currentPage;
+      
+      // Always show first page
+      pages.push(1);
+      
+      // Show pages around current page
+      const start = Math.max(2, current - 1);
+      const end = Math.min(totalPages - 1, current + 1);
+      
+      // Add ellipsis if needed
+      if (start > 2) pages.push(-1); // -1 represents ellipsis
+      
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+      
+      // Add ellipsis if needed
+      if (end < totalPages - 1) pages.push(-1);
+      
+      // Always show last page if more than 1 page
+      if (totalPages > 1) pages.push(totalPages);
+      
+      return pages;
+    };
+
     return (
         <div className="flex justify-center items-center space-x-4">
           <button
@@ -644,19 +673,26 @@ const LogoGrid = ({
           </button>
 
           <div className="flex space-x-2">
-            {Array.from({length: Math.min(5, pagination.totalPages)}, (_, i) => {
-              const pg = Math.max(1, currentPage - 2) + i;
-              if (pg > pagination.totalPages) return null;
+            {getPageNumbers().map((pageNum, idx) => {
+              if (pageNum === -1) {
+                return (
+                    <span key={`ellipsis-${idx}`} className="px-2 py-2 text-gray-400">
+                      ...
+                    </span>
+                );
+              }
+              
               return (
                   <button
-                      key={pg}
-                      onClick={() => setCurrentPage(pg)}
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
                       disabled={loadingMore}
                       className={`px-3 py-2 rounded-md ${
-                          pg === currentPage ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                          pageNum === currentPage ?
+                      'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                       }`}
                   >
-                    {pg}
+                    {pageNum}
                   </button>
               );
             })}

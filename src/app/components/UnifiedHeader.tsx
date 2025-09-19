@@ -59,7 +59,8 @@ export default function UnifiedHeader() {
     };
   }, [isDropdownOpen]);
 
-  if (pathname === '/public-catalog') {
+  // CHANGED: Updated from '/public-catalog' to '/catalog'
+  if (pathname === '/catalog') {
     return null;
   }
 
@@ -162,7 +163,7 @@ export default function UnifiedHeader() {
                   className="flex items-center text-xs font-medium text-gray-700 hover:text-gray-900 transition-colors"
                 >
                   <div className="mr-1 text-xs text-gray-500 bg-gray-100 px-1 py-0.5 rounded text-[10px]">
-                    <span className="font-medium">{user.logosCreated || 0}</span>/<span className="font-medium">{user.logosLimit || 0}</span>
+                    <span className="font-medium">{user.logosLimit-user.logosCreated || 0}</span>
                   </div>
                   <span className="text-xs hidden xs:inline mr-1">{user.email.split('@')[0]}</span>
                   <svg className="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -235,15 +236,16 @@ export default function UnifiedHeader() {
                       Bulk
                     </Link>
                 )}
+                {/* CHANGED: Updated from '/catalog' to '/admin-catalog' */}
                 {isPrivilegedUser && (
                     <Link
-                        href="/catalog"
+                        href="/admin-catalog"
                         className={`py-1 px-2 text-xs font-medium rounded transition-all duration-200 ${
-                            pathname === '/catalog'
+                            pathname === '/admin-catalog'
                                 ? 'text-white bg-indigo-600 shadow-sm'
                                 : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                         }`}
-                        onClick={(e) => handleNavClick(e, '/catalog')}
+                        onClick={(e) => handleNavClick(e, '/admin-catalog')}
                         style={{
                           opacity: isAnyGenerationActive() ? 0.5 : 1,
                           cursor: isAnyGenerationActive() ? 'not-allowed' : 'pointer'
@@ -358,15 +360,16 @@ export default function UnifiedHeader() {
                       Bulk Generate
                     </Link>
                 )}
+                {/* CHANGED: Updated from '/catalog' to '/admin-catalog' */}
                 {isPrivilegedUser && (
                     <Link
-                        href="/catalog"
+                        href="/admin-catalog"
                         className={`py-4 px-3 border-b-4 text-sm font-medium inline-flex items-center transition-all duration-200 ${
-                            pathname === '/catalog'
+                            pathname === '/admin-catalog'
                                 ? 'border-indigo-600 text-indigo-700 bg-indigo-50 shadow-sm'
                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'
                         }`}
-                        onClick={(e) => handleNavClick(e, '/catalog')}
+                        onClick={(e) => handleNavClick(e, '/admin-catalog')}
                         style={{
                           opacity: isAnyGenerationActive() ? 0.5 : 1,
                           cursor: isAnyGenerationActive() ? 'not-allowed' : 'pointer'

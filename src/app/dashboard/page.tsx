@@ -44,7 +44,7 @@ export default function DashboardPage() {
   }, [router]);
 
   const handleCopyCatalogLink = () => {
-    const catalogUrl = `${window.location.origin}/public-catalog`;
+    const catalogUrl = `${window.location.origin}/catalog`;
     navigator.clipboard.writeText(catalogUrl).then(() => {
       setCopiedLink(true);
       setTimeout(() => setCopiedLink(false), 2000);
@@ -53,7 +53,7 @@ export default function DashboardPage() {
 
   const handleCatalogClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    const catalogUrl = `${window.location.origin}/public-catalog`;
+    const catalogUrl = `${window.location.origin}/catalog`;
     
     // For iOS 17+, use x-safari scheme to force system Safari
     if (navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad')) {
@@ -211,7 +211,7 @@ export default function DashboardPage() {
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Logo Catalog</h3>
               <div className="flex gap-3">
                 <Link
-                  href="/public-catalog"
+                  href="/catalog"
                   onClick={handleCatalogClick}
                   className="flex-1 px-4 py-2 bg-blue-600 text-white text-center rounded-md hover:bg-blue-700 transition-colors"
                 >
