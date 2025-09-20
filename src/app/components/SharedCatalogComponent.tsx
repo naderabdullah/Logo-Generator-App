@@ -236,7 +236,7 @@ const LogoCard = ({
                     {logo.catalog_code}
                 </div>
                 
-                <p className="text-sm font-medium text-gray-900 truncate px-2" title={logo.original_company_name}>
+                <p className="text-sm font-medium text-gray-900 px-2 leading-tight break-words" title={logo.original_company_name}>
                     {logo.original_company_name}
                 </p>
                 
@@ -586,6 +586,13 @@ export default function SharedCatalogComponent({
                         </div>
                     )}
                 </div>
+
+                {/* Top Pagination Controls */}
+                {!initialLoading && catalogLogos.length > 0 && (
+                    <div className="mb-6">
+                        <PaginationControls />
+                    </div>
+                )}
 
                 {/* Logo Grid */}
                 {initialLoading && catalogLogos.length === 0 ? (

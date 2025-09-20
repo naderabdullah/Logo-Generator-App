@@ -293,63 +293,96 @@ export class SupabaseAuthService {
   }
   
   async getCatalogLogosMetadata(offset: number = 0, limit: number = 30, searchTerm: string = '', industryFilter: string = '') {
-      try {
-          // Build base query
-          let baseQuery = supabaseAdmin
-              .from('catalog_logos')
-              .select(`
-                  id,
-                  catalog_code,
-                  logo_key_id,
-                  parameters,
-                  created_at,
-                  created_by,
-                  original_company_name
-              `)
-              .order('created_at', { ascending: false });
+    try {
+        // Build base query
+        let baseQuery = supabaseAdmin
+            .from('catalog_logos')
+            .select(`
+                id,
+                catalog_code,
+                logo_key_id,
+                parameters,
+                created_at,
+                created_by,
+                original_company_name
+            `)
+            .order('created_at', { ascending: false });
 
-          // Build count query with same filters
-          let countQuery = supabaseAdmin
-              .from('catalog_logos')
-              .select('*', { count: 'exact', head: true });
+        // Apply search filter if provided
+        if (searchTerm.trim()) {
+            const searchFilter = `original_company_name.ilike.%${searchTerm}%,catalog_code.ilike.%${searchTerm}%`;
+            baseQuery = baseQuery.or(searchFilter);
+        }
 
-          // Apply search filter to BOTH queries if provided
-          if (searchTerm.trim()) {
-              const searchFilter = `original_company_name.ilike.%${searchTerm}%,catalog_code.ilike.%${searchTerm}%`;
-              baseQuery = baseQuery.or(searchFilter);
-              countQuery = countQuery.or(searchFilter);
-          }
+        // Apply industry filter if provided
+        if (industryFilter.trim() && industryFilter !== 'all') {
+            baseQuery = baseQuery.filter('parameters->>industry', 'eq', industryFilter);
+        }
 
-          // Apply industry filter to BOTH queries if provided
-          if (industryFilter.trim() && industryFilter !== 'all') {
-              const industryFilterCondition = `parameters->>'industry'.eq.${industryFilter}`;
-              baseQuery = baseQuery.filter('parameters->>industry', 'eq', industryFilter);
-              countQuery = countQuery.filter('parameters->>industry', 'eq', industryFilter);
-          }
+        // Get data with pagination
+        const { data, error } = await baseQuery.range(offset, offset + limit - 1);
 
-          // Get data with pagination
-          const { data, error } = await baseQuery
-              .range(offset, offset + limit - 1);
+        if (error) {
+            throw new Error(`Failed to get catalog logos metadata: ${error.message}`);
+        }
 
-          if (error) {
-              throw new Error(`Failed to get catalog logos metadata: ${error.message}`);
-          }
+        // Try to get total count with improved error handling
+        let totalCount = 0;
+        
+        try {
+            // Build count query with same filters but with timeout protection
+            let countQuery = supabaseAdmin
+                .from('catalog_logos')
+                .select('id', { count: 'exact', head: true });
 
-          // Get total count with same filters
-          const { count: totalCount, error: countError } = await countQuery;
+            // Apply same filters to count query
+            if (searchTerm.trim()) {
+                const searchFilter = `original_company_name.ilike.%${searchTerm}%,catalog_code.ilike.%${searchTerm}%`;
+                countQuery = countQuery.or(searchFilter);
+            }
 
-          if (countError) {
-              throw new Error(`Failed to get total count: ${countError.message}`);
-          }
+            if (industryFilter.trim() && industryFilter !== 'all') {
+                countQuery = countQuery.filter('parameters->>industry', 'eq', industryFilter);
+            }
 
-          return {
-              logos: data || [],
-              total: totalCount || 0
-          };
-      } catch (error: any) {
-          console.error('Error fetching catalog logos metadata:', error);
-          throw error;
-      }
+            // Add timeout protection using Promise.race
+            const countPromise = countQuery;
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Count query timeout')), 8000) // 8 second timeout
+            );
+
+            const { count, error: countError } = await Promise.race([countPromise, timeoutPromise]) as any;
+
+            if (countError) {
+                console.warn('Count query failed, using fallback:', countError.message);
+                // Fallback: estimate total based on current page
+                totalCount = offset + (data?.length || 0) + (data?.length === limit ? limit : 0);
+            } else {
+                totalCount = count || 0;
+            }
+
+        } catch (countError: any) {
+            console.warn('Count query error, using fallback estimation:', countError.message);
+            
+            // Fallback strategy: estimate total count
+            if (data && data.length === limit) {
+                // If we got a full page, assume there might be more
+                totalCount = offset + limit + 1; // Conservative estimate
+            } else {
+                // If we got less than a full page, we're probably at the end
+                totalCount = offset + (data?.length || 0);
+            }
+        }
+
+        return {
+            logos: data || [],
+            total: totalCount
+        };
+
+    } catch (error: any) {
+        console.error('Error fetching catalog logos metadata:', error);
+        throw error;
+    }
   }
 
   // NEW: Get total count for stats (fast query)
