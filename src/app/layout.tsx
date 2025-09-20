@@ -12,16 +12,7 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'AI Logo Generator',
   description: 'Generate professional logos using AI with customizable style options',
-  manifest: '/manifest.json',
-  icons: {
-    icon: [
-      { url: '/smallLogo.ico', sizes: '32x32', type: 'image/x-icon' },
-      { url: '/smallLogo.ico', sizes: '16x16', type: 'image/x-icon' }
-    ],
-    apple: [
-      { url: '/smallLogo.ico', sizes: '180x180', type: 'image/x-icon' }
-    ]
-  }
+  manifest: '/manifest.json'
 };
 
 export const viewport: Viewport = {
@@ -46,11 +37,11 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="theme-color" content="#6366f1" />
         {/* Preload the favicon to prevent flash */}
-        <link rel="preload" href="/smallLogo.ico" as="image" type="image/x-icon" />
+        <link rel="preload" href="/tabicon.ico" as="image" type="image/x-icon" />
         {/* Favicon links with higher priority */}
-        <link rel="icon" href="/smallLogo.ico" type="image/x-icon" sizes="any" />
-        <link rel="shortcut icon" href="/smallLogo.ico" type="image/x-icon" />
-        <link rel="apple-touch-icon" href="/smallLogo.ico" />
+        <link rel="icon" href="/tabicon.ico" type="image/x-icon" sizes="any" />
+        <link rel="shortcut icon" href="/tabicon.ico" type="image/x-icon" />
+        <link rel="apple-touch-icon" href="/tabicon.ico" />
       </head>
       <body className={`${inter.className} ios-safe`}>
         <AuthProvider>

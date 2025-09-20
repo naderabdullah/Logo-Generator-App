@@ -9,7 +9,7 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/favicon.ico",
+      "src": "/tabicon.ico",
       "sizes": "48x48",
       "type": "image/x-icon"
     },

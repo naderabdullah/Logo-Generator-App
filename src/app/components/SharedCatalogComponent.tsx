@@ -274,7 +274,7 @@ export default function SharedCatalogComponent({
     const [industryFilter, setIndustryFilter] = useState<string>('all');
     
     const router = useRouter();
-    const perPageOptions = defaultItemsPerPage === 30 ? [10, 20, 30, 50] : [5, 10, 15, 20, 30];
+    const perPageOptions = defaultItemsPerPage === 30 ? [6, 12, 18, 30, 60] : [5, 10, 15, 20, 30];
 
     const fetchCatalog = useCallback(async (page: number, search: string, industry: string, limit: number) => {
         setLoadingMore(page > 1);
@@ -309,6 +309,10 @@ export default function SharedCatalogComponent({
             setLoadingMore(false);
         }
     }, [apiEndpoint]);
+
+    const scrollToTop = () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     // Fetch data when page, search, industry, or limit changes
     useEffect(() => {
@@ -432,7 +436,10 @@ export default function SharedCatalogComponent({
         return (
             <div className="flex items-center justify-center space-x-2">
                 <button
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    onClick={() => {
+                        setCurrentPage(p => Math.max(1, p - 1));
+                        scrollToTop();
+                    }}
                     disabled={currentPage <= 1 || loadingMore}
                     className="px-3 py-2 text-sm bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -448,7 +455,10 @@ export default function SharedCatalogComponent({
                         return (
                             <button
                                 key={pageNum}
-                                onClick={() => setCurrentPage(Number(pageNum))}
+                                onClick={() => {
+                                    setCurrentPage(Number(pageNum));
+                                    scrollToTop();
+                                }}
                                 disabled={loadingMore}
                                 className={`px-3 py-2 text-sm rounded-md ${
                                     currentPage === pageNum
@@ -463,7 +473,10 @@ export default function SharedCatalogComponent({
                 </div>
                 
                 <button
-                    onClick={() => setCurrentPage(p => Math.min(pagination.totalPages, p + 1))}
+                    onClick={() => {
+                        setCurrentPage(p => Math.min(pagination.totalPages, p + 1));
+                        scrollToTop();
+                    }}
                     disabled={currentPage >= pagination.totalPages || loadingMore}
                     className="px-3 py-2 text-sm bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >

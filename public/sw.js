@@ -1,11 +1,12 @@
 // public/sw.js - FIXED: Exclude API routes to prevent conflicts
 // Service Worker for AI Logo Generator PWA
-const CACHE_NAME = 'logo-generator-v3';
+const CACHE_NAME = 'logo-generator-v4';
 
 // Files to cache - be selective to avoid caching Next.js assets
 const ASSETS_TO_CACHE = [
   '/manifest.json',
-  '/logo.ico'
+  '/logo.ico',
+  '/tabicon.ico'
 ];
 
 // Install event - cache only specific assets
