@@ -169,6 +169,20 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
 
             setTransparentBackground(logoData.parameters.transparentBackground === 'false' ? false : true);
 
+            const hasAdvancedParams = !!(
+              logoData.parameters.typographyStyle ||
+              logoData.parameters.lineStyle ||
+              logoData.parameters.composition ||
+              logoData.parameters.shapeEmphasis ||
+              logoData.parameters.texture ||
+              logoData.parameters.complexityLevel ||
+              logoData.parameters.applicationContext
+            );
+
+            if (hasAdvancedParams) {
+              setShowAdvanced(true);
+            }
+
             setReferenceImagePreview(logoData.imageDataUri);
 
             try {
@@ -1307,6 +1321,36 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
               true
           )}
 
+          <div style={{marginBottom: 'var(--space-sm)'}}>
+            <label htmlFor="special-instructions" className="form-label"
+                  style={{marginBottom: 'var(--space-xs)'}}>
+              Special Instructions/Notes (Optional)
+              {catalogMode && (
+                  <span style={{
+                    fontSize: 'var(--text-xs)',
+                    color: 'var(--color-gray-500)',
+                    marginLeft: 'var(--space-xs)'
+                  }}>
+                    🔒
+                  </span>
+              )}
+            </label>
+            <textarea
+                id="special-instructions"
+                className="form-textarea"
+                value={specialInstructions}
+                onChange={(e) => setSpecialInstructions(e.target.value)}
+                placeholder="Any specific requirements, style preferences, or additional notes for your logo..."
+                disabled={getFieldsDisabled()}
+                rows={3}
+                style={{
+                  height: 'auto',
+                  minHeight: '80px',
+                  resize: 'vertical'
+                }}
+            />
+          </div>
+
           <div style={{
             marginBottom: 'var(--space-sm)',
             marginTop: 'var(--space-xs)',
@@ -1372,7 +1416,10 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
           </div>
 
           {showAdvanced && (
-              <div className={`advanced-options ${isAnimating ? 'hiding' : ''}`}>
+              <div
+                className={`advanced-options ${isAnimating ? 'hiding' : ''}`}
+                style={{paddingBottom: 'var(--space-lg)'}}
+              >
                 <h3 style={{
                   fontSize: 'var(--text-lg)',
                   fontWeight: '500',
@@ -1438,35 +1485,6 @@ export default function GenerateForm({ setLoading, setImageDataUri, setError }: 
                       (e) => setApplicationContext(e.target.value),
                       applicationOptions
                   )}
-
-                  <div style={{marginBottom: 'var(--space-sm)'}}>
-                    <label htmlFor="special-instructions" className="form-label"
-                           style={{marginBottom: 'var(--space-xs)'}}>
-                      Special Instructions/Notes
-                      {catalogMode && (
-                          <span style={{
-                            fontSize: 'var(--text-xs)',
-                            color: 'var(--color-gray-500)',
-                            marginLeft: 'var(--space-xs)'
-                          }}>
-      🔒
-    </span>
-                      )}
-                    </label>
-                    <textarea
-                        id="special-instructions"
-                        className="form-textarea"
-                        value={specialInstructions}
-                        onChange={(e) => setSpecialInstructions(e.target.value)}
-                        placeholder="Any specific details, elements to include/exclude, or style preferences..."
-                        rows={3}
-                        disabled={getFieldsDisabled()}
-                        style={{
-                          minHeight: '80px',
-                          resize: 'vertical'
-                        }}
-                    />
-                  </div>
                 </div>
               </div>
           )}

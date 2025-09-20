@@ -925,6 +925,11 @@ const LogoGrid = ({
                                 )}
                               </h3>
                               <p className="text-sm text-gray-500">Created: {formatDate(original.createdAt)}</p>
+                              {revisions.length === 0 && (
+                                  <p className="text-sm text-indigo-600 font-medium">
+                                    <span className="text-gray-500">(3 revisions remaining)</span>
+                                  </p>
+                              )}
                               {revisions.length > 0 && (
                                   <p className="text-sm text-indigo-600 font-medium">
                                     Showing: Revision {latest?.revisionNumber}
