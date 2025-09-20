@@ -1,4 +1,4 @@
-// src/app/components/UnifiedHeader.tsx - Added username dropdown with logout
+// src/app/components/UnifiedHeader.tsx - Updated with Business Card Admin tab
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -33,10 +33,11 @@ export default function UnifiedHeader() {
   const handleLogout = async () => {
     setIsDropdownOpen(false);
     try {
+      console.log('🚪 Logging out user');
       await logout();
       router.push('/login');
     } catch (err) {
-      console.error('Logout failed:', err);
+      console.error('❌ Logout failed:', err);
     }
   };
 
@@ -57,71 +58,15 @@ export default function UnifiedHeader() {
       clearTimeout(timeoutId);
       document.removeEventListener('click', handleClickOutside);
     };
-  }, [isDropdownOpen]);
-
-  if (pathname === '/catalog') {
-    return null;
-  }
-
-  // Show basic header on auth pages (including register pages) - NO LINK
-  if (pathname === '/login' || pathname === '/signup' || pathname === '/auth' || pathname.startsWith('/register')) {
-    return (
-        <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm border-b border-gray-200 ios-unified-header">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-center items-center h-16">
-              {/* Static logo/text - NO LINK on auth pages */}
-              <div className="flex items-center space-x-2 text-xl font-bold text-indigo-600">
-                <Image
-                    src="/logo.ico"
-                    alt="AI Logo Generator Logo"
-                    width={64}
-                    height={64}
-                    className="rounded"
-                />
-                <span>AI Logo Generator</span>
-              </div>
-            </div>
-          </div>
-        </header>
-    );
-  }
+  }, []);
 
   if (loading) {
     return (
-        <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm border-b border-gray-200 ios-unified-header">
+        <header className="bg-white shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <div className="flex items-center space-x-2 text-xl font-bold text-indigo-600">
-                <Image
-                    src="/logo.ico"
-                    alt="AI Logo Generator Logo"
-                    width={64}
-                    height={64}
-                    className="rounded"
-                />
-                <span>AI Logo Generator</span>
-              </div>
-              <div className="w-5 h-5 animate-spin rounded-full border-2 border-gray-300 border-t-indigo-600"></div>
-            </div>
-          </div>
-        </header>
-    );
-  }
-
-  if (!user) {
-    return (
-        <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm border-b border-gray-200 ios-unified-header">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-center items-center h-16">
-              <div className="flex items-center space-x-2 text-xl font-bold text-indigo-600">
-                <Image
-                    src="/logo.ico"
-                    alt="AI Logo Generator Logo"
-                    width={64}
-                    height={64}
-                    className="rounded"
-                />
-                <span>AI Logo Generator</span>
+            <div className="flex justify-between h-16">
+              <div className="flex items-center">
+                <div className="animate-pulse bg-gray-300 h-8 w-32 rounded"></div>
               </div>
             </div>
           </div>
@@ -130,219 +75,25 @@ export default function UnifiedHeader() {
   }
 
   return (
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm border-b border-gray-200 ios-unified-header">
-        <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
-          {/* Mobile Layout - Stacked */}
-          <div className="md:hidden">
-            {/* Top row - Logo and User Info */}
-            <div className="flex items-center justify-between h-12 pt-2">
-              <Link
-                  href="/"
-                  className="flex items-center space-x-1 text-base font-bold text-indigo-600"
-                  onClick={(e) => handleNavClick(e, '/')}
-                  style={{
-                    opacity: isAnyGenerationActive() ? 0.5 : 1,
-                    cursor: isAnyGenerationActive() ? 'not-allowed' : 'pointer'
-                  }}
-              >
+      <header className="bg-white shadow-sm sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-between h-16">
+            {/* Logo and Primary Navigation */}
+            <div className="flex items-center">
+              <Link href="/" className="flex-shrink-0 flex items-center">
                 <Image
-                    src="/logo.ico"
-                    alt="AI Logo Generator Logo"
+                    src="/smallLogo.ico"
+                    alt="Logo"
                     width={32}
                     height={32}
-                    className="rounded"
+                    priority
+                    className="h-8 w-8"
                 />
-                <span className="text-sm">AI Logo Generator</span>
+                <span className="ml-2 text-xl font-bold text-gray-900">Logo Generator</span>
               </Link>
 
-              {/* Mobile User Dropdown */}
-              <div className="relative" ref={dropdownRef}>
-                <button
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className="flex items-center text-xs font-medium text-gray-700 hover:text-gray-900 transition-colors"
-                >
-                  <div className="mr-1 text-xs text-gray-500 bg-gray-100 px-1 py-0.5 rounded text-[10px]">
-                    <span className="font-medium">{user.logosCreated || 0}</span>/<span className="font-medium">{user.logosLimit || 0}</span>
-                  </div>
-                  <span className="text-xs hidden xs:inline mr-1">{user.email.split('@')[0]}</span>
-                  <svg className="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-
-                {/* Mobile Dropdown Menu */}
-                {isDropdownOpen && (
-                    <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-[9999]">
-                      <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-100">
-                        {user.email}
-                      </div>
-                      <Link
-                          href="/account"
-                          className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setIsDropdownOpen(false);
-                          }}
-                      >
-                        Account Settings
-                      </Link>
-                      <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleLogout();
-                          }}
-                          className="block w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                      >
-                        Log Out
-                      </button>
-                    </div>
-                )}
-              </div>
-            </div>
-
-            {/* Bottom row - Navigation - FIXED: Better mobile layout */}
-            <nav className="flex justify-center pb-1 px-1">
-              <div className="flex flex-wrap justify-center gap-1 max-w-full">
-                <Link
-                    href="/"
-                    className={`py-1 px-2 text-xs font-medium rounded transition-all duration-200 ${
-                        pathname === '/'
-                            ? 'text-white bg-indigo-600 shadow-sm'
-                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                    }`}
-                    onClick={(e) => handleNavClick(e, '/')}
-                    style={{
-                      opacity: isAnyGenerationActive() ? 0.5 : 1,
-                      cursor: isAnyGenerationActive() ? 'not-allowed' : 'pointer'
-                    }}
-                >
-                  Generate
-                </Link>
-                {isPrivilegedUser && (
-                    <Link
-                        href="/bulk-generate"
-                        className={`py-1 px-2 text-xs font-medium rounded transition-all duration-200 ${
-                            pathname === '/bulk-generate'
-                                ? 'text-white bg-indigo-600 shadow-sm'
-                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                        }`}
-                        onClick={(e) => handleNavClick(e, '/bulk-generate')}
-                        style={{
-                          opacity: isAnyGenerationActive() ? 0.5 : 1,
-                          cursor: isAnyGenerationActive() ? 'not-allowed' : 'pointer'
-                        }}
-                    >
-                      Bulk
-                    </Link>
-                )}
-                {isPrivilegedUser && (
-                    <Link
-                        href="/admin-catalog"
-                        className={`py-1 px-2 text-xs font-medium rounded transition-all duration-200 ${
-                            pathname === '/admin-catalog'
-                                ? 'text-white bg-indigo-600 shadow-sm'
-                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                        }`}
-                        onClick={(e) => handleNavClick(e, '/admin-catalog')}
-                        style={{
-                          opacity: isAnyGenerationActive() ? 0.5 : 1,
-                          cursor: isAnyGenerationActive() ? 'not-allowed' : 'pointer'
-                        }}
-                    >
-                      Catalog
-                    </Link>
-                )}
-                {(isPrivilegedUser && false) && (
-                    <Link
-                        href="/admin-template-parser"
-                        className={`py-4 px-3 border-b-4 text-sm font-medium inline-flex items-center transition-all duration-200 ${
-                            pathname === '/admin-template-parser'
-                                ? 'border-indigo-600 text-indigo-700 bg-indigo-50 shadow-sm'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'
-                        }`}
-                        onClick={(e) => handleNavClick(e, '/admin-template-parser')}
-                        style={{
-                          opacity: isAnyGenerationActive() ? 0.5 : 1,
-                          cursor: isAnyGenerationActive() ? 'not-allowed' : 'pointer'
-                        }}
-                    >
-                      Parser
-                    </Link>
-                )}
-                <Link
-                    href="/history"
-                    className={`py-1 px-2 text-xs font-medium rounded transition-all duration-200 ${
-                        pathname === '/history'
-                            ? 'text-white bg-indigo-600 shadow-sm'
-                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                    }`}
-                    onClick={(e) => handleNavClick(e, '/history')}
-                    style={{
-                      opacity: isAnyGenerationActive() ? 0.5 : 1,
-                      cursor: isAnyGenerationActive() ? 'not-allowed' : 'pointer'
-                    }}
-                >
-                  History
-                </Link>
-                <Link
-                    href="/dashboard"
-                    className={`py-1 px-2 text-xs font-medium rounded transition-all duration-200 ${
-                        pathname === '/dashboard'
-                            ? 'text-white bg-indigo-600 shadow-sm'
-                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                    }`}
-                    onClick={(e) => handleNavClick(e, '/dashboard')}
-                    style={{
-                      opacity: isAnyGenerationActive() ? 0.5 : 1,
-                      cursor: isAnyGenerationActive() ? 'not-allowed' : 'pointer'
-                    }}
-                >
-                  Dashboard
-                </Link>
-                <Link
-                    href="/purchase"
-                    className={`py-1 px-2 text-xs font-medium rounded transition-all duration-200 ${
-                        pathname === '/purchase'
-                            ? 'text-white bg-indigo-600 shadow-sm'
-                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                    }`}
-                    onClick={(e) => handleNavClick(e, '/purchase')}
-                    style={{
-                      opacity: isAnyGenerationActive() ? 0.5 : 1,
-                      cursor: isAnyGenerationActive() ? 'not-allowed' : 'pointer'
-                    }}
-                >
-                  Purchase
-                </Link>
-              </div>
-            </nav>
-          </div>
-
-          {/* Desktop Layout - Single row */}
-          <div className="hidden md:flex items-center justify-between h-16">
-            {/* Logo - Left side */}
-            <Link
-                href="/"
-                className="flex items-center space-x-2 text-xl font-bold text-indigo-600"
-                onClick={(e) => handleNavClick(e, '/')}
-                style={{
-                  opacity: isAnyGenerationActive() ? 0.5 : 1,
-                  cursor: isAnyGenerationActive() ? 'not-allowed' : 'pointer'
-                }}
-            >
-              <Image
-                  src="/logo.ico"
-                  alt="AI Logo Generator Logo"
-                  width={64}
-                  height={64}
-                  className="rounded"
-              />
-              <span>AI Logo Generator</span>
-            </Link>
-
-            {/* Navigation - Center */}
-            <nav className="flex-1 flex justify-center">
-              <div className={`flex ${isPrivilegedUser ? 'space-x-6' : 'space-x-8'}`}>
+              {/* Desktop Navigation */}
+              <nav className="hidden md:ml-8 md:flex md:space-x-1">
                 <Link
                     href="/"
                     className={`py-4 px-3 border-b-4 text-sm font-medium inline-flex items-center transition-all duration-200 ${
@@ -358,6 +109,30 @@ export default function UnifiedHeader() {
                 >
                   Generate
                 </Link>
+
+                {/* UPDATED: Admin Business Cards tab for privileged users */}
+                {isPrivilegedUser && (
+                    <Link
+                        href="/admin-business-cards"
+                        className={`py-4 px-3 border-b-4 text-sm font-medium inline-flex items-center transition-all duration-200 ${
+                            pathname === '/admin-business-cards'
+                                ? 'border-indigo-600 text-indigo-700 bg-indigo-50 shadow-sm'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                        }`}
+                        onClick={(e) => handleNavClick(e, '/admin-business-cards')}
+                        style={{
+                          opacity: isAnyGenerationActive() ? 0.5 : 1,
+                          cursor: isAnyGenerationActive() ? 'not-allowed' : 'pointer'
+                        }}
+                        title="View business card layout catalog"
+                    >
+                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd"/>
+                      </svg>
+                      Business Cards
+                    </Link>
+                )}
+
                 {isPrivilegedUser && (
                     <Link
                         href="/bulk-generate"
@@ -375,6 +150,7 @@ export default function UnifiedHeader() {
                       Bulk Generate
                     </Link>
                 )}
+
                 {isPrivilegedUser && (
                     <Link
                         href="/admin-catalog"
@@ -392,13 +168,15 @@ export default function UnifiedHeader() {
                       Catalog
                     </Link>
                 )}
+
+                {/* Template Parser - Currently disabled */}
                 {(isPrivilegedUser && false) && (
                     <Link
                         href="/admin-template-parser"
-                        className={`py-1 px-2 text-xs font-medium rounded transition-all duration-200 ${
+                        className={`py-4 px-3 border-b-4 text-sm font-medium inline-flex items-center transition-all duration-200 ${
                             pathname === '/admin-template-parser'
-                                ? 'text-white bg-indigo-600 shadow-sm'
-                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                                ? 'border-indigo-600 text-indigo-700 bg-indigo-50 shadow-sm'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'
                         }`}
                         onClick={(e) => handleNavClick(e, '/admin-template-parser')}
                         style={{
@@ -409,6 +187,7 @@ export default function UnifiedHeader() {
                       Parser
                     </Link>
                 )}
+
                 <Link
                     href="/history"
                     className={`py-4 px-3 border-b-4 text-sm font-medium inline-flex items-center transition-all duration-200 ${
@@ -424,6 +203,7 @@ export default function UnifiedHeader() {
                 >
                   History
                 </Link>
+
                 <Link
                     href="/dashboard"
                     className={`py-4 px-3 border-b-4 text-sm font-medium inline-flex items-center transition-all duration-200 ${
@@ -439,6 +219,7 @@ export default function UnifiedHeader() {
                 >
                   Dashboard
                 </Link>
+
                 <Link
                     href="/purchase"
                     className={`py-4 px-3 border-b-4 text-sm font-medium inline-flex items-center transition-all duration-200 ${
@@ -454,49 +235,221 @@ export default function UnifiedHeader() {
                 >
                   Purchase
                 </Link>
-              </div>
-            </nav>
+              </nav>
+            </div>
 
-            {/* Desktop User Dropdown - Right side */}
-            <div className="relative" ref={dropdownRef}>
-              <button
-                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="flex items-center text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-              >
-                <div className="mr-2 text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                  {/* <span className="font-medium">{user.logosCreated || 0}</span>/<span className="font-medium">{user.logosLimit || 0}</span>*/}<span className="font-medium">{user.logosLimit - user.logosCreated || 0}</span>
-                </div>
-                <span className="mr-1">{user.email.split('@')[0]}</span>
-                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-
-              {/* Desktop Dropdown Menu */}
-              {isDropdownOpen && (
-                  <div className="absolute right-0 top-full mt-1 w-56 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50">
-                    <div className="px-4 py-2 text-sm text-gray-500 border-b border-gray-100">
-                      {user.email}
-                    </div>
-                    <Link
-                        href="/account"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                        onClick={() => setIsDropdownOpen(false)}
+            {/* User Account Section */}
+            <div className="flex items-center space-x-4">
+              {user ? (
+                  <div className="relative" ref={dropdownRef}>
+                    <button
+                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                        className="flex items-center space-x-2 text-sm font-medium text-gray-700 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 rounded-md px-3 py-2"
                     >
-                      Account Settings
+                      <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                    <span className="text-indigo-600 font-medium">
+                      {user.email?.[0]?.toUpperCase() || 'U'}
+                    </span>
+                      </div>
+                      <span className="hidden sm:block">{user.email}</span>
+                      {user.isSuperUser && (
+                          <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
+                      Admin
+                    </span>
+                      )}
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+
+                    {/* Dropdown Menu */}
+                    {isDropdownOpen && (
+                        <div className="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+                          <div className="py-1">
+                            <div className="px-4 py-2 text-sm text-gray-700 border-b">
+                              <div className="font-medium">Signed in as</div>
+                              <div className="text-gray-900">{user.email}</div>
+                              {user.isSuperUser && (
+                                  <div className="mt-1">
+                            <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
+                              Administrator
+                            </span>
+                                  </div>
+                              )}
+                            </div>
+                            <button
+                                onClick={handleLogout}
+                                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            >
+                              Sign out
+                            </button>
+                          </div>
+                        </div>
+                    )}
+                  </div>
+              ) : (
+                  <div className="flex items-center space-x-4">
+                    <Link
+                        href="/login"
+                        className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
+                    >
+                      Sign In
                     </Link>
-                    <div className="border-t border-gray-100 mt-1 pt-1">
-                      <button
-                          onClick={handleLogout}
-                          className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                      >
-                        Log Out
-                      </button>
-                    </div>
+                    <Link
+                        href="/register"
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                    >
+                      Sign Up
+                    </Link>
                   </div>
               )}
             </div>
           </div>
+
+          {/* Mobile Navigation - Compact Version */}
+          {user && (
+              <div className="md:hidden border-t border-gray-200 px-4 py-2">
+                <div className="flex flex-wrap gap-2">
+                  <Link
+                      href="/"
+                      className={`py-1 px-2 text-xs font-medium rounded transition-all duration-200 ${
+                          pathname === '/'
+                              ? 'text-white bg-indigo-600 shadow-sm'
+                              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                      }`}
+                      onClick={(e) => handleNavClick(e, '/')}
+                      style={{
+                        opacity: isAnyGenerationActive() ? 0.5 : 1,
+                        cursor: isAnyGenerationActive() ? 'not-allowed' : 'pointer'
+                      }}
+                  >
+                    Generate
+                  </Link>
+
+                  {/* UPDATED: Mobile Business Cards link for admin users */}
+                  {isPrivilegedUser && (
+                      <Link
+                          href="/admin-business-cards"
+                          className={`py-1 px-2 text-xs font-medium rounded transition-all duration-200 ${
+                              pathname === '/admin-business-cards'
+                                  ? 'text-white bg-indigo-600 shadow-sm'
+                                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                          }`}
+                          onClick={(e) => handleNavClick(e, '/admin-business-cards')}
+                          style={{
+                            opacity: isAnyGenerationActive() ? 0.5 : 1,
+                            cursor: isAnyGenerationActive() ? 'not-allowed' : 'pointer'
+                          }}
+                      >
+                        Cards
+                      </Link>
+                  )}
+
+                  {isPrivilegedUser && (
+                      <Link
+                          href="/bulk-generate"
+                          className={`py-1 px-2 text-xs font-medium rounded transition-all duration-200 ${
+                              pathname === '/bulk-generate'
+                                  ? 'text-white bg-indigo-600 shadow-sm'
+                                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                          }`}
+                          onClick={(e) => handleNavClick(e, '/bulk-generate')}
+                          style={{
+                            opacity: isAnyGenerationActive() ? 0.5 : 1,
+                            cursor: isAnyGenerationActive() ? 'not-allowed' : 'pointer'
+                          }}
+                      >
+                        Bulk
+                      </Link>
+                  )}
+
+                  {isPrivilegedUser && (
+                      <Link
+                          href="/admin-catalog"
+                          className={`py-1 px-2 text-xs font-medium rounded transition-all duration-200 ${
+                              pathname === '/admin-catalog'
+                                  ? 'text-white bg-indigo-600 shadow-sm'
+                                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                          }`}
+                          onClick={(e) => handleNavClick(e, '/admin-catalog')}
+                          style={{
+                            opacity: isAnyGenerationActive() ? 0.5 : 1,
+                            cursor: isAnyGenerationActive() ? 'not-allowed' : 'pointer'
+                          }}
+                      >
+                        Catalog
+                      </Link>
+                  )}
+
+                  {/* Template Parser - Currently disabled */}
+                  {(isPrivilegedUser && false) && (
+                      <Link
+                          href="/admin-template-parser"
+                          className={`py-1 px-2 text-xs font-medium rounded transition-all duration-200 ${
+                              pathname === '/admin-template-parser'
+                                  ? 'text-white bg-indigo-600 shadow-sm'
+                                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                          }`}
+                          onClick={(e) => handleNavClick(e, '/admin-template-parser')}
+                          style={{
+                            opacity: isAnyGenerationActive() ? 0.5 : 1,
+                            cursor: isAnyGenerationActive() ? 'not-allowed' : 'pointer'
+                          }}
+                      >
+                        Parser
+                      </Link>
+                  )}
+
+                  <Link
+                      href="/history"
+                      className={`py-1 px-2 text-xs font-medium rounded transition-all duration-200 ${
+                          pathname === '/history'
+                              ? 'text-white bg-indigo-600 shadow-sm'
+                              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                      }`}
+                      onClick={(e) => handleNavClick(e, '/history')}
+                      style={{
+                        opacity: isAnyGenerationActive() ? 0.5 : 1,
+                        cursor: isAnyGenerationActive() ? 'not-allowed' : 'pointer'
+                      }}
+                  >
+                    History
+                  </Link>
+
+                  <Link
+                      href="/dashboard"
+                      className={`py-1 px-2 text-xs font-medium rounded transition-all duration-200 ${
+                          pathname === '/dashboard'
+                              ? 'text-white bg-indigo-600 shadow-sm'
+                              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                      }`}
+                      onClick={(e) => handleNavClick(e, '/dashboard')}
+                      style={{
+                        opacity: isAnyGenerationActive() ? 0.5 : 1,
+                        cursor: isAnyGenerationActive() ? 'not-allowed' : 'pointer'
+                      }}
+                  >
+                    Dashboard
+                  </Link>
+
+                  <Link
+                      href="/purchase"
+                      className={`py-1 px-2 text-xs font-medium rounded transition-all duration-200 ${
+                          pathname === '/purchase'
+                              ? 'text-white bg-indigo-600 shadow-sm'
+                              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                      }`}
+                      onClick={(e) => handleNavClick(e, '/purchase')}
+                      style={{
+                        opacity: isAnyGenerationActive() ? 0.5 : 1,
+                        cursor: isAnyGenerationActive() ? 'not-allowed' : 'pointer'
+                      }}
+                  >
+                    Purchase
+                  </Link>
+                </div>
+              </div>
+          )}
         </div>
       </header>
   );
