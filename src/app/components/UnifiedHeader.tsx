@@ -269,7 +269,7 @@ export default function UnifiedHeader() {
                       Catalog
                     </Link>
                 )}
-                {isPrivilegedUser && (
+                {(isPrivilegedUser && false) && (
                     <Link
                         href="/admin-template-parser"
                         className={`py-4 px-3 border-b-4 text-sm font-medium inline-flex items-center transition-all duration-200 ${
