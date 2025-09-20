@@ -895,10 +895,6 @@ const LogoGrid = ({
                                   className="absolute -top-2 -left-2 z-10 select-none"
                                   title={cat.catalogCode ? `In Catalog • ${cat.catalogCode}` : 'In Catalog'}
                               >
-                        <span
-                            className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold tracking-wide bg-purple-600 text-white shadow">
-                          In Catalog{cat.catalogCode ? ` • ${cat.catalogCode}` : ''}
-                        </span>
                               </div>
                           )}
                           <LazyLogoImage
