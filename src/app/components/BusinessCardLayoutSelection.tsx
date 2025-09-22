@@ -191,260 +191,269 @@ export const BusinessCardLayoutSelection: React.FC<BusinessCardLayoutSelectionPr
     }, []);
 
     return (
-        <div className="space-y-6">
-            {/* Header */}
-            <div>
-                <h2 className="text-xl font-semibold mb-2 text-gray-900">Choose Business Card Layout</h2>
-                <p className="text-gray-600 text-sm">
-                    Select a business card design that matches your style. You can preview how your information will look.
-                </p>
-            </div>
+        <div className="flex flex-col h-full">
+            {/* Scrollable Content Area */}
+            <div className="flex-1 overflow-y-auto space-y-6">
+                <div className="flex-1 overflow-y-auto space-y-6">
+                    {/* Header */}
+                    <div>
+                        <h2 className="text-xl font-semibold mb-2 text-gray-900">Choose Business Card Layout</h2>
+                        <p className="text-gray-600 text-sm">
+                            Select a business card design that matches your style. You can preview how your information will look.
+                        </p>
+                    </div>
 
-            {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-4 pb-4 border-b border-gray-200">
-                {/* Search */}
-                <div className="flex-1">
-                    <input
-                        type="text"
-                        placeholder="Search layouts..."
-                        value={searchTerm}
-                        onChange={(e) => handleSearchChange(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
-                    />
-                </div>
+                    {/* Filters */}
+                    <div className="flex flex-col sm:flex-row gap-4 pb-4 border-b border-gray-200">
+                        {/* Search */}
+                        <div className="flex-1">
+                            <input
+                                type="text"
+                                placeholder="Search layouts..."
+                                value={searchTerm}
+                                onChange={(e) => handleSearchChange(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                            />
+                        </div>
 
-                {/* Theme Filter */}
-                <div className="flex items-center gap-2">
-                    <label htmlFor="theme-filter" className="text-sm text-gray-600 whitespace-nowrap">
-                        Theme:
-                    </label>
-                    <select
-                        id="theme-filter"
-                        value={themeFilter}
-                        onChange={(e) => handleThemeFilterChange(e.target.value)}
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm min-w-[140px]"
-                    >
-                        <option value="all">All Themes</option>
-                        {themes.map(theme => (
-                            <option key={theme} value={theme}>
-                                {theme.charAt(0).toUpperCase() + theme.slice(1)}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-            </div>
+                        {/* Theme Filter */}
+                        <div className="flex items-center gap-2">
+                            <label htmlFor="theme-filter" className="text-sm text-gray-600 whitespace-nowrap">
+                                Theme:
+                            </label>
+                            <select
+                                id="theme-filter"
+                                value={themeFilter}
+                                onChange={(e) => handleThemeFilterChange(e.target.value)}
+                                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm min-w-[140px]"
+                            >
+                                <option value="all">All Themes</option>
+                                {themes.map(theme => (
+                                    <option key={theme} value={theme}>
+                                        {theme.charAt(0).toUpperCase() + theme.slice(1)}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
 
-            {/* Results Info */}
-            <div className="text-sm text-gray-600">
-                {paginatedData.totalItems === 0 ? (
-                    <span>No layouts found</span>
-                ) : (
-                    <span>
-                        Showing {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, paginatedData.totalItems)} of {paginatedData.totalItems} layouts
-                    </span>
-                )}
-            </div>
+                    {/* Results Info */}
+                    <div className="text-sm text-gray-600">
+                        {paginatedData.totalItems === 0 ? (
+                            <span>No layouts found</span>
+                        ) : (
+                            <span>
+                            Showing {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, paginatedData.totalItems)} of {paginatedData.totalItems} layouts
+                        </span>
+                        )}
+                    </div>
 
-            {/* Layouts Grid */}
-            {paginatedData.totalItems === 0 ? (
-                <div className="text-center py-12">
-                    <p className="text-gray-500 text-lg">No business card layouts found</p>
-                    <p className="text-gray-400 text-sm mt-2">Try adjusting your search or filter criteria</p>
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {paginatedData.layouts.map((layout) => (
-                        <div
-                            key={layout.catalogId}
-                            className={`
-                                relative bg-white border-2 rounded-lg shadow-sm transition-all duration-200 hover:shadow-lg
-                                ${selectedLayout === layout.catalogId
-                                ? 'border-purple-500 bg-purple-50 shadow-md'
-                                : 'border-gray-200 hover:border-purple-300'
-                            }
-                            `}
-                        >
-                            {/* Selection Indicator */}
-                            {selectedLayout === layout.catalogId && (
-                                <div className="absolute top-3 right-3 w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center z-10">
-                                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                    </svg>
-                                </div>
-                            )}
+                    {/* ========== FLIPPED LAYOUT: PREVIEW FIRST, PROFILE SECOND ========== */}
+                    {paginatedData.totalItems === 0 ? (
+                        <div className="text-center py-12">
+                            <p className="text-gray-500 text-lg">No business card layouts found</p>
+                            <p className="text-gray-400 text-sm mt-2">Try adjusting your search or filter criteria</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6">
+                            {paginatedData.layouts.map((layout) => (
+                                <div
+                                    key={layout.catalogId}
+                                    className={`
+                                    relative bg-white border-2 rounded-lg shadow-sm transition-all duration-200 hover:shadow-lg
+                                    ${selectedLayout === layout.catalogId
+                                        ? 'border-purple-500 bg-purple-50 shadow-md'
+                                        : 'border-gray-200 hover:border-purple-300'
+                                    }
+                                `}
+                                >
+                                    {/* Selection Indicator */}
+                                    {selectedLayout === layout.catalogId && (
+                                        <div className="absolute top-3 right-3 w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center z-10">
+                                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </div>
+                                    )}
 
-                            {/* Card Header */}
-                            <div className="p-4 border-b border-gray-100">
-                                <div className="flex items-center justify-between mb-2">
-                                    <h3 className="font-semibold text-gray-900">{layout.name}</h3>
-                                    <div className="flex items-center gap-2">
+                                    {/* ========== 1. CARD PREVIEW FIRST (FOR ALIGNMENT) ========== */}
+                                    <div className="relative bg-gray-100 p-4 flex items-center justify-center min-h-[200px] group">
+                                        <div
+                                            className="business-card-preview"
+                                            style={{
+                                                transform: 'scale(0.7)',
+                                                transformOrigin: 'center center',
+                                                width: '3.5in',
+                                                height: '2in'
+                                            }}
+                                            dangerouslySetInnerHTML={{ __html: layout.jsx }}
+                                        />
+                                    </div>
+
+                                    {/* ========== 2. PROFILE INFO SECOND (VARIABLE HEIGHT) ========== */}
+                                    <div className="p-4 border-t border-gray-200">
+                                        {/* Title and View Button */}
+                                        <div className="flex items-center justify-between mb-2">
+                                            <h3 className="font-semibold text-gray-900">{layout.name}</h3>
+                                            <button
+                                                onClick={() => handleCardClick(layout)}
+                                                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                                                title="View Details"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                </svg>
+                                            </button>
+                                        </div>
+
+                                        {/* Catalog ID */}
+                                        <div className="mb-3">
+                                        <span className="font-mono bg-gray-100 px-2 py-1 rounded text-xs">
+                                            {layout.catalogId}
+                                        </span>
+                                        </div>
+
+                                        {/* Description */}
+                                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">{layout.description}</p>
+
+                                        {/* Theme and Style Tags */}
+                                        <div className="flex gap-2 flex-wrap mb-3">
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                            layout.theme === 'minimalistic' ? 'bg-gray-100 text-gray-800' :
+                                                layout.theme === 'modern' ? 'bg-blue-100 text-blue-800' :
+                                                    layout.theme === 'trendy' ? 'bg-purple-100 text-purple-800' :
+                                                        layout.theme === 'classic' ? 'bg-amber-100 text-amber-800' :
+                                                            layout.theme === 'creative' ? 'bg-pink-100 text-pink-800' :
+                                                                layout.theme === 'professional' ? 'bg-indigo-100 text-indigo-800' :
+                                                                    layout.theme === 'luxury' ? 'bg-yellow-100 text-yellow-800' :
+                                                                        layout.theme === 'tech' ? 'bg-green-100 text-green-800' :
+                                                                            layout.theme === 'vintage' ? 'bg-orange-100 text-orange-800' :
+                                                                                layout.theme === 'artistic' ? 'bg-red-100 text-red-800' :
+                                                                                    'bg-gray-100 text-gray-800'
+                                        }`}>
+                                            {layout.theme}
+                                        </span>
+
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                                layout.style === 'contact-focused'
+                                                    ? 'bg-emerald-100 text-emerald-800'
+                                                    : 'bg-cyan-100 text-cyan-800'
+                                            }`}>
+                                            {layout.style.replace('-', ' ')}
+                                        </span>
+                                        </div>
+
+                                        {/* Feature Tags */}
+                                        {layout.metadata?.features && layout.metadata.features.length > 0 && (
+                                            <div className="mb-3">
+                                                <div className="flex flex-wrap gap-1">
+                                                    {layout.metadata.features.slice(0, 4).map((feature, idx) => (
+                                                        <span key={idx} className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded">
+                                                        {feature}
+                                                    </span>
+                                                    ))}
+                                                    {layout.metadata.features.length > 4 && (
+                                                        <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded">
+                                                        +{layout.metadata.features.length - 4} more
+                                                    </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* ========== 3. ACTION BUTTONS LAST ========== */}
+                                    <div className="p-4 bg-gray-50 border-t border-gray-200 flex gap-2">
+                                        <button
+                                            onClick={() => handleLayoutSelect(layout)}
+                                            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
+                                                selectedLayout === layout.catalogId
+                                                    ? 'bg-purple-600 text-white'
+                                                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                                            }`}
+                                        >
+                                            {selectedLayout === layout.catalogId ? 'Selected' : 'Select Layout'}
+                                        </button>
+
                                         <button
                                             onClick={() => handleCardClick(layout)}
-                                            className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                                            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                                             title="View Details"
                                         >
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 616 0z" />
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                             </svg>
                                         </button>
                                     </div>
                                 </div>
-
-                                <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
-                                    <span className="font-mono bg-gray-100 px-2 py-1 rounded text-xs">
-                                        {layout.catalogId}
-                                    </span>
-                                </div>
-
-                                <p className="text-sm text-gray-600 mb-3 line-clamp-2">{layout.description}</p>
-
-                                {/* Theme and Style Tags */}
-                                <div className="flex gap-2 flex-wrap mb-3">
-                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                        layout.theme === 'minimalistic' ? 'bg-gray-100 text-gray-800' :
-                                            layout.theme === 'modern' ? 'bg-blue-100 text-blue-800' :
-                                                layout.theme === 'trendy' ? 'bg-purple-100 text-purple-800' :
-                                                    layout.theme === 'classic' ? 'bg-amber-100 text-amber-800' :
-                                                        layout.theme === 'creative' ? 'bg-pink-100 text-pink-800' :
-                                                            layout.theme === 'professional' ? 'bg-indigo-100 text-indigo-800' :
-                                                                layout.theme === 'luxury' ? 'bg-yellow-100 text-yellow-800' :
-                                                                    layout.theme === 'tech' ? 'bg-green-100 text-green-800' :
-                                                                        layout.theme === 'vintage' ? 'bg-orange-100 text-orange-800' :
-                                                                            layout.theme === 'artistic' ? 'bg-red-100 text-red-800' :
-                                                                                'bg-gray-100 text-gray-800'
-                                    }`}>
-                                        {layout.theme}
-                                    </span>
-
-                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                        layout.style === 'contact-focused'
-                                            ? 'bg-emerald-100 text-emerald-800'
-                                            : 'bg-cyan-100 text-cyan-800'
-                                    }`}>
-                                        {layout.style.replace('-', ' ')}
-                                    </span>
-                                </div>
-
-                                {/* Feature Tags */}
-                                {layout.metadata?.features && layout.metadata.features.length > 0 && (
-                                    <div className="mb-3">
-                                        <div className="flex flex-wrap gap-1">
-                                            {layout.metadata.features.slice(0, 4).map((feature, idx) => (
-                                                <span key={idx} className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded">
-                                                    {feature}
-                                                </span>
-                                            ))}
-                                            {layout.metadata.features.length > 4 && (
-                                                <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded">
-                                                    +{layout.metadata.features.length - 4} more
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Card Preview - EXACT COPY FROM ADMIN VIEWER */}
-                            <div className="relative bg-gray-100 p-4 flex items-center justify-center min-h-[200px] group">
-                                <div
-                                    className="business-card-preview"
-                                    style={{
-                                        transform: 'scale(0.7)',
-                                        transformOrigin: 'center center',
-                                        width: '3.5in',
-                                        height: '2in'
-                                    }}
-                                    dangerouslySetInnerHTML={{ __html: layout.jsx }}
-                                />
-                            </div>
-
-                            {/* Action Buttons */}
-                            <div className="p-4 bg-gray-50 flex gap-2">
-                                <button
-                                    onClick={() => handleLayoutSelect(layout)}
-                                    className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
-                                        selectedLayout === layout.catalogId
-                                            ? 'bg-purple-600 text-white'
-                                            : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-                                    }`}
-                                >
-                                    {selectedLayout === layout.catalogId ? 'Selected' : 'Select Layout'}
-                                </button>
-
-                                <button
-                                    onClick={() => handleCardClick(layout)}
-                                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                                    title="View Details"
-                                >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                    </svg>
-                                </button>
-                            </div>
+                            ))}
                         </div>
-                    ))}
+                    )}
                 </div>
-            )}
 
-            {/* Pagination */}
-            {paginatedData.totalPages > 1 && (
-                <div className="flex justify-center items-center space-x-2 pt-4 border-t border-gray-200">
-                    <button
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={!paginatedData.hasPreviousPage}
-                        className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        Previous
-                    </button>
+                {/* Modal Fixed Footer with Pagination and Navigation */}
+                <div className="border-t border-gray-200 bg-white px-6 py-4">
+                    {/* Pagination */}
+                    {paginatedData.totalPages > 1 && (
+                        <div className="flex justify-center items-center space-x-2 mb-4">
+                            <button
+                                onClick={() => handlePageChange(currentPage - 1)}
+                                disabled={!paginatedData.hasPreviousPage}
+                                className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Previous
+                            </button>
 
-                    <div className="flex space-x-1">
-                        {Array.from({ length: Math.min(5, paginatedData.totalPages) }, (_, i) => {
-                            const page = i + 1;
-                            const isCurrentPage = page === currentPage;
-                            return (
-                                <button
-                                    key={page}
-                                    onClick={() => handlePageChange(page)}
-                                    className={`px-3 py-2 text-sm rounded-lg ${
-                                        isCurrentPage
-                                            ? 'bg-purple-600 text-white'
-                                            : 'border border-gray-300 hover:bg-gray-50'
-                                    }`}
-                                >
-                                    {page}
-                                </button>
-                            );
-                        })}
+                            <div className="flex space-x-1">
+                                {Array.from({ length: Math.min(5, paginatedData.totalPages) }, (_, i) => {
+                                    const page = i + 1;
+                                    const isCurrentPage = page === currentPage;
+                                    return (
+                                        <button
+                                            key={page}
+                                            onClick={() => handlePageChange(page)}
+                                            className={`px-3 py-2 text-sm rounded-lg ${
+                                                isCurrentPage
+                                                    ? 'bg-purple-600 text-white'
+                                                    : 'border border-gray-300 hover:bg-gray-50'
+                                            }`}
+                                        >
+                                            {page}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            <button
+                                onClick={() => handlePageChange(currentPage + 1)}
+                                disabled={!paginatedData.hasNextPage}
+                                className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Next
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Navigation Buttons */}
+                    <div className="flex justify-between">
+                        <button
+                            onClick={onBack}
+                            className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                            ← Back to Info
+                        </button>
+
+                        <button
+                            onClick={onNext}
+                            disabled={!selectedLayout}
+                            className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                        >
+                            Preview Card →
+                        </button>
                     </div>
-
-                    <button
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={!paginatedData.hasNextPage}
-                        className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        Next
-                    </button>
                 </div>
-            )}
-
-            {/* Navigation */}
-            <div className="flex justify-between pt-6 border-t border-gray-200">
-                <button
-                    onClick={onBack}
-                    className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                    ← Back to Info
-                </button>
-
-                <button
-                    onClick={onNext}
-                    disabled={!selectedLayout}
-                    className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-                >
-                    Preview Card →
-                </button>
             </div>
 
             {/* Enlargement Modal */}
