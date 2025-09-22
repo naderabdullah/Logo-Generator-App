@@ -274,7 +274,7 @@ export default function SharedCatalogComponent({
     const [industryFilter, setIndustryFilter] = useState<string>('all');
     
     const router = useRouter();
-    const perPageOptions = defaultItemsPerPage === 30 ? [6, 12, 18, 30, 60] : [5, 10, 15, 20, 30];
+    const perPageOptions = defaultItemsPerPage === 30 ? [6, 12, 18, 30, 60] : [6, 12, 18, 30, 60];
 
     const fetchCatalog = useCallback(async (page: number, search: string, industry: string, limit: number) => {
         setLoadingMore(page > 1);

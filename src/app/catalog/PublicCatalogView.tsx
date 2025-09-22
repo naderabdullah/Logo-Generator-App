@@ -8,7 +8,7 @@ export default function PublicCatalogView() {
         <SharedCatalogComponent
             apiEndpoint="/api/catalog/public"
             title="Smarty Logos Catalog"
-            defaultItemsPerPage={15}
+            defaultItemsPerPage={30}
             canRemoveLogos={false}
             hasHeader={false}  // No header on public catalog
         />
