@@ -839,7 +839,10 @@ const LogoGrid = ({
                           <div className="h-px bg-gray-200"/>
 
                           <div className="group w-full cursor-pointer transition-colors hover:bg-red-50"
-                               onClick={() => setShowBulkDeleteModal(true)}>
+                               onClick={() => {
+                                  setShowBulkDeleteModal(true);
+                                  setShowActionsDropdown(false);
+                                }}>
                             <button className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-700 text-left">
                               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
