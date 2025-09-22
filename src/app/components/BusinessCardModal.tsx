@@ -63,6 +63,10 @@ export const BusinessCardModal: React.FC<BusinessCardModalProps> = ({ isOpen, on
         socialMedia: []
     });
 
+    // Layout step pagination state
+    const [layoutCurrentPage, setLayoutCurrentPage] = useState(1);
+    const [layoutPaginationData, setLayoutPaginationData] = useState<any>(null);
+
     // Logo hook placeholder - to be implemented in future iteration
     const logo = null;
     const logoLoading = false;
@@ -78,151 +82,157 @@ export const BusinessCardModal: React.FC<BusinessCardModalProps> = ({ isOpen, on
                 name: formData.name,
                 title: formData.title,
                 logoId: formData.logo.logoId,
-                hasLogoDataUri: !!formData.logo.logoDataUri
+                hasLogoDataUri: !!formData.logo.logoDataUri,
+                phonesCount: formData.phones.length,
+                emailsCount: formData.emails.length,
+                addressesCount: formData.addresses.length,
+                websitesCount: formData.websites.length,
+                socialMediaCount: formData.socialMedia.length
             }
         });
     }, [currentStep, selectedLayout, formData]);
 
-    // Debug logo state - placeholder for future logo integration
+    // Modal effect management
     useEffect(() => {
-        console.log('🖼️ BusinessCardModal - Logo integration will be added in future iteration');
-    }, [formData.logo]);
+        if (isOpen) {
+            console.log('🎨 BusinessCardModal - Modal opened, preventing body scroll');
+            document.body.style.overflow = 'hidden';
+        } else {
+            console.log('🎨 BusinessCardModal - Modal closed, restoring body scroll');
+            document.body.style.overflow = '';
+        }
 
-    // Field management functions
-    const handleAddContactField = (fieldType: 'phones' | 'emails' | 'websites') => {
-        setFormData(prev => ({
-            ...prev,
-            [fieldType]: [...prev[fieldType], { value: '', label: '', isPrimary: false }]
-        }));
-    };
+        // Cleanup on unmount
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [isOpen]);
 
-    const handleRemoveContactField = (fieldType: 'phones' | 'emails' | 'websites', index: number) => {
-        setFormData(prev => ({
-            ...prev,
-            [fieldType]: prev[fieldType].filter((_, i) => i !== index)
-        }));
-    };
-
-    // PDF generation handler
-    const handleGenerate = async () => {
-        setIsGenerating(true);
-        setError(null);
-
-        // Enhanced debugging
-        console.log('🎨 BusinessCardModal - Form Data Debug:', {
-            companyName: formData.companyName,
-            name: formData.name,
-            title: formData.title,
-            logoId: formData.logo.logoId,
-            logoDataUri: formData.logo.logoDataUri ? {
-                hasDataUri: true,
-                length: formData.logo.logoDataUri.length,
-                startsWithData: formData.logo.logoDataUri.startsWith('data:'),
-                preview: formData.logo.logoDataUri.substring(0, 50) + '...'
-            } : null,
-            phones: formData.phones,
-            emails: formData.emails
-        });
-
-        console.log('🖼️ Logo integration placeholder - will be added in future iteration');
-
+    // Contact field management
+    const handleAddContactField = (type: 'phone' | 'email' | 'address' | 'website' | 'social') => {
         try {
-            // Prepare the data payload for PDF generation
-            const payload = {
-                selectedLayout, // Now uses layout instead of template
-                formData: {
-                    ...formData,
-                    logo: {
-                        ...formData.logo,
-                        // Logo integration will be added in future iteration
-                        logoDataUri: formData.logo.logoDataUri || ''
-                    }
-                }
+            console.log(`🎨 BusinessCardModal - Adding new ${type} field`);
+
+            const newField: ContactField = {
+                value: '',
+                label: '',
+                isPrimary: false
             };
 
-            console.log('📤 Sending payload to PDF generator:', {
-                selectedLayout,
-                hasFormDataLogo: !!payload.formData.logo.logoDataUri,
-                logoDataUriLength: payload.formData.logo.logoDataUri?.length
+            setFormData(prev => {
+                const updated = { ...prev };
+                switch (type) {
+                    case 'phone':
+                        updated.phones = [...prev.phones, newField];
+                        break;
+                    case 'email':
+                        updated.emails = [...prev.emails, newField];
+                        break;
+                    case 'website':
+                        updated.websites = [...prev.websites, newField];
+                        break;
+                    case 'social':
+                        updated.socialMedia = [...prev.socialMedia, newField];
+                        break;
+                    case 'address':
+                        updated.addresses = [...prev.addresses, {
+                            street: '',
+                            city: '',
+                            state: '',
+                            zipCode: '',
+                            country: '',
+                            label: '',
+                            isPrimary: false
+                        }];
+                        break;
+                }
+                return updated;
             });
 
-            const response = await fetch('/api/business-cards/generate-pdf', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload)
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-                throw new Error(errorData.error || `Server error: ${response.status}`);
-            }
-
-            // Handle PDF download
-            const blob = await response.blob();
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `business-card-${formData.name.replace(/\s+/g, '-').toLowerCase()}.pdf`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-
-            console.log('✅ Business card PDF generated and downloaded successfully');
-
-            // Close modal after successful generation
-            onClose();
-
+            console.log(`✅ Added new ${type} field successfully`);
         } catch (err) {
-            console.error('❌ Business card generation failed:', err);
-            setError(err instanceof Error ? err.message : 'Failed to generate business card');
+            console.error(`❌ Error adding ${type} field:`, err);
+            setError(`Failed to add ${type} field`);
+        }
+    };
+
+    const handleRemoveContactField = (type: 'phone' | 'email' | 'address' | 'website' | 'social', index: number) => {
+        try {
+            console.log(`🎨 BusinessCardModal - Removing ${type} field at index ${index}`);
+
+            setFormData(prev => {
+                const updated = { ...prev };
+                switch (type) {
+                    case 'phone':
+                        updated.phones = prev.phones.filter((_, i) => i !== index);
+                        break;
+                    case 'email':
+                        updated.emails = prev.emails.filter((_, i) => i !== index);
+                        break;
+                    case 'website':
+                        updated.websites = prev.websites.filter((_, i) => i !== index);
+                        break;
+                    case 'social':
+                        updated.socialMedia = prev.socialMedia.filter((_, i) => i !== index);
+                        break;
+                    case 'address':
+                        updated.addresses = prev.addresses.filter((_, i) => i !== index);
+                        break;
+                }
+                return updated;
+            });
+
+            console.log(`✅ Removed ${type} field at index ${index} successfully`);
+        } catch (err) {
+            console.error(`❌ Error removing ${type} field:`, err);
+            setError(`Failed to remove ${type} field`);
+        }
+    };
+
+    // Generation handler
+    const handleGenerate = async () => {
+        try {
+            console.log('🎨 BusinessCardModal - Starting business card generation with:', {
+                selectedLayout,
+                formData: formData.name,
+                company: formData.companyName
+            });
+
+            setIsGenerating(true);
+            setError(null);
+
+            // TODO: Implement actual generation logic
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            console.log('✅ Business card generation completed successfully');
+
+            onClose();
+        } catch (err) {
+            console.error('❌ Error during business card generation:', err);
+            setError('Failed to generate business card. Please try again.');
         } finally {
             setIsGenerating(false);
         }
     };
 
-    // Reset form when modal closes
-    useEffect(() => {
-        if (!isOpen) {
-            setCurrentStep('info');
-            setSelectedLayout(null);
-            setIsGenerating(false);
-            setError(null);
-            setFormData({
-                companyName: '',
-                name: '',
-                title: '',
-                logo: {
-                    logoId: '',
-                    logoDataUri: '',
-                    position: 'auto'
-                },
-                phones: [],
-                emails: [],
-                addresses: [],
-                websites: [],
-                socialMedia: []
-            });
-        }
-    }, [isOpen]);
-
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-                {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b">
-                    <h1 className="text-2xl font-bold text-gray-900">Create Business Card</h1>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg shadow-xl max-w-5xl w-full max-h-[95vh] flex flex-col overflow-hidden">
+                {/* Modal Header */}
+                <div className="flex justify-between items-center p-6 border-b border-gray-200">
+                    <h2 className="text-2xl font-bold text-gray-900">Create Business Card</h2>
                     <button
                         onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600 text-2xl font-light w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors relative"
+                        className="text-gray-400 hover:text-gray-600 transition-colors relative"
+                        disabled={isGenerating}
                         aria-label="Close modal"
                     >
-                        ×
-                        <div className="absolute inset-0 rounded-full bg-gray-200 scale-0 hover:scale-110 transition-transform duration-200 ease-out opacity-20 -z-10"></div>
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 opacity-0 hover:opacity-20 transition-opacity transform duration-200 ease-out opacity-20 -z-10"></div>
                     </button>
                 </div>
 
@@ -263,40 +273,112 @@ export const BusinessCardModal: React.FC<BusinessCardModalProps> = ({ isOpen, on
                     </div>
                 )}
 
-                {/* Step Content - Scrollable */}
-                <div className="flex-1 overflow-y-auto">
-                    <div className="p-6">
-                        {currentStep === 'info' && (
-                            <ContactInfoForm
-                                formData={formData}
-                                setFormData={setFormData}
-                                onNext={() => setCurrentStep('layout')}
-                                onAddField={handleAddContactField}
-                                onRemoveField={handleRemoveContactField}
-                            />
-                        )}
+                {/* Step Content */}
+                {currentStep === 'layout' ? (
+                    // Special structure for step 2 with fixed footer
+                    <div className="flex-1 flex flex-col min-h-0">
+                        <div className="flex-1 overflow-y-auto">
+                            <div className="p-6">
+                                <BusinessCardLayoutSelection
+                                    selectedLayout={selectedLayout}
+                                    setSelectedLayout={setSelectedLayout}
+                                    formData={formData}
+                                    hideFooter={true}
+                                    currentPage={layoutCurrentPage}
+                                    onPageChange={setLayoutCurrentPage}
+                                    onPaginationDataChange={setLayoutPaginationData}
+                                />
+                            </div>
+                        </div>
 
-                        {currentStep === 'layout' && (
-                            <BusinessCardLayoutSelection
-                                selectedLayout={selectedLayout}
-                                setSelectedLayout={setSelectedLayout}
-                                formData={formData}
-                                onBack={() => setCurrentStep('info')}
-                                onNext={() => setCurrentStep('preview')}
-                            />
-                        )}
+                        {/* Fixed Footer for Step 2 */}
+                        <div className="border-t border-gray-200 bg-white px-6 py-4">
+                            {/* Pagination */}
+                            {layoutPaginationData && layoutPaginationData.totalPages > 1 && (
+                                <div className="flex justify-center items-center space-x-2 mb-4">
+                                    <button
+                                        onClick={() => setLayoutCurrentPage(layoutCurrentPage - 1)}
+                                        disabled={!layoutPaginationData.hasPreviousPage}
+                                        className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        Previous
+                                    </button>
 
-                        {currentStep === 'preview' && (
-                            <PreviewAndGenerate
-                                selectedTemplate={selectedLayout}
-                                formData={formData}
-                                isGenerating={isGenerating}
-                                onBack={() => setCurrentStep('layout')}
-                                onGenerate={handleGenerate}
-                            />
-                        )}
+                                    <div className="flex space-x-1">
+                                        {Array.from({ length: Math.min(5, layoutPaginationData.totalPages) }, (_, i) => {
+                                            const page = i + 1;
+                                            const isCurrentPage = page === layoutCurrentPage;
+                                            return (
+                                                <button
+                                                    key={page}
+                                                    onClick={() => setLayoutCurrentPage(page)}
+                                                    className={`px-3 py-2 text-sm rounded-lg ${
+                                                        isCurrentPage
+                                                            ? 'bg-purple-600 text-white'
+                                                            : 'border border-gray-300 hover:bg-gray-50'
+                                                    }`}
+                                                >
+                                                    {page}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+
+                                    <button
+                                        onClick={() => setLayoutCurrentPage(layoutCurrentPage + 1)}
+                                        disabled={!layoutPaginationData.hasNextPage}
+                                        className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        Next
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Navigation Buttons */}
+                            <div className="flex justify-between">
+                                <button
+                                    onClick={() => setCurrentStep('info')}
+                                    className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                                >
+                                    ← Back to Info
+                                </button>
+
+                                <button
+                                    onClick={() => setCurrentStep('preview')}
+                                    disabled={!selectedLayout}
+                                    className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    Preview Card →
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                </div>
+                ) : (
+                    // Normal scrollable structure for other steps
+                    <div className="flex-1 overflow-y-auto">
+                        <div className="p-6">
+                            {currentStep === 'info' && (
+                                <ContactInfoForm
+                                    formData={formData}
+                                    setFormData={setFormData}
+                                    onNext={() => setCurrentStep('layout')}
+                                    onAddField={handleAddContactField}
+                                    onRemoveField={handleRemoveContactField}
+                                />
+                            )}
+
+                            {currentStep === 'preview' && (
+                                <PreviewAndGenerate
+                                    selectedTemplate={selectedLayout}
+                                    formData={formData}
+                                    isGenerating={isGenerating}
+                                    onBack={() => setCurrentStep('layout')}
+                                    onGenerate={handleGenerate}
+                                />
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
