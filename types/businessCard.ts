@@ -118,7 +118,7 @@ export interface TemplatePreviewProps {
 }
 
 export interface BusinessCardModalProps {
-    logo: StoredLogo;
+    logo?: StoredLogo;
     isOpen: boolean;
     onClose: () => void;
 }
@@ -129,6 +129,7 @@ export interface ContactInfoFormProps {
     onNext: () => void;
     onAddField: (fieldType: 'phones' | 'emails' | 'websites') => void;
     onRemoveField: (fieldType: 'phones' | 'emails' | 'websites', index: number) => void;
+    logo?: StoredLogo; // ADDED: Logo prop for preview functionality
 }
 
 export interface TemplateSelectionProps {

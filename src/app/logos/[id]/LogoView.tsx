@@ -280,27 +280,34 @@ export default function LogoView({ logoId }: LogoViewProps) {
 
   // ADDED: Business Cards handler
   const handleBusinessCardsClick = async () => {
-    if (!logo || !user?.email) return;
-
     try {
-      console.log('🎴 Fetching full logo data for business cards...');
-      console.log('🔍 Logo ID:', logo.id);
+      console.log('🎨 BusinessCardsClick - Starting with logo ID:', logoId);
 
-      // Fetch the FULL logo data including imageDataUri
-      const fullLogo = await getLogo(logo.id, user.email);
+      if (!logoId) {
+        console.error('❌ No logo ID available');
+        alert('Logo ID not found. Please try again.');
+        return;
+      }
 
-      if (fullLogo) {
-        console.log('✅ Full logo data retrieved:', {
+      // Get the full logo data including image data
+      const fullLogo = await getLogo(logoId);
+
+      if (fullLogo && fullLogo.imageDataUri) {
+        console.log('✅ Successfully fetched logo data for business cards:', {
           logoId: fullLogo.id,
-          hasImageDataUri: !!fullLogo.imageDataUri,
+          name: fullLogo.name,
+          hasImageData: !!fullLogo.imageDataUri,
           imageDataLength: fullLogo.imageDataUri?.length,
-          name: fullLogo.name
         });
 
+        // Set the logo for the modal
         setSelectedLogoForCards(fullLogo);
         setShowBusinessCardModal(true);
+
+        console.log('🎨 Business card modal opened with logo data');
       } else {
-        console.error('❌ Failed to fetch full logo data');
+        console.error('❌ Failed to fetch full logo data or missing image data');
+        console.error('Full logo object:', fullLogo);
         alert('Failed to load logo data. Please try again.');
       }
     } catch (error) {

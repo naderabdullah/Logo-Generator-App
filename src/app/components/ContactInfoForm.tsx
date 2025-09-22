@@ -1,6 +1,10 @@
-// src/app/components/ContactInfoForm.tsx - Original with only button text change
+// FILE: src/app/components/ContactInfoForm.tsx
+// PURPOSE: REVERTED to original 2-column layout, removed logo preview panel
+// This restores the original structure without any logo preview in the form itself
+
 'use client';
 import { BusinessCardData } from '../../../types/businessCard';
+import { StoredLogo } from '../utils/indexedDBUtils';
 
 interface ContactInfoFormProps {
     formData: BusinessCardData;
@@ -8,6 +12,7 @@ interface ContactInfoFormProps {
     onNext: () => void;
     onAddField: (fieldType: 'phones' | 'emails' | 'websites') => void;
     onRemoveField: (fieldType: 'phones' | 'emails' | 'websites', index: number) => void;
+    logo?: StoredLogo; // Keep for compatibility but don't use in this component
 }
 
 export const ContactInfoForm = ({
@@ -15,8 +20,11 @@ export const ContactInfoForm = ({
                                     setFormData,
                                     onNext,
                                     onAddField,
-                                    onRemoveField
+                                    onRemoveField,
+                                    logo
                                 }: ContactInfoFormProps) => {
+
+    console.log('📋 ContactInfoForm - Rendering with original layout (logo moved to header)');
 
     const handleFieldChange = (field: keyof BusinessCardData, value: any) => {
         setFormData({ ...formData, [field]: value });
@@ -51,6 +59,7 @@ export const ContactInfoForm = ({
                 <p className="text-gray-600">Fill in your professional details for the business cards</p>
             </div>
 
+            {/* REVERTED: Back to original 2-column grid structure */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
                 {/* Personal & Company Info */}
@@ -67,20 +76,7 @@ export const ContactInfoForm = ({
                                 value={formData.name}
                                 onChange={(e) => handleFieldChange('name', e.target.value)}
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
-                                placeholder="John Doe"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Job Title
-                            </label>
-                            <input
-                                type="text"
-                                value={formData.title}
-                                onChange={(e) => handleFieldChange('title', e.target.value)}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
-                                placeholder="Marketing Director"
+                                placeholder="Your full name"
                             />
                         </div>
 
@@ -93,20 +89,33 @@ export const ContactInfoForm = ({
                                 value={formData.companyName}
                                 onChange={(e) => handleFieldChange('companyName', e.target.value)}
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
-                                placeholder="Acme Corporation"
+                                placeholder="Your company name"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Job Title
+                            </label>
+                            <input
+                                type="text"
+                                value={formData.title}
+                                onChange={(e) => handleFieldChange('title', e.target.value)}
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
+                                placeholder="Your job title"
                             />
                         </div>
                     </div>
                 </div>
 
-                {/* Contact Information */}
+                {/* Contact Details */}
                 <div className="space-y-6">
                     <h4 className="text-lg font-semibold text-gray-900 border-b pb-2">Contact Details</h4>
 
                     {/* Phone Numbers */}
-                    <div>
-                        <div className="flex items-center justify-between mb-3">
-                            <label className="text-sm font-medium text-gray-700">Phone Numbers</label>
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <label className="text-sm font-medium text-gray-700">Phone Numbers *</label>
                             <button
                                 type="button"
                                 onClick={() => onAddField('phones')}
@@ -115,39 +124,44 @@ export const ContactInfoForm = ({
                                 + Add Phone
                             </button>
                         </div>
-                        <div className="space-y-2">
-                            {formData.phones.map((phone, index) => (
-                                <div key={index} className="flex items-center space-x-2">
-                                    <input
-                                        type="text"
-                                        placeholder="Label (Mobile, Office, etc.)"
-                                        value={phone.label}
-                                        onChange={(e) => handleContactChange('phones', index, 'label', e.target.value)}
-                                        className="w-32 px-2 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                    />
-                                    <input
-                                        type="tel"
-                                        placeholder="+1 (555) 123-4567"
-                                        value={phone.value}
-                                        onChange={(e) => handleContactChange('phones', index, 'value', e.target.value)}
-                                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => onRemoveField('phones', index)}
-                                        className="text-red-500 hover:text-red-700 px-2 text-sm font-bold"
-                                    >
-                                        ×
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
+
+                        {formData.phones.length > 0 && (
+                            <div className="space-y-3">
+                                {formData.phones.map((phone, index) => (
+                                    <div key={index} className="flex gap-3">
+                                        <input
+                                            type="text"
+                                            placeholder="Label (e.g., Mobile, Office)"
+                                            value={phone.label}
+                                            onChange={(e) => handleContactChange('phones', index, 'label', e.target.value)}
+                                            className="w-1/3 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                        />
+                                        <input
+                                            type="tel"
+                                            placeholder="Phone number"
+                                            value={phone.value}
+                                            onChange={(e) => handleContactChange('phones', index, 'value', e.target.value)}
+                                            className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                        />
+                                        {formData.phones.length > 1 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => onRemoveField('phones', index)}
+                                                className="text-red-500 hover:text-red-700 px-2 text-sm font-bold"
+                                            >
+                                                ×
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     {/* Email Addresses */}
-                    <div>
-                        <div className="flex items-center justify-between mb-3">
-                            <label className="text-sm font-medium text-gray-700">Email Addresses</label>
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <label className="text-sm font-medium text-gray-700">Email Addresses *</label>
                             <button
                                 type="button"
                                 onClick={() => onAddField('emails')}
@@ -156,39 +170,44 @@ export const ContactInfoForm = ({
                                 + Add Email
                             </button>
                         </div>
-                        <div className="space-y-2">
-                            {formData.emails.map((email, index) => (
-                                <div key={index} className="flex items-center space-x-2">
-                                    <input
-                                        type="text"
-                                        placeholder="Label (Work, Personal, etc.)"
-                                        value={email.label}
-                                        onChange={(e) => handleContactChange('emails', index, 'label', e.target.value)}
-                                        className="w-32 px-2 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                    />
-                                    <input
-                                        type="email"
-                                        placeholder="name@company.com"
-                                        value={email.value}
-                                        onChange={(e) => handleContactChange('emails', index, 'value', e.target.value)}
-                                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => onRemoveField('emails', index)}
-                                        className="text-red-500 hover:text-red-700 px-2 text-sm font-bold"
-                                    >
-                                        ×
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
+
+                        {formData.emails.length > 0 && (
+                            <div className="space-y-3">
+                                {formData.emails.map((email, index) => (
+                                    <div key={index} className="flex gap-3">
+                                        <input
+                                            type="text"
+                                            placeholder="Label (e.g., Work, Personal)"
+                                            value={email.label}
+                                            onChange={(e) => handleContactChange('emails', index, 'label', e.target.value)}
+                                            className="w-1/3 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                        />
+                                        <input
+                                            type="email"
+                                            placeholder="Email address"
+                                            value={email.value}
+                                            onChange={(e) => handleContactChange('emails', index, 'value', e.target.value)}
+                                            className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                        />
+                                        {formData.emails.length > 1 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => onRemoveField('emails', index)}
+                                                className="text-red-500 hover:text-red-700 px-2 text-sm font-bold"
+                                            >
+                                                ×
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
-                    {/* Websites (Optional) */}
-                    <div>
-                        <div className="flex items-center justify-between mb-3">
-                            <label className="text-sm font-medium text-gray-700">Websites (Optional)</label>
+                    {/* Website URLs */}
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <label className="text-sm font-medium text-gray-700">Websites</label>
                             <button
                                 type="button"
                                 onClick={() => onAddField('websites')}
@@ -197,13 +216,21 @@ export const ContactInfoForm = ({
                                 + Add Website
                             </button>
                         </div>
+
                         {formData.websites.length > 0 && (
-                            <div className="space-y-2">
+                            <div className="space-y-3">
                                 {formData.websites.map((website, index) => (
-                                    <div key={index} className="flex items-center space-x-3">
+                                    <div key={index} className="flex gap-3">
+                                        <input
+                                            type="text"
+                                            placeholder="Label (e.g., Portfolio, LinkedIn)"
+                                            value={website.label}
+                                            onChange={(e) => handleContactChange('websites', index, 'label', e.target.value)}
+                                            className="w-1/3 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                        />
                                         <input
                                             type="url"
-                                            placeholder="www.company.com"
+                                            placeholder="Website URL"
                                             value={website.value}
                                             onChange={(e) => handleContactChange('websites', index, 'value', e.target.value)}
                                             className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
