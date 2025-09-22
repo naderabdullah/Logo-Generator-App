@@ -117,7 +117,7 @@ export const BusinessCardLayoutSelection: React.FC<BusinessCardLayoutSelectionPr
                 layoutsOnPage: layouts.length
             });
 
-            const paginationData = {
+            return {
                 layouts,
                 currentPage,
                 totalPages,
@@ -126,13 +126,6 @@ export const BusinessCardLayoutSelection: React.FC<BusinessCardLayoutSelectionPr
                 totalItems,
                 itemsPerPage
             };
-
-            // Pass pagination data to parent if callback provided
-            if (onPaginationDataChange) {
-                onPaginationDataChange(paginationData);
-            }
-
-            return paginationData;
         } catch (err) {
             console.error('❌ Error calculating pagination:', err);
             return {
@@ -145,7 +138,14 @@ export const BusinessCardLayoutSelection: React.FC<BusinessCardLayoutSelectionPr
                 itemsPerPage
             };
         }
-    }, [filteredLayouts, currentPage, itemsPerPage, onPaginationDataChange]);
+    }, [filteredLayouts, currentPage, itemsPerPage]);
+
+    // Pass pagination data to parent using useEffect to avoid render-time state updates
+    useEffect(() => {
+        if (onPaginationDataChange && paginatedData) {
+            onPaginationDataChange(paginatedData);
+        }
+    }, [paginatedData, onPaginationDataChange]);
 
     // Handle layout selection
     const handleLayoutSelect = useCallback((layout: BusinessCardLayout) => {

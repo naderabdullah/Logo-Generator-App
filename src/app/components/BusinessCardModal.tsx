@@ -293,49 +293,9 @@ export const BusinessCardModal: React.FC<BusinessCardModalProps> = ({ isOpen, on
 
                         {/* Fixed Footer for Step 2 */}
                         <div className="border-t border-gray-200 bg-white px-6 py-4">
-                            {/* Pagination */}
-                            {layoutPaginationData && layoutPaginationData.totalPages > 1 && (
-                                <div className="flex justify-center items-center space-x-2 mb-4">
-                                    <button
-                                        onClick={() => setLayoutCurrentPage(layoutCurrentPage - 1)}
-                                        disabled={!layoutPaginationData.hasPreviousPage}
-                                        className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        Previous
-                                    </button>
-
-                                    <div className="flex space-x-1">
-                                        {Array.from({ length: Math.min(5, layoutPaginationData.totalPages) }, (_, i) => {
-                                            const page = i + 1;
-                                            const isCurrentPage = page === layoutCurrentPage;
-                                            return (
-                                                <button
-                                                    key={page}
-                                                    onClick={() => setLayoutCurrentPage(page)}
-                                                    className={`px-3 py-2 text-sm rounded-lg ${
-                                                        isCurrentPage
-                                                            ? 'bg-purple-600 text-white'
-                                                            : 'border border-gray-300 hover:bg-gray-50'
-                                                    }`}
-                                                >
-                                                    {page}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-
-                                    <button
-                                        onClick={() => setLayoutCurrentPage(layoutCurrentPage + 1)}
-                                        disabled={!layoutPaginationData.hasNextPage}
-                                        className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        Next
-                                    </button>
-                                </div>
-                            )}
-
-                            {/* Navigation Buttons */}
-                            <div className="flex justify-between">
+                            {/* Single Row Layout: Back Button | Pagination | Next Button */}
+                            <div className="flex items-center justify-between">
+                                {/* Back Button */}
                                 <button
                                     onClick={() => setCurrentStep('info')}
                                     className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
@@ -343,6 +303,48 @@ export const BusinessCardModal: React.FC<BusinessCardModalProps> = ({ isOpen, on
                                     ← Back to Info
                                 </button>
 
+                                {/* Pagination Controls (Center) */}
+                                {layoutPaginationData && layoutPaginationData.totalPages > 1 && (
+                                    <div className="flex items-center space-x-2">
+                                        <button
+                                            onClick={() => setLayoutCurrentPage(layoutCurrentPage - 1)}
+                                            disabled={!layoutPaginationData.hasPreviousPage}
+                                            className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            Previous
+                                        </button>
+
+                                        <div className="flex space-x-1">
+                                            {Array.from({ length: Math.min(5, layoutPaginationData.totalPages) }, (_, i) => {
+                                                const page = i + 1;
+                                                const isCurrentPage = page === layoutCurrentPage;
+                                                return (
+                                                    <button
+                                                        key={page}
+                                                        onClick={() => setLayoutCurrentPage(page)}
+                                                        className={`px-3 py-2 text-sm rounded-lg ${
+                                                            isCurrentPage
+                                                                ? 'bg-purple-600 text-white'
+                                                                : 'border border-gray-300 hover:bg-gray-50'
+                                                        }`}
+                                                    >
+                                                        {page}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+
+                                        <button
+                                            onClick={() => setLayoutCurrentPage(layoutCurrentPage + 1)}
+                                            disabled={!layoutPaginationData.hasNextPage}
+                                            className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            Next
+                                        </button>
+                                    </div>
+                                )}
+
+                                {/* Next Button */}
                                 <button
                                     onClick={() => setCurrentStep('preview')}
                                     disabled={!selectedLayout}
