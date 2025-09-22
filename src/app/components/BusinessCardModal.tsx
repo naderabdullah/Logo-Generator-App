@@ -1,57 +1,92 @@
+// src/app/components/BusinessCardModal.tsx
 'use client';
-
-import { useState, useEffect } from 'react';
-import { StoredLogo } from '@/app/utils/indexedDBUtils';
-import { BusinessCardData } from '../../../types/businessCard';
-import { BUSINESS_CARD_TEMPLATES } from '@/data/businessCardTemplates';
+import React, { useState, useEffect } from 'react';
+import { BusinessCardData, ContactField } from '../../../types/businessCard';
 import { ContactInfoForm } from './ContactInfoForm';
-import { TemplateSelection } from './TemplateSelection';
+import { BusinessCardLayoutSelection } from './BusinessCardLayoutSelection';
 import { PreviewAndGenerate } from './PreviewAndGenerate';
-import { StepIndicator } from './StepIndicator';
+// Logo hook functionality to be added in future iteration
 
 interface BusinessCardModalProps {
-    logo: StoredLogo;
     isOpen: boolean;
     onClose: () => void;
 }
 
-type ModalStep = 'info' | 'template' | 'preview';
+type WizardStep = 'info' | 'layout' | 'preview';
 
-export const BusinessCardModal = ({ logo, isOpen, onClose }: BusinessCardModalProps) => {
-    // Form state with defaults from logo
+interface StepIndicatorProps {
+    step: number;
+    label: string;
+    isActive: boolean;
+    isCompleted: boolean;
+}
+
+const StepIndicator: React.FC<StepIndicatorProps> = ({ step, label, isActive, isCompleted }) => (
+    <div className="flex items-center space-x-2">
+        <div className={`
+            w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
+            ${isActive ? 'bg-purple-600 text-white' :
+            isCompleted ? 'bg-green-500 text-white' :
+                'bg-gray-200 text-gray-600'}
+        `}>
+            {isCompleted ? '✓' : step}
+        </div>
+        <span className={`text-sm ${isActive ? 'text-purple-600 font-medium' : 'text-gray-600'}`}>
+            {label}
+        </span>
+    </div>
+);
+
+export const BusinessCardModal: React.FC<BusinessCardModalProps> = ({ isOpen, onClose }) => {
+    console.log('🎨 BusinessCardModal - Render with isOpen:', isOpen);
+
+    // Wizard state
+    const [currentStep, setCurrentStep] = useState<WizardStep>('info');
+    const [selectedLayout, setSelectedLayout] = useState<string | null>(null);
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    // Form data
     const [formData, setFormData] = useState<BusinessCardData>({
-        companyName: logo.parameters.companyName || '',
+        companyName: '',
         name: '',
         title: '',
         logo: {
-            logoId: logo.id,
-            logoDataUri: logo.imageDataUri,
+            logoId: '',
+            logoDataUri: '',
             position: 'auto'
         },
-        phones: [{ value: '', label: 'Mobile', isPrimary: true }],
-        emails: [{ value: '', label: '', isPrimary: true }],
+        phones: [{ value: '', label: '', isPrimary: false }],
+        emails: [{ value: '', label: '', isPrimary: false }],
         addresses: [],
-        websites: [],
-        socialMedia: [],
-        customFields: {}
+        websites: [{ value: '', label: '', isPrimary: false }],
+        socialMedia: []
     });
 
-    const [selectedTemplate, setSelectedTemplate] = useState(BUSINESS_CARD_TEMPLATES[0].id);
-    const [isGenerating, setIsGenerating] = useState(false);
-    const [currentStep, setCurrentStep] = useState<ModalStep>('info');
-    const [error, setError] = useState<string | null>(null);
-    const [isClosing, setIsClosing] = useState(false);
+    // Logo hook placeholder - to be implemented in future iteration
+    const logo = null;
+    const logoLoading = false;
+    const logoError = null;
 
+    // Debug current form data state
     useEffect(() => {
-        console.log('🔍 BusinessCardModal initialized with logo:', {
-            logoId: logo.id,
-            logoName: logo.name,
-            hasImageDataUri: !!logo.imageDataUri,
-            imageDataLength: logo.imageDataUri?.length,
-            formDataLogoId: formData.logo.logoId,
-            formDataHasDataUri: !!formData.logo.logoDataUri
+        console.log('🎨 BusinessCardModal - Form Data State Update:', {
+            step: currentStep,
+            selectedLayout,
+            formData: {
+                companyName: formData.companyName,
+                name: formData.name,
+                title: formData.title,
+                logoId: formData.logo.logoId,
+                hasLogoDataUri: !!formData.logo.logoDataUri
+            }
         });
-    }, [logo, formData.logo]);
+    }, [currentStep, selectedLayout, formData]);
+
+    // Debug logo state - placeholder for future logo integration
+    useEffect(() => {
+        console.log('🖼️ BusinessCardModal - Logo integration will be added in future iteration');
+    }, [formData.logo]);
 
     // Field management functions
     const handleAddContactField = (fieldType: 'phones' | 'emails' | 'websites') => {
@@ -69,10 +104,6 @@ export const BusinessCardModal = ({ logo, isOpen, onClose }: BusinessCardModalPr
     };
 
     // PDF generation handler
-    // Replace the ENTIRE handleGenerate function in BusinessCardModal.tsx with this:
-
-    // Complete FIXED handleGenerate function - replace the entire function in BusinessCardModal.tsx
-
     const handleGenerate = async () => {
         setIsGenerating(true);
         setError(null);
@@ -93,138 +124,105 @@ export const BusinessCardModal = ({ logo, isOpen, onClose }: BusinessCardModalPr
             emails: formData.emails
         });
 
-        console.log('🖼️ Original Logo Object:', {
-            logoId: logo.id,
-            hasImageDataUri: !!logo.imageDataUri,
-            imageDataLength: logo.imageDataUri?.length,
-            imageDataPreview: logo.imageDataUri?.substring(0, 50) + '...'
-        });
+        console.log('🖼️ Logo integration placeholder - will be added in future iteration');
 
         try {
-            const requestBody = {
-                templateId: selectedTemplate,
-                cardData: formData,
-                cardCount: 10
+            // Prepare the data payload for PDF generation
+            const payload = {
+                selectedLayout, // Now uses layout instead of template
+                formData: {
+                    ...formData,
+                    logo: {
+                        ...formData.logo,
+                        // Logo integration will be added in future iteration
+                        logoDataUri: formData.logo.logoDataUri || ''
+                    }
+                }
             };
 
-            console.log('📤 Sending to API:', requestBody);
+            console.log('📤 Sending payload to PDF generator:', {
+                selectedLayout,
+                hasFormDataLogo: !!payload.formData.logo.logoDataUri,
+                logoDataUriLength: payload.formData.logo.logoDataUri?.length
+            });
 
-            const response = await fetch('/api/business-cards/generate', {
+            const response = await fetch('/api/business-cards/generate-pdf', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(requestBody)
+                body: JSON.stringify(payload)
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.details || 'Generation failed');
+                const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                throw new Error(errorData.error || `Server error: ${response.status}`);
             }
 
-            // Create and download the PDF file
-            const pdfBlob = await response.blob();
+            // Handle PDF download
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `business-card-${formData.name.replace(/\s+/g, '-').toLowerCase()}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
 
-            // Create download link with safer URL handling
-            const downloadLink = document.createElement('a');
-            const blobUrl = URL.createObjectURL(pdfBlob);
+            console.log('✅ Business card PDF generated and downloaded successfully');
 
-            downloadLink.href = blobUrl;
-            downloadLink.download = `business-cards-${formData.companyName.replace(/\s+/g, '-').toLowerCase()}.pdf`;
-
-            // Trigger download
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            document.body.removeChild(downloadLink);
-
-            // Clean up the blob URL
-            URL.revokeObjectURL(blobUrl);
-
-            // Success - close modal
+            // Close modal after successful generation
             onClose();
 
-        } catch (error) {
-            console.error('❌ Business card generation failed:', error);
-            setError(error instanceof Error ? error.message : 'Generation failed. Please try again.');
+        } catch (err) {
+            console.error('❌ Business card generation failed:', err);
+            setError(err instanceof Error ? err.message : 'Failed to generate business card');
         } finally {
             setIsGenerating(false);
         }
     };
-    // Reset form when modal closes
-    const handleClose = async () => {
-        setIsClosing(true);
-        setCurrentStep('info');
-        setError(null);
-        setIsGenerating(false);
 
-        // Small delay for smooth animation
-        setTimeout(() => {
-            onClose();
-            setIsClosing(false);
-        }, 500);
-    };
+    // Reset form when modal closes
+    useEffect(() => {
+        if (!isOpen) {
+            setCurrentStep('info');
+            setSelectedLayout(null);
+            setIsGenerating(false);
+            setError(null);
+            setFormData({
+                companyName: '',
+                name: '',
+                title: '',
+                logo: {
+                    logoId: '',
+                    logoDataUri: '',
+                    position: 'auto'
+                },
+                phones: [],
+                emails: [],
+                addresses: [],
+                websites: [],
+                socialMedia: []
+            });
+        }
+    }, [isOpen]);
 
     if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg max-w-5xl w-full max-h-[95vh] overflow-hidden flex flex-col">
-
-                {/* Modal Header */}
-                <div className="flex items-center justify-between p-6 border-b bg-gray-50">
-                    <div className="flex items-center space-x-4">
-                        <img
-                            src={logo.imageDataUri}
-                            alt="Logo"
-                            className="w-12 h-12 rounded object-contain bg-white p-1 border"
-                        />
-                        <div>
-                            <h2 className="text-xl font-bold text-gray-900">Create Business Cards</h2>
-                            <p className="text-gray-600 text-sm">Using logo: {logo.name}</p>
-                        </div>
-                    </div>
-
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+                {/* Header */}
+                <div className="flex items-center justify-between p-6 border-b">
+                    <h1 className="text-2xl font-bold text-gray-900">Create Business Card</h1>
                     <button
-                        onClick={handleClose}
-                        disabled={isGenerating || isClosing}
-                        className="group relative flex items-center justify-center w-10 h-10 bg-gray-100 hover:bg-red-50 text-gray-500 hover:text-red-600 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-100 disabled:hover:text-red-600 disabled:hover:scale-100"
-                        aria-label={isClosing ? "Closing..." : "Close modal"}
+                        onClick={onClose}
+                        className="text-gray-400 hover:text-gray-600 text-2xl font-light w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors relative"
+                        aria-label="Close modal"
                     >
-                        {isClosing ? (
-                            // Spinning loader during close
-                            <svg
-                                className="w-5 h-5 animate-spin"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                                />
-                            </svg>
-                        ) : (
-                            // Regular X icon with rotation animation
-                            <svg
-                                className="w-5 h-5 transition-transform duration-200 group-hover:rotate-90"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M6 18L18 6M6 6l12 12"
-                                />
-                            </svg>
-                        )}
-
-                        {/* Subtle background animation */}
-                        <div
-                            className="absolute inset-0 rounded-lg bg-red-100 scale-0 group-hover:scale-100 transition-transform duration-200 ease-out opacity-20 -z-10"></div>
+                        ×
+                        <div className="absolute inset-0 rounded-full bg-gray-200 scale-0 hover:scale-110 transition-transform duration-200 ease-out opacity-20 -z-10"></div>
                     </button>
                 </div>
 
@@ -240,8 +238,8 @@ export const BusinessCardModal = ({ logo, isOpen, onClose }: BusinessCardModalPr
                         <div className="w-8 h-0.5 bg-gray-300"></div>
                         <StepIndicator
                             step={2}
-                            label="Choose Template"
-                            isActive={currentStep === 'template'}
+                            label="Choose Layout"
+                            isActive={currentStep === 'layout'}
                             isCompleted={currentStep === 'preview'}
                         />
                         <div className="w-8 h-0.5 bg-gray-300"></div>
@@ -272,16 +270,16 @@ export const BusinessCardModal = ({ logo, isOpen, onClose }: BusinessCardModalPr
                             <ContactInfoForm
                                 formData={formData}
                                 setFormData={setFormData}
-                                onNext={() => setCurrentStep('template')}
+                                onNext={() => setCurrentStep('layout')}
                                 onAddField={handleAddContactField}
                                 onRemoveField={handleRemoveContactField}
                             />
                         )}
 
-                        {currentStep === 'template' && (
-                            <TemplateSelection
-                                selectedTemplate={selectedTemplate}
-                                setSelectedTemplate={setSelectedTemplate}
+                        {currentStep === 'layout' && (
+                            <BusinessCardLayoutSelection
+                                selectedLayout={selectedLayout}
+                                setSelectedLayout={setSelectedLayout}
                                 formData={formData}
                                 onBack={() => setCurrentStep('info')}
                                 onNext={() => setCurrentStep('preview')}
@@ -290,10 +288,10 @@ export const BusinessCardModal = ({ logo, isOpen, onClose }: BusinessCardModalPr
 
                         {currentStep === 'preview' && (
                             <PreviewAndGenerate
-                                selectedTemplate={selectedTemplate}
+                                selectedTemplate={selectedLayout}
                                 formData={formData}
                                 isGenerating={isGenerating}
-                                onBack={() => setCurrentStep('template')}
+                                onBack={() => setCurrentStep('layout')}
                                 onGenerate={handleGenerate}
                             />
                         )}

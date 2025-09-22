@@ -1,6 +1,5 @@
-// src/app/components/ContactInfoForm.tsx - Updated with inline required message
+// src/app/components/ContactInfoForm.tsx - Original with only button text change
 'use client';
-
 import { BusinessCardData } from '../../../types/businessCard';
 
 interface ContactInfoFormProps {
@@ -224,54 +223,23 @@ export const ContactInfoForm = ({
                 </div>
             </div>
 
-            {/* Updated Button Row with Inline Required Message */}
-            <div className="pt-6 border-t">
+            {/* Form Validation & Next Button */}
+            <div className="pt-8 border-t border-gray-200">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    {/* Required Message - Always visible to prevent jumping */}
-                    <div className={`flex-1 transition-opacity duration-200 ${
-                        isFormValid() ? 'opacity-40' : 'opacity-100'
-                    }`}>
-                        <div className="flex items-start space-x-2">
-                            <svg
-                                className={`w-5 h-5 mt-0.5 flex-shrink-0 transition-colors duration-200 ${
-                                    isFormValid() ? 'text-green-500' : 'text-amber-500'
-                                }`}
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                {isFormValid() ? (
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                ) : (
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                )}
-                            </svg>
-                            <div>
-                                <p className={`text-sm font-medium transition-colors duration-200 ${
-                                    isFormValid() ? 'text-green-700' : 'text-amber-700'
-                                }`}>
-                                    {isFormValid() ? 'Ready to proceed!' : 'Required fields:'}
-                                </p>
-                                {!isFormValid() && (
-                                    <p className="text-sm text-amber-600 mt-1">
-                                        Name, Company Name, and at least one contact method (phone or email)
-                                    </p>
-                                )}
-                            </div>
-                        </div>
+                    <div className="text-sm text-gray-600">
+                        {isFormValid() ? (
+                            <span className="text-green-600">✓ All required fields completed</span>
+                        ) : (
+                            <span className="text-amber-600">* Fill all required fields to continue</span>
+                        )}
                     </div>
-
-                    {/* Choose Template Button */}
-                    <div className="flex-shrink-0">
-                        <button
-                            onClick={onNext}
-                            disabled={!isFormValid()}
-                            className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-8 py-3 rounded-lg font-medium transition-colors flex items-center space-x-2"
-                        >
-                            <span>Choose Template</span>
-                            <span>→</span>
-                        </button>
-                    </div>
+                    <button
+                        onClick={onNext}
+                        disabled={!isFormValid()}
+                        className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-8 py-3 rounded-lg font-medium transition-colors"
+                    >
+                        Choose Business Card →
+                    </button>
                 </div>
             </div>
         </div>
