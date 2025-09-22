@@ -238,6 +238,10 @@ const LogoGrid = ({
   // request guard to kill stale responses
   const reqSeqRef = useRef(0);
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   // Catalog admin state (per displayed logo)
   const [catalogStates, setCatalogStates] = useState<
       Record<string, { isInCatalog: boolean; catalogLoading: boolean; catalogCode: string | null }>
@@ -665,7 +669,10 @@ const LogoGrid = ({
     return (
         <div className="flex justify-center items-center space-x-4">
           <button
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              onClick={() => {
+                setCurrentPage((p) => Math.max(1, p - 1));
+                scrollToTop();
+              }}
               disabled={currentPage <= 1 || loadingMore}
               className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -685,7 +692,10 @@ const LogoGrid = ({
               return (
                   <button
                       key={pageNum}
-                      onClick={() => setCurrentPage(pageNum)}
+                      onClick={() => {
+                        setCurrentPage(pageNum);
+                        scrollToTop();
+                      }}
                       disabled={loadingMore}
                       className={`px-3 py-2 rounded-md ${
                           pageNum === currentPage ?
@@ -699,7 +709,10 @@ const LogoGrid = ({
           </div>
 
           <button
-              onClick={() => setCurrentPage((p) => Math.min((pagination?.totalPages || p) as number, p + 1))}
+              onClick={() => {
+                setCurrentPage((p) => Math.min((pagination?.totalPages || p) as number, p + 1));
+                scrollToTop();
+              }}
               disabled={currentPage >= (pagination?.totalPages || 1) || loadingMore}
               className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -754,8 +767,8 @@ const LogoGrid = ({
                 {selectedCount} logo{selectedCount !== 1 ? 's' : ''}
               </span>
                   <button onClick={deselectAll}
-                          className="text-xs text-indigo-600 hover:text-indigo-700 underline hidden sm:block">
-                    Clear selection
+                          className="text-xs text-indigo-600 hover:text-indigo-700 underline">
+                    Clear
                   </button>
                 </div>
 
@@ -786,7 +799,7 @@ const LogoGrid = ({
 
                     {showActionsDropdown && (
                         <div
-                            className="absolute mt-1 z-50 w-56 bg-white rounded-md shadow-lg border border-gray-200 right-0">
+                            className="absolute right-0 sm:right-0 left-0 sm:left-auto top-full mt-1 w-48 sm:w-48 max-w-[calc(100vw-2rem)] bg-white rounded-md shadow-lg border border-gray-200 py-1 z-[9999]">
                           <div className="group w-full cursor-pointer transition-colors hover:bg-gray-100"
                                onClick={() => download('png')}>
                             <button
