@@ -50,21 +50,33 @@ export const BusinessCardModal: React.FC<BusinessCardModalProps> = ({ logo, isOp
     const [isGenerating, setIsGenerating] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // Form data - ONLY CHANGE: Initialize with logo data if available
+    // Form data - UPDATED: Initialize with more default fields and logo data if available
     const [formData, setFormData] = useState<BusinessCardData>({
         companyName: '',
         name: '',
         title: '',
+        slogan: '',
+        descriptor: '',
         logo: {
             logoId: logo?.id || '',
             logoDataUri: logo?.imageDataUri || '',
             position: 'auto'
         },
-        phones: [{ value: '', label: '', isPrimary: false }],
-        emails: [{ value: '', label: '', isPrimary: false }],
+        phones: [
+            { value: '', label: '', isPrimary: true },
+            { value: '', label: '', isPrimary: false }
+        ],
+        emails: [
+            { value: '', label: '', isPrimary: true },
+            { value: '', label: '', isPrimary: false }
+        ],
         addresses: [],
         websites: [{ value: '', label: '', isPrimary: false }],
-        socialMedia: []
+        socialMedia: [
+            { value: '', label: '', isPrimary: false },
+            { value: '', label: '', isPrimary: false },
+            { value: '', label: '', isPrimary: false }
+        ]
     });
 
     // Layout step pagination state - PRESERVED ORIGINAL
@@ -100,6 +112,8 @@ export const BusinessCardModal: React.FC<BusinessCardModalProps> = ({ logo, isOp
                 companyName: formData.companyName,
                 name: formData.name,
                 title: formData.title,
+                slogan: formData.slogan,         // ADDED: New field logging
+                descriptor: formData.descriptor, // ADDED: New field logging
                 logoId: formData.logo.logoId,
                 hasLogoDataUri: !!formData.logo.logoDataUri,
                 phonesCount: formData.phones.length,

@@ -30,27 +30,21 @@ export interface BusinessCardZone {
 }
 
 export interface BusinessCardData {
-    // Core info
     companyName: string;
     name: string;
     title: string;
-
-    // Logo integration with existing system
+    slogan?: string;        // ADDED: For company tagline
+    descriptor?: string;    // ADDED: For misc additional info
     logo: {
-        logoId?: string;           // Reference to stored logo from IndexedDB
-        logoDataUri?: string;      // Direct base64 data
-        position?: 'auto' | 'custom';
+        logoId: string;
+        logoDataUri: string;
+        position: 'auto' | 'custom';
     };
-
-    // Contact arrays for flexibility
     phones: ContactField[];
     emails: ContactField[];
     addresses: ContactField[];
     websites: ContactField[];
-    socialMedia: SocialMediaField[];
-
-    // Optional custom fields
-    customFields?: { [key: string]: string };
+    socialMedia: ContactField[];
 }
 
 export interface ContactField {
