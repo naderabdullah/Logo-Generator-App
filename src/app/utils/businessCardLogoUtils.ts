@@ -1,6 +1,6 @@
 // FILE: src/app/utils/businessCardLogoUtils.ts
-// PURPOSE: FIXED logo injection to prevent digital signature leakage
-// CHANGES: Fixed regex patterns and improved error handling
+// PURPOSE: Enhanced logo injection utilities for business card previews
+// UPDATES: Added comprehensive logo injection functions with proper error handling and logging
 
 import { StoredLogo } from '@/app/utils/indexedDBUtils';
 
@@ -30,13 +30,18 @@ const DEFAULT_LOGO_OPTIONS: LogoInjectionOptions = {
  * Extract dimensions from a style string (e.g., "width: 0.8in; height: 0.45in;")
  */
 function extractDimensionsFromStyle(styleString: string): { width: string; height: string } {
+    console.log('🔍 Extracting dimensions from style:', styleString);
+
     const widthMatch = styleString.match(/width:\s*([^;]+)/i);
     const heightMatch = styleString.match(/height:\s*([^;]+)/i);
 
-    return {
+    const dimensions = {
         width: widthMatch ? widthMatch[1].trim() : '1in',
         height: heightMatch ? heightMatch[1].trim() : '1in'
     };
+
+    console.log('✅ Extracted dimensions:', dimensions);
+    return dimensions;
 }
 
 /**
@@ -58,14 +63,7 @@ function createOverlayLogoImageElement(
             return '';
         }
 
-        // DEBUG: Log the data URI format
-        console.log('🔍 DEBUG Data URI format:', {
-            starts_with_data: imageDataUri.startsWith('data:image/'),
-            length: imageDataUri.length,
-            first_50_chars: imageDataUri.substring(0, 50),
-            has_base64: imageDataUri.includes('base64'),
-            has_quotes: imageDataUri.includes('"')
-        });
+        console.log('🔍 Creating logo overlay with dimensions:', dimensions);
 
         const styles = [
             'position: absolute',
@@ -89,14 +87,9 @@ function createOverlayLogoImageElement(
 
         const imgTag = `<img src="${escapedImageDataUri}" style="${styles.join('; ')}" alt="Logo" />`;
 
-        // DEBUG: Log the generated img tag
-        console.log('🔍 DEBUG Generated img tag:', {
-            imgTag_first_100: imgTag.substring(0, 100),
-            imgTag_length: imgTag.length,
-            src_attribute: imgTag.match(/src="([^"]*)"/) ? imgTag.match(/src="([^"]*)"/)[1].substring(0, 50) : 'NOT_FOUND'
-        });
-
+        console.log('✅ Generated logo overlay element');
         return imgTag;
+
     } catch (error) {
         console.error('❌ Error creating overlay logo image element:', error);
         return '';
@@ -104,273 +97,164 @@ function createOverlayLogoImageElement(
 }
 
 /**
- * Inject user logo into business card layout JSX string using z-layer overlay approach
- * @param jsxString - Original business card JSX layout string
- * @param logo - User's stored logo data
+ * Main function to inject logo into business card HTML
+ * @param businessCardHtml - Original business card HTML
+ * @param logo - StoredLogo object with image data
  * @param options - Optional styling overrides
- * @returns Modified JSX string with logo injected
+ * @returns Modified HTML with logo injected
  */
-export function injectLogoIntoBusinessCardJSX(
-    jsxString: string,
-    logo: StoredLogo,
-    options: LogoInjectionOptions = {}
+export function injectLogoIntoBusinessCard(
+    businessCardHtml: string,
+    logo: StoredLogo | null | undefined,
+    options: Partial<LogoInjectionOptions> = {}
 ): string {
     try {
-        console.log('🎨 BusinessCardLogoUtils - Starting logo injection for logo:', {
-            logoId: logo.id,
-            logoName: logo.name,
-            hasImageData: !!logo.imageDataUri,
-            imageDataLength: logo.imageDataUri?.length
+        console.log('🎨 Starting logo injection process:', {
+            hasLogo: !!logo,
+            logoId: logo?.id,
+            htmlLength: businessCardHtml.length
         });
+
+        // Early return if no logo provided
+        if (!logo || !logo.imageDataUri) {
+            console.log('⚠️ No logo provided or logo missing imageDataUri, returning original HTML');
+            return businessCardHtml;
+        }
+
+        // Validate logo data
+        if (!logo.imageDataUri.startsWith('data:image/')) {
+            console.error('❌ Invalid logo data format, expected data:image/ URI');
+            return businessCardHtml;
+        }
 
         // Merge options with defaults
         const finalOptions = { ...DEFAULT_LOGO_OPTIONS, ...options };
 
-        // Validate logo data
-        if (!logo.imageDataUri) {
-            console.warn('⚠️ BusinessCardLogoUtils - No image data URI found in logo, returning original JSX');
-            return jsxString;
+        console.log('🔧 Using logo injection options:', finalOptions);
+
+        // Find all logo placeholder divs
+        const logoPlaceholderRegex = /<div[^>]*class="[^"]*logo-placeholder[^"]*"[^>]*>(.*?)<\/div>/gi;
+        const matches = Array.from(businessCardHtml.matchAll(logoPlaceholderRegex));
+
+        if (matches.length === 0) {
+            console.log('⚠️ No logo placeholders found in business card HTML');
+            return businessCardHtml;
         }
 
-        if (!logo.imageDataUri.startsWith('data:image/')) {
-            console.warn('⚠️ BusinessCardLogoUtils - Invalid image data URI format, returning original JSX');
-            return jsxString;
-        }
+        console.log(`🔍 Found ${matches.length} logo placeholder(s)`);
 
-        let modifiedJSX = jsxString;
+        let modifiedHtml = businessCardHtml;
         let injectionCount = 0;
 
-        // FIXED Pattern 1: Handle class="logo-placeholder" with z-layer overlay
-// FIXED Pattern 1: Handle class="logo-placeholder" with z-layer overlay
-        modifiedJSX = modifiedJSX.replace(
-            /<div([^>]*class="logo-placeholder"[^>]*style="([^"]*)"[^>]*)>(.*?)<\/div>/gi,
-            (match, attributes, styleString, content) => {
-                try {
-                    console.log('🔍 DEBUG Pattern 1 Match:', {
-                        full_match: match,
-                        attributes: attributes,
-                        styleString: styleString,
-                        content: content
-                    });
+        // Process each logo placeholder
+        for (let i = 0; i < matches.length; i++) {
+            const match = matches[i];
+            const fullPlaceholderDiv = match[0];
 
-                    const dimensions = extractDimensionsFromStyle(styleString);
-                    const logoImage = createOverlayLogoImageElement(logo.imageDataUri, dimensions, finalOptions);
+            console.log(`🎯 Processing logo placeholder ${i + 1}:`, {
+                placeholder: fullPlaceholderDiv.substring(0, 100) + '...'
+            });
 
-                    if (!logoImage) {
-                        console.warn('⚠️ Failed to create logo image, keeping original placeholder');
-                        return match;
-                    }
+            // Extract style attribute
+            const styleMatch = fullPlaceholderDiv.match(/style="([^"]*)"/i);
 
-                    injectionCount++;
-                    console.log(`✅ Logo injected into class="logo-placeholder" (injection #${injectionCount})`);
-
-                    const result = `<div${attributes} style="position: relative; ${styleString}">${logoImage}${content}</div>`;
-                    console.log('🔍 DEBUG Pattern 1 Result:', result.substring(0, 200));
-
-                    return result;
-                } catch (error) {
-                    console.error('❌ Error in pattern 1 logo injection:', error);
-                    return match; // Return original on error
-                }
+            if (!styleMatch) {
+                console.warn(`⚠️ No style attribute found in placeholder ${i + 1}, skipping`);
+                continue;
             }
-        );
 
-        // FIXED Pattern 2: Handle className="logo-placeholder" with z-layer overlay
-        modifiedJSX = modifiedJSX.replace(
-            /<div([^>]*className="logo-placeholder"[^>]*style="([^"]*)"[^>]*)>(.*?)<\/div>/gi,
-            (match, attributes, styleString, content) => {
-                try {
-                    const dimensions = extractDimensionsFromStyle(styleString);
-                    const logoImage = createOverlayLogoImageElement(logo.imageDataUri, dimensions, finalOptions);
+            const styleString = styleMatch[1];
+            const dimensions = extractDimensionsFromStyle(styleString);
 
-                    if (!logoImage) {
-                        console.warn('⚠️ Failed to create logo image, keeping original placeholder');
-                        return match;
-                    }
+            // Create logo overlay element
+            const logoOverlay = createOverlayLogoImageElement(logo.imageDataUri, dimensions, finalOptions);
 
-                    injectionCount++;
-                    console.log(`✅ Logo injected into className="logo-placeholder" (injection #${injectionCount})`);
-
-                    // Keep original placeholder but add logo overlay
-                    return `<div${attributes} style="position: relative; ${styleString}">${logoImage}${content}</div>`;
-                } catch (error) {
-                    console.error('❌ Error in pattern 2 logo injection:', error);
-                    return match; // Return original on error
-                }
+            if (!logoOverlay) {
+                console.warn(`⚠️ Failed to create logo overlay for placeholder ${i + 1}`);
+                continue;
             }
-        );
 
-        // Pattern 3: Handle style-based detection for logo placeholders without explicit class
-        modifiedJSX = modifiedJSX.replace(
-            /<div([^>]*style="([^"]*)"[^>]*)>(.*?LOGO.*?)<\/div>/gi,
-            (match, attributes, styleString, content) => {
-                try {
-                    // Only process if it looks like a logo placeholder (small dimensions, centered content)
-                    if (styleString.includes('width:') && styleString.includes('height:') &&
-                        (styleString.includes('flex') || styleString.includes('center'))) {
-
-                        const dimensions = extractDimensionsFromStyle(styleString);
-                        const logoImage = createOverlayLogoImageElement(logo.imageDataUri, dimensions, finalOptions);
-
-                        if (!logoImage) {
-                            console.warn('⚠️ Failed to create logo image, keeping original placeholder');
-                            return match;
-                        }
-
-                        injectionCount++;
-                        console.log(`✅ Logo injected into LOGO placeholder (injection #${injectionCount})`);
-
-                        // Keep original placeholder but add logo overlay and reduce text opacity
-                        const hiddenContent = content.replace(/LOGO/gi, '<span style="opacity: 0;">LOGO</span>');
-                        return `<div${attributes} style="position: relative; ${styleString}">${logoImage}${hiddenContent}</div>`;
-                    }
-                    return match; // Return unchanged if doesn't match criteria
-                } catch (error) {
-                    console.error('❌ Error in pattern 3 logo injection:', error);
-                    return match; // Return original on error
+            // Inject logo by making the placeholder relative and adding the logo as a child
+            const enhancedPlaceholder = fullPlaceholderDiv.replace(
+                /style="([^"]*)"/i,
+                (match, existingStyle) => {
+                    // Add position relative if not already present
+                    const hasPosition = existingStyle.includes('position:');
+                    const newStyle = hasPosition ? existingStyle : existingStyle + '; position: relative';
+                    return `style="${newStyle}"`;
                 }
-            }
-        );
+            ).replace(
+                />(.*?)<\/div>/i,
+                `>${logoOverlay}</div>`
+            );
 
-        console.log(`✅ BusinessCardLogoUtils - Logo injection completed successfully. Total injections: ${injectionCount}`);
+            // Replace in the HTML
+            modifiedHtml = modifiedHtml.replace(fullPlaceholderDiv, enhancedPlaceholder);
+            injectionCount++;
 
-        if (injectionCount === 0) {
-            console.warn('⚠️ No logo placeholders were found or injected');
+            console.log(`✅ Successfully injected logo into placeholder ${i + 1}`);
         }
 
-        return modifiedJSX;
+        console.log(`🎉 Logo injection completed! Injected into ${injectionCount} placeholder(s)`);
+        return modifiedHtml;
 
     } catch (error) {
-        console.error('❌ BusinessCardLogoUtils - Error during logo injection:', error);
-        return jsxString; // Return original on error
+        console.error('❌ Critical error in logo injection:', error);
+        // Return original HTML to prevent breaking the UI
+        return businessCardHtml;
     }
 }
 
 /**
- * Check if a business card layout contains logo placeholders
- * @param jsxString - Business card JSX layout string
- * @returns Boolean indicating if logo placeholders are present
+ * Helper function to validate logo data before injection
+ * @param logo - StoredLogo object to validate
+ * @returns boolean indicating if logo is valid for injection
  */
-export function hasLogoPlaceholder(jsxString: string): boolean {
-    try {
-        const logoPatterns = [
-            /class="logo-placeholder"/i,
-            /className="logo-placeholder"/i,
-            /<div[^>]*style="[^"]*width:[^"]*height:[^"]*"[^>]*>[^<]*LOGO[^<]*<\/div>/i // Style-based detection
-        ];
-
-        const hasPlaceholder = logoPatterns.some(pattern => pattern.test(jsxString));
-
-        if (hasPlaceholder) {
-            console.log('✅ Logo placeholder detected in layout');
-        } else {
-            console.log('ℹ️ No logo placeholder found in layout');
-        }
-
-        return hasPlaceholder;
-    } catch (error) {
-        console.error('❌ BusinessCardLogoUtils - Error checking for logo placeholder:', error);
+export function validateLogoForInjection(logo: StoredLogo | null | undefined): boolean {
+    if (!logo) {
+        console.log('🔍 Logo validation: No logo provided');
         return false;
     }
-}
 
-/**
- * Get optimized logo injection options based on business card layout style
- * @param layoutTheme - Business card theme (e.g., 'corporate', 'creative', 'tech')
- * @param layoutStyle - Business card style (e.g., 'company-focused', 'contact-focused')
- * @returns Optimized logo injection options
- */
-export function getLogoOptionsForLayout(
-    layoutTheme?: string,
-    layoutStyle?: string
-): LogoInjectionOptions {
-    try {
-        // Base options
-        const baseOptions: LogoInjectionOptions = { ...DEFAULT_LOGO_OPTIONS };
-
-        // Theme-specific adjustments
-        switch (layoutTheme?.toLowerCase()) {
-            case 'tech':
-            case 'cyberpunk':
-                return {
-                    ...baseOptions,
-                    objectFit: 'contain',
-                    zIndex: 25, // Higher z-index for tech themes with overlays
-                };
-
-            case 'luxury':
-            case 'elegant':
-            case 'classic':
-                return {
-                    ...baseOptions,
-                    objectFit: 'contain',
-                    zIndex: 22,
-                };
-
-            case 'creative':
-            case 'artistic':
-                return {
-                    ...baseOptions,
-                    objectFit: 'contain',
-                    zIndex: 23,
-                };
-
-            case 'minimalistic':
-            case 'minimalist':
-                return {
-                    ...baseOptions,
-                    objectFit: 'contain',
-                    zIndex: 21, // Slightly higher for clean overlay
-                };
-
-            default:
-                return baseOptions;
-        }
-    } catch (error) {
-        console.error('❌ BusinessCardLogoUtils - Error getting layout options:', error);
-        return DEFAULT_LOGO_OPTIONS;
+    if (!logo.imageDataUri) {
+        console.warn('⚠️ Logo validation: Logo missing imageDataUri');
+        return false;
     }
+
+    if (!logo.imageDataUri.startsWith('data:image/')) {
+        console.warn('⚠️ Logo validation: Invalid data URI format');
+        return false;
+    }
+
+    const minDataUriLength = 100; // Minimum realistic data URI length
+    if (logo.imageDataUri.length < minDataUriLength) {
+        console.warn('⚠️ Logo validation: Data URI too short, possibly corrupted');
+        return false;
+    }
+
+    console.log('✅ Logo validation: Logo is valid for injection');
+    return true;
 }
 
 /**
- * Batch process multiple business card layouts with logo injection
- * @param layouts - Array of business card layout objects
- * @param logo - User's stored logo data
- * @param limit - Maximum number of layouts to process (default: 5)
- * @returns Array of layouts with logos injected
+ * Helper to get logo dimensions from a business card layout
+ * @param businessCardHtml - The business card HTML
+ * @returns Array of dimension objects found in logo placeholders
  */
-export function batchInjectLogos<T extends { jsx: string; theme?: string; style?: string }>(
-    layouts: T[],
-    logo: StoredLogo,
-    limit: number = 5
-): T[] {
+export function getLogoPlaceholderDimensions(businessCardHtml: string): Array<{ width: string; height: string }> {
     try {
-        console.log(`🎨 BusinessCardLogoUtils - Starting batch logo injection for ${Math.min(layouts.length, limit)} layouts`);
+        const logoPlaceholderRegex = /<div[^>]*class="[^"]*logo-placeholder[^"]*"[^>]*>/gi;
+        const matches = Array.from(businessCardHtml.matchAll(logoPlaceholderRegex));
 
-        return layouts.map((layout, index) => {
-            if (index >= limit) {
-                // Return original layout for items beyond the limit
-                return layout;
+        return matches.map(match => {
+            const styleMatch = match[0].match(/style="([^"]*)"/i);
+            if (styleMatch) {
+                return extractDimensionsFromStyle(styleMatch[1]);
             }
-
-            if (!hasLogoPlaceholder(layout.jsx)) {
-                console.log(`⚠️ BusinessCardLogoUtils - Layout ${index + 1} has no logo placeholder, skipping`);
-                return layout;
-            }
-
-            const options = getLogoOptionsForLayout(layout.theme, layout.style);
-            const modifiedJSX = injectLogoIntoBusinessCardJSX(layout.jsx, logo, options);
-
-            console.log(`✅ BusinessCardLogoUtils - Logo injected for layout ${index + 1}: ${layout.theme || 'unknown theme'}`);
-
-            return {
-                ...layout,
-                jsx: modifiedJSX
-            };
+            return { width: '1in', height: '1in' };
         });
-
     } catch (error) {
-        console.error('❌ BusinessCardLogoUtils - Error in batch logo injection:', error);
-        return layouts; // Return original layouts on error
+        console.error('❌ Error extracting logo placeholder dimensions:', error);
+        return [];
     }
 }

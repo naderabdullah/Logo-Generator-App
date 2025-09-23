@@ -1,3 +1,7 @@
+// FILE: types/businessCard.ts
+// PURPOSE: Updated business card types with logo props for layout selection
+// CHANGES: Added logo prop to BusinessCardLayoutSelectionProps interface
+
 // Import existing types from the logo system
 import { StoredLogo } from '@/app/utils/indexedDBUtils';
 
@@ -147,4 +151,21 @@ export interface StepIndicatorProps {
     label: string;
     isActive: boolean;
     isCompleted: boolean;
+}
+
+// ADDED: BusinessCardLayoutSelection props with logo support
+export interface BusinessCardLayoutSelectionProps {
+    selectedLayout: string | null;
+    onLayoutSelect: (catalogId: string) => void;
+    formData: any;
+    onNext: () => void;
+    onBack: () => void;
+    searchTerm?: string;
+    themeFilter?: string;
+    onSearchChange?: (term: string) => void;
+    onThemeFilterChange?: (theme: string) => void;
+    externalCurrentPage?: number;
+    onPageChange?: (page: number) => void;
+    hideFooter?: boolean;
+    logo?: StoredLogo | null; // ADDED: Logo prop for injection in enlarged modal
 }
