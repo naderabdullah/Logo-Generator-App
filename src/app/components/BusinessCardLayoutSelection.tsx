@@ -254,14 +254,6 @@ export const BusinessCardLayoutSelection: React.FC<BusinessCardLayoutSelectionPr
         <div className="flex flex-col h-full">
             {/* Scrollable Content Area */}
             <div className="flex-1 overflow-y-auto space-y-6">
-                {/* Header */}
-                <div>
-                    <h2 className="text-xl font-semibold mb-2 text-gray-900">Choose Business Card Layout</h2>
-                    <p className="text-gray-600 text-sm">
-                        Select a business card design that matches your style. You can preview how your information will look.
-                    </p>
-                </div>
-
                 {/* Filters */}
                 <div className="flex flex-col sm:flex-row gap-4">
                     {/* Search */}
@@ -392,9 +384,12 @@ export const BusinessCardLayoutSelection: React.FC<BusinessCardLayoutSelectionPr
                                             className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                                             title="View Details"
                                         >
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 616 0z" />
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor"
+                                                 viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
+                                                      d="M15 12a3 3 0 11-6 0 3 3 0 0 1 6 0z"/>
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
+                                                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                                             </svg>
                                         </button>
                                     </div>

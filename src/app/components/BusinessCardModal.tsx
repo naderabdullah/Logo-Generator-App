@@ -229,15 +229,18 @@ export const BusinessCardModal: React.FC<BusinessCardModalProps> = ({ logo, isOp
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[95vh] flex flex-col overflow-hidden">
-                {/* Modal Header - WITH LOGO PREVIEW FOR STEP 1 ONLY */}
+                {/* Modal Header - TITLE LEFT, LOGO CENTER, CLOSE RIGHT */}
                 <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                    <div className="flex items-center space-x-4">
-                        {/* Logo Preview - Only show in step 1 */}
+                    {/* Title - Left side */}
+                    <h2 className="text-2xl font-bold text-gray-900">Create Business Cards</h2>
+
+                    {/* Logo Preview - Center (only in step 1) */}
+                    <div className="absolute left-1/2 transform -translate-x-1/2">
                         {currentStep === 'info' && logo && logo.imageDataUri && (
-                            <div className="w-12 h-12 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
+                            <div className="w-16 h-16 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
                                 <img
                                     src={logo.imageDataUri}
-                                    alt="Logo"
+                                    alt="Logo preview"
                                     className="max-w-full max-h-full object-contain"
                                     onLoad={() => console.log('✅ Header logo preview loaded successfully')}
                                     onError={(e) => {
@@ -246,8 +249,9 @@ export const BusinessCardModal: React.FC<BusinessCardModalProps> = ({ logo, isOp
                                 />
                             </div>
                         )}
-                        <h2 className="text-2xl font-bold text-gray-900">Create Business Cards</h2>
                     </div>
+
+                    {/* Close button - Right side */}
                     <button
                         onClick={onClose}
                         className="relative w-10 h-10 rounded-full bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 p-0.5 hover:shadow-lg transition-all duration-200 ease-out transform hover:scale-105"

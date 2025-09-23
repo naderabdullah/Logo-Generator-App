@@ -54,11 +54,6 @@ export const ContactInfoForm = ({
 
     return (
         <div className="space-y-8">
-            <div className="text-center">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Contact Information</h3>
-                <p className="text-gray-600">Fill in your professional details for the business cards</p>
-            </div>
-
             {/* REVERTED: Back to original 2-column grid structure */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
