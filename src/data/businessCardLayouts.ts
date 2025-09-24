@@ -184,80 +184,100 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
 
     {
         catalogId: 'BC003',
-        name: 'Minimal Edge',
-        theme: 'minimalistic',
-        description: 'Asymmetric layout with left edge accent',
+        name: 'Professional Minimalist',
+        theme: 'minimalist',
+        description: 'Clean minimalist design with subtle accents',
         style: 'contact-focused',
-        jsx: `
-<div class="business-card" style="
+        jsx: `<div class="business-card" style="
   width: 3.5in;
   height: 2in;
   background: #ffffff;
-  position: relative;
+  border: 1px solid #e5e7eb;
   font-family: 'Helvetica Neue', sans-serif;
   box-sizing: border-box;
+  position: relative;
 ">
   <div style="
     position: absolute;
-    left: 0;
     top: 0;
-    width: 4px;
-    height: 100%;
-    background: #4299e1;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: radial-gradient(circle, #f1f5f9 1px, transparent 1px);
+    background-size: 20px 20px;
+    opacity: 0.3;
   "></div>
-  <div style="padding: 0.18in 0.2in 0.18in 0.25in;">
-    <div class="logo-section" style="margin-bottom: 0.08in;">
-      <div class="logo-placeholder" style="
-        width: 0.6in;
-        height: 0.4in;
-        background-color: #f7fafc;
-        border-radius: 2px;
-        display: inline-flex;
+  <div style="padding: 0.4in; position: relative; z-index: 2;">
+    <div style="
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      height: 100%;
+    ">
+      <div style="flex: 1; max-width: 2in;">
+        <h1 style="
+          font-size: 15px;
+          font-weight: 300;
+          color: #0f172a;
+          margin: 0 0 6px 0;
+          line-height: 1.1;
+          letter-spacing: -0.3px;
+        ">James Wilson</h1>
+        <h2 style="
+          font-size: 10px;
+          color: #64748b;
+          margin: 0 0 4px 0;
+          font-weight: 500;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        ">Architect</h2>
+        <h3 style="
+          font-size: 9px;
+          color: #94a3b8;
+          margin: 0 0 20px 0;
+          font-weight: 400;
+        ">Minimal Design Studio</h3>
+        <div class="contact-info" style="
+          font-size: 9px;
+          color: #475569;
+          line-height: 1.5;
+        ">
+          <div style="margin-bottom: 3px;">📞 (555) 123-4567</div>
+          <div style="margin-bottom: 3px;">✉️ james@minimaldesign.studio</div>
+          <div>🌐 minimaldesign.studio</div>
+        </div>
+      </div>
+      <div style="
+        display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 7px;
-        color: #a0aec0;
-        border: 1px solid #e2e8f0;
-      ">LOGO</div>
-    </div>
-    <h1 style="
-      font-size: 13px;
-      font-weight: 600;
-      color: #2d3748;
-      margin: 0 0 2px 0;
-      line-height: 1.1;
-    ">Sarah Johnson</h1>
-    <h2 style="
-      font-size: 10px;
-      color: #4299e1;
-      margin: 0 0 1px 0;
-      font-weight: 500;
-    ">Creative Director</h2>
-    <h3 style="
-      font-size: 9px;
-      color: #718096;
-      margin: 0 0 10px 0;
-      font-weight: 400;
-    ">Design Studio Inc.</h3>
-    <div class="contact-info" style="
-      font-size: 10px;
-      color: #4a5568;
-      line-height: 1.4;
-    ">
-      <div style="margin-bottom: 1px;">Mobile: (555) 123-4567</div>
-      <div style="margin-bottom: 1px;">Work: (555) 987-6543</div>
-      <div>sarah.johnson@designstudio.com</div>
+        width: 1.0in;
+        height: 1.0in;
+      ">
+        <div class="logo-placeholder" style="
+          width: 0.9in;
+          height: 0.9in;
+          border: 1px solid #e2e8f0;
+          border-radius: 2px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 8px;
+          color: #94a3b8;
+          background-color: #f8fafc;
+        ">LOGO</div>
+      </div>
     </div>
   </div>
-</div>
-    `,
+</div>`,
         metadata: {
             dimensions: { width: '3.5in', height: '2in' },
-            colors: ['#ffffff', '#4299e1', '#2d3748', '#718096'],
+            colors: ['#ffffff', '#0f172a', '#64748b', '#94a3b8'],
             fonts: ['Helvetica Neue'],
-            features: ['left-accent', 'asymmetric', 'color-accent']
+            features: ['minimalist', 'clean', 'subtle-accents', 'professional']
         }
     },
+
 
     {
         catalogId: 'BC004',
@@ -344,74 +364,72 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
         theme: 'classic',
         description: 'Traditional design with serif typography and elegant spacing',
         style: 'company-focused',
-        jsx: `
-  <div class="business-card" style="
-    width: 3.5in;
-    height: 2in;
-    background: #fefefe;
-    padding: 0.18in;
-    font-family: Georgia, serif;
-    box-sizing: border-box;
-  ">
-    <div style="text-align: center; margin-bottom: 0.12in;">
-      <h1 style="
-        font-size: 15px;
-        font-weight: 700;
-        color: #0f172a;
-        margin: 0 0 3px 0;
-        letter-spacing: -0.5px;
-        line-height: 1;
-      ">STELLAR DESIGN</h1>
-      <div style="
-        width: 1.8in;
-        height: 1px;
-        background: linear-gradient(to right, transparent, #cbd5e0, transparent);
-        margin: 0 auto;
-      "></div>
-    </div>
-    <div style="text-align: center;">
-      <div class="logo-placeholder" style="
-        width: 0.5in;
-        height: 0.5in;
-        background-color: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 4px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 7px;
-        color: #94a3b8;
-        margin-bottom: 8px;
-      ">LOGO</div>
-      <h2 style="
-        font-size: 11px;
-        color: #1e293b;
-        margin: 0 0 1px 0;
-        font-weight: 600;
-      ">Emma Wilson</h2>
-      <h3 style="
-        font-size: 9px;
-        color: #64748b;
-        margin: 0 0 8px 0;
-        font-style: italic;
-      ">Principal Designer</h3>
-      <div class="contact-info" style="
-        font-size: 9px;
-        color: #475569;
-        line-height: 1.3;
-      ">
-        <div>Mobile: (555) 123-4567</div>
-        <div>Office: (555) 987-6543</div>
-        <div>emma@stellardesign.com</div>
-      </div>
+        jsx: `<div class="business-card" style="
+  width: 3.5in;
+  height: 2in;
+  background: #fefefe;
+  padding: 0.18in;
+  font-family: Georgia, serif;
+  box-sizing: border-box;
+">
+  <div style="text-align: center; margin-bottom: 0.12in;">
+    <h1 style="
+      font-size: 15px;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0 0 3px 0;
+      letter-spacing: -0.5px;
+      line-height: 1;
+    ">STELLAR DESIGN</h1>
+    <div style="
+      width: 1.8in;
+      height: 1px;
+      background: linear-gradient(to right, transparent, #cbd5e0, transparent);
+      margin: 0 auto;
+    "></div>
+  </div>
+  <div style="text-align: center;">
+    <div class="logo-placeholder" style="
+      width: 0.9in;
+      height: 0.7in;
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 8px;
+      color: #94a3b8;
+      margin-bottom: 12px;
+    ">LOGO</div>
+    <h2 style="
+      font-size: 11px;
+      color: #1e293b;
+      margin: 0 0 1px 0;
+      font-weight: 600;
+    ">Emma Wilson</h2>
+    <h3 style="
+      font-size: 9px;
+      color: #64748b;
+      margin: 0 0 8px 0;
+      font-style: italic;
+    ">Principal Designer</h3>
+    <div style="
+      font-size: 9px;
+      color: #475569;
+      line-height: 1.4;
+    ">
+      <div style="margin-bottom: 2px;">Mobile: (555) 123-4567</div>
+      <div style="margin-bottom: 2px;">Office: (555) 987-6543</div>
+      <div>emma@stellardesign.com</div>
     </div>
   </div>
-`,
+</div>`,
         metadata: {
             dimensions: { width: '3.5in', height: '2in' },
-            colors: ['#fefefe', '#0f172a', '#64748b', '#cbd5e0'],
+            colors: ['#fefefe', '#0f172a', '#1e293b', '#64748b'],
             fonts: ['Georgia'],
-            features: ['serif-typography', 'center-layout', 'gradient-divider', 'enhanced-contact-readability']
+            features: ['classic', 'serif', 'elegant', 'traditional']
         }
     },
 
@@ -513,175 +531,197 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
 
     {
         catalogId: 'BC008',
-        name: 'Creative Edge Splitter',
+        name: 'Bold Brutalist',
         theme: 'creative',
-        description: 'Bold asymmetric design with vibrant color blocks',
+        description: 'Bold brutalist design with strong geometric elements',
         style: 'contact-focused',
-        jsx: `
-  <div class="business-card" style="
-    width: 3.5in;
-    height: 2in;
-    background: #ffffff;
-    position: relative;
-    font-family: 'Inter', sans-serif;
-    box-sizing: border-box;
-    overflow: hidden;
-  ">
+        jsx: `<div class="business-card" style="
+  width: 3.5in;
+  height: 2in;
+  background: #ffffff;
+  border: 4px solid #000000;
+  font-family: 'Arial Black', sans-serif;
+  box-sizing: border-box;
+  position: relative;
+">
+  <div style="
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    border: 2px solid #ff4500;
+  "></div>
+  <div style="padding: 0.2in; position: relative; z-index: 2; height: 100%;">
     <div style="
-      position: absolute;
-      top: 0;
-      right: 0;
-      width: 1in;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
       height: 100%;
-      background: linear-gradient(45deg, #ff6b6b, #ee5a24);
-    "></div>
-    <div style="
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 60%;
-      height: 4px;
-      background: #4834d4;
-    "></div>
-    <div style="padding: 0.16in; position: relative; z-index: 2;">
-      <div class="logo-section" style="margin-bottom: 0.08in;">
+    ">
+      <div>
+        <h1 style="
+          font-size: 18px;
+          font-weight: 900;
+          color: #000000;
+          margin: 0 0 4px 0;
+          text-transform: uppercase;
+          letter-spacing: -1px;
+          line-height: 0.9;
+        ">ALEX STONE</h1>
+        <h2 style="
+          font-size: 11px;
+          color: #ff4500;
+          margin: 0 0 6px 0;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        ">CREATIVE DIRECTOR</h2>
+        <h3 style="
+          font-size: 9px;
+          color: #000000;
+          margin: 0 0 12px 0;
+          font-weight: 700;
+          text-transform: uppercase;
+        ">STONE DESIGN CO</h3>
+      </div>
+      <div style="
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+      ">
+        <div class="contact-info" style="
+          font-size: 10px;
+          color: #000000;
+          line-height: 1.2;
+          font-weight: 700;
+        ">
+          <div>(555) 123-4567</div>
+          <div>(555) 987-6543</div>
+          <div style="font-size: 9px;">ALEX@STONE.DESIGN</div>
+        </div>
         <div class="logo-placeholder" style="
-          width: 0.5in;
-          height: 0.5in;
-          background-color: #f8f9fa;
-          border-radius: 50%;
-          display: inline-flex;
+          width: 0.9in;
+          height: 0.9in;
+          background-color: #ff4500;
+          border: 2px solid #000000;
+          display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 7px;
-          color: #6c757d;
-          border: 2px solid #ee5a24;
+          font-size: 8px;
+          color: #ffffff;
+          font-weight: 900;
         ">LOGO</div>
-      </div>
-      <h1 style="
-        font-size: 14px;
-        font-weight: 800;
-        color: #2d3436;
-        margin: 0 0 3px 0;
-        line-height: 1;
-      ">Alex Rivera</h1>
-      <h2 style="
-        font-size: 10px;
-        color: #ee5a24;
-        margin: 0 0 2px 0;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      ">Creative Director</h2>
-      <h3 style="
-        font-size: 9px;
-        color: #636e72;
-        margin: 0 0 8px 0;
-        font-weight: 400;
-      ">Splash Creative Studio</h3>
-      <div class="contact-info" style="
-        font-size: 9px;
-        color: #2d3436;
-        line-height: 1.3;
-        max-width: 1.6in;
-      ">
-        <div style="margin-bottom: 1px;">📱 (555) 123-4567</div>
-        <div style="margin-bottom: 1px;">✉️ alex@splashcreative.com</div>
-        <div>🎨 splashcreative.com</div>
       </div>
     </div>
   </div>
-`,
+</div>`,
         metadata: {
             dimensions: { width: '3.5in', height: '2in' },
-            colors: ['#ff6b6b', '#ee5a24', '#4834d4', '#2d3436'],
-            fonts: ['Inter'],
-            features: ['color-blocks', 'asymmetric', 'creative-layout']
+            colors: ['#ff4500', '#000000', '#ffffff'],
+            fonts: ['Arial Black'],
+            features: ['brutalist', 'bold-borders', 'high-contrast', 'geometric']
         }
     },
 
+
     {
         catalogId: 'BC009',
-        name: 'Tech Minimal Grid',
-        theme: 'tech',
-        description: 'Clean tech design with structured grid and modern typography',
+        name: 'Financial Sterling',
+        theme: 'professional',
+        description: 'Professional financial services design with trust elements',
         style: 'company-focused',
-        jsx: `
-      <div class="business-card" style="
-        width: 3.5in;
-        height: 2in;
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        font-family: 'SF Pro Display', sans-serif;
-        box-sizing: border-box;
-        position: relative;
-      ">
-        <div style="
-          background: #1e293b;
-          height: 0.4in;
-          padding: 0.1in 0.25in;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        ">
-          <h1 style="
-            font-size: 14px;
-            font-weight: 600;
-            color: #ffffff;
-            margin: 0;
-            letter-spacing: 1px;
-          ">DATAFLOW</h1>
-          <div class="logo-placeholder" style="
-            width: 0.6in;
-            height: 0.25in;
-            background-color: rgba(255,255,255,0.1);
-            border-radius: 3px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 7px;
-            color: rgba(255,255,255,0.7);
-          ">LOGO</div>
-        </div>
-        <div style="padding: 0.25in;">
-          <h2 style="
-            font-size: 13px;
-            color: #1e293b;
-            margin: 0 0 3px 0;
-            font-weight: 600;
-          ">David Park</h2>
-          <h3 style="
-            font-size: 10px;
-            color: #64748b;
-            margin: 0 0 15px 0;
-            font-weight: 500;
-          ">Senior Software Engineer</h3>
-          <div style="
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            font-size: 9px;
-            color: #475569;
-          ">
-            <div>
-              <div style="margin-bottom: 3px;">📱 (555) 123-4567</div>
-              <div>✉️ david@dataflow.tech</div>
-            </div>
-            <div style="text-align: right;">
-              <div style="margin-bottom: 3px;">🌐 dataflow.tech</div>
-              <div>📍 San Francisco, CA</div>
-            </div>
-          </div>
+        jsx: `<div class="business-card" style="
+  width: 3.5in;
+  height: 2in;
+  background: #ffffff;
+  font-family: 'Times New Roman', serif;
+  box-sizing: border-box;
+  position: relative;
+">
+  <div style="
+    background: #1e40af;
+    height: 0.5in;
+    padding: 0.1in 0.25in;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+  ">
+    <div style="
+      font-size: 14px;
+      font-weight: 700;
+      color: #ffffff;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    ">STERLING FINANCIAL</div>
+    <div class="logo-placeholder" style="
+      width: 1.0in;
+      height: 0.7in;
+      background-color: rgba(255,255,255,0.2);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 8px;
+      color: rgba(255,255,255,0.9);
+      position: absolute;
+      top: -0.1in;
+      right: 0.2in;
+      z-index: 10;
+    ">LOGO</div>
+  </div>
+  <div style="
+    padding: 0.2in 0.25in 0.25in 0.25in;
+  ">
+    <h1 style="
+      font-size: 14px;
+      color: #1f2937;
+      margin: 0 0 2px 0;
+      font-weight: 600;
+    ">Michael Sterling, CFA</h1>
+    <h2 style="
+      font-size: 11px;
+      color: #1e40af;
+      margin: 0 0 8px 0;
+      font-weight: 500;
+    ">Senior Portfolio Manager</h2>
+    <h3 style="
+      font-size: 9px;
+      color: #6b7280;
+      margin: 0 0 12px 0;
+      font-style: italic;
+    ">Chartered Financial Analyst</h3>
+    <div style="
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      font-size: 9px;
+      color: #4b5563;
+    ">
+      <div>
+        <div style="margin-bottom: 2px;">☎️ Direct: (555) 123-4567</div>
+        <div>✉️ msterling@sterlingfinancial.com</div>
+      </div>
+      <div style="text-align: right; background: #f3f4f6; padding: 4px; border-radius: 4px;">
+        <div style="font-size: 8px; color: #1e40af; font-weight: 600; margin-bottom: 1px;">LICENSED</div>
+        <div style="font-size: 7px; color: #6b7280; line-height: 1.2;">
+          <div>FINRA Series 7</div>
+          <div>FINRA Series 66</div>
+          <div>Insurance Licensed</div>
         </div>
       </div>
-    `,
+    </div>
+  </div>
+</div>`,
         metadata: {
             dimensions: { width: '3.5in', height: '2in' },
-            colors: ['#1e293b', '#f8fafc', '#64748b', '#475569'],
-            fonts: ['SF Pro Display'],
-            features: ['tech-header', 'grid-contact', 'modern-minimal']
+            colors: ['#1e40af', '#ffffff', '#1f2937', '#6b7280'],
+            fonts: ['Times New Roman'],
+            features: ['financial-theme', 'professional-header', 'licenses', 'conservative']
         }
     },
+
 
     {
         catalogId: 'BC010',
@@ -867,177 +907,178 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
         theme: 'professional',
         description: 'Clean medical professional design with trust elements',
         style: 'contact-focused',
-        jsx: `
-      <div class="business-card" style="
-        width: 3.5in;
-        height: 2in;
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        font-family: 'Helvetica', sans-serif;
-        box-sizing: border-box;
-      ">
-        <div style="
-          background: #2563eb;
-          height: 0.3in;
-          padding: 0.08in 0.25in;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        ">
-          <div style="
-            font-size: 12px;
-            font-weight: 600;
-            color: #ffffff;
-            letter-spacing: 0.5px;
-          ">HEALTHCARE PLUS</div>
-          <div class="logo-placeholder" style="
-            width: 0.5in;
-            height: 0.2in;
-            background-color: rgba(255,255,255,0.2);
-            border-radius: 2px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 6px;
-            color: rgba(255,255,255,0.8);
-          ">LOGO</div>
-        </div>
-        <div style="padding: 0.25in;">
-          <h1 style="
-            font-size: 14px;
-            color: #1e293b;
-            margin: 0 0 2px 0;
-            font-weight: 600;
-          ">Dr. Sarah Mitchell</h1>
-          <h2 style="
-            font-size: 11px;
-            color: #2563eb;
-            margin: 0 0 3px 0;
-            font-weight: 500;
-          ">Family Medicine Physician</h2>
-          <h3 style="
-            font-size: 9px;
-            color: #64748b;
-            margin: 0 0 15px 0;
-            font-weight: 400;
-          ">Board Certified • MD, Johns Hopkins</h3>
-          <div style="
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            font-size: 9px;
-            color: #475569;
-          ">
-            <div>
-              <div style="margin-bottom: 2px;">📞 (555) 123-4567</div>
-              <div style="margin-bottom: 2px;">📠 (555) 123-4568</div>
-              <div>✉️ s.mitchell@healthplus.com</div>
-            </div>
-            <div style="text-align: right;">
-              <div style="margin-bottom: 2px;">🏥 123 Medical Center Dr</div>
-              <div style="margin-bottom: 2px;">Boston, MA 02101</div>
-              <div>🌐 healthcareplus.com</div>
-            </div>
-          </div>
-        </div>
+        jsx: `<div class="business-card" style="
+  width: 3.5in;
+  height: 2in;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  font-family: 'Helvetica', sans-serif;
+  box-sizing: border-box;
+  position: relative;
+">
+  <div style="
+    background: #2563eb;
+    height: 0.35in;
+    padding: 0.05in 0.25in;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+  ">
+    <div style="
+      font-size: 12px;
+      font-weight: 600;
+      color: #ffffff;
+      letter-spacing: 0.5px;
+    ">HEALTHCARE PLUS</div>
+    <div class="logo-placeholder" style="
+      width: 0.9in;
+      height: 0.6in;
+      background-color: rgba(255,255,255,0.2);
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 7px;
+      color: rgba(255,255,255,0.9);
+      position: absolute;
+      top: -0.15in;
+      right: 0.2in;
+      z-index: 10;
+    ">LOGO</div>
+  </div>
+  <div style="padding: 0.25in;">
+    <h1 style="
+      font-size: 14px;
+      color: #1e293b;
+      margin: 0 0 2px 0;
+      font-weight: 600;
+    ">Dr. Sarah Mitchell</h1>
+    <h2 style="
+      font-size: 11px;
+      color: #2563eb;
+      margin: 0 0 3px 0;
+      font-weight: 500;
+    ">Family Medicine Physician</h2>
+    <h3 style="
+      font-size: 9px;
+      color: #64748b;
+      margin: 0 0 12px 0;
+      font-style: italic;
+    ">Board Certified • MD, Johns Hopkins</h3>
+    <div style="
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      font-size: 9px;
+      color: #475569;
+    ">
+      <div>
+        <div style="margin-bottom: 3px;">☎️ (555) 123-4567</div>
+        <div style="margin-bottom: 3px;">📠 (555) 123-4568</div>
+        <div>✉️ s.mitchell@healthplus.com</div>
       </div>
-    `,
+      <div style="text-align: right;">
+        <div style="margin-bottom: 3px;">🏥 123 Medical Center Dr</div>
+        <div style="margin-bottom: 3px;">Boston, MA 02101</div>
+        <div>🌐 healthcareplus.com</div>
+      </div>
+    </div>
+  </div>
+</div>`,
         metadata: {
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#2563eb', '#ffffff', '#1e293b', '#64748b'],
             fonts: ['Helvetica'],
-            features: ['medical-theme', 'professional-header', 'credentials']
+            features: ['medical', 'professional', 'clean-design', 'trust-elements']
         }
     },
 
+
     {
         catalogId: 'BC013',
-        name: 'Luxury Gold Accent',
-        theme: 'luxury',
-        description: 'Sophisticated design with elegant gold accents',
+        name: 'Vintage Postcard',
+        theme: 'vintage',
+        description: 'Classic postcard style with aged paper texture',
         style: 'company-focused',
-        jsx: `
-  <div class="business-card" style="
-    width: 3.5in;
-    height: 2in;
-    background: #1a1a1a;
-    border: 2px solid #d4af37;
-    padding: 0.16in;
-    font-family: 'Playfair Display', serif;
-    position: relative;
-    box-sizing: border-box;
-  ">
-    <div style="
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: radial-gradient(circle at center, rgba(212, 175, 55, 0.1) 0%, transparent 70%);
-      pointer-events: none;
-    "></div>
+        jsx: `<div class="business-card" style="
+  width: 3.5in;
+  height: 2in;
+  background: #f4e4bc;
+  border: 3px solid #8b4513;
+  font-family: Georgia, serif;
+  box-sizing: border-box;
+  position: relative;
+">
+  <div style="
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 8px;
+    color: #8b4513;
+    font-style: italic;
+  ">EST. 1952</div>
+  <div style="padding: 0.2in; height: 100%;">
     <div style="
       text-align: center;
-      position: relative;
-      z-index: 2;
+      border-bottom: 2px solid #8b4513;
+      padding-bottom: 0.1in;
+      margin-bottom: 0.15in;
     ">
       <h1 style="
         font-size: 16px;
-        font-weight: 400;
-        color: #d4af37;
-        margin: 0 0 6px 0;
-        text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
-        letter-spacing: 2px;
-      ">PRESTIGE</h1>
-      <div style="
-        width: 2in;
-        height: 1px;
-        background: linear-gradient(90deg, transparent, #d4af37, transparent);
-        margin: 0 auto 8px auto;
-      "></div>
+        font-weight: 700;
+        color: #5d4037;
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      ">HERITAGE TRAVEL</h1>
+    </div>
+    <div style="text-align: center;">
       <div class="logo-placeholder" style="
-        width: 0.8in;
-        height: 0.4in;
-        background-color: rgba(212, 175, 55, 0.1);
-        border: 1px solid #d4af37;
+        width: 0.9in;
+        height: 0.7in;
+        background-color: rgba(139, 69, 19, 0.1);
+        border: 2px solid #8b4513;
         border-radius: 4px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        font-size: 7px;
-        color: #d4af37;
-        margin-bottom: 8px;
+        font-size: 8px;
+        color: #8b4513;
+        margin-bottom: 0.1in;
       ">LOGO</div>
       <h2 style="
         font-size: 12px;
-        color: #ffffff;
+        color: #5d4037;
         margin: 0 0 2px 0;
         font-weight: 600;
-      ">Victoria Sterling</h2>
+      ">Winston Gatsby</h2>
       <h3 style="
         font-size: 10px;
-        color: #d4af37;
+        color: #8b4513;
         margin: 0 0 8px 0;
         font-style: italic;
-      ">Executive Director</h3>
-      <div class="contact-info" style="
+      ">Distinguished Proprietor</h3>
+      <div style="
         font-size: 9px;
-        color: #cccccc;
+        color: #5d4037;
         line-height: 1.3;
       ">
-        <div>📞 (555) 123-4567 ◆ 📧 victoria@prestige.luxury</div>
-        <div style="margin-top: 2px; color: #d4af37;">www.prestige.luxury</div>
+        <div>☎️ MayfAir 5-1234</div>
+        <div>✉️ winston@gatsby.co</div>
       </div>
     </div>
   </div>
-`,
+</div>`,
         metadata: {
             dimensions: { width: '3.5in', height: '2in' },
-            colors: ['#1a1a1a', '#d4af37', '#ffffff', '#cccccc'],
-            fonts: ['Playfair Display'],
-            features: ['luxury', 'gold-foil', 'dark-background', 'elegant']
+            colors: ['#f4e4bc', '#8b4513', '#5d4037'],
+            fonts: ['Georgia'],
+            features: ['vintage', 'postcard-style', 'aged-effects', 'travel-theme']
         }
     },
+
 
     {
         catalogId: 'BC014',
@@ -1281,6 +1322,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
     display: flex;
     align-items: center;
     justify-content: space-between;
+    position: relative;
   ">
     <h1 style="
       font-size: 16px;
@@ -1291,15 +1333,19 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
       letter-spacing: 1px;
     ">CORPORATE SOLUTIONS</h1>
     <div class="logo-placeholder" style="
-      width: 0.8in;
-      height: 0.3in;
+      width: 1.0in;
+      height: 0.7in;
       background-color: rgba(255,255,255,0.2);
       border-radius: 3px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 8px;
-      color: rgba(255,255,255,0.8);
+      color: rgba(255,255,255,0.9);
+      position: absolute;
+      top: -0.1in;
+      right: 0.2in;
+      z-index: 10;
     ">LOGO</div>
   </div>
   <div style="
@@ -1328,7 +1374,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
       <div>
         <div style="margin-bottom: 3px; font-weight: 500;">📞 Direct: (555) 123-4567</div>
         <div style="margin-bottom: 3px;">📱 Mobile: (555) 987-6543</div>
-        <div style="font-size: 8px;">📧 j.martinez@corpsolutions.com</div>
+        <div>✉️ j.martinez@corpsolutions.com</div>
       </div>
       <div style="text-align: right;">
         <div style="margin-bottom: 3px;">🏢 1234 Business Blvd</div>
@@ -1342,111 +1388,100 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#1e3a8a', '#ffffff', '#1f2937', '#4b5563'],
             fonts: ['Arial'],
-            features: ['corporate-header', 'two-column-contact', 'professional', 'navy-blue']
+            features: ['corporate', 'professional', 'navy-accents', 'traditional']
         }
     },
 
+
     {
         catalogId: 'BC021',
-        name: 'Tech Holographic',
-        theme: 'tech',
-        description: 'Futuristic holographic design with data elements',
-        style: 'company-focused',
+        name: 'Bold Creative Splash',
+        theme: 'creative',
+        description: 'High-energy design with bold colors and dynamic shapes',
+        style: 'contact-focused',
         jsx: `<div class="business-card" style="
   width: 3.5in;
   height: 2in;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-  background-size: 400% 400%;
-  padding: 2px;
-  font-family: 'Inter', sans-serif;
+  background: linear-gradient(135deg, #fbbf24, #dc2626);
   position: relative;
+  font-family: 'Arial Black', sans-serif;
   box-sizing: border-box;
+  overflow: hidden;
 ">
   <div style="
-    background: rgba(255, 255, 255, 0.95);
-    height: 100%;
-    border-radius: 12px;
-    padding: 0.15in;
-    position: relative;
-    overflow: hidden;
-  ">
+    position: absolute;
+    top: -15px;
+    right: -15px;
+    width: 100px;
+    height: 100px;
+    background: #dc2626;
+    border-radius: 50%;
+    opacity: 0.8;
+  "></div>
+  <div style="padding: 0.16in; position: relative; z-index: 2; height: 100%;">
     <div style="
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, #667eea, #764ba2, #f093fb, #667eea);
-      background-size: 400% 100%;
-    "></div>
-    <div style="
-      position: absolute;
-      top: 15px;
-      right: 15px;
-      width: 40px;
-      height: 40px;
-      opacity: 0.1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 100%;
     ">
-      <div style="
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(45deg, #667eea, #764ba2);
-        border-radius: 50%;
-      "></div>
-    </div>
-    <div style="margin-top: 6px; height: calc(100% - 12px); display: flex; flex-direction: column;">
       <div>
         <h1 style="
-          font-size: 16px;
-          font-weight: 700;
-          color: #1a202c;
+          font-size: 18px;
+          font-weight: 900;
+          color: #ffffff;
           margin: 0 0 3px 0;
           text-transform: uppercase;
+          letter-spacing: -1px;
+          text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+          line-height: 0.9;
+        ">BOLD</h1>
+        <h2 style="
+          font-size: 12px;
+          font-weight: 700;
+          color: #1f2937;
+          margin: 0 0 10px 0;
+          text-transform: uppercase;
           letter-spacing: 1px;
-        ">QUANTUM TECH</h1>
-        <div style="
-          width: 2in;
-          height: 2px;
-          background: linear-gradient(90deg, #667eea, #764ba2);
-          margin-bottom: 8px;
-        "></div>
+        ">CREATIVE STUDIO</h2>
         <div class="logo-placeholder" style="
-          width: 0.7in;
-          height: 0.35in;
-          background: linear-gradient(135deg, #667eea, #f093fb);
-          border-radius: 6px;
+          width: 0.8in;
+          height: 0.5in;
+          background-color: rgba(255,255,255,0.2);
+          border: 2px solid #ffffff;
+          border-radius: 4px;
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          font-size: 8px;
-          color: white;
-          font-weight: 600;
+          font-size: 7px;
+          color: #ffffff;
+          font-weight: 700;
           margin-bottom: 8px;
         ">LOGO</div>
-        <h2 style="
-          font-size: 13px;
-          color: #2d3748;
-          margin: 0 0 2px 0;
-          font-weight: 600;
-        ">Alex Chen</h2>
+      </div>
+      <div>
         <h3 style="
-          font-size: 10px;
-          color: #667eea;
+          font-size: 12px;
+          color: #1f2937;
+          margin: 0 0 1px 0;
+          font-weight: 700;
+        ">Jake Thompson</h3>
+        <h4 style="
+          font-size: 9px;
+          color: #ffffff;
           margin: 0 0 6px 0;
-          font-weight: 500;
+          font-weight: 600;
           text-transform: uppercase;
           letter-spacing: 0.5px;
-        ">Chief Technology Officer</h3>
-      </div>
-      <div style="margin-top: auto; margin-bottom: 0.05in;">
+        ">ART DIRECTOR</h4>
         <div class="contact-info" style="
           font-size: 9px;
-          color: #4a5568;
-          line-height: 1.3;
+          color: #1f2937;
+          line-height: 1.2;
+          font-weight: 600;
         ">
-          <div style="margin-bottom: 2px;">📱 (555) 123-4567</div>
-          <div style="margin-bottom: 2px;">✉️ alex@quantumtech.ai</div>
-          <div>🌐 quantumtech.ai</div>
+          <div>📱 (555) 123-4567</div>
+          <div>✉️ jake@boldcreative.studio</div>
         </div>
       </div>
     </div>
@@ -1454,11 +1489,12 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
 </div>`,
         metadata: {
             dimensions: { width: '3.5in', height: '2in' },
-            colors: ['#667eea', '#764ba2', '#f093fb', '#ffffff'],
-            fonts: ['Inter'],
-            features: ['holographic-gradient', 'tech-elements', 'futuristic']
+            colors: ['#fbbf24', '#dc2626', '#ffffff', '#1f2937'],
+            fonts: ['Arial Black'],
+            features: ['bold-colors', 'dynamic-shapes', 'high-energy', 'creative']
         }
     },
+
 
     {
         catalogId: 'BC022',
@@ -1603,7 +1639,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
       align-items: flex-start;
       margin-bottom: 0.1in;
     ">
-      <div style="flex: 1; margin-right: 0.15in; max-width: 2in;">
+      <div style="flex: 1; margin-right: 0.15in; max-width: 1.8in;">
         <h1 style="
           font-size: 16px;
           font-weight: 700;
@@ -1627,51 +1663,40 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
         ">Digital Innovations</h3>
       </div>
       <div class="logo-placeholder" style="
-        width: 0.45in;
-        height: 0.35in;
+        width: 0.9in;
+        height: 0.7in;
         background: linear-gradient(135deg, #3b82f6, #10b981);
         border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 7px;
-        color: white;
+        font-size: 8px;
+        color: #ffffff;
         font-weight: 600;
-        flex-shrink: 0;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       ">LOGO</div>
     </div>
-    <div style="
-      margin-top: auto;
-      margin-bottom: 0.1in;
-      margin-right: 0.3in;
-    ">
-      <div class="contact-info" style="
+    <div style="margin-top: auto;">
+      <div style="
         font-size: 10px;
-        color: #374151;
-        line-height: 1.3;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
+        color: #4b5563;
+        line-height: 1.4;
       ">
-        <div>
-          <div style="margin-bottom: 2px; white-space: nowrap;">📱 (555) 123-4567</div>
-          <div style="font-size: 8px;">✉️ sofia@digitalinnovations.com</div>
-        </div>
-        <div style="text-align: right;">
-          <div style="margin-bottom: 2px;">🌐 digitalinnovations.com</div>
-          <div style="color: #3b82f6; font-size: 9px;">@sofiadesigns</div>
-        </div>
+        <div style="margin-bottom: 3px;">📱 (555) 123-4567</div>
+        <div style="margin-bottom: 3px;">✉️ sofia@digitalinnovations.com</div>
+        <div>🌐 digitalinnovations.com</div>
       </div>
     </div>
   </div>
 </div>`,
         metadata: {
             dimensions: { width: '3.5in', height: '2in' },
-            colors: ['#3b82f6', '#10b981', '#ffffff', '#1f2937'],
+            colors: ['#ffffff', '#3b82f6', '#10b981', '#1f2937'],
             fonts: ['Inter'],
-            features: ['geometric-shapes', 'modern-layout', 'gradient-logo']
+            features: ['geometric', 'modern', 'bold-shapes', 'gradient']
         }
     },
+
 
     {
         catalogId: 'BC024',
@@ -2211,227 +2236,6 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             features: ['gradient-text', 'startup-theme', 'modern-tech']
         }
     },
-    {
-        catalogId: 'BC034',
-        name: 'Luxury Fashion',
-        theme: 'luxury',
-        description: 'High-end fashion design with elegant typography',
-        style: 'contact-focused',
-        jsx: `
-      <div class="business-card" style="
-        width: 3.5in;
-        height: 2in;
-        background: #000000;
-        position: relative;
-        font-family: 'Playfair Display', serif;
-        box-sizing: border-box;
-        padding: 0.08in;
-      ">
-        <div style="
-          background: #ffffff;
-          height: 100%;
-          padding: 0.25in;
-          position: relative;
-        ">
-          <div style="
-            position: absolute;
-            top: 0.1in;
-            left: 0.1in;
-            right: 0.1in;
-            bottom: 0.1in;
-            border: 1px solid #e5e7eb;
-          "></div>
-          <div style="
-            text-align: center;
-            position: relative;
-            z-index: 2;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            padding: 0.05in;
-          ">
-            <h1 style="
-              font-size: 16px;
-              font-weight: 400;
-              color: #000000;
-              margin: 0 0 6px 0;
-              letter-spacing: 3px;
-              text-transform: uppercase;
-            ">ÉLÉGANCE</h1>
-            <div style="
-              width: 1.5in;
-              height: 1px;
-              background: #d4af37;
-              margin: 0 auto 12px auto;
-            "></div>
-            <div class="logo-placeholder" style="
-              width: 0.6in;
-              height: 0.6in;
-              border: 1px solid #d4af37;
-              border-radius: 50%;
-              display: inline-flex;
-              align-items: center;
-              justify-content: center;
-              font-size: 7px;
-              color: #d4af37;
-              background-color: #fefefe;
-              margin-bottom: 12px;
-            ">LOGO</div>
-            <h2 style="
-              font-size: 12px;
-              color: #000000;
-              margin: 0 0 2px 0;
-              font-weight: 400;
-              letter-spacing: 1px;
-            ">Isabella Laurent</h2>
-            <h3 style="
-              font-size: 10px;
-              color: #6b7280;
-              margin: 0 0 8px 0;
-              font-style: italic;
-              font-weight: 300;
-            ">Creative Director</h3>
-            <div class="contact-info" style="
-              font-size: 9px;
-              color: #374151;
-              line-height: 1.4;
-              font-family: 'Inter', sans-serif;
-            ">
-              <div style="margin-bottom: 2px;">📞 (555) 123-4567</div>
-              <div style="margin-bottom: 2px;">✉️ isabella@elegance.fashion</div>
-              <div>🌐 elegance.fashion</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    `,
-        metadata: {
-            dimensions: { width: '3.5in', height: '2in' },
-            colors: ['#000000', '#ffffff', '#d4af37', '#6b7280'],
-            fonts: ['Playfair Display', 'Inter'],
-            features: ['luxury-fashion', 'elegant-borders', 'gold-accents']
-        }
-    },
-
-    {
-        catalogId: 'BC035',
-        name: 'Creative Studio Bold',
-        theme: 'creative',
-        description: 'Bold creative design with expressive typography',
-        style: 'company-focused',
-        jsx: `
-  <div class="business-card" style="
-    width: 3.5in;
-    height: 2in;
-    background: #fbbf24;
-    position: relative;
-    font-family: 'Inter', sans-serif;
-    box-sizing: border-box;
-    overflow: hidden;
-  ">
-    <div style="
-      position: absolute;
-      top: -15px;
-      right: -15px;
-      width: 100px;
-      height: 100px;
-      background: #dc2626;
-      border-radius: 50%;
-      opacity: 0.8;
-    "></div>
-    <div style="
-      position: absolute;
-      bottom: -25px;
-      left: -25px;
-      width: 80px;
-      height: 80px;
-      background: #7c3aed;
-      transform: rotate(45deg);
-      opacity: 0.7;
-    "></div>
-    <div style="padding: 0.16in; position: relative; z-index: 2; height: 100%;">
-      <div style="
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        height: 100%;
-      ">
-        <div>
-          <h1 style="
-            font-size: 18px;
-            font-weight: 900;
-            color: #ffffff;
-            margin: 0 0 3px 0;
-            text-transform: uppercase;
-            letter-spacing: -1px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-            line-height: 0.9;
-          ">BOLD</h1>
-          <h2 style="
-            font-size: 12px;
-            font-weight: 700;
-            color: #1f2937;
-            margin: 0 0 6px 0;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-          ">CREATIVE STUDIO</h2>
-          <div class="logo-placeholder" style="
-            width: 0.7in;
-            height: 0.35in;
-            background-color: rgba(255,255,255,0.2);
-            border: 2px solid #ffffff;
-            border-radius: 4px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 7px;
-            color: #ffffff;
-            font-weight: 700;
-          ">LOGO</div>
-        </div>
-        <div style="
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-end;
-        ">
-          <div>
-            <h3 style="
-              font-size: 12px;
-              color: #1f2937;
-              margin: 0 0 1px 0;
-              font-weight: 700;
-            ">Jake Thompson</h3>
-            <h4 style="
-              font-size: 9px;
-              color: #ffffff;
-              margin: 0 0 6px 0;
-              font-weight: 600;
-              text-transform: uppercase;
-              letter-spacing: 0.5px;
-            ">Art Director</h4>
-            <div class="contact-info" style="
-              font-size: 9px;
-              color: #1f2937;
-              line-height: 1.2;
-              font-weight: 600;
-            ">
-              <div>📱 (555) 123-4567</div>
-              <div>✉️ jake@boldcreative.studio</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-`,
-        metadata: {
-            dimensions: { width: '3.5in', height: '2in' },
-            colors: ['#fbbf24', '#dc2626', '#7c3aed', '#ffffff'],
-            fonts: ['Inter'],
-            features: ['bold-colors', 'creative-shapes', 'expressive-typography']
-        }
-    },
 
     {
         catalogId: 'BC007',
@@ -2666,24 +2470,6 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
     background: rgba(0, 255, 65, 0.1);
     transform: rotate(45deg);
   "></div>
-  <div style="
-    position: absolute;
-    top: 40px;
-    right: 35px;
-    width: 15px;
-    height: 15px;
-    border: 1px solid #ff0080;
-    background: rgba(255, 0, 128, 0.1);
-  "></div>
-  <div style="
-    position: absolute;
-    bottom: 8px;
-    right: 12px;
-    width: 20px;
-    height: 20px;
-    border: 1px solid #ff0080;
-    background: rgba(255, 0, 128, 0.1);
-  "></div>
   <div style="padding: 0.16in; position: relative; z-index: 2; height: 100%;">
     <div style="
       display: flex;
@@ -2705,49 +2491,48 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
         <div style="
           font-size: 7px;
           color: #ff0080;
-          margin-bottom: 10px;
+          margin-bottom: 12px;
           text-transform: uppercase;
           letter-spacing: 3px;
           font-weight: 600;
         ">DIGITAL FRONTIER</div>
         <div class="logo-placeholder" style="
-          width: 0.7in;
-          height: 0.35in;
-          border: 1px solid #00ff41;
+          width: 0.9in;
+          height: 0.6in;
           background: rgba(0, 255, 65, 0.1);
+          border: 1px solid #00ff41;
+          border-radius: 2px;
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          font-size: 7px;
+          font-size: 8px;
           color: #00ff41;
-          font-weight: 700;
-          text-shadow: 0 0 5px #00ff41;
+          font-weight: 600;
+          margin-bottom: 10px;
         ">LOGO</div>
       </div>
-      <div style="margin-right: 0.3in;">
+      <div>
         <h2 style="
-          font-size: 11px;
+          font-size: 12px;
           color: #ffffff;
-          margin: 0 0 1px 0;
+          margin: 0 0 2px 0;
           font-weight: 600;
-          text-shadow: 0 0 5px #ffffff;
+          text-transform: uppercase;
         ">ZARA NEXUS</h2>
         <h3 style="
-          font-size: 8px;
+          font-size: 9px;
           color: #ff0080;
-          margin: 0 0 6px 0;
-          font-weight: 500;
+          margin: 0 0 8px 0;
           text-transform: uppercase;
           letter-spacing: 1px;
         ">CYBER ARCHITECT</h3>
-        <div class="contact-info" style="
+        <div style="
           font-size: 8px;
           color: #00ff41;
           line-height: 1.3;
-          font-family: 'Courier New', monospace;
         ">
-          <div style="margin-bottom: 1px;">[TEL] 555.123.4567</div>
-          <div style="margin-bottom: 1px;">[NET] zara@cybernexus.io</div>
+          <div style="margin-bottom: 2px;">[TEL] 555.123.4567</div>
+          <div style="margin-bottom: 2px;">[NET] zara@cybernexus.io</div>
           <div>[WEB] cybernexus.io</div>
         </div>
       </div>
@@ -2758,7 +2543,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#0a0a0a', '#00ff41', '#ff0080', '#ffffff'],
             fonts: ['Courier New'],
-            features: ['cyberpunk', 'neon-glow', 'futuristic', 'tech-grid']
+            features: ['cyberpunk', 'neon-highlights', 'tech-theme', 'futuristic']
         }
     },
 
@@ -2868,120 +2653,92 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
 
     {
         catalogId: 'BC019',
-        name: 'Vintage Art Deco',
-        theme: 'vintage',
-        description: 'Classic art deco design with geometric patterns',
-        style: 'company-focused',
-        jsx: `
-  <div class="business-card" style="
-    width: 3.5in;
-    height: 2in;
-    background: #2c1810;
-    border: 3px solid #d4af37;
-    position: relative;
-    font-family: 'Georgia', serif;
-    box-sizing: border-box;
-  ">
+        name: 'Quantum Tech',
+        theme: 'tech',
+        description: 'Modern tech design with quantum-inspired elements',
+        style: 'contact-focused',
+        jsx: `<div class="business-card" style="
+  width: 3.5in;
+  height: 2in;
+  background: #f8fafc;
+  border: 2px solid #3b82f6;
+  border-radius: 12px;
+  font-family: 'Inter', sans-serif;
+  box-sizing: border-box;
+  position: relative;
+">
+  <div style="
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 40px;
+    height: 40px;
+    background: rgba(59, 130, 246, 0.1);
+    border-radius: 50%;
+    border: 1px solid #3b82f6;
+  "></div>
+  <div style="padding: 0.2in; height: 100%;">
     <div style="
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 0.25in;
-      background: linear-gradient(90deg, #d4af37 0%, #f4e4bc 50%, #d4af37 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      border-bottom: 1px solid #3b82f6;
+      padding-bottom: 0.05in;
+      margin-bottom: 0.1in;
     ">
-      <div style="
-        width: 0;
-        height: 0;
-        border-left: 12px solid transparent;
-        border-right: 12px solid transparent;
-        border-bottom: 12px solid #2c1810;
-        margin: 0 8px;
-      "></div>
-      <div style="
-        width: 0;
-        height: 0;
-        border-left: 8px solid transparent;
-        border-right: 8px solid transparent;
-        border-bottom: 8px solid #2c1810;
-        margin: 0 4px;
-      "></div>
-      <div style="
-        width: 0;
-        height: 0;
-        border-left: 12px solid transparent;
-        border-right: 12px solid transparent;
-        border-bottom: 12px solid #2c1810;
-        margin: 0 8px;
-      "></div>
+      <h1 style="
+        font-size: 14px;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      ">QUANTUM TECH</h1>
     </div>
-    <div style="padding: 0.35in 0.2in 0.18in 0.2in; position: relative; z-index: 2;">
-      <div style="text-align: center;">
-        <h1 style="
-          font-size: 15px;
-          font-weight: 700;
-          color: #d4af37;
-          margin: 0 0 6px 0;
-          text-transform: uppercase;
-          letter-spacing: 2px;
-          text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-          line-height: 1;
-        ">GATSBY & CO</h1>
-        <div style="
-          width: 1.8in;
-          height: 2px;
-          background: #d4af37;
-          margin: 0 auto 8px auto;
-        "></div>
-        <div class="logo-placeholder" style="
-          width: 0.8in;
-          height: 0.4in;
-          border: 2px solid #d4af37;
-          background: rgba(212, 175, 55, 0.1);
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 7px;
-          color: #d4af37;
-          margin-bottom: 8px;
-          transform: skew(-5deg);
-        ">LOGO</div>
-        <h2 style="
-          font-size: 11px;
-          color: #f4e4bc;
-          margin: 0 0 2px 0;
-          font-weight: 600;
-          letter-spacing: 1px;
-        ">WINSTON GATSBY</h2>
-        <h3 style="
-          font-size: 9px;
-          color: #d4af37;
-          margin: 0 0 8px 0;
-          font-style: italic;
-        ">Distinguished Proprietor</h3>
-        <div class="contact-info" style="
-          font-size: 9px;
-          color: #f4e4bc;
-          line-height: 1.3;
-        ">
-          <div>📞 MAyfair 5-1234</div>
-          <div>✉️ winston@gatsby.co</div>
-          <div>Est. 1925</div>
-        </div>
+    <div style="text-align: left;">
+      <div class="logo-placeholder" style="
+        width: 0.8in;
+        height: 0.6in;
+        background-color: rgba(59, 130, 246, 0.1);
+        border: 1px solid #3b82f6;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 8px;
+        color: #3b82f6;
+        margin-bottom: 0.1in;
+      ">LOGO</div>
+      <h2 style="
+        font-size: 13px;
+        color: #1e293b;
+        margin: 0 0 2px 0;
+        font-weight: 600;
+      ">Alex Chen</h2>
+      <h3 style="
+        font-size: 11px;
+        color: #3b82f6;
+        margin: 0 0 8px 0;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      ">CHIEF TECHNOLOGY OFFICER</h3>
+      <div style="
+        font-size: 9px;
+        color: #64748b;
+        line-height: 1.4;
+      ">
+        <div style="margin-bottom: 2px;">📞 (555) 123-4567</div>
+        <div>✉️ alex@quantumtech.ai</div>
       </div>
     </div>
   </div>
-`,
+</div>`,
         metadata: {
             dimensions: { width: '3.5in', height: '2in' },
-            colors: ['#2c1810', '#d4af37', '#f4e4bc'],
-            fonts: ['Georgia'],
-            features: ['art-deco', 'geometric-patterns', 'vintage-gold', 'skewed-elements']
+            colors: ['#f8fafc', '#3b82f6', '#1e293b', '#64748b'],
+            fonts: ['Inter'],
+            features: ['tech', 'quantum-elements', 'modern', 'professional']
         }
     },
+
 
     {
         catalogId: 'BC026',
@@ -3222,118 +2979,89 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
 
     {
         catalogId: 'BC028',
-        name: 'Professional Finance',
-        theme: 'professional',
-        description: 'Conservative financial services design with trust elements',
-        style: 'company-focused',
-        jsx: `
-  <div class="business-card" style="
-    width: 3.5in;
-    height: 2in;
-    background: #ffffff;
-    border: 1px solid #d1d5db;
+        name: 'Data Flow Tech',
+        theme: 'tech',
+        description: 'Clean tech design with data flow elements',
+        style: 'contact-focused',
+        jsx: `<div class="business-card" style="
+  width: 3.5in;
+  height: 2in;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  font-family: 'Inter', sans-serif;
+  box-sizing: border-box;
+  position: relative;
+">
+  <div style="
+    background: #334155;
+    height: 0.4in;
+    padding: 0.1in 0.25in;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     position: relative;
-    font-family: 'Times New Roman', serif;
-    box-sizing: border-box;
   ">
     <div style="
-      background: #1e40af;
-      height: 0.35in;
-      padding: 0.06in 0.25in;
+      font-size: 14px;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: 1px;
+    ">DATAFLOW</div>
+    <div class="logo-placeholder" style="
+      width: 0.9in;
+      height: 0.6in;
+      background-color: rgba(255,255,255,0.2);
+      border-radius: 4px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: center;
+      font-size: 8px;
+      color: rgba(255,255,255,0.9);
+      position: absolute;
+      top: -0.1in;
+      right: 0.2in;
+      z-index: 10;
+    ">LOGO</div>
+  </div>
+  <div style="padding: 0.25in;">
+    <h1 style="
+      font-size: 14px;
+      color: #1e293b;
+      margin: 0 0 2px 0;
+      font-weight: 600;
+    ">David Park</h1>
+    <h2 style="
+      font-size: 11px;
+      color: #64748b;
+      margin: 0 0 12px 0;
+      font-weight: 500;
+    ">Senior Software Engineer</h2>
+    <div style="
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      font-size: 9px;
+      color: #475569;
     ">
-      <h1 style="
-        font-size: 13px;
-        font-weight: 700;
-        color: #ffffff;
-        margin: 0;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-      ">STERLING FINANCIAL</h1>
-      <div class="logo-placeholder" style="
-        width: 0.5in;
-        height: 0.2in;
-        background-color: rgba(255,255,255,0.2);
-        border-radius: 2px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 6px;
-        color: rgba(255,255,255,0.8);
-      ">LOGO</div>
-    </div>
-    <div style="padding: 0.2in;">
-      <div style="
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-      ">
-        <div style="flex: 1;">
-          <h2 style="
-            font-size: 13px;
-            color: #1f2937;
-            margin: 0 0 2px 0;
-            font-weight: 600;
-          ">Michael Sterling, CFA</h2>
-          <h3 style="
-            font-size: 10px;
-            color: #1e40af;
-            margin: 0 0 1px 0;
-            font-weight: 500;
-          ">Senior Portfolio Manager</h3>
-          <div style="
-            font-size: 8px;
-            color: #6b7280;
-            margin-bottom: 8px;
-            font-style: italic;
-          ">Chartered Financial Analyst</div>
-          <div class="contact-info" style="
-            font-size: 9px;
-            color: #374151;
-            line-height: 1.3;
-          ">
-            <div style="margin-bottom: 1px;">📞 Direct: (555) 123-4567</div>
-            <div style="margin-bottom: 1px;">✉️ msterling@sterlingfinancial.com</div>
-            <div style="margin-bottom: 1px;">🏢 100 Wall Street, Suite 2500</div>
-            <div style="margin-left: 12px;">New York, NY 10005</div>
-          </div>
-        </div>
-        <div style="
-          width: 0.7in;
-          text-align: center;
-          margin-left: 0.1in;
-        ">
-          <div style="
-            font-size: 7px;
-            color: #1e40af;
-            font-weight: 600;
-            margin-bottom: 3px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-          ">Licensed</div>
-          <div style="
-            font-size: 6px;
-            color: #6b7280;
-            line-height: 1.1;
-          ">
-            <div>FINRA Series 7</div>
-            <div>FINRA Series 66</div>
-            <div>Insurance Licensed</div>
-          </div>
-        </div>
+      <div>
+        <div style="margin-bottom: 3px;">📞 (555) 123-4567</div>
+        <div>✉️ david@dataflow.tech</div>
+      </div>
+      <div style="text-align: right;">
+        <div style="margin-bottom: 3px;">🌐 dataflow.tech</div>
+        <div>📍 San Francisco, CA</div>
       </div>
     </div>
   </div>
-`,
+</div>`,
         metadata: {
             dimensions: { width: '3.5in', height: '2in' },
-            colors: ['#1e40af', '#ffffff', '#1f2937', '#6b7280'],
-            fonts: ['Times New Roman'],
-            features: ['financial-theme', 'professional-header', 'licenses', 'conservative']
+            colors: ['#334155', '#ffffff', '#1e293b', '#64748b'],
+            fonts: ['Inter'],
+            features: ['tech', 'data-flow', 'modern', 'professional']
         }
     },
+
 
     {
         catalogId: 'BC029',
@@ -3579,7 +3307,179 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             fonts: ['Playfair Display', 'Inter'],
             features: ['monogram-logo', 'double-border', 'luxury-typography', 'elegant-spacing']
         }
-    }
+    },
+
+    {
+        catalogId: 'BC034',
+        name: 'Color Splash Creative',
+        theme: 'creative',
+        description: 'Vibrant color blocks with modern asymmetric layout',
+        style: 'contact-focused',
+        jsx: `<div class="business-card" style="
+  width: 3.5in;
+  height: 2in;
+  background: #ffffff;
+  position: relative;
+  font-family: 'Inter', sans-serif;
+  box-sizing: border-box;
+  overflow: hidden;
+">
+  <div style="padding: 0.25in; position: relative; z-index: 2; height: 100%;">
+    <div style="
+      display: flex;
+      align-items: flex-start;
+      gap: 0.2in;
+      margin-bottom: 0.15in;
+    ">
+      <div class="logo-placeholder" style="
+        width: 0.8in;
+        height: 0.8in;
+        background-color: #f8fafc;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 8px;
+        color: #a0aec0;
+        border: 1px solid #e2e8f0;
+        flex-shrink: 0;
+      ">LOGO</div>
+      <div>
+        <h1 style="
+          font-size: 16px;
+          font-weight: 700;
+          color: #1a202c;
+          margin: 0 0 4px 0;
+          line-height: 1.1;
+        ">Alex Rivera</h1>
+        <h2 style="
+          font-size: 12px;
+          color: #e53e3e;
+          margin: 0 0 2px 0;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        ">CREATIVE DIRECTOR</h2>
+        <h3 style="
+          font-size: 10px;
+          color: #718096;
+          margin: 0;
+          font-weight: 500;
+        ">Splash SMARTY LOGOS</h3>
+      </div>
+    </div>
+    <div class="contact-info" style="
+      font-size: 10px;
+      color: #4a5568;
+      line-height: 1.4;
+    ">
+      <div style="margin-bottom: 3px;">📱 (555) 123-4567</div>
+      <div style="margin-bottom: 3px;">✉️ alex@splashcreative.com</div>
+      <div>🌐 splashcreative.com</div>
+    </div>
+  </div>
+</div>`,
+        metadata: {
+            dimensions: { width: '3.5in', height: '2in' },
+            colors: ['#ffffff', '#1a202c', '#e53e3e', '#718096'],
+            fonts: ['Inter'],
+            features: ['color-blocks', 'modern-layout', 'creative']
+        }
+    },
+    {
+        catalogId: 'BC035',
+        name: 'Prestige Luxury',
+        theme: 'luxury',
+        description: 'Elegant luxury design with premium gold accents',
+        style: 'company-focused',
+        jsx: `<div class="business-card" style="
+  width: 3.5in;
+  height: 2in;
+  background: #1a1a1a;
+  border: 2px solid #d4af37;
+  padding: 0.16in;
+  font-family: 'Playfair Display', serif;
+  position: relative;
+  box-sizing: border-box;
+">
+  <div style="
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at center, rgba(212, 175, 55, 0.1) 0%, transparent 70%);
+    pointer-events: none;
+  "></div>
+  <div style="
+    text-align: center;
+    position: relative;
+    z-index: 2;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  ">
+    <div>
+      <h1 style="
+        font-size: 16px;
+        font-weight: 400;
+        color: #d4af37;
+        margin: 0 0 6px 0;
+        text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+        letter-spacing: 2px;
+      ">PRESTIGE</h1>
+      <div style="
+        width: 2in;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, #d4af37, transparent);
+        margin: 0 auto 10px auto;
+      "></div>
+      <div class="logo-placeholder" style="
+        width: 0.9in;
+        height: 0.6in;
+        background-color: rgba(212, 175, 55, 0.1);
+        border: 1px solid #d4af37;
+        border-radius: 4px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 7px;
+        color: #d4af37;
+        margin-bottom: 12px;
+      ">LOGO</div>
+    </div>
+    <div>
+      <h2 style="
+        font-size: 12px;
+        color: #ffffff;
+        margin: 0 0 2px 0;
+        font-weight: 400;
+      ">Victoria Sterling</h2>
+      <h3 style="
+        font-size: 10px;
+        color: #d4af37;
+        margin: 0 0 8px 0;
+        font-style: italic;
+      ">Executive Director</h3>
+      <div style="
+        font-size: 8px;
+        color: #ffffff;
+        line-height: 1.4;
+      ">
+        <div style="margin-bottom: 2px;">☎️ (555) 123-4567 • ✉️ victoria@prestige.luxury</div>
+        <div>🌐 www.prestige.luxury</div>
+      </div>
+    </div>
+  </div>
+</div>`,
+        metadata: {
+            dimensions: { width: '3.5in', height: '2in' },
+            colors: ['#1a1a1a', '#d4af37', '#ffffff'],
+            fonts: ['Playfair Display'],
+            features: ['luxury', 'gold-accents', 'premium', 'elegant']
+        }
+    },
 ];
 
 // HELPER FUNCTIONS FOR BUSINESS CARD LAYOUTS
