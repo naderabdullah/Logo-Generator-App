@@ -357,81 +357,131 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             features: ['two-column', 'clean-spacing', 'right-logo']
         }
     },
-
     {
         catalogId: 'BC005',
-        name: 'Classic Serif Elegance',
-        theme: 'classic',
-        description: 'Traditional design with serif typography and elegant spacing',
-        style: 'company-focused',
+        name: 'Heritage Travel',
+        theme: 'vintage',
+        description: 'Vintage travel design with centered content layout',
+        style: 'contact-focused',
         jsx: `<div class="business-card" style="
-  width: 3.5in;
-  height: 2in;
-  background: #fefefe;
-  padding: 0.18in;
-  font-family: Georgia, serif;
-  box-sizing: border-box;
-">
-  <div style="text-align: center; margin-bottom: 0.12in;">
-    <h1 style="
-      font-size: 15px;
-      font-weight: 700;
-      color: #0f172a;
-      margin: 0 0 3px 0;
-      letter-spacing: -0.5px;
-      line-height: 1;
-    ">STELLAR DESIGN</h1>
-    <div style="
-      width: 1.8in;
-      height: 1px;
-      background: linear-gradient(to right, transparent, #cbd5e0, transparent);
-      margin: 0 auto;
-    "></div>
-  </div>
-  <div style="text-align: center;">
-    <div class="logo-placeholder" style="
-      width: 0.9in;
-      height: 0.7in;
-      background-color: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 4px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 8px;
-      color: #94a3b8;
-      margin-bottom: 12px;
-    ">LOGO</div>
-    <h2 style="
-      font-size: 11px;
-      color: #1e293b;
-      margin: 0 0 1px 0;
-      font-weight: 600;
-    ">Emma Wilson</h2>
-    <h3 style="
-      font-size: 9px;
-      color: #64748b;
-      margin: 0 0 8px 0;
-      font-style: italic;
-    ">Principal Designer</h3>
-    <div style="
-      font-size: 9px;
-      color: #475569;
-      line-height: 1.4;
+        width: 3.5in;
+        height: 2in;
+        background: #f4e4bc;
+        border: 3px solid #8b4513;
+        padding: 0.2in;
+        font-family: 'Georgia', serif;
+        position: relative;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
     ">
-      <div style="margin-bottom: 2px;">Mobile: (555) 123-4567</div>
-      <div style="margin-bottom: 2px;">Office: (555) 987-6543</div>
-      <div>emma@stellardesign.com</div>
-    </div>
-  </div>
-</div>`,
+        <div style="
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 0.4in;
+            height: 0.4in;
+            background: radial-gradient(circle, rgba(139, 69, 19, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+        "></div>
+        <div style="
+            position: absolute;
+            bottom: 6px;
+            left: 6px;
+            width: 0.25in;
+            height: 0.25in;
+            background: radial-gradient(circle, rgba(139, 69, 19, 0.05) 0%, transparent 70%);
+            border-radius: 50%;
+        "></div>
+        <div style="
+            text-align: center;
+            border-bottom: 2px solid #8b4513;
+            padding-bottom: 0.06in;
+            margin-bottom: 0.02in;
+        ">
+            <h1 style="
+                font-size: 14px;
+                font-weight: 700;
+                color: #5d4037;
+                margin: 0;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                line-height: 0.9;
+            ">Heritage Travel</h1>
+        </div>
+        <div style="
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25in;
+            margin-top: 0.2in;
+        ">
+            <div style="text-align: center;">
+                <h2 style="
+                    font-size: 11px;
+                    color: #5d4037;
+                    margin: 0 0 1px 0;
+                    font-weight: 600;
+                    line-height: 1.1;
+                ">Winston Gatsby</h2>
+                <h3 style="
+                    font-size: 9px;
+                    color: #8b4513;
+                    margin: 0 0 6px 0;
+                    font-style: italic;
+                    line-height: 1.1;
+                ">Distinguished Proprietor</h3>
+                <div style="
+                    font-size: 8px;
+                    color: #5d4037;
+                    line-height: 1.2;
+                ">
+                    <div style="margin-bottom: 1px;">☎️ MayfAir 5-1234</div>
+                    <div style="margin-bottom: 1px;">✉️ winston@gatsby.co</div>
+                    <div>🌍 heritage-travel.co</div>
+                </div>
+            </div>
+            <div style="
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            ">
+                <div class="logo-placeholder" style="
+                    width: 0.8in;
+                    height: 0.6in;
+                    background-color: rgba(139, 69, 19, 0.1);
+                    border: 2px solid #8b4513;
+                    border-radius: 4px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 8px;
+                    color: #8b4513;
+                    font-weight: 600;
+                    margin-bottom: 0.02in;
+                ">LOGO</div>
+                <div style="
+                    font-size: 7px;
+                    color: #8b4513;
+                    font-style: italic;
+                    padding: 1px 4px;
+                    border: 1px solid #8b4513;
+                    border-radius: 8px;
+                    background: rgba(139, 69, 19, 0.05);
+                ">Est. 1952</div>
+            </div>
+        </div>
+    </div>`,
         metadata: {
             dimensions: { width: '3.5in', height: '2in' },
-            colors: ['#fefefe', '#0f172a', '#1e293b', '#64748b'],
+            colors: ['#f4e4bc', '#8b4513', '#5d4037'],
             fonts: ['Georgia'],
-            features: ['classic', 'serif', 'elegant', 'traditional']
+            features: ['vintage', 'postcard-style', 'aged-effects', 'travel-theme', 'centered-layout']
         }
     },
+
+
 
     {
         catalogId: 'BC006',
@@ -993,89 +1043,111 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             features: ['medical', 'professional', 'clean-design', 'trust-elements']
         }
     },
-
-
     {
         catalogId: 'BC013',
-        name: 'Vintage Postcard',
-        theme: 'vintage',
-        description: 'Classic postcard style with aged paper texture',
+        name: 'Stellar Design',
+        theme: 'classic',
+        description: 'Traditional design with serif typography and elegant spacing',
         style: 'company-focused',
         jsx: `<div class="business-card" style="
-  width: 3.5in;
-  height: 2in;
-  background: #f4e4bc;
-  border: 3px solid #8b4513;
-  font-family: Georgia, serif;
-  box-sizing: border-box;
-  position: relative;
-">
-  <div style="
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    font-size: 8px;
-    color: #8b4513;
-    font-style: italic;
-  ">EST. 1952</div>
-  <div style="padding: 0.2in; height: 100%;">
-    <div style="
-      text-align: center;
-      border-bottom: 2px solid #8b4513;
-      padding-bottom: 0.1in;
-      margin-bottom: 0.15in;
+        width: 3.5in;
+        height: 2in;
+        background: #fefefe;
+        padding: 0.18in;
+        font-family: Georgia, serif;
+        box-sizing: border-box;
+        text-align: center;
     ">
-      <h1 style="
-        font-size: 16px;
-        font-weight: 700;
-        color: #5d4037;
-        margin: 0;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-      ">HERITAGE TRAVEL</h1>
-    </div>
-    <div style="text-align: center;">
-      <div class="logo-placeholder" style="
-        width: 0.9in;
-        height: 0.7in;
-        background-color: rgba(139, 69, 19, 0.1);
-        border: 2px solid #8b4513;
-        border-radius: 4px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 8px;
-        color: #8b4513;
-        margin-bottom: 0.1in;
-      ">LOGO</div>
-      <h2 style="
-        font-size: 12px;
-        color: #5d4037;
-        margin: 0 0 2px 0;
-        font-weight: 600;
-      ">Winston Gatsby</h2>
-      <h3 style="
-        font-size: 10px;
-        color: #8b4513;
-        margin: 0 0 8px 0;
-        font-style: italic;
-      ">Distinguished Proprietor</h3>
-      <div style="
-        font-size: 9px;
-        color: #5d4037;
-        line-height: 1.3;
-      ">
-        <div>☎️ MayfAir 5-1234</div>
-        <div>✉️ winston@gatsby.co</div>
-      </div>
-    </div>
-  </div>
-</div>`,
+        <div style="margin-bottom: 0.12in;">
+            <h1 style="
+                font-size: 15px;
+                font-weight: 700;
+                color: #0f172a;
+                margin: 0 0 3px 0;
+                letter-spacing: -0.5px;
+                line-height: 1;
+            ">STELLAR DESIGN</h1>
+            <div style="
+                width: 1.8in;
+                height: 1px;
+                background: linear-gradient(to right, transparent, #cbd5e0, transparent);
+                margin: 0 auto;
+            "></div>
+        </div>
+        <div style="
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            height: calc(100% - 0.7in);
+        ">
+            <div style="
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                padding-right: 0.1in;
+            ">
+                <h2 style="
+                    font-size: 11px;
+                    color: #1e293b;
+                    margin: 0 0 1px 0;
+                    font-weight: 600;
+                ">Emma Wilson</h2>
+                <h3 style="
+                    font-size: 9px;
+                    color: #64748b;
+                    margin: 0 0 8px 0;
+                    font-style: italic;
+                ">Principal Designer</h3>
+                <div style="
+                    font-size: 8px;
+                    color: #475569;
+                    line-height: 1.3;
+                    display: flex;
+                    justify-content: space-between;
+                    gap: 0.2in;
+                    max-width: 2.3in;
+                    margin: 0 auto;
+                ">
+                    <div style="flex: 1; text-align: center;">
+                        <div style="margin-bottom: 2px;">M: (555) 123-4567</div>
+                        <div style="margin-bottom: 2px;">O: (555) 987-6543</div>
+                    </div>
+                    <div style="flex: 1; text-align: center;">
+                        <div style="margin-bottom: 2px;">emma@stellardesign.com</div>
+                        <div>🌟 stellardesign.com</div>
+                    </div>
+                </div>
+            </div>
+            <div style="
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                min-width: 0.8in;
+            ">
+                <div class="logo-placeholder" style="
+                    width: 0.75in;
+                    height: 0.55in;
+                    background-color: #f8fafc;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 4px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 7px;
+                    color: #94a3b8;
+                    font-weight: 600;
+                    margin-bottom: 0.08in;
+                ">LOGO</div>
+            </div>
+        </div>
+    </div>`,
         metadata: {
             dimensions: { width: '3.5in', height: '2in' },
-            colors: ['#f4e4bc', '#8b4513', '#5d4037'],
+            colors: ['#fefefe', '#0f172a', '#1e293b', '#64748b'],
             fonts: ['Georgia'],
-            features: ['vintage', 'postcard-style', 'aged-effects', 'travel-theme']
+            features: ['classic', 'serif', 'elegant', 'traditional', 'side-by-side-contact']
         }
     },
 
@@ -2650,7 +2722,6 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             features: ['marble-texture', 'luxury-gold', 'sophisticated', 'elegant-lines']
         }
     },
-
     {
         catalogId: 'BC019',
         name: 'Quantum Tech',
@@ -2658,84 +2729,112 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
         description: 'Modern tech design with quantum-inspired elements',
         style: 'contact-focused',
         jsx: `<div class="business-card" style="
-  width: 3.5in;
-  height: 2in;
-  background: #f8fafc;
-  border: 2px solid #3b82f6;
-  border-radius: 12px;
-  font-family: 'Inter', sans-serif;
-  box-sizing: border-box;
-  position: relative;
-">
-  <div style="
-    position: absolute;
-    top: -10px;
-    right: -10px;
-    width: 40px;
-    height: 40px;
-    background: rgba(59, 130, 246, 0.1);
-    border-radius: 50%;
-    border: 1px solid #3b82f6;
-  "></div>
-  <div style="padding: 0.2in; height: 100%;">
-    <div style="
-      border-bottom: 1px solid #3b82f6;
-      padding-bottom: 0.05in;
-      margin-bottom: 0.1in;
+        width: 3.5in;
+        height: 2in;
+        background: #f8fafc;
+        border: 2px solid #3b82f6;
+        border-radius: 8px;
+        font-family: 'Inter', sans-serif;
+        box-sizing: border-box;
+        position: relative;
     ">
-      <h1 style="
-        font-size: 14px;
-        font-weight: 700;
-        color: #1e293b;
-        margin: 0;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-      ">QUANTUM TECH</h1>
-    </div>
-    <div style="text-align: left;">
-      <div class="logo-placeholder" style="
-        width: 0.8in;
-        height: 0.6in;
-        background-color: rgba(59, 130, 246, 0.1);
-        border: 1px solid #3b82f6;
-        border-radius: 6px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 8px;
-        color: #3b82f6;
-        margin-bottom: 0.1in;
-      ">LOGO</div>
-      <h2 style="
-        font-size: 13px;
-        color: #1e293b;
-        margin: 0 0 2px 0;
-        font-weight: 600;
-      ">Alex Chen</h2>
-      <h3 style="
-        font-size: 11px;
-        color: #3b82f6;
-        margin: 0 0 8px 0;
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      ">CHIEF TECHNOLOGY OFFICER</h3>
-      <div style="
-        font-size: 9px;
-        color: #64748b;
-        line-height: 1.4;
-      ">
-        <div style="margin-bottom: 2px;">📞 (555) 123-4567</div>
-        <div>✉️ alex@quantumtech.ai</div>
-      </div>
-    </div>
-  </div>
-</div>`,
+        <div style="
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 35px;
+            height: 35px;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 50%;
+            border: 1px solid #3b82f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 6px;
+            color: #3b82f6;
+            font-weight: 600;
+        ">Q</div>
+        <div style="
+            padding: 0.15in;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 0.06in;
+        ">
+            <div style="
+                border-bottom: 1px solid #3b82f6;
+                padding-bottom: 0.03in;
+                text-align: center;
+            ">
+                <h1 style="
+                    font-size: 13px;
+                    font-weight: 700;
+                    color: #1e293b;
+                    margin: 0;
+                    line-height: 1;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                ">Quantum Tech</h1>
+            </div>
+            <div style="
+                flex: 1;
+                display: grid;
+                grid-template-columns: 1fr auto;
+                gap: 0.12in;
+                align-items: center;
+            ">
+                <div style="text-align: left;">
+                    <h2 style="
+                        font-size: 11px;
+                        font-weight: 600;
+                        color: #1e293b;
+                        margin: 0 0 1px 0;
+                        line-height: 1.1;
+                    ">Alex Chen</h2>
+                    <h3 style="
+                        font-size: 9px;
+                        color: #3b82f6;
+                        margin: 0 0 6px 0;
+                        font-weight: 500;
+                        text-transform: uppercase;
+                        letter-spacing: 0.3px;
+                        line-height: 1.1;
+                    ">Chief Technology Officer</h3>
+                    <div style="
+                        font-size: 8px;
+                        color: #475569;
+                        line-height: 1.2;
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+                        gap: 0.05in 0.1in;
+                    ">
+                        <div>📱 (555) 123-4567</div>
+                        <div>✉️ alex@quantumtech.co</div>
+                        <div>🌐 quantumtech.co</div>
+                        <div>💼 LinkedIn/alexchen</div>
+                    </div>
+                </div>
+                <div class="logo-placeholder" style="
+                    width: 0.75in;
+                    height: 0.55in;
+                    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.05));
+                    border: 1px solid #3b82f6;
+                    border-radius: 4px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 7px;
+                    color: #3b82f6;
+                    font-weight: 600;
+                ">LOGO</div>
+            </div>
+        </div>
+    </div>`,
         metadata: {
             dimensions: { width: '3.5in', height: '2in' },
-            colors: ['#f8fafc', '#3b82f6', '#1e293b', '#64748b'],
+            colors: ['#f8fafc', '#3b82f6', '#1e293b', '#475569'],
             fonts: ['Inter'],
-            features: ['tech', 'quantum-elements', 'modern', 'professional']
+            features: ['tech', 'modern', 'quantum-elements', 'grid-contact', 'decorative-circle']
         }
     },
 
@@ -3393,93 +3492,107 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
         description: 'Elegant luxury design with premium gold accents',
         style: 'company-focused',
         jsx: `<div class="business-card" style="
-  width: 3.5in;
-  height: 2in;
-  background: #1a1a1a;
-  border: 2px solid #d4af37;
-  padding: 0.16in;
-  font-family: 'Playfair Display', serif;
-  position: relative;
-  box-sizing: border-box;
-">
-  <div style="
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: radial-gradient(circle at center, rgba(212, 175, 55, 0.1) 0%, transparent 70%);
-    pointer-events: none;
-  "></div>
-  <div style="
-    text-align: center;
-    position: relative;
-    z-index: 2;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  ">
-    <div>
-      <h1 style="
-        font-size: 16px;
-        font-weight: 400;
-        color: #d4af37;
-        margin: 0 0 6px 0;
-        text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
-        letter-spacing: 2px;
-      ">PRESTIGE</h1>
-      <div style="
-        width: 2in;
-        height: 1px;
-        background: linear-gradient(90deg, transparent, #d4af37, transparent);
-        margin: 0 auto 10px auto;
-      "></div>
-      <div class="logo-placeholder" style="
-        width: 0.9in;
-        height: 0.6in;
-        background-color: rgba(212, 175, 55, 0.1);
-        border: 1px solid #d4af37;
-        border-radius: 4px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 7px;
-        color: #d4af37;
-        margin-bottom: 12px;
-      ">LOGO</div>
-    </div>
-    <div>
-      <h2 style="
-        font-size: 12px;
-        color: #ffffff;
-        margin: 0 0 2px 0;
-        font-weight: 400;
-      ">Victoria Sterling</h2>
-      <h3 style="
-        font-size: 10px;
-        color: #d4af37;
-        margin: 0 0 8px 0;
-        font-style: italic;
-      ">Executive Director</h3>
-      <div style="
-        font-size: 8px;
-        color: #ffffff;
-        line-height: 1.4;
-      ">
-        <div style="margin-bottom: 2px;">☎️ (555) 123-4567 • ✉️ victoria@prestige.luxury</div>
-        <div>🌐 www.prestige.luxury</div>
-      </div>
-    </div>
-  </div>
-</div>`,
+        width: 3.5in;
+        height: 2in;
+        background: #1a1a1a;
+        border: 2px solid #d4af37;
+        padding: 0.14in;
+        font-family: 'Playfair Display', serif;
+        position: relative;
+        box-sizing: border-box;
+        text-align: center;
+    ">
+        <div style="
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at center, rgba(212, 175, 55, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+        "></div>
+        <div style="
+            position: relative;
+            z-index: 2;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        ">
+            <div style="text-align: center;">
+                <h1 style="
+                    font-size: 15px;
+                    font-weight: 400;
+                    color: #d4af37;
+                    margin: 0 0 4px 0;
+                    text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+                    letter-spacing: 2px;
+                    line-height: 1;
+                ">PRESTIGE</h1>
+                <div style="
+                    width: 1.8in;
+                    height: 1px;
+                    background: linear-gradient(90deg, transparent, #d4af37, transparent);
+                    margin: 0 auto 8px auto;
+                "></div>
+                <div class="logo-placeholder" style="
+                    width: 0.8in;
+                    height: 0.5in;
+                    background-color: rgba(212, 175, 55, 0.1);
+                    border: 1px solid #d4af37;
+                    border-radius: 4px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 6px;
+                    color: #d4af37;
+                    margin-bottom: 8px;
+                ">LOGO</div>
+            </div>
+            <div style="text-align: center;">
+                <h2 style="
+                    font-size: 11px;
+                    color: #ffffff;
+                    margin: 0 0 1px 0;
+                    font-weight: 400;
+                    line-height: 1;
+                ">Victoria Sterling</h2>
+                <h3 style="
+                    font-size: 9px;
+                    color: #d4af37;
+                    margin: 0 0 6px 0;
+                    font-style: italic;
+                    line-height: 1;
+                ">Executive Director</h3>
+                <div style="
+                    font-size: 7px;
+                    color: #ffffff;
+                    line-height: 1.2;
+                    display: flex;
+                    justify-content: center;
+                    gap: 0.3in;
+                    max-width: 2.2in;
+                    margin: 0 auto;
+                ">
+                    <div style="flex: 1; text-align: center;">
+                        <div style="margin-bottom: 1px;">☎️ (555) 123-4567</div>
+                        <div>🌐 prestige.luxury</div>
+                    </div>
+                    <div style="flex: 1; text-align: center;">
+                        <div style="margin-bottom: 1px;">✉️ victoria@prestige.luxury</div>
+                        <div>💼 Executive Services</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>`,
         metadata: {
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#1a1a1a', '#d4af37', '#ffffff'],
             fonts: ['Playfair Display'],
-            features: ['luxury', 'gold-accents', 'premium', 'elegant']
+            features: ['luxury', 'gold-accents', 'premium', 'elegant', 'two-column-contact']
         }
-    },
+    }
 ];
 
 // HELPER FUNCTIONS FOR BUSINESS CARD LAYOUTS
