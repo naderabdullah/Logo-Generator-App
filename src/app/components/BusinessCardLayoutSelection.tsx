@@ -54,6 +54,18 @@ export const BusinessCardLayoutSelection: React.FC<BusinessCardLayoutSelectionPr
     }, [logo]);
 
     // All available layouts - PRESERVED ORIGINAL
+
+
+
+
+
+
+
+
+
+
+
+
     const allLayouts = BUSINESS_CARD_LAYOUTS;
 
     // Modal state for enlarged preview - PRESERVED ORIGINAL
@@ -72,11 +84,14 @@ export const BusinessCardLayoutSelection: React.FC<BusinessCardLayoutSelectionPr
 
     // Filter and search layouts - PRESERVED ORIGINAL
     const filteredLayouts = useMemo(() => {
+
+
         let filtered = allLayouts;
 
         // Apply theme filter
         if (themeFilter !== 'all') {
             filtered = filtered.filter(layout => layout.theme === themeFilter);
+
         }
 
         // Apply search filter
@@ -87,8 +102,11 @@ export const BusinessCardLayoutSelection: React.FC<BusinessCardLayoutSelectionPr
                 layout.description.toLowerCase().includes(term) ||
                 layout.theme.toLowerCase().includes(term) ||
                 layout.style.toLowerCase().includes(term)
+
             );
+
         }
+
 
         return filtered;
     }, [searchTerm, themeFilter, allLayouts]);
@@ -103,6 +121,7 @@ export const BusinessCardLayoutSelection: React.FC<BusinessCardLayoutSelectionPr
 
         return {
             layouts,
+
             totalPages,
             currentPage,
             hasNextPage: currentPage < totalPages,
@@ -111,8 +130,15 @@ export const BusinessCardLayoutSelection: React.FC<BusinessCardLayoutSelectionPr
         };
     }, [filteredLayouts, currentPage, itemsPerPage]);
 
+
+
+
+
+
+
     // Handle layout selection - PRESERVED ORIGINAL
     const handleLayoutSelect = (layout: BusinessCardLayout) => {
+
         onLayoutSelect(layout.catalogId);
     };
 
@@ -137,6 +163,10 @@ export const BusinessCardLayoutSelection: React.FC<BusinessCardLayoutSelectionPr
         const totalPages = paginatedData.totalPages;
         const currentPage = paginatedData.currentPage;
         const maxVisible = 5;
+
+
+
+
 
         if (totalPages <= maxVisible) {
             return Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -174,6 +204,7 @@ export const BusinessCardLayoutSelection: React.FC<BusinessCardLayoutSelectionPr
 
     // Handle search change - PRESERVED ORIGINAL
     const handleSearchChange = useCallback((value: string) => {
+
         if (onSearchChange) {
             onSearchChange(value);
         }
@@ -181,6 +212,7 @@ export const BusinessCardLayoutSelection: React.FC<BusinessCardLayoutSelectionPr
 
     // Handle theme filter change - PRESERVED ORIGINAL
     const handleThemeFilterChange = useCallback((theme: string) => {
+
         if (onThemeFilterChange) {
             onThemeFilterChange(theme);
         }
@@ -375,7 +407,40 @@ export const BusinessCardLayoutSelection: React.FC<BusinessCardLayoutSelectionPr
                     </div>
                 ) : (
                     <div className="text-center py-12">
+
                         <p className="text-gray-500 mb-4">No layouts found matching your criteria.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                         <button
                             onClick={() => {
                                 handleSearchChange('');
@@ -459,14 +524,29 @@ export const BusinessCardLayoutSelection: React.FC<BusinessCardLayoutSelectionPr
                         {/* Modal Header - PRESERVED ORIGINAL STRUCTURE */}
                         <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex justify-between items-center">
                             <div>
+
+
                                 <h3 className="text-lg font-semibold">{selectedCard.name}</h3>
                                 <p className="text-sm text-gray-600 font-mono">{selectedCard.catalogId}</p>
                             </div>
+
+
                             <div className="flex items-center gap-2">
                                 {/* Navigation Controls */}
+
+
                                 <span className="text-sm text-gray-600 mr-4">
                                     {currentModalIndex + 1} of {filteredLayouts.length}
                                 </span>
+
+
+
+
+
+
+
+
+
 
                                 <button
                                     onClick={navigateToPrevious}
@@ -532,16 +612,45 @@ export const BusinessCardLayoutSelection: React.FC<BusinessCardLayoutSelectionPr
                                 </div>
 
                                 {selectedCard.metadata?.features && selectedCard.metadata.features.length > 0 && (
+
                                     <div>
                                         <h4 className="font-medium mb-2">Features</h4>
                                         <div className="flex flex-wrap gap-2">
                                             {selectedCard.metadata.features.map((feature, idx) => (
                                                 <span key={idx} className="text-xs bg-gray-100 px-2 py-1 rounded">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                                                     {feature.replace('-', ' ')}
                                                 </span>
                                             ))}
                                         </div>
                                     </div>
+
+
+
+
+
+
+
+
+
+
+
+
                                 )}
 
                                 {selectedCard.metadata?.colors && selectedCard.metadata.colors.length > 0 && (
@@ -556,6 +665,7 @@ export const BusinessCardLayoutSelection: React.FC<BusinessCardLayoutSelectionPr
                                                     title={color}
                                                 />
                                             ))}
+
                                         </div>
                                     </div>
                                 )}
@@ -569,7 +679,9 @@ export const BusinessCardLayoutSelection: React.FC<BusinessCardLayoutSelectionPr
                                                     {font}
                                                 </span>
                                             ))}
+
                                         </div>
+
                                     </div>
                                 )}
                             </div>
