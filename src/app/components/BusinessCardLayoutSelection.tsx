@@ -8,6 +8,7 @@ import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { BusinessCardLayout, BUSINESS_CARD_LAYOUTS } from '@/data/businessCardLayouts';
 import { StoredLogo } from '@/app/utils/indexedDBUtils';
 import { injectLogoIntoBusinessCard, validateLogoForInjection } from '@/app/utils/businessCardLogoUtils';
+import { getAllThemes } from '@/data/businessCardLayouts';
 
 interface BusinessCardLayoutSelectionProps {
     selectedLayout: string | null;
@@ -84,29 +85,24 @@ export const BusinessCardLayoutSelection: React.FC<BusinessCardLayoutSelectionPr
 
     // Filter and search layouts - PRESERVED ORIGINAL
     const filteredLayouts = useMemo(() => {
-
-
         let filtered = allLayouts;
 
         // Apply theme filter
         if (themeFilter !== 'all') {
             filtered = filtered.filter(layout => layout.theme === themeFilter);
-
         }
 
-        // Apply search filter
+        // Apply search filter - ENHANCED
         if (searchTerm.trim()) {
             const term = searchTerm.toLowerCase();
             filtered = filtered.filter(layout =>
                 layout.name.toLowerCase().includes(term) ||
-                layout.description.toLowerCase().includes(term) ||
+                layout.description?.toLowerCase().includes(term) ||
                 layout.theme.toLowerCase().includes(term) ||
-                layout.style.toLowerCase().includes(term)
-
+                layout.style.toLowerCase().includes(term) ||
+                layout.metadata?.features?.some(feature => feature.toLowerCase().includes(term))
             );
-
         }
-
 
         return filtered;
     }, [searchTerm, themeFilter, allLayouts]);
@@ -284,13 +280,22 @@ export const BusinessCardLayoutSelection: React.FC<BusinessCardLayoutSelectionPr
                             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                         >
                             <option value="all">All Themes</option>
-                            <option value="professional">Professional</option>
-                            <option value="modern">Modern</option>
-                            <option value="creative">Creative</option>
-                            <option value="minimalist">Minimalist</option>
-                            <option value="corporate">Corporate</option>
-                            <option value="tech">Tech</option>
-                            <option value="trendy">Trendy</option>
+                            {(() => {
+                                try {
+                                    return getAllThemes().map(theme => (
+                                        <option key={theme} value={theme}>
+                                            {theme.charAt(0).toUpperCase() + theme.slice(1)}
+                                        </option>
+                                    ));
+                                } catch (error) {
+                                    // Fallback themes if getAllThemes fails
+                                    return ['minimalistic', 'modern', 'tech', 'luxury', 'artistic', 'vintage', 'creative', 'professional'].map(theme => (
+                                        <option key={theme} value={theme}>
+                                            {theme.charAt(0).toUpperCase() + theme.slice(1)}
+                                        </option>
+                                    ));
+                                }
+                            })()}
                         </select>
                     </div>
                 </div>
@@ -316,7 +321,8 @@ export const BusinessCardLayoutSelection: React.FC<BusinessCardLayoutSelectionPr
                                 }`}
                             >
                                 {/* Layout Preview - NO LOGO INJECTION in grid view */}
-                                <div className="bg-gray-100 rounded-lg mb-4 flex items-center justify-center" style={{ height: '180px' }}>
+                                <div className="bg-gray-100 rounded-lg mb-4 flex items-center justify-center"
+                                     style={{height: '180px'}}>
                                     <div
                                         className="business-card-preview transform scale-75"
                                         style={{

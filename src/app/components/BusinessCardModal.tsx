@@ -59,6 +59,8 @@ export const BusinessCardModal: React.FC<BusinessCardModalProps> = ({ logo, isOp
     const [selectedLayout, setSelectedLayout] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [themeFilter, setThemeFilter] = useState('all');
 
     // Form data - ENHANCED: Initialize with logo data if available
     const [formData, setFormData] = useState<BusinessCardData>({
@@ -326,14 +328,22 @@ export const BusinessCardModal: React.FC<BusinessCardModalProps> = ({ logo, isOp
                             )}
 
                             {currentStep === 'layout' && (
-                                <BusinessCardLayoutSelection
-                                    selectedLayout={selectedLayout}
-                                    onLayoutSelect={setSelectedLayout}
-                                    formData={formData}
-                                    onNext={() => setCurrentStep('preview')}
-                                    onBack={() => setCurrentStep('info')}
-                                    logo={logo} // ADDED: Pass logo for injection in enlarged modal
-                                />
+                                <div className="flex flex-col h-full">
+                                    <BusinessCardLayoutSelection
+                                        selectedLayout={selectedLayout}
+                                        onLayoutSelect={setSelectedLayout}
+                                        formData={formData}
+                                        onNext={() => setCurrentStep('preview')}        // FIXED: Use setCurrentStep directly
+                                        onBack={() => setCurrentStep('info')}
+                                        searchTerm={searchTerm}                    // ADDED
+                                        themeFilter={themeFilter}                 // ADDED
+                                        onSearchChange={setSearchTerm}            // ADDED
+                                        onThemeFilterChange={setThemeFilter}      // ADDED
+                                        externalCurrentPage={layoutCurrentPage}
+                                        onPageChange={setLayoutCurrentPage}
+                                        logo={logo}
+                                    />
+                                </div>
                             )}
 
                             {currentStep === 'preview' && (
