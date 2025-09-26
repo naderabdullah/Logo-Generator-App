@@ -706,7 +706,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
     ">STERLING FINANCIAL</div>
     <div style="
       position: absolute;
-      top: -0.1in;
+      top: -0.05in;
       right: 0.2in;
       z-index: 10;
       background: #ffffff;
@@ -994,21 +994,26 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
       color: #ffffff;
       letter-spacing: 0.5px;
     ">HEALTHCARE PLUS</div>
-    <div class="logo-placeholder" style="
-      width: 0.9in;
-      height: 0.6in;
-      background-color: rgba(255,255,255,0.2);
-      border-radius: 2px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 7px;
-      color: rgba(255,255,255,0.9);
+    <div style="
       position: absolute;
-      top: -0.15in;
+      top: -0.1in;
       right: 0.2in;
       z-index: 10;
-    ">LOGO</div>
+      background: #ffffff;
+      padding: 6px 3px 3px 3px;
+      border-radius: 2px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    ">
+      <div class="logo-placeholder" style="
+        width: 0.9in;
+        height: 0.6in;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 7px;
+        color: #2563eb;
+      ">LOGO</div>
+    </div>
   </div>
   <div style="padding: 0.25in;">
     <h1 style="
@@ -2042,8 +2047,8 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
                         box-shadow: 0 4px 8px rgba(0,0,0,0.2);
                     ">
                         <div class="logo-placeholder" style="
-                            width: 0.8in;
-                            height: 0.8in;
+                            width: 0.9in;
+                            height: 0.9in;
                             display: flex;
                             align-items: center;
                             justify-content: center;
@@ -2568,7 +2573,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
         ">DIGITAL FRONTIER</div>
         <div style="
           display: inline-block;
-          margin-bottom: 10px;
+          margin-bottom: 6px;
           background: #ffffff;
           padding: 3px;
           border-radius: 2px;
@@ -2577,7 +2582,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
         ">
           <div class="logo-placeholder" style="
             width: 0.9in;
-            height: 0.6in;
+            height: 0.35in;
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -3081,7 +3086,6 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             features: ['collage-style', 'mixed-media', 'creative-shapes', 'dashed-border']
         }
     },
-
     {
         catalogId: 'BC028',
         name: 'Data Flow Tech',
@@ -3112,21 +3116,26 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
       color: #ffffff;
       letter-spacing: 1px;
     ">DATAFLOW</div>
-    <div class="logo-placeholder" style="
-      width: 0.9in;
-      height: 0.6in;
-      background-color: rgba(255,255,255,0.2);
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 8px;
-      color: rgba(255,255,255,0.9);
+    <div style="
       position: absolute;
       top: -0.1in;
       right: 0.2in;
       z-index: 10;
-    ">LOGO</div>
+      background: #ffffff;
+      padding: 3px;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    ">
+      <div class="logo-placeholder" style="
+        width: 0.9in;
+        height: 0.6in;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 8px;
+        color: #334155;
+      ">LOGO</div>
+    </div>
   </div>
   <div style="padding: 0.25in;">
     <h1 style="
@@ -3166,8 +3175,6 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             features: ['tech', 'data-flow', 'modern', 'professional']
         }
     },
-
-
     {
         catalogId: 'BC029',
         name: 'Tech Circuit Board',
@@ -3542,19 +3549,24 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
                     background: linear-gradient(90deg, transparent, #d4af37, transparent);
                     margin: 0 auto 8px auto;
                 "></div>
-                <div class="logo-placeholder" style="
-                    width: 0.8in;
-                    height: 0.5in;
-                    background-color: rgba(212, 175, 55, 0.1);
+                <div style="
+                    display: inline-block;
+                    background: #ffffff;
+                    padding: 3px;
                     border: 1px solid #d4af37;
                     border-radius: 4px;
-                    display: inline-flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 6px;
-                    color: #d4af37;
                     margin-bottom: 8px;
-                ">LOGO</div>
+                ">
+                    <div class="logo-placeholder" style="
+                        width: 0.8in;
+                        height: 0.5in;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 6px;
+                        color: #d4af37;
+                    ">LOGO</div>
+                </div>
             </div>
             <div style="text-align: center;">
                 <h2 style="
