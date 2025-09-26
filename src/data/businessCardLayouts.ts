@@ -674,7 +674,6 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
         }
     },
 
-
     {
         catalogId: 'BC009',
         name: 'Financial Sterling',
@@ -705,21 +704,26 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
       text-transform: uppercase;
       letter-spacing: 1px;
     ">STERLING FINANCIAL</div>
-    <div class="logo-placeholder" style="
-      width: 1.0in;
-      height: 0.7in;
-      background-color: rgba(255,255,255,0.2);
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 8px;
-      color: rgba(255,255,255,0.9);
+    <div style="
       position: absolute;
       top: -0.1in;
       right: 0.2in;
       z-index: 10;
-    ">LOGO</div>
+      background: #ffffff;
+      padding: 3px;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    ">
+      <div class="logo-placeholder" style="
+        width: 1.0in;
+        height: 0.7in;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 8px;
+        color: #1e40af;
+      ">LOGO</div>
+    </div>
   </div>
   <div style="
     padding: 0.2in 0.25in 0.25in 0.25in;
@@ -753,14 +757,6 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
         <div style="margin-bottom: 2px;">☎️ Direct: (555) 123-4567</div>
         <div>✉️ msterling@sterlingfinancial.com</div>
       </div>
-      <div style="text-align: right; background: #f3f4f6; padding: 4px; border-radius: 4px;">
-        <div style="font-size: 8px; color: #1e40af; font-weight: 600; margin-bottom: 1px;">LICENSED</div>
-        <div style="font-size: 7px; color: #6b7280; line-height: 1.2;">
-          <div>FINRA Series 7</div>
-          <div>FINRA Series 66</div>
-          <div>Insurance Licensed</div>
-        </div>
-      </div>
     </div>
   </div>
 </div>`,
@@ -771,93 +767,110 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             features: ['financial-theme', 'professional-header', 'licenses', 'conservative']
         }
     },
-
-
     {
         catalogId: 'BC010',
         name: 'Trendy Neon Glow',
         theme: 'trendy',
         description: 'Vibrant neon-inspired design with modern typography',
         style: 'contact-focused',
-        jsx: `
-      <div class="business-card" style="
-        width: 3.5in;
-        height: 2in;
-        background: #0f0f23;
-        position: relative;
-        font-family: 'Inter', sans-serif;
-        box-sizing: border-box;
-        overflow: hidden;
-      ">
-        <div style="
-          position: absolute;
-          top: -20px;
-          right: -20px;
-          width: 80px;
-          height: 80px;
-          background: radial-gradient(circle, #ff0080 0%, transparent 70%);
-          filter: blur(15px);
-          opacity: 0.6;
-        "></div>
-        <div style="
-          position: absolute;
-          bottom: -15px;
-          left: -15px;
-          width: 60px;
-          height: 60px;
-          background: radial-gradient(circle, #00ff88 0%, transparent 70%);
-          filter: blur(10px);
-          opacity: 0.5;
-        "></div>
-        <div style="padding: 0.25in; position: relative; z-index: 2;">
-          <div class="logo-section" style="margin-bottom: 0.15in;">
-            <div class="logo-placeholder" style="
-              width: 0.7in;
-              height: 0.5in;
-              background: linear-gradient(45deg, #ff0080, #00ff88);
-              border-radius: 6px;
-              display: inline-flex;
-              align-items: center;
-              justify-content: center;
-              font-size: 8px;
-              color: #ffffff;
-              font-weight: 700;
-            ">LOGO</div>
-          </div>
-          <h1 style="
-            font-size: 16px;
-            font-weight: 800;
-            color: #ffffff;
-            margin: 0 0 4px 0;
-            line-height: 1.1;
-            text-shadow: 0 0 10px rgba(255, 0, 128, 0.5);
-          ">Maya Singh</h1>
-          <h2 style="
-            font-size: 11px;
-            color: #00ff88;
-            margin: 0 0 3px 0;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-          ">Digital Artist</h2>
-          <h3 style="
-            font-size: 10px;
-            color: #a8a8b3;
-            margin: 0 0 15px 0;
-            font-weight: 400;
-          ">Neon Dreams Studio</h3>
-          <div class="contact-info" style="
-            font-size: 9px;
-            color: #ffffff;
-            line-height: 1.5;
-          ">
-            <div style="margin-bottom: 3px;">📱 (555) 123-4567</div>
-            <div style="margin-bottom: 3px;">✉️ maya@neondreams.art</div>
-            <div>🎨 neondreams.art</div>
-          </div>
+        jsx: `<div class="business-card" style="
+  width: 3.5in;
+  height: 2in;
+  background: #0f0f23;
+  position: relative;
+  font-family: 'Inter', sans-serif;
+  box-sizing: border-box;
+  overflow: hidden;
+">
+  <div style="
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(45deg, #ff0080, #00ff88);
+    border-radius: 50%;
+    opacity: 0.6;
+    filter: blur(20px);
+  "></div>
+  <div style="
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(-45deg, #00ff88, #ff0080);
+    border-radius: 50%;
+    opacity: 0.4;
+    filter: blur(25px);
+  "></div>
+  <div style="padding: 0.25in; position: relative; z-index: 2; height: 100%;">
+    <div style="
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      height: 100%;
+    ">
+      <div style="flex: 1; max-width: 1.8in;">
+        <h1 style="
+          font-size: 16px;
+          font-weight: 700;
+          color: #ffffff;
+          margin: 0 0 4px 0;
+          line-height: 1.1;
+          text-shadow: 0 0 10px #ff0080;
+        ">John Doe</h1>
+        <h2 style="
+          font-size: 12px;
+          color: #00ff88;
+          margin: 0 0 3px 0;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          text-shadow: 0 0 8px #00ff88;
+        ">DIGITAL ARTIST</h2>
+        <h3 style="
+          font-size: 10px;
+          color: #ffffff;
+          margin: 0 0 20px 0;
+          font-weight: 400;
+          opacity: 0.8;
+        ">SMARTY LOGOS</h3>
+        <div class="contact-info" style="
+          font-size: 10px;
+          color: #ffffff;
+          line-height: 1.5;
+        ">
+          <div style="margin-bottom: 3px;">📱 (555) 123-4567</div>
+          <div style="margin-bottom: 3px;">✉️ maya@neondreams.art</div>
+          <div>🎨 neondreams.art</div>
         </div>
       </div>
-    `,
+      <div style="
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 0.3in;
+        background: #f8fafc;
+        padding: 3px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      ">
+        <div class="logo-placeholder" style="
+          width: 0.8in;
+          height: 0.8in;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 8px;
+          color: #1f2937;
+          font-weight: 600;
+        ">LOGO</div>
+      </div>
+    </div>
+  </div>
+</div>`,
         metadata: {
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#0f0f23', '#ff0080', '#00ff88', '#ffffff'],
@@ -1372,7 +1385,6 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             features: ['watercolor-splash', 'artistic', 'gradient-logo', 'organic-shapes']
         }
     },
-
     {
         catalogId: 'BC020',
         name: 'Corporate Professional Blue',
@@ -1388,54 +1400,56 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
   position: relative;
 ">
   <div style="
-    background: #1e3a8a;
-    height: 0.5in;
-    padding: 0.15in 0.25in;
+    background: #1e40af;
+    height: 0.45in;
+    padding: 0.08in 0.25in;
     display: flex;
     align-items: center;
     justify-content: space-between;
     position: relative;
   ">
-    <h1 style="
-      font-size: 16px;
+    <div style="
+      font-size: 13px;
       font-weight: 700;
       color: #ffffff;
-      margin: 0;
       text-transform: uppercase;
       letter-spacing: 1px;
-    ">CORPORATE SOLUTIONS</h1>
-    <div class="logo-placeholder" style="
-      width: 1.0in;
-      height: 0.7in;
-      background-color: rgba(255,255,255,0.2);
-      border-radius: 3px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 8px;
-      color: rgba(255,255,255,0.9);
+    ">CORP SOLUTIONS</div>
+    <div style="
       position: absolute;
       top: -0.1in;
       right: 0.2in;
       z-index: 10;
-    ">LOGO</div>
+      background: #ffffff;
+      padding: 3px;
+      border-radius: 4px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    ">
+      <div class="logo-placeholder" style="
+        width: 1.0in;
+        height: 0.65in;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 8px;
+        color: #1e40af;
+        font-weight: 600;
+      ">LOGO</div>
+    </div>
   </div>
-  <div style="
-    padding: 0.25in;
-    padding-top: 0.2in;
-  ">
-    <h2 style="
-      font-size: 16px;
+  <div style="padding: 0.2in 0.25in 0.25in 0.25in;">
+    <h1 style="
+      font-size: 14px;
       color: #1f2937;
-      margin: 0 0 3px 0;
+      margin: 0 0 2px 0;
       font-weight: 600;
-    ">Jennifer Martinez</h2>
-    <h3 style="
-      font-size: 12px;
-      color: #1e3a8a;
-      margin: 0 0 15px 0;
+    ">Jennifer Martinez</h1>
+    <h2 style="
+      font-size: 11px;
+      color: #1e40af;
+      margin: 0 0 12px 0;
       font-weight: 500;
-    ">Senior Account Manager</h3>
+    ">Senior Account Manager</h2>
     <div style="
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -1444,26 +1458,25 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
       color: #4b5563;
     ">
       <div>
-        <div style="margin-bottom: 3px; font-weight: 500;">📞 Direct: (555) 123-4567</div>
+        <div style="margin-bottom: 3px;">☎️ Direct: (555) 123-4567</div>
         <div style="margin-bottom: 3px;">📱 Mobile: (555) 987-6543</div>
-        <div>✉️ j.martinez@corpsolutions.com</div>
+        <div>✉️ jennifer@corporatesolutions.com</div>
       </div>
       <div style="text-align: right;">
-        <div style="margin-bottom: 3px;">🏢 1234 Business Blvd</div>
-        <div style="margin-bottom: 3px;">Chicago, IL 60601</div>
-        <div>🌐 www.corpsolutions.com</div>
+        <div style="margin-bottom: 3px;">🌐 www.corporatesolutions.com</div>
+        <div style="margin-bottom: 3px;">📍 1234 Business Blvd</div>
+        <div>Chicago, IL 60601</div>
       </div>
     </div>
   </div>
 </div>`,
         metadata: {
             dimensions: { width: '3.5in', height: '2in' },
-            colors: ['#1e3a8a', '#ffffff', '#1f2937', '#4b5563'],
+            colors: ['#1e40af', '#ffffff', '#1f2937', '#4b5563'],
             fonts: ['Arial'],
-            features: ['corporate', 'professional', 'navy-accents', 'traditional']
+            features: ['corporate', 'traditional', 'navy-accents', 'professional']
         }
     },
-
 
     {
         catalogId: 'BC021',
@@ -1985,15 +1998,13 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             features: ['dot-grid-pattern', 'minimal-typography', 'ultra-clean']
         }
     },
-
     {
         catalogId: 'BC031',
         name: 'Modern Split Layout',
         theme: 'modern',
         description: 'Bold split design with contrasting sections',
         style: 'company-focused',
-        jsx: `
-      <div class="business-card" style="
+        jsx: `<div class="business-card" style="
         width: 3.5in;
         height: 2in;
         background: #ffffff;
@@ -2001,102 +2012,89 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
         font-family: 'Inter', sans-serif;
         box-sizing: border-box;
         overflow: hidden;
-      ">
+    ">
         <div style="
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 50%;
-          height: 100%;
-          background: #1f2937;
-        "></div>
-        <div style="
-          position: absolute;
-          top: 0;
-          right: 0;
-          width: 50%;
-          height: 100%;
-          background: #ffffff;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 50%;
+            height: 100%;
+            background: #1f2937;
         "></div>
         <div style="padding: 0.25in; position: relative; z-index: 2; height: 100%;">
-          <div style="
-            display: flex;
-            height: 100%;
-          ">
             <div style="
-              width: 50%;
-              padding-right: 0.15in;
-              color: #ffffff;
-              display: flex;
-              flex-direction: column;
-              justify-content: center;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 0.2in;
+                height: 100%;
             ">
-              <h1 style="
-                font-size: 16px;
-                font-weight: 700;
-                color: #ffffff;
-                margin: 0 0 6px 0;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-              ">NEXUS</h1>
-              <h2 style="
-                font-size: 18px;
-                font-weight: 700;
-                color: #ffffff;
-                margin: 0 0 8px 0;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-              ">DIGITAL</h2>
-              <div class="logo-placeholder" style="
-                width: 0.8in;
-                height: 0.4in;
-                background-color: rgba(255,255,255,0.1);
-                border: 1px solid rgba(255,255,255,0.3);
-                border-radius: 4px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 8px;
-                color: rgba(255,255,255,0.8);
-                margin-top: 8px;
-              ">LOGO</div>
+                <div style="
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    padding-right: 0.1in;
+                ">
+                    <div style="
+                        margin-bottom: 0.15in;
+                        background: #ffffff;
+                        padding: 3px;
+                        border-radius: 6px;
+                        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+                    ">
+                        <div class="logo-placeholder" style="
+                            width: 0.8in;
+                            height: 0.8in;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 8px;
+                            color: #1f2937;
+                            font-weight: 600;
+                        ">LOGO</div>
+                    </div>
+                    <h1 style="
+                        font-size: 12px;
+                        font-weight: 700;
+                        color: #ffffff;
+                        margin: 0 0 3px 0;
+                        text-transform: uppercase;
+                        letter-spacing: 1px;
+                    ">NEXUS DIGITAL</h1>
+                </div>
+                <div style="
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    padding-left: 0.1in;
+                ">
+                    <h2 style="
+                        font-size: 14px;
+                        font-weight: 600;
+                        color: #1f2937;
+                        margin: 0 0 3px 0;
+                        line-height: 1.1;
+                    ">Marcus Chen</h2>
+                    <h3 style="
+                        font-size: 11px;
+                        color: #6b7280;
+                        margin: 0 0 12px 0;
+                        font-weight: 500;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                    ">CREATIVE DIRECTOR</h3>
+                    <div class="contact-info" style="
+                        font-size: 9px;
+                        color: #374151;
+                        line-height: 1.4;
+                    ">
+                        <div style="margin-bottom: 3px;">📞 (555) 123-4567</div>
+                        <div style="margin-bottom: 3px;">✉️ marcus@nexusdigital.com</div>
+                        <div>🌐 nexusdigital.com</div>
+                    </div>
+                </div>
             </div>
-            <div style="
-              width: 50%;
-              padding-left: 0.15in;
-              color: #1f2937;
-              display: flex;
-              flex-direction: column;
-              justify-content: center;
-            ">
-              <h3 style="
-                font-size: 14px;
-                color: #1f2937;
-                margin: 0 0 3px 0;
-                font-weight: 600;
-              ">Marcus Chen</h3>
-              <h4 style="
-                font-size: 10px;
-                color: #6b7280;
-                margin: 0 0 15px 0;
-                font-weight: 500;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-              ">Creative Director</h4>
-              <div class="contact-info" style="
-                font-size: 9px;
-                color: #374151;
-                line-height: 1.4;
-              ">
-                <div style="margin-bottom: 3px;">📱 (555) 123-4567</div>
-                <div style="margin-bottom: 3px;">✉️ marcus@nexusdigital.com</div>
-                <div>🌐 nexusdigital.com</div>
-              </div>
-            </div>
-          </div>
         </div>
-      </div>
-    `,
+    </div>`,
         metadata: {
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#1f2937', '#ffffff', '#6b7280', '#374151'],
@@ -2568,44 +2566,52 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
           letter-spacing: 3px;
           font-weight: 600;
         ">DIGITAL FRONTIER</div>
-        <div class="logo-placeholder" style="
-          width: 0.9in;
-          height: 0.6in;
-          background: rgba(0, 255, 65, 0.1);
-          border: 1px solid #00ff41;
-          border-radius: 2px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 8px;
-          color: #00ff41;
-          font-weight: 600;
+        <div style="
+          display: inline-block;
           margin-bottom: 10px;
-        ">LOGO</div>
+          background: #ffffff;
+          padding: 3px;
+          border-radius: 2px;
+          border: 2px solid #00ff41;
+          box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+        ">
+          <div class="logo-placeholder" style="
+            width: 0.9in;
+            height: 0.6in;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            color: #0a0a0a;
+            font-weight: 600;
+          ">LOGO</div>
+        </div>
       </div>
       <div>
         <h2 style="
           font-size: 12px;
+          font-weight: 700;
           color: #ffffff;
           margin: 0 0 2px 0;
-          font-weight: 600;
-          text-transform: uppercase;
+          line-height: 1.1;
         ">ZARA NEXUS</h2>
         <h3 style="
-          font-size: 9px;
+          font-size: 10px;
           color: #ff0080;
-          margin: 0 0 8px 0;
+          margin: 0 0 6px 0;
+          font-weight: 600;
           text-transform: uppercase;
           letter-spacing: 1px;
         ">CYBER ARCHITECT</h3>
-        <div style="
+        <div class="contact-info" style="
           font-size: 8px;
           color: #00ff41;
-          line-height: 1.3;
+          line-height: 1.4;
+          font-family: 'Courier New', monospace;
         ">
           <div style="margin-bottom: 2px;">[TEL] 555.123.4567</div>
-          <div style="margin-bottom: 2px;">[NET] zara@cybernexus.io</div>
-          <div>[WEB] cybernexus.io</div>
+          <div style="margin-bottom: 2px;">[MAIL] alex@circuitflow.tech</div>
+          <div>[NET] circuitflow.tech</div>
         </div>
       </div>
     </div>
@@ -2615,7 +2621,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#0a0a0a', '#00ff41', '#ff0080', '#ffffff'],
             fonts: ['Courier New'],
-            features: ['cyberpunk', 'neon-highlights', 'tech-theme', 'futuristic']
+            features: ['cyberpunk', 'neon-highlights', 'futuristic', 'tech']
         }
     },
 
@@ -3240,22 +3246,22 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
           font-weight: 600;
           text-transform: uppercase;
           letter-spacing: 1px;
-          margin-right: 0.3in;
         ">HARDWARE ENGINEER</h2>
         <h3 style="
           font-size: 9px;
-          color: #94a3b8;
-          margin: 0 0 15px 0;
+          color: #f1f5f9;
+          margin: 0 0 20px 0;
           font-weight: 400;
+          opacity: 0.8;
         ">CircuitFlow Technologies</h3>
         <div class="contact-info" style="
           font-size: 9px;
-          color: #e2e8f0;
+          color: #f1f5f9;
           line-height: 1.4;
           font-family: 'Roboto Mono', monospace;
         ">
-          <div style="margin-bottom: 3px;">[MOBILE] 555.123.4567</div>
-          <div style="margin-bottom: 3px;">[EMAIL] alex@circuitflow.tech</div>
+          <div style="margin-bottom: 2px;">[MOBILE] 555.123.4567</div>
+          <div style="margin-bottom: 2px;">[EMAIL] alex@circuitflow.tech</div>
           <div>[WEB] circuitflow.tech</div>
         </div>
       </div>
@@ -3263,21 +3269,22 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 0.8in;
-        height: 100%;
+        margin-top: 0.2in;
+        background: #f1f5f9;
+        padding: 3px;
+        border-radius: 4px;
+        border: 2px solid #10b981;
+        box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
       ">
         <div class="logo-placeholder" style="
-          width: 0.6in;
-          height: 0.6in;
-          border: 2px solid #10b981;
-          background: rgba(16, 185, 129, 0.1);
+          width: 0.75in;
+          height: 0.75in;
           display: flex;
           align-items: center;
           justify-content: center;
           font-size: 8px;
-          color: #10b981;
-          font-weight: 700;
-          text-shadow: 0 0 5px #10b981;
+          color: #1e293b;
+          font-weight: 600;
         ">LOGO</div>
       </div>
     </div>
@@ -3285,9 +3292,9 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
 </div>`,
         metadata: {
             dimensions: { width: '3.5in', height: '2in' },
-            colors: ['#1e293b', '#10b981', '#3b82f6', '#f59e0b'],
+            colors: ['#1e293b', '#10b981', '#3b82f6', '#f1f5f9'],
             fonts: ['Roboto Mono'],
-            features: ['circuit-board', 'tech-grid', 'neon-glow', 'geometric-elements']
+            features: ['circuit-board', 'tech-pattern', 'digital-elements', 'hardware']
         }
     },
 
