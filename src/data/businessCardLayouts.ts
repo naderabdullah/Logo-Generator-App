@@ -2044,10 +2044,11 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
                         padding: 3px;
                         border-radius: 6px;
                         box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+                        width: fit-content;
                     ">
                         <div class="logo-placeholder" style="
-                            width: 0.9in;
-                            height: 0.9in;
+                            width: 0.8in;
+                            height: 0.8in;
                             display: flex;
                             align-items: center;
                             justify-content: center;
@@ -2092,7 +2093,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
                         line-height: 1.4;
                     ">
                         <div style="margin-bottom: 3px;">📞 (555) 123-4567</div>
-                        <div style="margin-bottom: 3px;">✉️ marcus@nexusdigital.com</div>
+                        <div style="margin-bottom: 3px;">✉️ mchen@nexusdigital.com</div>
                         <div>🌐 nexusdigital.com</div>
                     </div>
                 </div>
@@ -2773,12 +2774,13 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             height: 100%;
             display: flex;
             flex-direction: column;
-            gap: 0.06in;
+            gap: 0.04in;
         ">
             <div style="
                 border-bottom: 1px solid #3b82f6;
                 padding-bottom: 0.03in;
                 text-align: center;
+                margin-bottom: 0.04in;
             ">
                 <h1 style="
                     font-size: 13px;
@@ -2791,6 +2793,27 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
                 ">Quantum Tech</h1>
             </div>
             <div style="
+                text-align: center;
+                margin-bottom: 0.06in;
+            ">
+                <h2 style="
+                    font-size: 11px;
+                    font-weight: 600;
+                    color: #1e293b;
+                    margin: 0 0 1px 0;
+                    line-height: 1.1;
+                ">Alex Chen</h2>
+                <h3 style="
+                    font-size: 9px;
+                    color: #3b82f6;
+                    margin: 0;
+                    font-weight: 500;
+                    text-transform: uppercase;
+                    letter-spacing: 0.3px;
+                    line-height: 1.1;
+                ">Chief Technology Officer</h3>
+            </div>
+            <div style="
                 flex: 1;
                 display: grid;
                 grid-template-columns: 1fr auto;
@@ -2798,22 +2821,6 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
                 align-items: center;
             ">
                 <div style="text-align: left;">
-                    <h2 style="
-                        font-size: 11px;
-                        font-weight: 600;
-                        color: #1e293b;
-                        margin: 0 0 1px 0;
-                        line-height: 1.1;
-                    ">Alex Chen</h2>
-                    <h3 style="
-                        font-size: 9px;
-                        color: #3b82f6;
-                        margin: 0 0 6px 0;
-                        font-weight: 500;
-                        text-transform: uppercase;
-                        letter-spacing: 0.3px;
-                        line-height: 1.1;
-                    ">Chief Technology Officer</h3>
                     <div style="
                         font-size: 8px;
                         color: #475569;
@@ -2851,8 +2858,6 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             features: ['tech', 'modern', 'quantum-elements', 'grid-contact', 'decorative-circle']
         }
     },
-
-
     {
         catalogId: 'BC026',
         name: 'Modern Asymmetric',
