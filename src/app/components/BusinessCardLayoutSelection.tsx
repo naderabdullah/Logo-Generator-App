@@ -96,6 +96,7 @@ export const BusinessCardLayoutSelection: React.FC<BusinessCardLayoutSelectionPr
         if (searchTerm.trim()) {
             const term = searchTerm.toLowerCase();
             filtered = filtered.filter(layout =>
+                layout.catalogId.toLowerCase().includes(term) ||
                 layout.name.toLowerCase().includes(term) ||
                 layout.description?.toLowerCase().includes(term) ||
                 layout.theme.toLowerCase().includes(term) ||
@@ -261,15 +262,25 @@ export const BusinessCardLayoutSelection: React.FC<BusinessCardLayoutSelectionPr
             <div className="flex-1 overflow-y-auto space-y-6 pb-20">
                 {/* Filters - PRESERVED ORIGINAL */}
                 <div className="flex flex-col sm:flex-row gap-4">
-                    {/* Search */}
+                    {/* Search - Alternative Version */}
                     <div className="flex-1">
-                        <input
-                            type="text"
-                            placeholder="Search layouts..."
-                            value={searchTerm}
-                            onChange={(e) => handleSearchChange(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        />
+                        <div className="relative">
+                            <input
+                                type="text"
+                                placeholder="Search layouts..."
+                                value={searchTerm}
+                                onChange={(e) => handleSearchChange(e.target.value)}
+                                className="w-full px-4 py-2 pr-8 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            />
+                            {searchTerm.length > 0 && (
+                                <button
+                                    onClick={() => handleSearchChange('')}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-full text-sm"
+                                >
+                                    X
+                                </button>
+                            )}
+                        </div>
                     </div>
 
                     {/* Theme Filter */}
@@ -612,8 +623,13 @@ export const BusinessCardLayoutSelection: React.FC<BusinessCardLayoutSelectionPr
                                     <h4 className="font-medium mb-2">Layout Details</h4>
                                     <div className="space-y-2 text-sm">
                                         <div><span className="font-medium">Theme:</span> {selectedCard.theme}</div>
-                                        <div><span className="font-medium">Style:</span> {selectedCard.style.replace('-', ' ')}</div>
-                                        <div><span className="font-medium">Description:</span> {selectedCard.description}</div>
+                                        <div><span
+                                            className="font-medium">Style:</span> {selectedCard.style.replace('-', ' ')}
+                                        </div>
+                                        <div>
+                                            <span className="font-medium">Description:</span><br/>
+                                            <span className="inline-block min-h-[2.5rem] leading-5">{selectedCard.description}</span>
+                                        </div>
                                     </div>
                                 </div>
 
