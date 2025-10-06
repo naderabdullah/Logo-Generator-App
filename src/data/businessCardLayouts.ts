@@ -70,33 +70,33 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
           margin-left: 1.2in;
           padding-top: 0.1in;
         ">
-          <h1 style="
+          <h1 class="bc-contact-name" style="
             font-size: 14px;
             font-weight: 600;
             color: #2d3748;
             margin: 0 0 2px 0;
             line-height: 1.2;
           ">John Smith</h1>
-          <h2 style="
+          <h2 class="bc-contact-title" style="
             font-size: 10px;
             color: #718096;
             margin: 0 0 8px 0;
             font-weight: 400;
           ">Senior Manager</h2>
-          <h3 style="
+          <h3 class="bc-contact-company" style="
             font-size: 12px;
             color: #4a5568;
             margin: 0 0 12px 0;
             font-weight: 500;
           ">Acme Corporation</h3>
-          <div class="contact-info" style="
+          <div class="bc-contact-info-block" style="
             font-size: 9px;
             color: #4a5568;
             line-height: 1.4;
           ">
-            <div style="margin-bottom: 2px;">📱 (555) 123-4567</div>
-            <div style="margin-bottom: 2px;">📞 (555) 987-6543</div>
-            <div>✉️ john.smith@acme.com</div>
+            <div class="bc-contact-phone" data-phone-type="mobile" style="margin-bottom: 2px;">📱 (555) 123-4567</div>
+            <div class="bc-contact-phone" data-phone-type="office" style="margin-bottom: 2px;">📞 (555) 987-6543</div>
+            <div class="bc-contact-email" data-email-type="primary">✉️ john.smith@acme.com</div>
           </div>
         </div>
       </div>
@@ -140,7 +140,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
       color: #6c757d;
     ">LOGO</div>
   </div>
-  <h1 style="
+  <h1 class="bc-contact-company" style="
     font-size: 14px;
     font-weight: 700;
     color: #1a202c;
@@ -153,25 +153,25 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
     background: #cbd5e0;
     margin: 5px auto;
   "></div>
-  <h2 style="
+  <h2 class="bc-contact-name" style="
     font-size: 11px;
     color: #2d3748;
     margin: 0 0 1px 0;
     font-weight: 500;
   ">John Smith</h2>
-  <h3 style="
+  <h3 class="bc-contact-title" style="
     font-size: 9px;
     color: #718096;
     margin: 0 0 8px 0;
     font-weight: 400;
   ">Senior Manager</h3>
-  <div class="contact-info" style="
+  <div class="bc-contact-info-block" style="
     font-size: 10px;
     color: #4a5568;
     line-height: 1.3;
   ">
-    <div>Mobile: (555) 123-4567</div>
-    <div>Email: john.smith@acme.com</div>
+    <div class="bc-contact-phone" data-phone-type="mobile">Mobile: (555) 123-4567</div>
+    <div class="bc-contact-email" data-email-type="primary">Email: john.smith@acme.com</div>
   </div>
 </div>`,
         metadata: {
@@ -181,7 +181,6 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             features: ['center-aligned', 'thin-border', 'company-logo-top']
         }
     },
-
     {
         catalogId: 'BC003',
         name: 'Professional Minimalist',
@@ -215,7 +214,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
       height: 100%;
     ">
       <div style="flex: 1; max-width: 2in;">
-        <h1 style="
+        <h1 class="bc-contact-name" style="
           font-size: 15px;
           font-weight: 300;
           color: #0f172a;
@@ -223,7 +222,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
           line-height: 1.1;
           letter-spacing: -0.3px;
         ">James Wilson</h1>
-        <h2 style="
+        <h2 class="bc-contact-title" style="
           font-size: 10px;
           color: #64748b;
           margin: 0 0 4px 0;
@@ -231,20 +230,20 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
           text-transform: uppercase;
           letter-spacing: 1px;
         ">Architect</h2>
-        <h3 style="
+        <h3 class="bc-contact-company" style="
           font-size: 9px;
           color: #94a3b8;
           margin: 0 0 20px 0;
           font-weight: 400;
         ">Minimal Design Studio</h3>
-        <div class="contact-info" style="
+        <div class="bc-contact-info-block" style="
           font-size: 9px;
           color: #475569;
           line-height: 1.5;
         ">
-          <div style="margin-bottom: 3px;">📞 (555) 123-4567</div>
-          <div style="margin-bottom: 3px;">✉️ james@minimaldesign.studio</div>
-          <div>🌐 minimaldesign.studio</div>
+          <div class="bc-contact-phone" data-phone-type="mobile" style="margin-bottom: 3px;">📞 (555) 123-4567</div>
+          <div class="bc-contact-email" data-email-type="primary" style="margin-bottom: 3px;">✉️ james@minimaldesign.studio</div>
+          <div class="bc-contact-website">🌐 minimaldesign.studio</div>
         </div>
       </div>
       <div style="
@@ -274,7 +273,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#ffffff', '#0f172a', '#64748b', '#94a3b8'],
             fonts: ['Helvetica Neue'],
-            features: ['minimalist', 'clean', 'subtle-accents', 'professional']
+            features: ['dot-grid-pattern', 'minimal-typography', 'ultra-clean']
         }
     },
 
@@ -285,54 +284,59 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
         description: 'Ultra-clean with generous white space and perfect balance',
         style: 'contact-focused',
         jsx: `
-        <div class="business-card" style="
-            width: 3.5in;
-            height: 2in;
-            background: #ffffff;
-            padding: 0.35in 0.3in;
-            font-family: system-ui, sans-serif;
-            box-sizing: border-box;
+    <div class="business-card" style="
+        width: 3.5in;
+        height: 2in;
+        background: #ffffff;
+        padding: 0.35in 0.3in;
+        font-family: system-ui, sans-serif;
+        box-sizing: border-box;
+    ">
+        <div style="
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            height: 100%;
         ">
-            <div style="
-                display: flex;
-                justify-content: space-between;
-                align-items: flex-start;
-                height: 100%;
+            <div class="content-left" style="
+                flex: 1;
+                max-width: 1.8in;
+                padding-right: 0.2in;
             ">
-                <div class="content-left" style="
-                    flex: 1;
-                    max-width: 1.8in;
-                    padding-right: 0.2in;
+                <h1 class="bc-contact-name" style="
+                    font-size: 16px;
+                    font-weight: 700;
+                    color: #1a202c;
+                    margin: 0 0 4px 0;
+                    line-height: 1.1;
+                ">Emma Thompson</h1>
+                <h2 class="bc-contact-title" style="
+                    font-size: 11px;
+                    color: #718096;
+                    margin: 0 0 15px 0;
+                    font-weight: 400;
+                ">Brand Strategist</h2>
+                <h3 class="bc-contact-company" style="
+                    font-size: 12px;
+                    color: #4a5568;
+                    margin: 0 0 20px 0;
+                    font-weight: 500;
+                ">Creative Solutions</h3>
+                <div class="bc-contact-info-block" style="
+                    font-size: 9px;
+                    color: #4a5568;
+                    line-height: 1.4;
                 ">
-                    <h1 style="
-                        font-size: 16px;
-                        font-weight: 700;
-                        color: #1a202c;
-                        margin: 0 0 4px 0;
-                        line-height: 1.1;
-                    ">Emma Thompson</h1>
-                    <h2 style="
-                        font-size: 11px;
-                        color: #718096;
-                        margin: 0 0 15px 0;
-                        font-weight: 400;
-                    ">Brand Strategist</h2>
-                    <h3 style="
-                        font-size: 12px;
-                        color: #4a5568;
-                        margin: 0 0 20px 0;
-                        font-weight: 500;
-                    ">Creative Solutions</h3>
-                    <div class="contact-info" style="
-                        font-size: 9px;
-                        color: #4a5568;
-                        line-height: 1.4;
-                    ">
-                        <div style="margin-bottom: 3px;">📱 (555) 123-4567</div>
-                        <div style="margin-bottom: 3px;">✉️ emma@creativesolutions.com</div>
-                        <div>🌐 creativesolutions.com</div>
-                    </div>
+                    <div class="bc-contact-phone" data-phone-type="mobile" style="margin-bottom: 3px;">📱 (555) 123-4567</div>
+                    <div class="bc-contact-email" data-email-type="primary" style="margin-bottom: 3px;">✉️ emma@creativesolutions.com</div>
+                    <div class="bc-contact-website">🌐 creativesolutions.com</div>
                 </div>
+            </div>
+            <div class="content-right" style="
+                display: flex;
+                align-items: flex-start;
+                justify-content: flex-end;
+            ">
                 <div class="logo-placeholder" style="
                     width: 0.8in;
                     height: 0.8in;
@@ -348,7 +352,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
                 ">LOGO</div>
             </div>
         </div>
-    `,
+    </div>`,
         metadata: {
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#ffffff', '#1a202c', '#718096', '#4a5568'],
@@ -356,6 +360,9 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             features: ['two-column', 'clean-spacing', 'right-logo']
         }
     },
+    // FILE: src/data/businessCardLayouts.ts
+// LOCATION: Find catalogId: 'BC005' and replace the ENTIRE object with this
+
     {
         catalogId: 'BC005',
         name: 'Heritage Travel',
@@ -363,115 +370,115 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
         description: 'Vintage travel design with centered content layout',
         style: 'contact-focused',
         jsx: `<div class="business-card" style="
-        width: 3.5in;
-        height: 2in;
-        background: #f4e4bc;
-        border: 3px solid #8b4513;
-        padding: 0.2in;
-        font-family: 'Georgia', serif;
-        position: relative;
-        box-sizing: border-box;
-        display: flex;
-        flex-direction: column;
+    width: 3.5in;
+    height: 2in;
+    background: #f4e4bc;
+    border: 3px solid #8b4513;
+    padding: 0.2in;
+    font-family: 'Georgia', serif;
+    position: relative;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+">
+    <div style="
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        width: 0.4in;
+        height: 0.4in;
+        background: radial-gradient(circle, rgba(139, 69, 19, 0.1) 0%, transparent 70%);
+        border-radius: 50%;
+    "></div>
+    <div style="
+        position: absolute;
+        bottom: 6px;
+        left: 6px;
+        width: 0.25in;
+        height: 0.25in;
+        background: radial-gradient(circle, rgba(139, 69, 19, 0.05) 0%, transparent 70%);
+        border-radius: 50%;
+    "></div>
+    <div style="
+        text-align: center;
+        border-bottom: 2px solid #8b4513;
+        padding-bottom: 0.06in;
+        margin-bottom: 0.02in;
     ">
-        <div style="
-            position: absolute;
-            top: 6px;
-            right: 6px;
-            width: 0.4in;
-            height: 0.4in;
-            background: radial-gradient(circle, rgba(139, 69, 19, 0.1) 0%, transparent 70%);
-            border-radius: 50%;
-        "></div>
-        <div style="
-            position: absolute;
-            bottom: 6px;
-            left: 6px;
-            width: 0.25in;
-            height: 0.25in;
-            background: radial-gradient(circle, rgba(139, 69, 19, 0.05) 0%, transparent 70%);
-            border-radius: 50%;
-        "></div>
-        <div style="
-            text-align: center;
-            border-bottom: 2px solid #8b4513;
-            padding-bottom: 0.06in;
-            margin-bottom: 0.02in;
-        ">
-            <h1 style="
-                font-size: 14px;
-                font-weight: 700;
+        <h1 class="bc-contact-company" style="
+            font-size: 14px;
+            font-weight: 700;
+            color: #5d4037;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            line-height: 0.9;
+        ">Heritage Travel</h1>
+    </div>
+    <div style="
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.25in;
+        margin-top: 0.2in;
+    ">
+        <div style="text-align: center;">
+            <h2 class="bc-contact-name" style="
+                font-size: 11px;
                 color: #5d4037;
-                margin: 0;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-                line-height: 0.9;
-            ">Heritage Travel</h1>
+                margin: 0 0 1px 0;
+                font-weight: 600;
+                line-height: 1.1;
+            ">Winston Gatsby</h2>
+            <h3 class="bc-contact-title" style="
+                font-size: 9px;
+                color: #8b4513;
+                margin: 0 0 6px 0;
+                font-style: italic;
+                line-height: 1.1;
+            ">Distinguished Proprietor</h3>
+            <div class="bc-contact-info-block" style="
+                font-size: 8px;
+                color: #5d4037;
+                line-height: 1.2;
+            ">
+                <div class="bc-contact-phone" data-phone-type="office" style="margin-bottom: 1px;">☎️ MayfAir 5-1234</div>
+                <div class="bc-contact-email" data-email-type="primary" style="margin-bottom: 1px;">✉️ winston@gatsby.co</div>
+                <div class="bc-contact-website">🌍 heritage-travel.co</div>
+            </div>
         </div>
         <div style="
-            flex: 1;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            gap: 0.25in;
-            margin-top: 0.2in;
         ">
-            <div style="text-align: center;">
-                <h2 style="
-                    font-size: 11px;
-                    color: #5d4037;
-                    margin: 0 0 1px 0;
-                    font-weight: 600;
-                    line-height: 1.1;
-                ">Winston Gatsby</h2>
-                <h3 style="
-                    font-size: 9px;
-                    color: #8b4513;
-                    margin: 0 0 6px 0;
-                    font-style: italic;
-                    line-height: 1.1;
-                ">Distinguished Proprietor</h3>
-                <div style="
-                    font-size: 8px;
-                    color: #5d4037;
-                    line-height: 1.2;
-                ">
-                    <div style="margin-bottom: 1px;">☎️ MayfAir 5-1234</div>
-                    <div style="margin-bottom: 1px;">✉️ winston@gatsby.co</div>
-                    <div>🌍 heritage-travel.co</div>
-                </div>
-            </div>
-            <div style="
+            <div class="logo-placeholder" style="
+                width: 0.8in;
+                height: 0.6in;
+                background-color: rgba(139, 69, 19, 0.1);
+                border: 2px solid #8b4513;
+                border-radius: 4px;
                 display: flex;
-                flex-direction: column;
                 align-items: center;
-            ">
-                <div class="logo-placeholder" style="
-                    width: 0.8in;
-                    height: 0.6in;
-                    background-color: rgba(139, 69, 19, 0.1);
-                    border: 2px solid #8b4513;
-                    border-radius: 4px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 8px;
-                    color: #8b4513;
-                    font-weight: 600;
-                    margin-bottom: 0.02in;
-                ">LOGO</div>
-                <div style="
-                    font-size: 7px;
-                    color: #8b4513;
-                    font-style: italic;
-                    padding: 1px 4px;
-                    border: 1px solid #8b4513;
-                    border-radius: 8px;
-                    background: rgba(139, 69, 19, 0.05);
-                ">Est. 1952</div>
-            </div>
+                justify-content: center;
+                font-size: 8px;
+                color: #8b4513;
+                font-weight: 600;
+                margin-bottom: 0.02in;
+            ">LOGO</div>
+            <div class="bc-contact-established" style="
+                font-size: 7px;
+                color: #8b4513;
+                font-style: italic;
+                padding: 1px 4px;
+                border: 1px solid #8b4513;
+                border-radius: 8px;
+                background: rgba(139, 69, 19, 0.05);
+            ">Est. 1952</div>
         </div>
-    </div>`,
+    </div>
+</div>`,
         metadata: {
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#f4e4bc', '#8b4513', '#5d4037'],

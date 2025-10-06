@@ -9,6 +9,7 @@ import { BusinessCardLayout, BUSINESS_CARD_LAYOUTS } from '@/data/businessCardLa
 import { StoredLogo } from '@/app/utils/indexedDBUtils';
 import { injectLogoIntoBusinessCard, validateLogoForInjection } from '@/app/utils/businessCardLogoUtils';
 import { getAllThemes } from '@/data/businessCardLayouts';
+import { injectContactInfo } from '@/app/utils/businessCardContactUtils';
 
 interface BusinessCardLayoutSelectionProps {
     selectedLayout: string | null;
@@ -53,19 +54,6 @@ export const BusinessCardLayoutSelection: React.FC<BusinessCardLayoutSelectionPr
             });
         }
     }, [logo]);
-
-    // All available layouts - PRESERVED ORIGINAL
-
-
-
-
-
-
-
-
-
-
-
 
     const allLayouts = BUSINESS_CARD_LAYOUTS;
 
@@ -160,11 +148,6 @@ export const BusinessCardLayoutSelection: React.FC<BusinessCardLayoutSelectionPr
         const totalPages = paginatedData.totalPages;
         const currentPage = paginatedData.currentPage;
         const maxVisible = 5;
-
-
-
-
-
         if (totalPages <= maxVisible) {
             return Array.from({ length: totalPages }, (_, i) => i + 1);
         }
@@ -220,20 +203,15 @@ export const BusinessCardLayoutSelection: React.FC<BusinessCardLayoutSelectionPr
         try {
             console.log('🎨 BusinessCardLayoutSelection - Generating enlarged modal HTML for card:', card.catalogId);
 
-            // Start with basic text replacements
-            let processedHTML = card.jsx
-                .replace(
-                    /John Doe|Jane Smith|Alex Stone|Maya Singh|Sarah Johnson|Michael Chen|Rachel Green|Sofia Martinez|Lucy Chen|Zara Nexus/g,
-                    formData.name || 'Your Name'
-                )
-                .replace(
-                    /Acme Corp|Creative Studio|Stone Design Co|Neon Dreams Studio|Marketing Pro|Tech Solutions|Green Marketing|Digital Innovations|Creative Arts|Cyber Nexus/g,
-                    formData.companyName || 'Your Company'
-                );
+            let processedHTML = card.jsx;
 
-            // ENHANCED: Only inject logo if we have valid logo data
+            // STEP 1: Inject Contact Info (NEW)
+            console.log('📝 BusinessCardLayoutSelection - Step 1: Injecting contact info');
+            processedHTML = injectContactInfo(processedHTML, formData);
+
+            // STEP 2: Inject Logo (EXISTING - PRESERVED)
             if (validateLogoForInjection(logo)) {
-                console.log('✅ BusinessCardLayoutSelection - Valid logo data found, injecting logo');
+                console.log('✅ BusinessCardLayoutSelection - Step 2: Injecting logo');
                 processedHTML = injectLogoIntoBusinessCard(processedHTML, logo);
             } else {
                 console.log('ℹ️ BusinessCardLayoutSelection - No valid logo data, showing basic preview');
@@ -243,16 +221,7 @@ export const BusinessCardLayoutSelection: React.FC<BusinessCardLayoutSelectionPr
 
         } catch (error) {
             console.error('❌ BusinessCardLayoutSelection - Error generating enlarged modal HTML:', error);
-            // Return basic processed HTML as fallback
-            return card.jsx
-                .replace(
-                    /John Doe|Jane Smith|Alex Stone|Maya Singh|Sarah Johnson|Michael Chen|Rachel Green|Sofia Martinez|Lucy Chen|Zara Nexus/g,
-                    formData.name || 'Your Name'
-                )
-                .replace(
-                    /Acme Corp|Creative Studio|Stone Design Co|Neon Dreams Studio|Marketing Pro|Tech Solutions|Green Marketing|Digital Innovations|Creative Arts|Cyber Nexus/g,
-                    formData.companyName || 'Your Company'
-                );
+            return card.jsx;
         }
     };
 
@@ -426,38 +395,6 @@ export const BusinessCardLayoutSelection: React.FC<BusinessCardLayoutSelectionPr
                     <div className="text-center py-12">
 
                         <p className="text-gray-500 mb-4">No layouts found matching your criteria.</p>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
                         <button
                             onClick={() => {
                                 handleSearchChange('');

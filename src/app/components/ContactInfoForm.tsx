@@ -139,8 +139,24 @@ export const ContactInfoForm = ({
                                 placeholder="Company tagline"
                             />
                         </div>
-
-                        {/* Descriptor - MOVED HERE */}
+                        {/* Year Established - NEW FIELD */}
+                        <div>
+                            <label htmlFor="yearEstablished" className="block text-sm font-medium text-gray-700 mb-1">
+                                Year Established (optional)
+                            </label>
+                            <input
+                                type="text"
+                                id="yearEstablished"
+                                value={formData.yearEstablished || ''}
+                                onChange={(e) => setFormData({...formData, yearEstablished: e.target.value})}
+                                placeholder="e.g., Est. 1995, Since 2010, Founded 1952"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                maxLength={50}
+                            />
+                            <p className="text-xs text-gray-500 mt-1">
+                                Shows on vintage/heritage layouts if provided (e.g., "Est. 1952")
+                            </p>
+                        </div>
                         <div>
                             <label className="block text-xs font-medium text-gray-700 mb-1">
                                 Descriptor

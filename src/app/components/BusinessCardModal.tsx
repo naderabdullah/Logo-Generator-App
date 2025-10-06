@@ -67,8 +67,9 @@ export const BusinessCardModal: React.FC<BusinessCardModalProps> = ({ logo, isOp
         companyName: '',
         name: '',
         title: '',
-        slogan: '',        // ADDED: New field for enhanced business cards
-        descriptor: '',    // ADDED: New field for enhanced business cards
+        slogan: '',
+        descriptor: '',
+        yearEstablished: '',
         logo: {
             logoId: logo?.id || '',
             logoDataUri: logo?.imageDataUri || '',

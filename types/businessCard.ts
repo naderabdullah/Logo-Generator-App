@@ -37,8 +37,9 @@ export interface BusinessCardData {
     companyName: string;
     name: string;
     title: string;
-    slogan?: string;        // ADDED: For company tagline
-    descriptor?: string;    // ADDED: For misc additional info
+    slogan?: string;
+    descriptor?: string;
+    yearEstablished?: string;
     logo: {
         logoId: string;
         logoDataUri: string;
