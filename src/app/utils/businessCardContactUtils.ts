@@ -110,7 +110,30 @@ export function injectContactInfo(
             }
         }
 
-        // 3. INJECT COMPANY
+        // 3. INJECT SUBTITLE/CREDENTIALS (with hide if empty)
+        const subtitleRegex = /<[^>]*class=["'][^"']*bc-contact-subtitle[^"']*["'][^>]*>([^<]*)<\/[^>]+>/i;
+        const subtitleMatch = subtitleRegex.exec(layoutHtml);
+
+        if (subtitleMatch) {
+            const fullElement = subtitleMatch[0]; // Full element including tags
+            const placeholderSubtitle = subtitleMatch[1]; // Text inside element
+
+            if (formData.subtitle && formData.subtitle.trim()) {
+                // User provided subtitle/credentials - replace text
+                console.log('🎓 [Contact Utils] Injecting subtitle/credentials');
+                console.log(`🔄 [Contact Utils] Replacing text for selector: ".bc-contact-subtitle"`);
+                result = simpleReplace(result, placeholderSubtitle, formData.subtitle);
+                console.log(`✅ [Contact Utils] Replaced "${placeholderSubtitle}" → "${formData.subtitle}"`);
+            } else {
+                // User left empty - HIDE the entire element
+                console.log('🙈 [Contact Utils] Subtitle empty, hiding element');
+                result = result.replace(fullElement, '');
+            }
+        } else {
+            console.log('ℹ️ [Contact Utils] No subtitle field in this layout');
+        }
+
+        // 4. INJECT COMPANY
         if (formData.companyName && formData.companyName.trim()) {
             const placeholderCompany = extractTextBetweenTags(result, 'bc-contact-company');
             if (placeholderCompany) {
@@ -118,7 +141,7 @@ export function injectContactInfo(
             }
         }
 
-        // 4. INJECT PHONES - Extract placeholder then replace
+        // 5. INJECT PHONES - Extract placeholder then replace
         if (formData.phones && formData.phones.length > 0) {
             // Find all phone placeholders
             const phoneRegex = /<[^>]*class=["'][^"']*bc-contact-phone[^"']*["'][^>]*>([^<]*)<\/[^>]+>/gi;
@@ -149,7 +172,7 @@ export function injectContactInfo(
             }
         }
 
-        // 5. INJECT EMAILS - Extract placeholder then replace
+        // 6. INJECT EMAILS - Extract placeholder then replace
         if (formData.emails && formData.emails.length > 0) {
             const emailRegex = /<[^>]*class=["'][^"']*bc-contact-email[^"']*["'][^>]*>([^<]*)<\/[^>]+>/gi;
             let match;
@@ -177,7 +200,7 @@ export function injectContactInfo(
             }
         }
 
-        // 6. INJECT WEBSITE - Extract placeholder then replace
+        // 7. INJECT WEBSITE - Extract placeholder then replace
         if (formData.websites && formData.websites.length > 0 && formData.websites[0].value) {
             const websiteRegex = /<[^>]*class=["'][^"']*bc-contact-website[^"']*["'][^>]*>([^<]*)<\/[^>]+>/i;
             const match = websiteRegex.exec(layoutHtml);
@@ -200,7 +223,7 @@ export function injectContactInfo(
             }
         }
 
-        // 7. INJECT YEAR ESTABLISHED (with hide if empty)
+        // 8. INJECT YEAR ESTABLISHED (with hide if empty)
                 const establishedRegex = /<[^>]*class=["'][^"']*bc-contact-established[^"']*["'][^>]*>([^<]*)<\/div>/i;
                 const establishedMatch = establishedRegex.exec(layoutHtml);
 
@@ -245,6 +268,11 @@ export function validateContactInfo(formData: BusinessCardData): {
 
     if (!formData.companyName || !formData.companyName.trim()) {
         errors.push('Company name is required');
+    }
+
+    // Subtitle is optional - no validation needed
+    if (formData.subtitle && formData.subtitle.trim()) {
+        console.log('✨ [Contact Utils] Subtitle/credentials provided:', formData.subtitle);
     }
 
     const hasPhone = formData.phones && formData.phones.some(p => p.value && p.value.trim());

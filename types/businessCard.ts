@@ -37,6 +37,7 @@ export interface BusinessCardData {
     companyName: string;
     name: string;
     title: string;
+    subtitle?: string;
     slogan?: string;
     descriptor?: string;
     yearEstablished?: string;

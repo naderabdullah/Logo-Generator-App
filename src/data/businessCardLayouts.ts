@@ -360,8 +360,6 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             features: ['two-column', 'clean-spacing', 'right-logo']
         }
     },
-    // FILE: src/data/businessCardLayouts.ts
-// LOCATION: Find catalogId: 'BC005' and replace the ENTIRE object with this
 
     {
         catalogId: 'BC005',
@@ -487,8 +485,6 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
         }
     },
 
-
-
     {
         catalogId: 'BC006',
         name: 'Modern Grid Balance',
@@ -522,14 +518,14 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             height: 100%;
           ">
             <div class="content-area">
-              <h1 style="
+              <h1 class="bc-contact-name" style="
                 font-size: 14px;
                 font-weight: 700;
                 color: #1a202c;
                 margin: 0 0 6px 0;
                 line-height: 1.2;
               ">Michael Chen</h1>
-              <h2 style="
+              <h2 class="bc-contact-title" style="
                 font-size: 10px;
                 color: #667eea;
                 margin: 0 0 4px 0;
@@ -537,7 +533,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
               ">Product Manager</h2>
-              <h3 style="
+              <h3 class="bc-contact-company" style="
                 font-size: 11px;
                 color: #4a5568;
                 margin: 0 0 15px 0;
@@ -550,9 +546,9 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
                 font-size: 9px;
                 color: #4a5568;
               ">
-                <div>📱 (555) 123-4567</div>
-                <div>📧 m.chen@techinnovations.com</div>
-                <div>🌐 techinnovations.com</div>
+                <div class="bc-contact-phone" data-phone-type="mobile">📱 (555) 123-4567</div>
+                <div class="bc-contact-email" data-email-type="primary">📧 m.chen@techinnovations.com</div>
+                <div class="bc-contact-website">🌐 techinnovations.com</div>
               </div>
             </div>
             <div class="logo-area" style="
@@ -584,6 +580,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             features: ['grid-layout', 'gradient-border', 'modern-styling']
         }
     },
+
     {
         catalogId: 'BC007',
         name: 'Modern Glassmorphism',
@@ -619,7 +616,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             height: 100%;
           ">
             <div style="flex: 1; padding-right: 0.15in;">
-              <h1 style="
+              <h1 class="bc-contact-name" style="
                 font-size: 16px;
                 font-weight: 600;
                 color: #ffffff;
@@ -627,7 +624,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
                 line-height: 1.1;
                 text-shadow: 0 2px 4px rgba(0,0,0,0.3);
               ">Elena Rodriguez</h1>
-              <h2 style="
+              <h2 class="bc-contact-title" style="
                 font-size: 11px;
                 color: rgba(255,255,255,0.9);
                 margin: 0 0 3px 0;
@@ -635,7 +632,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
               ">UX Director</h2>
-              <h3 style="
+              <h3 class="bc-contact-company" style="
                 font-size: 10px;
                 color: rgba(255,255,255,0.8);
                 margin: 0 0 15px 0;
@@ -646,9 +643,9 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
                 color: rgba(255,255,255,0.9);
                 line-height: 1.4;
               ">
-                <div style="margin-bottom: 3px;">📱 (555) 123-4567</div>
-                <div style="margin-bottom: 3px;">✉️ elena@moderndigital.com</div>
-                <div>🌐 moderndigital.com</div>
+                <div class="bc-contact-phone" data-phone-type="mobile" style="margin-bottom: 3px;">📱 (555) 123-4567</div>
+                <div class="bc-contact-email" data-email-type="primary" style="margin-bottom: 3px;">✉️ elena@moderndigital.com</div>
+                <div class="bc-contact-website">🌐 moderndigital.com</div>
               </div>
             </div>
             <div class="logo-placeholder" style="
@@ -708,7 +705,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
       height: 100%;
     ">
       <div>
-        <h1 style="
+        <h1 class="bc-contact-name" style="
           font-size: 18px;
           font-weight: 900;
           color: #000000;
@@ -717,7 +714,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
           letter-spacing: -1px;
           line-height: 0.9;
         ">ALEX STONE</h1>
-        <h2 style="
+        <h2 class="bc-contact-title" style="
           font-size: 11px;
           color: #ff4500;
           margin: 0 0 6px 0;
@@ -725,7 +722,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
           text-transform: uppercase;
           letter-spacing: 1px;
         ">CREATIVE DIRECTOR</h2>
-        <h3 style="
+        <h3 class="bc-contact-company" style="
           font-size: 9px;
           color: #000000;
           margin: 0 0 12px 0;
@@ -744,9 +741,9 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
           line-height: 1.2;
           font-weight: 700;
         ">
-          <div>(555) 123-4567</div>
-          <div>(555) 987-6543</div>
-          <div style="font-size: 9px;">ALEX@STONE.DESIGN</div>
+          <div class="bc-contact-phone" data-phone-type="mobile">(555) 123-4567</div>
+          <div class="bc-contact-phone" data-phone-type="office">(555) 987-6543</div>
+          <div class="bc-contact-email" data-email-type="primary" style="font-size: 9px;">ALEX@STONE.DESIGN</div>
         </div>
         <div class="logo-placeholder" style="
           width: 0.9in;
@@ -795,7 +792,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
     justify-content: space-between;
     position: relative;
   ">
-    <div style="
+    <div class="bc-contact-company" style="
       font-size: 14px;
       font-weight: 700;
       color: #ffffff;
@@ -826,19 +823,19 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
   <div style="
     padding: 0.2in 0.25in 0.25in 0.25in;
   ">
-    <h1 style="
+    <h1 class="bc-contact-name" style="
       font-size: 14px;
       color: #1f2937;
       margin: 0 0 2px 0;
       font-weight: 600;
     ">Michael Sterling, CFA</h1>
-    <h2 style="
+    <h2 class="bc-contact-title" style="
       font-size: 11px;
       color: #1e40af;
       margin: 0 0 8px 0;
       font-weight: 500;
     ">Senior Portfolio Manager</h2>
-    <h3 style="
+    <h3 class="bc-contact-subtitle" style="
       font-size: 9px;
       color: #6b7280;
       margin: 0 0 12px 0;
@@ -852,8 +849,8 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
       color: #4b5563;
     ">
       <div>
-        <div style="margin-bottom: 2px;">☎️ Direct: (555) 123-4567</div>
-        <div>✉️ msterling@sterlingfinancial.com</div>
+        <div class="bc-contact-phone" data-phone-type="direct" style="margin-bottom: 2px;">☎️ Direct: (555) 123-4567</div>
+        <div class="bc-contact-email" data-email-type="primary">✉️ msterling@sterlingfinancial.com</div>
       </div>
     </div>
   </div>
@@ -865,6 +862,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             features: ['financial-theme', 'professional-header', 'licenses', 'conservative']
         }
     },
+
     {
         catalogId: 'BC010',
         name: 'Trendy Neon Glow',
@@ -910,7 +908,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
       height: 100%;
     ">
       <div style="flex: 1; max-width: 1.8in;">
-        <h1 style="
+        <h1 class="bc-contact-name" style="
           font-size: 16px;
           font-weight: 700;
           color: #ffffff;
@@ -918,7 +916,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
           line-height: 1.1;
           text-shadow: 0 0 10px #ff0080;
         ">John Doe</h1>
-        <h2 style="
+        <h2 class="bc-contact-title" style="
           font-size: 12px;
           color: #00ff88;
           margin: 0 0 3px 0;
@@ -927,7 +925,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
           letter-spacing: 0.5px;
           text-shadow: 0 0 8px #00ff88;
         ">DIGITAL ARTIST</h2>
-        <h3 style="
+        <h3 class="bc-contact-company" style="
           font-size: 10px;
           color: #ffffff;
           margin: 0 0 20px 0;
@@ -939,9 +937,9 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
           color: #ffffff;
           line-height: 1.5;
         ">
-          <div style="margin-bottom: 3px;">📱 (555) 123-4567</div>
-          <div style="margin-bottom: 3px;">✉️ maya@neondreams.art</div>
-          <div>🎨 neondreams.art</div>
+          <div class="bc-contact-phone" data-phone-type="mobile" style="margin-bottom: 3px;">📱 (555) 123-4567</div>
+          <div class="bc-contact-email" data-email-type="primary" style="margin-bottom: 3px;">✉️ maya@neondreams.art</div>
+          <div class="bc-contact-website">🎨 neondreams.art</div>
         </div>
       </div>
       <div style="

@@ -125,6 +125,27 @@ export const ContactInfoForm = ({
                                 placeholder="Your job title"
                             />
                         </div>
+                        <div>
+                            <label htmlFor="subtitle" className="block text-sm font-medium text-gray-700">
+                                Professional Credentials (Optional)
+                                <span className="text-xs text-gray-500 ml-2">
+                e.g., CFA, PhD, MBA, Licensed Professional
+            </span>
+                            </label>
+                            <input
+                                type="text"
+                                id="subtitle"
+                                name="subtitle"
+                                placeholder="Chartered Financial Analyst"
+                                maxLength={50}
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                value={formData.subtitle || ''}
+                                onChange={(e) => handleFieldChange('subtitle', e.target.value)}
+                            />
+                            <p className="mt-1 text-xs text-gray-500">
+                                Only shown on layouts that support credentials (e.g., BC009)
+                            </p>
+                        </div>
 
                         {/* Slogan - MOVED HERE */}
                         <div>
