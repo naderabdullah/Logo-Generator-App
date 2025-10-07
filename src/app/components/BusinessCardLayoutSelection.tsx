@@ -1,7 +1,6 @@
 // FILE: src/app/components/BusinessCardLayoutSelection.tsx
 // FUNCTION: BusinessCardLayoutSelection Component
 // PURPOSE: Business card layout selection with dual preview mode toggle in enlarged modal
-// CHANGES: Added ONLY preview mode toggle to modal - footer and all other code preserved exactly
 
 'use client';
 
@@ -55,15 +54,12 @@ export const BusinessCardLayoutSelection = ({
 
     const allLayouts = BUSINESS_CARD_LAYOUTS;
 
-    // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedCard, setSelectedCard] = useState<BusinessCardLayout | null>(null);
     const [currentModalIndex, setCurrentModalIndex] = useState(0);
 
-    // NEW: Preview mode toggle state
     const [previewMode, setPreviewMode] = useState<'generic' | 'injected'>('injected');
 
-    // Pagination state
     const [internalCurrentPage, setInternalCurrentPage] = useState(1);
     const currentPage = externalCurrentPage || internalCurrentPage;
     const itemsPerPage = 12;
@@ -192,17 +188,15 @@ export const BusinessCardLayoutSelection = ({
         }
     }, [onThemeFilterChange]);
 
-    // NEW: Generate injected HTML with logo and contact info
+    // Generate injected HTML with logo and contact info
     const generateEnlargedModalHTML = (card: BusinessCardLayout): string => {
         try {
             console.log('🎨 BusinessCardLayoutSelection - Generating modal HTML:', card.catalogId);
             let processedHTML = card.jsx;
 
-            // Inject contact info
             console.log('📝 BusinessCardLayoutSelection - Injecting contact info');
             processedHTML = injectContactInfo(processedHTML, formData);
 
-            // Inject logo
             if (validateLogoForInjection(logo)) {
                 console.log('✅ BusinessCardLayoutSelection - Injecting logo');
                 processedHTML = injectLogoIntoBusinessCard(processedHTML, logo);
@@ -217,7 +211,7 @@ export const BusinessCardLayoutSelection = ({
         }
     };
 
-    // NEW: Get HTML based on preview mode
+    // Get HTML based on preview mode
     const getModalPreviewHTML = (card: BusinessCardLayout): string => {
         if (previewMode === 'generic') {
             console.log('📝 BusinessCardLayoutSelection - Showing generic preview');
@@ -396,7 +390,7 @@ export const BusinessCardLayoutSelection = ({
                 )}
             </div>
 
-            {/* ORIGINAL Fixed Footer - PRESERVED EXACTLY */}
+            {/* Fixed Footer */}
             {!hideFooter && (
                 <div className="sticky bottom-0 border-t border-gray-200 bg-white px-6 py-3 z-40 shadow-lg">
                     <div className="flex items-center justify-between">
@@ -408,7 +402,7 @@ export const BusinessCardLayoutSelection = ({
                             ← Back to Info
                         </button>
 
-                        {/* Center: Pagination (only show if multiple pages) */}
+                        {/* Center: Pagination */}
                         {paginatedData.totalPages > 1 && (
                             <div className="flex items-center space-x-2">
                                 <button
@@ -509,7 +503,7 @@ export const BusinessCardLayoutSelection = ({
 
                         {/* Modal Content */}
                         <div className="p-6 space-y-6">
-                            {/* NEW: Preview Mode Indicator */}
+                            {/* Preview Mode Indicator */}
                             <div className="flex justify-center">
                                 <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-full text-sm">
                                     <span className={`font-medium ${previewMode === 'generic' ? 'text-purple-600' : 'text-gray-500'}`}>
@@ -517,7 +511,7 @@ export const BusinessCardLayoutSelection = ({
                                     </span>
                                     <span className="text-gray-400">•</span>
                                     <span className={`font-medium ${previewMode === 'injected' ? 'text-purple-600' : 'text-gray-500'}`}>
-                                        With Your Data
+                                        Client's Info
                                     </span>
                                 </div>
                             </div>
@@ -597,7 +591,7 @@ export const BusinessCardLayoutSelection = ({
 
                             {/* Action Buttons with Toggle */}
                             <div className="flex gap-4 pt-4 border-t items-center">
-                                {/* NEW: Preview Mode Toggle - First from Left */}
+                                {/* Preview Mode Toggle */}
                                 <div className="flex items-center gap-3 pr-4 border-r border-gray-200">
                                     <label className="flex items-center cursor-pointer group">
                                         <div className="relative">
@@ -615,12 +609,11 @@ export const BusinessCardLayoutSelection = ({
                                             }`}></div>
                                         </div>
                                         <div className="ml-3 text-sm font-medium text-gray-700">
-                                            {previewMode === 'injected' ? 'Your Data' : 'Generic'}
+                                            {previewMode === 'injected' ? `Client's Info` : 'Generic'}
                                         </div>
                                     </label>
                                 </div>
 
-                                {/* Select and Close Buttons */}
                                 <button
                                     onClick={() => {
                                         handleLayoutSelect(selectedCard);
