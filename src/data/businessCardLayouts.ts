@@ -437,7 +437,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
                 line-height: 1.1;
             ">Distinguished Proprietor</h3>
             <div class="bc-contact-info-block" style="
-                font-size: 8px;
+                font-size: 10px;
                 color: #5d4037;
                 line-height: 1.2;
             ">
@@ -833,7 +833,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
     <h2 class="bc-contact-title" style="
       font-size: 11px;
       color: #1e40af;
-      margin: 0 0 8px 0;
+      margin: 0 0 0px 0;
       font-weight: 500;
     ">Senior Portfolio Manager</h2>
     <h3 class="bc-contact-subtitle" style="
@@ -848,6 +848,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
       gap: 8px;
       font-size: 9px;
       color: #4b5563;
+      margin-top: 8px;
     ">
       <div>
         <div class="bc-contact-phone" data-phone-type="direct" style="margin-bottom: 2px;">☎️ Direct: (555) 123-4567</div>
@@ -1370,7 +1371,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
         width: 100%;
         height: 1px;
         background: linear-gradient(to right, transparent, #8b4513, transparent);
-        margin-bottom: 0.04in;
+        margin-bottom: 0.08in;
       "></div>
       <div class="bc-contact-info-block" style="
         text-align: center;
