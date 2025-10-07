@@ -740,6 +740,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
           color: #000000;
           line-height: 1.2;
           font-weight: 700;
+          margin-bottom: 4px;
         ">
           <div class="bc-contact-phone" data-phone-type="mobile">(555) 123-4567</div>
           <div class="bc-contact-phone" data-phone-type="office">(555) 987-6543</div>
@@ -1188,12 +1189,12 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
   width: 3.5in;
   height: 2in;
   background: #fefefe;
-  padding: 0.18in;
+  padding: 0.09in;
   font-family: Georgia, serif;
   box-sizing: border-box;
   text-align: center;
 ">
-  <div style="margin-bottom: 0.12in;">
+  <div style="margin-bottom: 0.04in;">
     <h3 class="bc-contact-company" style="
       font-size: 15px;
       font-weight: 700;
@@ -1240,7 +1241,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
       <h2 class="bc-contact-title" style="
         font-size: 10px;
         color: #64748b;
-        margin: 0 0 8px 0;
+        margin: 0 0 4px 0;
         font-weight: 400;
         font-style: italic;
       ">Creative Director</h2>
@@ -1259,7 +1260,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
         color: #475569;
         line-height: 1.4;
       ">
-        <div class="bc-contact-email" data-email-type="primary" style="margin-bottom: 2px;">emma@stellardesign.com</div>
+        <div class="bc-contact-email" data-email-type="primary" style="margin-bottom: 2px;">✉️ emma@stellardesign.com</div>
         <div class="bc-contact-website">🌟 stellardesign.com</div>
       </div>
     </div>
@@ -1273,6 +1274,12 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
         }
     },
 
+    // FILE: src/data/businessCardLayouts.ts
+// LAYOUT: BC014 - Vintage Letterpress
+// CHANGE: Moved bc-contact-established from center to upper right corner
+// PURPOSE: Fix vertical overflow by relocating established year
+// INSTRUCTIONS: Replace only the BC014 layout object in the array
+
     {
         catalogId: 'BC014',
         name: 'Vintage Letterpress',
@@ -1285,7 +1292,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
   height: 2in;
   background: #f4e4bc;
   border: 3px solid #8b4513;
-  padding: 0.16in;
+  padding: 0.08in;
   font-family: 'Georgia', serif;
   position: relative;
   box-sizing: border-box;
@@ -1307,8 +1314,15 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
     height: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
   ">
+    <div class="bc-contact-established" style="
+      position: absolute;
+      top: 0.05in;
+      right: 0.05in;
+      font-size: 8px;
+      color: #8b4513;
+      font-style: italic;
+    ">Est. 1952</div>
     <div class="header-section" style="text-align: center;">
       <div class="logo-placeholder" style="
         width: 0.9in;
@@ -1321,14 +1335,15 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
         font-size: 8px;
         color: #f4e4bc;
         font-weight: 700;
-        margin-bottom: 0.12in;
+        margin-bottom: 0.02in;
         box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
       ">LOGO</div>
       <h1 class="bc-contact-name" style="
-        font-size: 16px;
+        font-size: 14px;
         font-weight: 700;
         color: #5d4037;
-        margin: 0 0 3px 0;
+        margin: 0 0 1px 0;
+        line-height: 1;
         text-transform: uppercase;
         letter-spacing: 2px;
         text-shadow: 1px 1px 2px rgba(139, 69, 19, 0.2);
@@ -1336,30 +1351,26 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
       <h2 class="bc-contact-title" style="
         font-size: 10px;
         color: #8b4513;
-        margin: 0 0 2px 0;
+        margin: 0 0 1px 0;
+        line-height: 1;
         font-weight: 400;
         font-style: italic;
       ">Master Craftsman</h2>
       <h3 class="bc-contact-company" style="
         font-size: 11px;
         color: #5d4037;
-        margin: 0 0 8px 0;
+        margin: 0 0 0.08in 0;
+        line-height: 1;
         font-weight: 600;
         letter-spacing: 1px;
       ">Pemberton & Sons</h3>
-      <div class="bc-contact-established" style="
-        font-size: 8px;
-        color: #8b4513;
-        margin: 0 0 8px 0;
-        font-style: italic;
-      ">Est. 1952</div>
     </div>
-    <div class="footer-section">
+    <div class="footer-section" style="margin-top: auto;">
       <div style="
         width: 100%;
         height: 1px;
         background: linear-gradient(to right, transparent, #8b4513, transparent);
-        margin-bottom: 0.08in;
+        margin-bottom: 0.04in;
       "></div>
       <div class="bc-contact-info-block" style="
         text-align: center;
