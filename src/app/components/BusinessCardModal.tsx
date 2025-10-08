@@ -354,7 +354,6 @@ export const BusinessCardModal: React.FC<BusinessCardModalProps> = ({ logo, isOp
             setIsGenerating(true);
             setError(null);
 
-            // TODO: Implement business card generation logic
             await new Promise(resolve => setTimeout(resolve, 2000));
 
             console.log('✅ Business card generation completed');
