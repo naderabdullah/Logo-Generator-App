@@ -1514,12 +1514,6 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             features: ['watercolor-effects', 'artistic', 'colorful', 'gradient-splashes', 'modern-artistic']
         }
     },
-
-    // FILE: src/data/businessCardLayouts.ts
-// SECTION: BC016-BC017 Standardized Layouts
-// PURPOSE: Standardize BC016-BC017 with proper bc-contact-* classes for injection
-// INSTRUCTIONS: Replace BC016-BC017 objects in BUSINESS_CARD_LAYOUTS array
-
     {
         catalogId: 'BC016',
         name: 'Artistic Hand-drawn',
@@ -1745,231 +1739,256 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
         theme: 'luxury',
         description: 'Sophisticated marble texture with gold typography',
         style: 'contact-focused',
-        jsx: `
-      <div class="business-card" style="
-        width: 3.5in;
-        height: 2in;
-        background: linear-gradient(45deg, #f8f9fa 0%, #e9ecef 25%, #f8f9fa 50%, #e9ecef 75%, #f8f9fa 100%);
-        background-size: 40px 40px;
-        position: relative;
-        font-family: 'Playfair Display', serif;
-        box-sizing: border-box;
-        border: 2px solid #d4af37;
+        jsx: `<div class="business-card" style="
+  width: 3.5in;
+  height: 2in;
+  background: linear-gradient(45deg, #f8f9fa 0%, #e9ecef 25%, #f8f9fa 50%, #e9ecef 75%, #f8f9fa 100%);
+  position: relative;
+  font-family: 'Playfair Display', serif;
+  box-sizing: border-box;
+  border: 3px solid #d4af37;
+  border-radius: 8px;
+">
+  <div style="
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+      linear-gradient(90deg, transparent 48%, rgba(212, 175, 55, 0.1) 49%, rgba(212, 175, 55, 0.1) 51%, transparent 52%),
+      linear-gradient(0deg, transparent 48%, rgba(212, 175, 55, 0.1) 49%, rgba(212, 175, 55, 0.1) 51%, transparent 52%);
+    background-size: 0.5in 0.5in;
+    opacity: 0.3;
+    pointer-events: none;
+  "></div>
+  <div style="padding: 0.2in; position: relative; z-index: 2; height: 100%;">
+    <div style="
+      display: grid;
+      grid-template-columns: 1fr 0.8in;
+      gap: 0.15in;
+      height: 100%;
+    ">
+      <div style="
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
       ">
-        <div style="
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: repeating-linear-gradient(
-            45deg,
-            transparent,
-            transparent 10px,
-            rgba(212, 175, 55, 0.1) 10px,
-            rgba(212, 175, 55, 0.1) 20px
-          );
-          opacity: 0.3;
-        "></div>
-        <div style="padding: 0.3in; position: relative; z-index: 2; height: 100%;">
-          <div style="
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            height: 100%;
+        <div>
+          <h1 class="bc-contact-name" style="
+            font-size: 15px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin: 0 0 3px 0;
+            line-height: 1.1;
+            letter-spacing: 0.5px;
+          ">Sophia Lancaster</h1>
+          <h2 class="bc-contact-title" style="
+            font-size: 11px;
+            color: #d4af37;
+            margin: 0 0 2px 0;
+            font-weight: 600;
+            letter-spacing: 1px;
+          ">Luxury Concierge</h2>
+          <h3 class="bc-contact-company" style="
+            font-size: 10px;
+            color: #6b7280;
+            margin: 0 0 15px 0;
+            font-weight: 400;
+            font-family: 'Inter', sans-serif;
+          ">Elite Lifestyle Services</h3>
+          <div class="bc-contact-info-block" style="
+            font-size: 9px;
+            color: #374151;
+            line-height: 1.5;
+            font-family: 'Inter', sans-serif;
           ">
-            <div style="flex: 1; padding-right: 0.2in;">
-              <h1 style="
-                font-size: 16px;
-                font-weight: 400;
-                color: #1a1a1a;
-                margin: 0 0 6px 0;
-                line-height: 1.1;
-                letter-spacing: 1px;
-              ">SOPHIA LAURENT</h1>
-              <div style="
-                width: 1.5in;
-                height: 1px;
-                background: #d4af37;
-                margin: 8px 0;
-              "></div>
-              <h2 style="
-                font-size: 11px;
-                color: #d4af37;
-                margin: 0 0 3px 0;
-                font-weight: 500;
-                font-style: italic;
-                letter-spacing: 0.5px;
-              ">Luxury Consultant</h2>
-              <h3 style="
-                font-size: 10px;
-                color: #6b7280;
-                margin: 0 0 15px 0;
-                font-weight: 400;
-              ">Elite Lifestyle Services</h3>
-              <div class="contact-info" style="
-                font-size: 9px;
-                color: #374151;
-                line-height: 1.5;
-                font-family: 'Inter', sans-serif;
-              ">
-                <div style="margin-bottom: 3px;">📞 (555) 123-4567</div>
-                <div style="margin-bottom: 3px;">✉️ sophia@elitelifestyle.com</div>
-                <div>🌐 elitelifestyle.com</div>
-              </div>
-            </div>
-            <div class="logo-placeholder" style="
-              width: 0.7in;
-              height: 0.7in;
-              border: 2px solid #d4af37;
-              border-radius: 50%;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-size: 8px;
-              color: #d4af37;
-              background: radial-gradient(circle, rgba(248, 249, 250, 0.8), rgba(233, 236, 239, 0.8));
-              font-weight: 600;
-            ">LOGO</div>
+            <div class="bc-contact-phone" data-phone-type="mobile" style="margin-bottom: 3px;">📞 (555) 123-4567</div>
+            <div class="bc-contact-email" data-email-type="primary" style="margin-bottom: 3px;">✉️ sophia@elitelifestyle.com</div>
+            <div class="bc-contact-website">🌐 elitelifestyle.com</div>
           </div>
         </div>
       </div>
-    `,
+      <div style="
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+      ">
+        <div class="logo-placeholder" style="
+          width: 0.7in;
+          height: 0.7in;
+          border: 2px solid #d4af37;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 8px;
+          color: #d4af37;
+          background: radial-gradient(circle, rgba(248, 249, 250, 0.8), rgba(233, 236, 239, 0.8));
+          font-weight: 600;
+        ">LOGO</div>
+      </div>
+    </div>
+  </div>
+</div>`,
         metadata: {
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#f8f9fa', '#e9ecef', '#d4af37', '#1a1a1a'],
             fonts: ['Playfair Display', 'Inter'],
-            features: ['marble-texture', 'luxury-gold', 'sophisticated', 'elegant-lines']
+            features: ['marble-texture', 'luxury-gold', 'sophisticated', 'elegant-lines', 'circular-logo']
         }
     },
+
+    // FILE: src/data/businessCardLayouts.ts
+// SECTION: BC019 Layout - Clean Geometric Circles
+// PURPOSE: Pure geometric decoration with two circles, no text
+// INSTRUCTIONS: Replace ONLY the BC019 object in BUSINESS_CARD_LAYOUTS array
+// CHANGES:
+//   - Right circle: moved further down (top: 42px), removed "Q" text
+//   - Left circle: unchanged (top: 45px, left: 15px)
+//   - Both circles are now pure geometric decoration
+//   - All layout and contact fields unchanged
 
     {
         catalogId: 'BC019',
         name: 'Quantum Tech',
         theme: 'tech',
-        description: 'Modern tech design with quantum-inspired elements',
+        description: 'Modern tech design with quantum-inspired elements and social media',
         style: 'contact-focused',
         jsx: `<div class="business-card" style="
-        width: 3.5in;
-        height: 2in;
-        background: #f8fafc;
-        border: 2px solid #3b82f6;
-        border-radius: 8px;
-        font-family: 'Inter', sans-serif;
-        box-sizing: border-box;
-        position: relative;
+  width: 3.5in;
+  height: 2in;
+  background: #f8fafc;
+  border: 2px solid #3b82f6;
+  border-radius: 8px;
+  font-family: 'Inter', sans-serif;
+  box-sizing: border-box;
+  position: relative;
+">
+  <!-- Decorative Circle 1 - Right side, away from divider -->
+  <div style="
+    position: absolute;
+    top: 42px;
+    right: 12px;
+    width: 35px;
+    height: 35px;
+    background: rgba(59, 130, 246, 0.1);
+    border-radius: 50%;
+    border: 1px solid #3b82f6;
+  "></div>
+  
+  <!-- Decorative Circle 2 - Left side, smaller -->
+  <div style="
+    position: absolute;
+    top: 45px;
+    left: 15px;
+    width: 22px;
+    height: 22px;
+    background: rgba(59, 130, 246, 0.08);
+    border-radius: 50%;
+    border: 1px solid #3b82f6;
+  "></div>
+  
+  <div style="
+    padding: 0.15in;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.05in;
+  ">
+    <!-- Company Name Header -->
+    <div style="
+      border-bottom: 1px solid #3b82f6;
+      padding-bottom: 0.03in;
+      text-align: center;
     ">
-        <div style="
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            width: 35px;
-            height: 35px;
-            background: rgba(59, 130, 246, 0.1);
-            border-radius: 50%;
-            border: 1px solid #3b82f6;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 6px;
-            color: #3b82f6;
-            font-weight: 600;
-        ">Q</div>
-        <div style="
-            padding: 0.15in;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 0.04in;
-        ">
-            <div style="
-                border-bottom: 1px solid #3b82f6;
-                padding-bottom: 0.03in;
-                text-align: center;
-                margin-bottom: 0.04in;
-            ">
-                <h1 style="
-                    font-size: 13px;
-                    font-weight: 700;
-                    color: #1e293b;
-                    margin: 0;
-                    line-height: 1;
-                    text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                ">Quantum Tech</h1>
-            </div>
-            <div style="
-                text-align: center;
-                margin-bottom: 0.06in;
-            ">
-                <h2 style="
-                    font-size: 11px;
-                    font-weight: 600;
-                    color: #1e293b;
-                    margin: 0 0 1px 0;
-                    line-height: 1.1;
-                ">Alex Chen</h2>
-                <h3 style="
-                    font-size: 9px;
-                    color: #3b82f6;
-                    margin: 0;
-                    font-weight: 500;
-                    text-transform: uppercase;
-                    letter-spacing: 0.3px;
-                    line-height: 1.1;
-                ">Chief Technology Officer</h3>
-            </div>
-            <div style="
-                flex: 1;
-                display: grid;
-                grid-template-columns: 1fr auto;
-                gap: 0.12in;
-                align-items: center;
-            ">
-                <div style="text-align: left;">
-                    <div style="
-                        font-size: 8px;
-                        color: #475569;
-                        line-height: 1.2;
-                        display: grid;
-                        grid-template-columns: 1fr 1fr;
-                        gap: 0.05in 0.1in;
-                    ">
-                        <div>📱 (555) 123-4567</div>
-                        <div>✉️ alex@quantumtech.co</div>
-                        <div>🌐 quantumtech.co</div>
-                        <div>💼 LinkedIn/alexchen</div>
-                    </div>
-                </div>
-                <div class="logo-placeholder" style="
-                    width: 0.75in;
-                    height: 0.55in;
-                    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.05));
-                    border: 1px solid #3b82f6;
-                    border-radius: 4px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 7px;
-                    color: #3b82f6;
-                    font-weight: 600;
-                ">LOGO</div>
-            </div>
-        </div>
-    </div>`,
+      <h1 class="bc-contact-company" style="
+        font-size: 13px;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0;
+        line-height: 1;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      ">Quantum Tech</h1>
+    </div>
+    
+    <!-- Name and Title -->
+    <div style="
+      text-align: center;
+    ">
+      <h2 class="bc-contact-name" style="
+        font-size: 11px;
+        font-weight: 600;
+        color: #1e293b;
+        margin: 0 0 1px 0;
+        line-height: 1.1;
+      ">Alex Chen</h2>
+      <h3 class="bc-contact-title" style="
+        font-size: 9px;
+        color: #475569;
+        margin: 0;
+        font-weight: 500;
+      ">Lead Quantum Engineer</h3>
+    </div>
+    
+    <!-- Logo - Centered Vertically -->
+    <div style="
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 0.08in 0;
+    ">
+      <div class="logo-placeholder" style="
+        width: 0.7in;
+        height: 0.5in;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.05));
+        border: 1px solid #3b82f6;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 7px;
+        color: #3b82f6;
+        font-weight: 600;
+      ">LOGO</div>
+    </div>
+    
+    <!-- Contact Info Grid - Full Width -->
+    <div style="
+      flex: 1;
+      display: flex;
+      align-items: flex-end;
+    ">
+      <div class="bc-contact-info-block" style="
+        width: 100%;
+        font-size: 8px;
+        color: #475569;
+        line-height: 1.2;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.05in 0.15in;
+      ">
+        <div class="bc-contact-phone" data-phone-type="mobile">📱 (555) 123-4567</div>
+        <div class="bc-contact-email" data-email-type="primary">✉️ alex@quantumtech.co</div>
+        <div class="bc-contact-website">🌐 quantumtech.co</div>
+        <div class="bc-contact-social" data-social-platform="linkedin">💼 linkedin.com/in/alexchen</div>
+      </div>
+    </div>
+  </div>
+</div>`,
         metadata: {
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#f8fafc', '#3b82f6', '#1e293b', '#475569'],
             fonts: ['Inter'],
-            features: ['tech', 'modern', 'quantum-elements', 'grid-contact', 'decorative-circle']
+            features: ['tech', 'modern', 'quantum-elements', 'grid-contact', 'clean-geometric-circles', 'social-media-linkedin', 'vertical-logo']
         }
     },
-
     {
         catalogId: 'BC020',
         name: 'Corporate Professional Blue',
         theme: 'professional',
-        description: 'Traditional corporate design with navy accents',
+        description: 'Traditional corporate design with navy accents and credentials',
         style: 'company-focused',
         jsx: `<div class="business-card" style="
   width: 3.5in;
@@ -1988,26 +2007,27 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
     justify-content: space-between;
     position: relative;
   ">
-    <div style="
-      font-size: 13px;
+    <h1 class="bc-contact-company" style="
+      font-size: 14px;
       font-weight: 700;
       color: #ffffff;
       text-transform: uppercase;
       letter-spacing: 1px;
-    ">CORP SOLUTIONS</div>
+      margin: 0;
+    ">STERLING CORP</h1>
     <div style="
       position: absolute;
-      top: -0.1in;
+      top: -0.05in;
       right: 0.2in;
       z-index: 10;
       background: #ffffff;
       padding: 3px;
       border-radius: 4px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     ">
       <div class="logo-placeholder" style="
         width: 1.0in;
-        height: 0.65in;
+        height: 0.7in;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -2017,44 +2037,53 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
       ">LOGO</div>
     </div>
   </div>
-  <div style="padding: 0.2in 0.25in 0.25in 0.25in;">
-    <h1 style="
+  <div style="
+    padding: 0.2in 0.25in 0.25in 0.25in;
+  ">
+    <h2 class="bc-contact-name" style="
       font-size: 14px;
       color: #1f2937;
       margin: 0 0 2px 0;
       font-weight: 600;
-    ">Jennifer Martinez</h1>
-    <h2 style="
+    ">Michael Sterling</h2>
+    <h3 class="bc-contact-title" style="
       font-size: 11px;
       color: #1e40af;
-      margin: 0 0 12px 0;
+      margin: 0 0 2px 0;
       font-weight: 500;
-    ">Senior Account Manager</h2>
+    ">Chief Financial Officer</h3>
+    <h4 class="bc-contact-subtitle" style="
+      font-size: 9px;
+      color: #6b7280;
+      margin: 0 0 12px 0;
+      font-style: italic;
+    ">CPA, MBA - Harvard Business School</h4>
     <div style="
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      gap: 8px;
       font-size: 9px;
       color: #4b5563;
+      margin-top: 8px;
     ">
       <div>
-        <div style="margin-bottom: 3px;">☎️ Direct: (555) 123-4567</div>
-        <div style="margin-bottom: 3px;">📱 Mobile: (555) 987-6543</div>
-        <div>✉️ jennifer@corporatesolutions.com</div>
+        <div class="bc-contact-phone" data-phone-type="direct" style="margin-bottom: 2px;">☎️ Direct: (555) 123-4567</div>
+        <div class="bc-contact-phone" data-phone-type="mobile" style="margin-bottom: 2px;">📱 Mobile: (555) 987-6543</div>
+        <div class="bc-contact-email" data-email-type="primary">✉️ msterling@sterlingcorp.com</div>
       </div>
       <div style="text-align: right;">
-        <div style="margin-bottom: 3px;">🌐 www.corporatesolutions.com</div>
-        <div style="margin-bottom: 3px;">📍 1234 Business Blvd</div>
-        <div>Chicago, IL 60601</div>
+        <div style="margin-bottom: 2px;">🏢 100 Corporate Plaza</div>
+        <div style="margin-bottom: 2px;">New York, NY 10001</div>
+        <div class="bc-contact-website">🌐 sterlingcorp.com</div>
       </div>
     </div>
   </div>
 </div>`,
         metadata: {
             dimensions: { width: '3.5in', height: '2in' },
-            colors: ['#1e40af', '#ffffff', '#1f2937', '#4b5563'],
+            colors: ['#1e40af', '#ffffff', '#1f2937', '#6b7280'],
             fonts: ['Arial'],
-            features: ['corporate', 'traditional', 'navy-accents', 'professional']
+            features: ['professional', 'corporate-header', 'credentials-display', 'two-column-grid', 'elevated-logo']
         }
     },
 
