@@ -1515,6 +1515,10 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
         }
     },
 
+    // FILE: src/data/businessCardLayouts.ts
+// SECTION: BC016-BC017 Standardized Layouts
+// PURPOSE: Standardize BC016-BC017 with proper bc-contact-* classes for injection
+// INSTRUCTIONS: Replace BC016-BC017 objects in BUSINESS_CARD_LAYOUTS array
 
     {
         catalogId: 'BC016',
@@ -1580,7 +1584,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
       margin-bottom: 8px;
       transform: rotate(-2deg);
     ">LOGO</div>
-    <h1 style="
+    <h1 class="bc-contact-name" style="
       font-size: 14px;
       font-weight: 700;
       color: #2d3748;
@@ -1588,30 +1592,30 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
       line-height: 1;
       transform: rotate(1deg);
     ">Lucy Chen</h1>
-    <h2 style="
+    <h2 class="bc-contact-title" style="
       font-size: 10px;
       color: #4a5568;
       margin: 0 0 2px 0;
       font-weight: 600;
       transform: rotate(-0.5deg);
     ">Illustrator</h2>
-    <h3 style="
+    <h3 class="bc-contact-company" style="
       font-size: 9px;
       color: #718096;
       margin: 0 0 10px 0;
       font-weight: 400;
       transform: rotate(0.5deg);
     ">Sketch & Dream Studio</h3>
-    <div class="contact-info" style="
+    <div class="bc-contact-info-block" style="
       font-size: 9px;
       color: #2d3748;
       line-height: 1.4;
       transform: rotate(-0.5deg);
       margin-right: 0.3in;
     ">
-      <div style="margin-bottom: 2px;">🎨 lucy@sketchdream.art</div>
-      <div style="margin-bottom: 2px;">📱 (555) 123-4567</div>
-      <div>✨ @lucydraws</div>
+      <div class="bc-contact-email" data-email-type="primary" style="margin-bottom: 2px;">🎨 lucy@sketchdream.art</div>
+      <div class="bc-contact-phone" data-phone-type="mobile" style="margin-bottom: 2px;">📱 (555) 123-4567</div>
+      <div class="bc-contact-website">✨ sketchdream.art</div>
     </div>
   </div>
 </div>`,
@@ -1664,7 +1668,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
       height: 100%;
     ">
       <div>
-        <h1 style="
+        <h1 class="bc-contact-company" style="
           font-size: 14px;
           font-weight: 700;
           color: #00ff41;
@@ -1674,60 +1678,54 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
           text-shadow: 0 0 10px #00ff41;
           line-height: 1;
         ">CYBER NEXUS</h1>
-        <div style="
+        <div class="bc-contact-slogan" style="
           font-size: 7px;
           color: #ff0080;
           margin-bottom: 3px;
           text-transform: uppercase;
-          letter-spacing: 3px;
-          font-weight: 600;
-        ">DIGITAL FRONTIER</div>
-        <div style="
-          display: inline-block;
-          margin-bottom: 6px;
-          background: #ffffff;
-          padding: 3px;
-          border-radius: 2px;
-          border: 2px solid #00ff41;
-          box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
-        ">
-          <div class="logo-placeholder" style="
-            width: 0.6in;
-            height: 0.6in;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 8px;
-            color: #0a0a0a;
-            font-weight: 600;
-          ">LOGO</div>
-        </div>
+          letter-spacing: 1px;
+          text-shadow: 0 0 5px #ff0080;
+        ">FUTURE TECH SYSTEMS</div>
+        <div class="logo-placeholder" style="
+          width: 0.6in;
+          height: 0.4in;
+          border: 1px solid #00ff41;
+          background: rgba(0, 255, 65, 0.05);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 6px;
+          color: #00ff41;
+          font-weight: 700;
+          margin-bottom: 0.12in;
+          text-shadow: 0 0 5px #00ff41;
+        ">LOGO</div>
       </div>
       <div>
-        <h2 style="
-          font-size: 12px;
-          font-weight: 700;
+        <h2 class="bc-contact-name" style="
+          font-size: 11px;
           color: #ffffff;
           margin: 0 0 2px 0;
-          line-height: 1.1;
-        ">ZARA NEXUS</h2>
-        <h3 style="
-          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 1px;
+        ">ALEX STORM</h2>
+        <h3 class="bc-contact-title" style="
+          font-size: 8px;
           color: #ff0080;
-          margin: 0 0 3px 0;
+          margin: 0 0 8px 0;
           font-weight: 600;
           text-transform: uppercase;
           letter-spacing: 1px;
-        ">CYBER ARCHITECT</h3>
-        <div class="contact-info" style="
+          text-shadow: 0 0 5px #ff0080;
+        ">CHIEF ARCHITECT</h3>
+        <div class="bc-contact-info-block" style="
           font-size: 8px;
           color: #00ff41;
           line-height: 1.4;
-          font-family: 'Courier New', monospace;
         ">
-          <div style="margin-bottom: 2px;">[TEL] 555.123.4567</div>
-          <div style="margin-bottom: 2px;">[MAIL] alex@circuitflow.tech</div>
-          <div>[NET] circuitflow.tech</div>
+          <div class="bc-contact-phone" data-phone-type="mobile" style="margin-bottom: 2px;">📱 (555) 123-4567</div>
+          <div class="bc-contact-email" data-email-type="primary" style="margin-bottom: 2px;">✉️ alex@cybernexus.tech</div>
+          <div class="bc-contact-website">🌐 cybernexus.tech</div>
         </div>
       </div>
     </div>
@@ -1737,7 +1735,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#0a0a0a', '#00ff41', '#ff0080', '#ffffff'],
             fonts: ['Courier New'],
-            features: ['cyberpunk', 'neon-highlights', 'futuristic', 'tech']
+            features: ['cyberpunk', 'neon-effects', 'tech-theme', 'futuristic', 'dark-background']
         }
     },
 
