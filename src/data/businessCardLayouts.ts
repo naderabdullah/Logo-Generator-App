@@ -2181,125 +2181,131 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
 
     {
         catalogId: 'BC022',
-        name: 'Vintage Postcard',
-        theme: 'vintage',
-        description: 'Retro postcard-inspired design with aged effects and centered layout',
+        name: 'Asymmetric Angles - Warm',
+        theme: 'modern',
+        description: 'Modern asymmetric design with warm angular color blocks and diagonal emphasis',
         style: 'contact-focused',
-        jsx: `<div class="business-card" style="
+        jsx: `
+<div class="business-card" style="
   width: 3.5in;
   height: 2in;
-  background: linear-gradient(45deg, #f4e4bc 0%, #e8d5b7 100%);
-  border: 3px solid #8b4513;
-  padding: 0.2in;
-  font-family: 'Georgia', serif;
+  background: #fefefe;
   position: relative;
+  font-family: 'Inter', sans-serif;
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
+  overflow: hidden;
 ">
+  <!-- Angular Color Block 1 - Top Left (Warm Orange) -->
   <div style="
     position: absolute;
-    top: 6px;
-    right: 6px;
-    width: 0.5in;
-    height: 0.5in;
-    background: radial-gradient(circle, rgba(139, 69, 19, 0.1) 0%, transparent 70%);
-    border-radius: 50%;
+    top: 0;
+    left: 0;
+    width: 35%;
+    height: 55%;
+    background: #fed7aa;
+    transform: skewX(-8deg);
+    transform-origin: top left;
   "></div>
+  
+  <!-- Angular Color Block 2 - Bottom Right (Amber) -->
   <div style="
     position: absolute;
-    bottom: 6px;
-    left: 6px;
-    width: 0.3in;
-    height: 0.3in;
-    background: radial-gradient(circle, rgba(139, 69, 19, 0.08) 0%, transparent 70%);
-    border-radius: 50%;
+    bottom: 0;
+    right: 0;
+    width: 45%;
+    height: 40%;
+    background: #f59e0b;
+    opacity: 0.15;
+    transform: skewX(10deg);
+    transform-origin: bottom right;
   "></div>
+  
+  <!-- Accent Diagonal Stripe -->
   <div style="
-    text-align: center;
-    border-bottom: 2px solid #8b4513;
-    padding-bottom: 0.06in;
-    margin-bottom: 0.02in;
-  ">
-    <h1 class="bc-contact-company" style="
-      font-size: 14px;
-      font-weight: 700;
-      color: #5d4037;
-      margin: 0;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      line-height: 0.9;
-    ">Heritage Travel</h1>
-  </div>
-  <div style="
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.25in;
-    margin-top: 0.15in;
-  ">
-    <div style="text-align: center;">
-      <h2 class="bc-contact-name" style="
-        font-size: 11px;
-        color: #5d4037;
-        margin: 0 0 1px 0;
-        font-weight: 600;
-        line-height: 1.1;
-      ">Winston Gatsby</h2>
-      <h3 class="bc-contact-title" style="
-        font-size: 9px;
-        color: #8b4513;
-        margin: 0 0 6px 0;
-        font-style: italic;
-        line-height: 1.1;
-      ">Distinguished Proprietor</h3>
-      <div class="bc-contact-info-block" style="
-        font-size: 10px;
-        color: #5d4037;
-        line-height: 1.2;
-      ">
-        <div class="bc-contact-phone" data-phone-type="office" style="margin-bottom: 1px;">☎️ (555) 123-4567</div>
-        <div class="bc-contact-email" data-email-type="primary" style="margin-bottom: 1px;">✉️ winston@heritage-travel.co</div>
-        <div class="bc-contact-website">🌍 heritage-travel.co</div>
-      </div>
-    </div>
+    position: absolute;
+    top: 30%;
+    left: -10%;
+    width: 120%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #f59e0b, transparent);
+    transform: rotate(-3deg);
+    opacity: 0.3;
+  "></div>
+
+  <div style="padding: 0.3in; position: relative; z-index: 2; height: 100%;">
     <div style="
       display: flex;
-      flex-direction: column;
-      align-items: center;
+      justify-content: space-between;
+      align-items: flex-start;
+      height: 100%;
     ">
-      <div class="logo-placeholder" style="
-        width: 0.8in;
-        height: 0.6in;
-        background-color: rgba(139, 69, 19, 0.1);
-        border: 2px solid #8b4513;
-        border-radius: 4px;
+      <!-- Left Column: Contact Info -->
+      <div style="flex: 1; max-width: 55%; display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+        <div>
+          <h1 class="bc-contact-name" style="
+            font-size: 16px;
+            font-weight: 700;
+            color: #292524;
+            margin: 0 0 4px 0;
+            line-height: 1.1;
+          ">Sofia Chen</h1>
+          <h2 class="bc-contact-title" style="
+            font-size: 11px;
+            color: #78716c;
+            margin: 0 0 12px 0;
+            font-weight: 500;
+          ">Brand Strategist</h2>
+          <h3 class="bc-contact-company" style="
+            font-size: 10px;
+            color: #ea580c;
+            margin: 0 0 16px 0;
+            font-weight: 600;
+          ">Angle Creative Agency</h3>
+        </div>
+        
+        <!-- Contact Info Block -->
+        <div class="bc-contact-info-block" style="
+          font-size: 9px;
+          color: #57534e;
+          line-height: 1.5;
+        ">
+          <div class="bc-contact-phone" data-phone-type="mobile" style="margin-bottom: 3px;">📱 (555) 123-4567</div>
+          <div class="bc-contact-email" data-email-type="primary" style="margin-bottom: 3px;">✉️ sofia@anglecreative.co</div>
+          <div class="bc-contact-website">🌐 anglecreative.co</div>
+        </div>
+      </div>
+
+      <!-- Right Column: Logo -->
+      <div style="
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 8px;
-        color: #8b4513;
-        font-weight: 600;
-        margin-bottom: 0.02in;
-      ">LOGO</div>
-      <div class="bc-contact-established" style="
-        font-size: 7px;
-        color: #8b4513;
-        font-style: italic;
-        padding: 1px 4px;
-        border: 1px solid #8b4513;
-        border-radius: 8px;
-        background: rgba(139, 69, 19, 0.05);
-      ">Est. 1952</div>
+        width: 40%;
+        height: 100%;
+      ">
+        <div class="logo-placeholder" style="
+          width: 0.85in;
+          height: 0.85in;
+          background: #ffffff;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 8px;
+          color: #ea580c;
+          font-weight: 600;
+          box-shadow: 0 4px 6px rgba(234, 88, 12, 0.15);
+          border: 1px solid #fed7aa;
+        ">LOGO</div>
+      </div>
     </div>
   </div>
 </div>`,
         metadata: {
             dimensions: { width: '3.5in', height: '2in' },
-            colors: ['#f4e4bc', '#e8d5b7', '#8b4513', '#5d4037'],
-            fonts: ['Georgia'],
-            features: ['vintage', 'postcard-style', 'aged-effects', 'travel-theme', 'centered-layout', 'established-year']
+            colors: ['#fefefe', '#fed7aa', '#f59e0b', '#ea580c', '#292524'],
+            fonts: ['Inter'],
+            features: ['asymmetric-layout', 'warm-tones', 'angular-shapes', 'diagonal-stripe', 'modern-design']
         }
     },
 
@@ -2619,115 +2625,121 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             features: ['dot-grid-pattern', 'minimal-typography', 'ultra-clean', 'two-column-layout']
         }
     },
+
     {
         catalogId: 'BC026',
-        name: 'Modern Asymmetric',
+        name: 'Asymmetric Angles',
         theme: 'modern',
-        description: 'Bold asymmetric layout with dynamic color blocks',
+        description: 'Modern asymmetric design with angular color blocks',
         style: 'contact-focused',
         jsx: `
-      <div class="business-card" style="
-        width: 3.5in;
-        height: 2in;
-        background: #ffffff;
-        position: relative;
-        font-family: 'Inter', sans-serif;
-        box-sizing: border-box;
-        overflow: hidden;
-      ">
-        <div style="
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 70%;
-          height: 100%;
-          background: #f3f4f6;
-        "></div>
-        <div style="
-          position: absolute;
-          top: 0;
-          right: 0;
-          width: 30%;
-          height: 100%;
-          background: #3b82f6;
-        "></div>
-        <div style="
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          width: 100%;
-          height: 6px;
-          background: #1f2937;
-        "></div>
-        <div style="padding: 0.3in; position: relative; z-index: 2; height: 100%;">
-          <div style="
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            height: 100%;
-          ">
-            <div style="flex: 1; max-width: 1.8in;">
-              <h1 style="
-                font-size: 16px;
-                font-weight: 700;
-                color: #1f2937;
-                margin: 0 0 4px 0;
-                line-height: 1.1;
-              ">Ryan Mitchell</h1>
-              <h2 style="
-                font-size: 11px;
-                color: #3b82f6;
-                margin: 0 0 3px 0;
-                font-weight: 600;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-              ">Product Designer</h2>
-              <h3 style="
-                font-size: 10px;
-                color: #6b7280;
-                margin: 0 0 15px 0;
-                font-weight: 400;
-              ">Asymmetric Studios</h3>
-              <div class="contact-info" style="
-                font-size: 9px;
-                color: #374151;
-                line-height: 1.4;
-              ">
-                <div style="margin-bottom: 3px;">📱 (555) 123-4567</div>
-                <div style="margin-bottom: 3px;">✉️ ryan@asymmetric.design</div>
-                <div>🌐 asymmetric.design</div>
-              </div>
-            </div>
-            <div style="
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              width: 0.8in;
-              height: 100%;
-            ">
-              <div class="logo-placeholder" style="
-                width: 0.6in;
-                height: 0.6in;
-                background: #ffffff;
-                border-radius: 8px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 8px;
-                color: #3b82f6;
-                font-weight: 600;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-              ">LOGO</div>
-            </div>
-          </div>
+<div class="business-card" style="
+  width: 3.5in;
+  height: 2in;
+  background: #ffffff;
+  position: relative;
+  font-family: 'Inter', sans-serif;
+  box-sizing: border-box;
+  overflow: hidden;
+">
+  <!-- Angular Color Block 1 -->
+  <div style="
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 40%;
+    height: 50%;
+    background: #f3f4f6;
+    transform: skewY(-6deg);
+    transform-origin: top right;
+  "></div>
+  
+  <!-- Angular Color Block 2 -->
+  <div style="
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 30%;
+    height: 45%;
+    background: #3b82f6;
+    opacity: 0.1;
+    transform: skewY(8deg);
+    transform-origin: bottom left;
+  "></div>
+
+  <div style="padding: 0.3in; position: relative; z-index: 2; height: 100%;">
+    <div style="
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      height: 100%;
+    ">
+      <!-- Left Column: Contact Info -->
+      <div style="flex: 1; max-width: 55%; display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+        <div>
+          <h1 class="bc-contact-name" style="
+            font-size: 16px;
+            font-weight: 700;
+            color: #1f2937;
+            margin: 0 0 4px 0;
+            line-height: 1.1;
+          ">Ryan Martinez</h1>
+          <h2 class="bc-contact-title" style="
+            font-size: 11px;
+            color: #6b7280;
+            margin: 0 0 12px 0;
+            font-weight: 500;
+          ">Creative Director</h2>
+          <h3 class="bc-contact-company" style="
+            font-size: 10px;
+            color: #3b82f6;
+            margin: 0 0 16px 0;
+            font-weight: 600;
+          ">Asymmetric Design Studio</h3>
+        </div>
+        
+        <!-- Contact Info Block -->
+        <div class="bc-contact-info-block" style="
+          font-size: 9px;
+          color: #4b5563;
+          line-height: 1.5;
+        ">
+          <div class="bc-contact-phone" data-phone-type="mobile" style="margin-bottom: 3px;">📱 (555) 123-4567</div>
+          <div class="bc-contact-email" data-email-type="primary" style="margin-bottom: 3px;">✉️ ryan@asymmetric.design</div>
+          <div class="bc-contact-website">🌐 asymmetric.design</div>
         </div>
       </div>
-    `,
+
+      <!-- Right Column: Logo -->
+      <div style="
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40%;
+        height: 100%;
+      ">
+        <div class="logo-placeholder" style="
+          width: 0.8in;
+          height: 0.8in;
+          background: #ffffff;
+          border-radius: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 8px;
+          color: #3b82f6;
+          font-weight: 600;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        ">LOGO</div>
+      </div>
+    </div>
+  </div>
+</div>`,
         metadata: {
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#ffffff', '#f3f4f6', '#3b82f6', '#1f2937'],
             fonts: ['Inter'],
-            features: ['asymmetric-layout', 'color-blocks', 'modern-design']
+            features: ['asymmetric-layout', 'color-blocks', 'modern-design', 'angular-shapes']
         }
     },
 
@@ -2738,221 +2750,249 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
         description: 'Artistic collage style with mixed media elements',
         style: 'contact-focused',
         jsx: `
-      <div class="business-card" style="
-        width: 3.5in;
-        height: 2in;
-        background: #ffffff;
-        position: relative;
-        font-family: 'Inter', sans-serif;
-        box-sizing: border-box;
-        overflow: hidden;
+<div class="business-card" style="
+  width: 3.5in;
+  height: 2in;
+  background: #ffffff;
+  position: relative;
+  font-family: 'Inter', sans-serif;
+  box-sizing: border-box;
+  overflow: hidden;
+">
+  <!-- Collage Element 1: Yellow Rectangle -->
+  <div style="
+    position: absolute;
+    top: 10px;
+    left: 15px;
+    width: 60px;
+    height: 40px;
+    background: #fbbf24;
+    transform: rotate(-15deg);
+    opacity: 0.8;
+  "></div>
+  
+  <!-- Collage Element 2: Red Circle -->
+  <div style="
+    position: absolute;
+    top: 30px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    background: #ef4444;
+    border-radius: 50%;
+    opacity: 0.7;
+  "></div>
+  
+  <!-- Collage Element 3: Green Rectangle -->
+  <div style="
+    position: absolute;
+    bottom: 15px;
+    left: 30px;
+    width: 40px;
+    height: 30px;
+    background: #10b981;
+    transform: rotate(25deg);
+    opacity: 0.6;
+  "></div>
+  
+  <!-- Collage Element 4: Purple Square -->
+  <div style="
+    position: absolute;
+    bottom: 20px;
+    right: 15px;
+    width: 35px;
+    height: 35px;
+    background: #8b5cf6;
+    transform: rotate(-10deg);
+    opacity: 0.5;
+  "></div>
+
+  <div style="padding: 0.3in; position: relative; z-index: 2;">
+    <!-- Content Box with Dashed Border -->
+    <div style="
+      background: rgba(255, 255, 255, 0.9);
+      padding: 12px;
+      border-radius: 8px;
+      border: 2px dashed #374151;
+    ">
+      <h1 class="bc-contact-name" style="
+        font-size: 14px;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0 0 4px 0;
+        line-height: 1.1;
+      ">Mia Rodriguez</h1>
+      <h2 class="bc-contact-title" style="
+        font-size: 10px;
+        color: #ef4444;
+        margin: 0 0 3px 0;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      ">Mixed Media Artist</h2>
+      <h3 class="bc-contact-company" style="
+        font-size: 9px;
+        color: #6b7280;
+        margin: 0 0 12px 0;
+        font-weight: 400;
+      ">Collage & Canvas Co.</h3>
+      
+      <div style="
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
       ">
-        <div style="
-          position: absolute;
-          top: 10px;
-          left: 15px;
-          width: 60px;
-          height: 40px;
-          background: #fbbf24;
-          transform: rotate(-15deg);
-          opacity: 0.8;
-        "></div>
-        <div style="
-          position: absolute;
-          top: 30px;
-          right: 20px;
-          width: 50px;
-          height: 50px;
-          background: #ef4444;
-          border-radius: 50%;
-          opacity: 0.7;
-        "></div>
-        <div style="
-          position: absolute;
-          bottom: 15px;
-          left: 30px;
-          width: 40px;
-          height: 30px;
-          background: #8b5cf6;
-          transform: rotate(25deg);
-          opacity: 0.6;
-        "></div>
-        <div style="
-          position: absolute;
-          bottom: 20px;
-          right: 15px;
-          width: 35px;
-          height: 35px;
-          background: #10b981;
-          transform: rotate(-10deg);
-          opacity: 0.5;
-        "></div>
-        <div style="padding: 0.3in; position: relative; z-index: 2;">
-          <div style="
-            background: rgba(255, 255, 255, 0.9);
-            padding: 12px;
-            border-radius: 8px;
-            border: 2px dashed #374151;
-          ">
-            <h1 style="
-              font-size: 14px;
-              font-weight: 700;
-              color: #1f2937;
-              margin: 0 0 4px 0;
-              line-height: 1.1;
-            ">Mia Rodriguez</h1>
-            <h2 style="
-              font-size: 10px;
-              color: #ef4444;
-              margin: 0 0 3px 0;
-              font-weight: 600;
-              text-transform: uppercase;
-              letter-spacing: 0.5px;
-            ">Mixed Media Artist</h2>
-            <h3 style="
-              font-size: 9px;
-              color: #6b7280;
-              margin: 0 0 12px 0;
-              font-weight: 400;
-            ">Collage & Canvas Co.</h3>
-            <div style="
-              display: flex;
-              justify-content: space-between;
-              align-items: flex-end;
-            ">
-              <div class="contact-info" style="
-                font-size: 8px;
-                color: #374151;
-                line-height: 1.4;
-              ">
-                <div style="margin-bottom: 2px;">🎨 mia@collagecanvas.art</div>
-                <div style="margin-bottom: 2px;">📱 (555) 123-4567</div>
-                <div>✨ @miacollages</div>
-              </div>
-              <div class="logo-placeholder" style="
-                width: 0.5in;
-                height: 0.5in;
-                border: 2px solid #8b5cf6;
-                border-radius: 4px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 7px;
-                color: #8b5cf6;
-                background: #ffffff;
-                font-weight: 600;
-                transform: rotate(5deg);
-              ">LOGO</div>
-            </div>
-          </div>
+        <!-- Contact Info -->
+        <div class="bc-contact-info-block" style="
+          font-size: 8px;
+          color: #374151;
+          line-height: 1.4;
+        ">
+          <div class="bc-contact-email" data-email-type="primary" style="margin-bottom: 2px;">🎨 mia@collagecanvas.art</div>
+          <div class="bc-contact-phone" data-phone-type="mobile" style="margin-bottom: 2px;">📱 (555) 123-4567</div>
+          <div class="bc-contact-social">✨ @miacollages</div>
         </div>
+        
+        <!-- Logo -->
+        <div class="logo-placeholder" style="
+          width: 0.5in;
+          height: 0.5in;
+          border: 2px solid #8b5cf6;
+          border-radius: 4px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 7px;
+          color: #8b5cf6;
+          background: #ffffff;
+          font-weight: 600;
+          transform: rotate(5deg);
+        ">LOGO</div>
       </div>
-    `,
+    </div>
+  </div>
+</div>`,
         metadata: {
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#ffffff', '#fbbf24', '#ef4444', '#8b5cf6', '#10b981'],
             fonts: ['Inter'],
-            features: ['collage-style', 'mixed-media', 'creative-shapes', 'dashed-border']
+            features: ['collage-style', 'mixed-media', 'creative-shapes', 'dashed-border', 'social-media-generic']
         }
     },
+
     {
         catalogId: 'BC028',
         name: 'Data Flow Tech',
         theme: 'tech',
-        description: 'Clean tech design with data flow elements',
+        description: 'Clean tech design with data flow elements and location',
         style: 'contact-focused',
         jsx: `
-        <div class="business-card" style="
-            width: 3.5in;
-            height: 2in;
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            font-family: 'Inter', sans-serif;
-            box-sizing: border-box;
-            position: relative;
-        ">
-            <div style="
-                background: #334155;
-                height: 0.4in;
-                padding: 0.1in 0.25in;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                position: relative;
-            ">
-                <div style="
-                    font-size: 14px;
-                    font-weight: 700;
-                    color: #ffffff;
-                    letter-spacing: 1px;
-                ">DATAFLOW</div>
-                <div style="
-                    position: absolute;
-                    top: 0.05in;
-                    right: 0.2in;
-                    z-index: 10;
-                    background: #ffffff;
-                    padding: 6px;
-                    border-radius: 4px;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                ">
-                    <div class="logo-placeholder" style="
-                        width: 0.9in;
-                        height: 0.6in;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        font-size: 8px;
-                        color: #334155;
-                    ">LOGO</div>
-                </div>
-            </div>
-            <div style="padding: 0.25in;">
-                <h1 style="
-                    font-size: 14px;
-                    color: #1e293b;
-                    margin: 0 0 2px 0;
-                    font-weight: 600;
-                ">David Park</h1>
-                <h2 style="
-                    font-size: 11px;
-                    color: #64748b;
-                    margin: 0 0 12px 0;
-                    font-weight: 500;
-                ">Senior Software Engineer</h2>
-                <div style="
-                    display: grid;
-                    grid-template-columns: 1fr 1fr;
-                    gap: 10px;
-                    font-size: 9px;
-                    color: #475569;
-                ">
-                    <div>
-                        <div style="margin-bottom: 3px;">📞 (555) 123-4567</div>
-                        <div>✉️ david@dataflow.tech</div>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="margin-bottom: 3px;">🌐 dataflow.tech</div>
-                        <div>📍 San Francisco, CA</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `,
+<div class="business-card" style="
+  width: 3.5in;
+  height: 2in;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  font-family: 'Inter', sans-serif;
+  box-sizing: border-box;
+  position: relative;
+">
+  <!-- Header Bar -->
+  <div style="
+    background: #334155;
+    height: 0.4in;
+    padding: 0.1in 0.25in;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+  ">
+    <h3 class="bc-contact-company" style="
+      font-size: 14px;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: 1px;
+      margin: 0;
+    ">DATAFLOW</h3>
+    
+    <!-- Logo in Header -->
+    <div style="
+      position: absolute;
+      top: 0.05in;
+      right: 0.2in;
+      z-index: 10;
+      background: #ffffff;
+      padding: 6px;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    ">
+      <div class="logo-placeholder" style="
+        width: 0.9in;
+        height: 0.6in;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 8px;
+        color: #334155;
+        font-weight: 600;
+      ">LOGO</div>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <div style="padding: 0.25in;">
+    <h1 class="bc-contact-name" style="
+      font-size: 14px;
+      color: #1e293b;
+      margin: 0 0 2px 0;
+      font-weight: 600;
+    ">David Park</h1>
+    <h2 class="bc-contact-title" style="
+      font-size: 11px;
+      color: #64748b;
+      margin: 0 0 12px 0;
+      font-weight: 500;
+    ">Senior Software Engineer</h2>
+    
+    <!-- Contact Info Grid -->
+    <div style="
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      font-size: 9px;
+      color: #475569;
+    ">
+      <div class="bc-contact-info-block">
+        <div class="bc-contact-phone" data-phone-type="mobile" style="margin-bottom: 3px;">📞 (555) 123-4567</div>
+        <div class="bc-contact-email" data-email-type="primary">✉️ david@dataflow.tech</div>
+      </div>
+      <div style="text-align: right;">
+        <div class="bc-contact-website" style="margin-bottom: 3px;">🌐 dataflow.tech</div>
+        <div class="bc-contact-address">📍 San Francisco, CA</div>
+      </div>
+    </div>
+  </div>
+</div>`,
         metadata: {
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#334155', '#ffffff', '#1e293b', '#64748b'],
             fonts: ['Inter'],
-            features: ['tech', 'data-flow', 'modern', 'professional']
+            features: ['tech', 'data-flow', 'modern', 'professional', 'location-field', 'header-logo']
         }
     },
+
+    // FILE: src/data/businessCardLayouts.ts
+// SECTION: BC029 Layout - FIXED with bracket labels only
+// PURPOSE: Remove emojis, use ONLY bracket-style labels
+// ACTION: Replace BC029 object in BUSINESS_CARD_LAYOUTS array
+
     {
         catalogId: 'BC029',
         name: 'Tech Circuit Board',
         theme: 'tech',
         description: 'High-tech circuit board pattern with digital elements',
         style: 'contact-focused',
-        jsx: `<div class="business-card" style="
+        jsx: `
+<div class="business-card" style="
   width: 3.5in;
   height: 2in;
   background: #1e293b;
@@ -2961,6 +3001,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
   box-sizing: border-box;
   overflow: hidden;
 ">
+  <!-- Circuit Grid Pattern -->
   <div style="
     position: absolute;
     top: 0;
@@ -2973,6 +3014,8 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
     background-size: 20px 20px;
     opacity: 0.3;
   "></div>
+  
+  <!-- Circuit Elements -->
   <div style="
     position: absolute;
     top: 15px;
@@ -3001,6 +3044,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
     background: #f59e0b;
     transform: rotate(45deg);
   "></div>
+
   <div style="padding: 0.25in; position: relative; z-index: 2; height: 100%;">
     <div style="
       display: flex;
@@ -3008,41 +3052,46 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
       align-items: flex-start;
       height: 100%;
     ">
+      <!-- Contact Info -->
       <div style="flex: 1; max-width: 1.8in;">
-        <h1 style="
+        <h1 class="bc-contact-name" style="
           font-size: 14px;
           font-weight: 700;
           color: #10b981;
           margin: 0 0 4px 0;
           line-height: 1.1;
           text-shadow: 0 0 8px #10b981;
-        ">ALEX CHEN</h1>
-        <h2 style="
+        ">Alex Chen</h1>
+        <h2 class="bc-contact-title" style="
           font-size: 10px;
           color: #3b82f6;
           margin: 0 0 3px 0;
           font-weight: 600;
           text-transform: uppercase;
           letter-spacing: 1px;
-        ">HARDWARE ENGINEER</h2>
-        <h3 style="
+        ">Hardware Engineer</h2>
+        <h3 class="bc-contact-company" style="
           font-size: 9px;
           color: #f1f5f9;
           margin: 0 0 20px 0;
           font-weight: 400;
           opacity: 0.8;
         ">CircuitFlow Technologies</h3>
-        <div class="contact-info" style="
+        
+        <!-- Bracket-Style Contact Block (NO EMOJIS) -->
+        <div class="bc-contact-info-block" style="
           font-size: 9px;
           color: #f1f5f9;
           line-height: 1.4;
           font-family: 'Roboto Mono', monospace;
         ">
-          <div style="margin-bottom: 2px;">[MOBILE] 555.123.4567</div>
-          <div style="margin-bottom: 2px;">[EMAIL] alex@circuitflow.tech</div>
-          <div>[WEB] circuitflow.tech</div>
+          <div class="bc-contact-phone" data-phone-type="mobile" style="margin-bottom: 2px;">[MOBILE] (555) 123-4567</div>
+          <div class="bc-contact-email" data-email-type="primary" style="margin-bottom: 2px;">[EMAIL] alex@circuitflow.tech</div>
+          <div class="bc-contact-website">[WEB] circuitflow.tech</div>
         </div>
       </div>
+      
+      <!-- Logo with Glow Effect -->
       <div style="
         display: flex;
         align-items: center;
@@ -3072,103 +3121,125 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#1e293b', '#10b981', '#3b82f6', '#f1f5f9'],
             fonts: ['Roboto Mono'],
-            features: ['circuit-board', 'tech-pattern', 'digital-elements', 'hardware']
+            features: ['circuit-board', 'tech-pattern', 'digital-elements', 'hardware', 'bracket-style-labels', 'dark-theme', 'no-emojis']
         }
     },
+
     {
         catalogId: 'BC030',
         name: 'Luxury Monogram',
         theme: 'luxury',
-        description: 'Elegant monogram design with classic typography',
+        description: 'Elegant monogram design with classic typography and double border',
         style: 'contact-focused',
         jsx: `
-        <div class="business-card" style="
-            width: 3.5in;
-            height: 2in;
-            background: #ffffff;
-            border: 2px solid #1f2937;
-            position: relative;
-            font-family: 'Playfair Display', serif;
-            box-sizing: border-box;
+<div class="business-card" style="
+  width: 3.5in;
+  height: 2in;
+  background: #ffffff;
+  border: 2px solid #1f2937;
+  position: relative;
+  font-family: 'Playfair Display', serif;
+  box-sizing: border-box;
+">
+  <!-- Inner Gold Border -->
+  <div style="
+    position: absolute;
+    top: 0.1in;
+    left: 0.1in;
+    right: 0.1in;
+    bottom: 0.1in;
+    border: 1px solid #d4af37;
+  "></div>
+
+  <div style="padding: 0.3in; position: relative; z-index: 2; height: 100%;">
+    <div style="
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      height: 100%;
+    ">
+      <!-- Left: Contact Info -->
+      <div style="flex: 1; max-width: 1.8in;">
+        <h1 class="bc-contact-name" style="
+          font-size: 16px;
+          font-weight: 400;
+          color: #1f2937;
+          margin: 0 0 6px 0;
+          line-height: 1.1;
+          letter-spacing: 1px;
+        ">Elizabeth Morgan</h1>
+        
+        <!-- Gold Divider -->
+        <div style="
+          width: 1.5in;
+          height: 1px;
+          background: #d4af37;
+          margin: 0 0 8px 0;
+        "></div>
+        
+        <h2 class="bc-contact-title" style="
+          font-size: 12px;
+          color: #6b7280;
+          margin: 0 0 4px 0;
+          font-weight: 500;
+          font-style: italic;
+        ">Executive Consultant</h2>
+        <h3 class="bc-contact-company" style="
+          font-size: 10px;
+          color: #1f2937;
+          margin: 0 0 3px 0;
+          font-weight: 600;
+          letter-spacing: 0.5px;
+        ">Morgan & Associates</h3>
+        <div class="bc-contact-subtitle" style="
+          font-size: 9px;
+          color: #9ca3af;
+          margin: 0 0 16px 0;
+          font-style: italic;
+        ">MBA • Leadership Certified</div>
+        
+        <!-- Contact Info -->
+        <div class="bc-contact-info-block" style="
+          font-size: 9px;
+          color: #4b5563;
+          line-height: 1.5;
         ">
-            <div style="
-                position: absolute;
-                top: 0.1in;
-                left: 0.1in;
-                right: 0.1in;
-                bottom: 0.1in;
-                border: 1px solid #d4af37;
-            "></div>
-            <div style="padding: 0.3in; position: relative; z-index: 2; height: 100%;">
-                <div style="
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: flex-start;
-                    height: 100%;
-                ">
-                    <div style="flex: 1; max-width: 1.8in;">
-                        <h1 style="
-                            font-size: 16px;
-                            font-weight: 400;
-                            color: #1f2937;
-                            margin: 0 0 6px 0;
-                            line-height: 1.1;
-                            letter-spacing: 1px;
-                        ">ELIZABETH MORGAN</h1>
-                        <div style="
-                            width: 1.5in;
-                            height: 1px;
-                            background: #d4af37;
-                            margin: 8px 0;
-                        "></div>
-                        <h2 style="
-                            font-size: 11px;
-                            color: #d4af37;
-                            margin: 0 0 3px 0;
-                            font-weight: 500;
-                            font-style: italic;
-                            letter-spacing: 0.5px;
-                        ">Estate Planning Attorney</h2>
-                        <h3 style="
-                            font-size: 10px;
-                            color: #6b7280;
-                            margin: 0 0 15px 0;
-                            font-weight: 400;
-                        ">Morgan & Associates</h3>
-                        <div class="contact-info" style="
-                            font-size: 9px;
-                            color: #374151;
-                            line-height: 1.5;
-                            font-family: 'Inter', sans-serif;
-                        ">
-                            <div style="margin-bottom: 3px;">📞 (555) 123-4567</div>
-                            <div style="margin-bottom: 3px;">✉️ elizabeth@morgan-law.com</div>
-                            <div>🏢 morgan-law.com</div>
-                        </div>
-                    </div>
-                    <div class="logo-placeholder" style="
-                        width: 0.8in;
-                        height: 0.8in;
-                        border: 2px solid #d4af37;
-                        border-radius: 50%;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        background: #f9fafb;
-                        font-size: 18px;
-                        font-weight: 400;
-                        color: #1f2937;
-                        font-family: 'Playfair Display', serif;
-                    ">EM</div>
-                </div>
-            </div>
+          <div class="bc-contact-phone" data-phone-type="direct" style="margin-bottom: 3px;">📞 (555) 123-4567</div>
+          <div class="bc-contact-email" data-email-type="primary" style="margin-bottom: 3px;">✉️ elizabeth@morganassoc.com</div>
+          <div class="bc-contact-website">🌐 morganassoc.com</div>
         </div>
-    `,
+      </div>
+      
+      <!-- Right: Monogram Logo -->
+      <div style="
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+      ">
+        <div class="logo-placeholder" style="
+          width: 0.95in;
+          height: 0.95in;
+          border: 2px solid #d4af37;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 32px;
+          color: #1f2937;
+          font-family: 'Playfair Display', serif;
+          background: linear-gradient(135deg, #faf8f5 0%, #ffffff 100%);
+          font-weight: 400;
+        ">EM</div>
+      </div>
+    </div>
+  </div>
+</div>`,
         metadata: {
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#ffffff', '#1f2937', '#d4af37', '#6b7280'],
             fonts: ['Playfair Display', 'Inter'],
-            features: ['monogram-logo', 'double-border', 'luxury-typography', 'elegant-spacing']
+            features: ['monogram-logo', 'double-border', 'luxury-typography', 'elegant-spacing', 'credentials-display']
         }
     },
 
@@ -3672,6 +3743,123 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             features: ['luxury', 'gold-accents', 'premium', 'elegant', 'two-column-contact']
         }
     },
+
+    {
+        catalogId: 'BC036',
+        name: 'Bold Creative Splash - Cool',
+        theme: 'creative',
+        description: 'High-energy design with cool tones and geometric shapes',
+        style: 'contact-focused',
+        jsx: `<div class="business-card" style="
+  width: 3.5in;
+  height: 2in;
+  background: linear-gradient(135deg, #06b6d4, #8b5cf6);
+  position: relative;
+  font-family: 'Arial Black', sans-serif;
+  box-sizing: border-box;
+  overflow: hidden;
+">
+  <!-- Geometric Triangle 1 - Top Right -->
+  <div style="
+    position: absolute;
+    top: -30px;
+    right: -30px;
+    width: 0;
+    height: 0;
+    border-left: 80px solid transparent;
+    border-right: 80px solid transparent;
+    border-bottom: 140px solid rgba(139, 92, 246, 0.6);
+    transform: rotate(30deg);
+  "></div>
+  
+  <!-- Geometric Square - Bottom Left -->
+  <div style="
+    position: absolute;
+    bottom: -20px;
+    left: -20px;
+    width: 70px;
+    height: 70px;
+    background: rgba(6, 182, 212, 0.7);
+    transform: rotate(15deg);
+  "></div>
+  
+  <div style="padding: 0.16in; position: relative; z-index: 2; height: 100%;">
+    <div style="
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 100%;
+    ">
+      <div>
+        <h1 class="bc-contact-company" style="
+          font-size: 18px;
+          font-weight: 900;
+          color: #ffffff;
+          margin: 0 0 3px 0;
+          text-transform: uppercase;
+          letter-spacing: -1px;
+          text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+          line-height: 0.9;
+        ">COOL CREATIVE</h1>
+        <div class="bc-contact-slogan" style="
+          font-size: 12px;
+          font-weight: 700;
+          color: #0f172a;
+          margin: 0 0 10px 0;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        ">Fresh Perspectives</div>
+        <div class="logo-placeholder" style="
+          width: 0.8in;
+          height: 0.5in;
+          background-color: rgba(255,255,255,0.25);
+          border: 2px solid #ffffff;
+          border-radius: 8px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 7px;
+          color: #ffffff;
+          font-weight: 700;
+          margin-bottom: 8px;
+          backdrop-filter: blur(4px);
+        ">LOGO</div>
+      </div>
+      <div>
+        <h2 class="bc-contact-name" style="
+          font-size: 12px;
+          color: #0f172a;
+          margin: 0 0 1px 0;
+          font-weight: 700;
+        ">Maya Rodriguez</h2>
+        <h3 class="bc-contact-title" style="
+          font-size: 9px;
+          color: #ffffff;
+          margin: 0 0 6px 0;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        ">CREATIVE LEAD</h3>
+        <div class="bc-contact-info-block" style="
+          font-size: 9px;
+          color: #0f172a;
+          line-height: 1.2;
+          font-weight: 600;
+        ">
+          <div class="bc-contact-phone" data-phone-type="mobile" style="margin-bottom: 2px;">📱 (555) 123-4567</div>
+          <div class="bc-contact-email" data-email-type="primary">✉️ maya@coolcreative.studio</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>`,
+        metadata: {
+            dimensions: { width: '3.5in', height: '2in' },
+            colors: ['#06b6d4', '#8b5cf6', '#ffffff', '#0f172a'],
+            fonts: ['Arial Black'],
+            features: ['bold-colors', 'geometric-shapes', 'high-energy', 'creative', 'slogan-field', 'cool-tones', 'gradient-background']
+        }
+    }
 ];
 
 // HELPER FUNCTIONS FOR BUSINESS CARD LAYOUTS
