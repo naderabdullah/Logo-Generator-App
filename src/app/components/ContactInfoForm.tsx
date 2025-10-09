@@ -316,57 +316,146 @@ export const ContactInfoForm = ({
 
                 {/* Right Column - Social Media Only */}
                 <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 space-y-4">
-                    <h4 className="text-base font-semibold text-gray-900 border-b border-purple-300 pb-1">Social
-                        Media</h4>
+                    <h4 className="text-base font-semibold text-gray-900 border-b border-purple-300 pb-1">
+                        Social Media
+                    </h4>
 
-                    {/* Social Media - 3 by default */}
+                    {/* Social Media - 3 Fixed Dropdown + Input Pairs */}
                     <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                            <label className="text-xs font-medium text-gray-700">Social Profiles</label>
-                            <button
-                                type="button"
-                                onClick={() => handleAddSocialMedia()}
-                                className="text-purple-600 hover:text-purple-700 text-xs font-medium"
-                            >
-                                + Add Social
-                            </button>
+                        <p className="text-xs text-gray-600 mb-2">
+                            Select platforms and enter handles. Order matters - first populated field gets injected first.
+                        </p>
+
+                        {/* Social Media Field 1 */}
+                        <div className="space-y-1">
+                            <label className="block text-xs font-medium text-gray-700">
+                                Social Media 1
+                            </label>
+                            <div className="flex gap-2">
+                                <select
+                                    value={formData.socialMedia[0]?.label || ''}
+                                    onChange={(e) => {
+                                        const newSocialMedia = [...formData.socialMedia];
+                                        if (!newSocialMedia[0]) {
+                                            newSocialMedia[0] = { value: '', label: e.target.value, isPrimary: true };
+                                        } else {
+                                            newSocialMedia[0].label = e.target.value;
+                                        }
+                                        setFormData({ ...formData, socialMedia: newSocialMedia });
+                                    }}
+                                    className="w-32 px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
+                                >
+                                    <option value="">None</option>
+                                    <option value="Twitter">Twitter</option>
+                                    <option value="Instagram">Instagram</option>
+                                    <option value="LinkedIn">LinkedIn</option>
+                                </select>
+                                <input
+                                    type="text"
+                                    value={formData.socialMedia[0]?.value || ''}
+                                    onChange={(e) => {
+                                        const newSocialMedia = [...formData.socialMedia];
+                                        if (!newSocialMedia[0]) {
+                                            newSocialMedia[0] = { value: e.target.value, label: '', isPrimary: true };
+                                        } else {
+                                            newSocialMedia[0].value = e.target.value;
+                                        }
+                                        setFormData({ ...formData, socialMedia: newSocialMedia });
+                                    }}
+                                    placeholder="@handle or profile URL"
+                                    disabled={!formData.socialMedia[0]?.label}
+                                    className="flex-1 px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-400"
+                                />
+                            </div>
                         </div>
 
-                        {formData.socialMedia && formData.socialMedia.length > 0 && (
-                            <div className="space-y-2">
-                                {formData.socialMedia.map((social, index) => (
-                                    <div key={index} className="space-y-1">
-                                        <input
-                                            type="text"
-                                            placeholder={
-                                                index === 0 ? "LinkedIn" :
-                                                    index === 1 ? "Twitter" :
-                                                        index === 2 ? "Instagram" : "Platform"
-                                            }
-                                            value={social.label || ''}
-                                            onChange={(e) => handleSocialMediaChange(index, 'label', e.target.value)}
-                                            className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
-                                        />
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="text"
-                                                placeholder="@username or URL"
-                                                value={social.value}
-                                                onChange={(e) => handleSocialMediaChange(index, 'value', e.target.value)}
-                                                className="flex-1 px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => handleRemoveSocialMedia(index)}
-                                                className="text-red-500 hover:text-red-700 px-1 text-xs font-bold"
-                                            >
-                                                ×
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
+                        {/* Social Media Field 2 */}
+                        <div className="space-y-1">
+                            <label className="block text-xs font-medium text-gray-700">
+                                Social Media 2
+                            </label>
+                            <div className="flex gap-2">
+                                <select
+                                    value={formData.socialMedia[1]?.label || ''}
+                                    onChange={(e) => {
+                                        const newSocialMedia = [...formData.socialMedia];
+                                        while (newSocialMedia.length < 2) {
+                                            newSocialMedia.push({ value: '', label: '', isPrimary: false });
+                                        }
+                                        newSocialMedia[1].label = e.target.value;
+                                        setFormData({ ...formData, socialMedia: newSocialMedia });
+                                    }}
+                                    className="w-32 px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
+                                >
+                                    <option value="">None</option>
+                                    <option value="Twitter">Twitter</option>
+                                    <option value="Instagram">Instagram</option>
+                                    <option value="LinkedIn">LinkedIn</option>
+                                </select>
+                                <input
+                                    type="text"
+                                    value={formData.socialMedia[1]?.value || ''}
+                                    onChange={(e) => {
+                                        const newSocialMedia = [...formData.socialMedia];
+                                        while (newSocialMedia.length < 2) {
+                                            newSocialMedia.push({ value: '', label: '', isPrimary: false });
+                                        }
+                                        newSocialMedia[1].value = e.target.value;
+                                        setFormData({ ...formData, socialMedia: newSocialMedia });
+                                    }}
+                                    placeholder="@handle or profile URL"
+                                    disabled={!formData.socialMedia[1]?.label}
+                                    className="flex-1 px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-400"
+                                />
                             </div>
-                        )}
+                        </div>
+
+                        {/* Social Media Field 3 */}
+                        <div className="space-y-1">
+                            <label className="block text-xs font-medium text-gray-700">
+                                Social Media 3
+                            </label>
+                            <div className="flex gap-2">
+                                <select
+                                    value={formData.socialMedia[2]?.label || ''}
+                                    onChange={(e) => {
+                                        const newSocialMedia = [...formData.socialMedia];
+                                        while (newSocialMedia.length < 3) {
+                                            newSocialMedia.push({ value: '', label: '', isPrimary: false });
+                                        }
+                                        newSocialMedia[2].label = e.target.value;
+                                        setFormData({ ...formData, socialMedia: newSocialMedia });
+                                    }}
+                                    className="w-32 px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
+                                >
+                                    <option value="">None</option>
+                                    <option value="Twitter">Twitter</option>
+                                    <option value="Instagram">Instagram</option>
+                                    <option value="LinkedIn">LinkedIn</option>
+                                </select>
+                                <input
+                                    type="text"
+                                    value={formData.socialMedia[2]?.value || ''}
+                                    onChange={(e) => {
+                                        const newSocialMedia = [...formData.socialMedia];
+                                        while (newSocialMedia.length < 3) {
+                                            newSocialMedia.push({ value: '', label: '', isPrimary: false });
+                                        }
+                                        newSocialMedia[2].value = e.target.value;
+                                        setFormData({ ...formData, socialMedia: newSocialMedia });
+                                    }}
+                                    placeholder="@handle or profile URL"
+                                    disabled={!formData.socialMedia[2]?.label}
+                                    className="flex-1 px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-400"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="bg-purple-100 border border-purple-300 rounded p-2 mt-2">
+                            <p className="text-xs text-purple-800">
+                                💡 <strong>Injection Priority:</strong> First populated field injects into first social media slot in layout, second into second slot, etc.
+                            </p>
+                        </div>
                     </div>
                 </div>
 

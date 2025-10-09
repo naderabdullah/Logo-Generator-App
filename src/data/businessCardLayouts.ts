@@ -1839,16 +1839,6 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
         }
     },
 
-    // FILE: src/data/businessCardLayouts.ts
-// SECTION: BC019 Layout - Clean Geometric Circles
-// PURPOSE: Pure geometric decoration with two circles, no text
-// INSTRUCTIONS: Replace ONLY the BC019 object in BUSINESS_CARD_LAYOUTS array
-// CHANGES:
-//   - Right circle: moved further down (top: 42px), removed "Q" text
-//   - Left circle: unchanged (top: 45px, left: 15px)
-//   - Both circles are now pure geometric decoration
-//   - All layout and contact fields unchanged
-
     {
         catalogId: 'BC019',
         name: 'Quantum Tech',
@@ -1972,7 +1962,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
         <div class="bc-contact-phone" data-phone-type="mobile">📱 (555) 123-4567</div>
         <div class="bc-contact-email" data-email-type="primary">✉️ alex@quantumtech.co</div>
         <div class="bc-contact-website">🌐 quantumtech.co</div>
-        <div class="bc-contact-social" data-social-platform="linkedin">💼 linkedin.com/in/alexchen</div>
+        <div class="bc-contact-social">💼 @alexchen</div>
       </div>
     </div>
   </div>
@@ -1981,7 +1971,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#f8fafc', '#3b82f6', '#1e293b', '#475569'],
             fonts: ['Inter'],
-            features: ['tech', 'modern', 'quantum-elements', 'grid-contact', 'clean-geometric-circles', 'social-media-linkedin', 'vertical-logo']
+            features: ['tech', 'modern', 'quantum-elements', 'grid-contact', 'clean-geometric-circles', 'social-media-generic', 'vertical-logo']
         }
     },
     {
@@ -2520,7 +2510,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
       ">
         <div class="bc-contact-email" data-email-type="primary" style="margin-bottom: 3px;">🖋️ maya@inkandsoul.art</div>
         <div class="bc-contact-phone" data-phone-type="mobile" style="margin-bottom: 3px;">📱 (555) 123-4567</div>
-        <div class="bc-contact-social" data-social-platform="instagram" style="font-size: 9px; color: #4a5568;">✨ @mayacalligraphy</div>
+        <div class="bc-contact-social" style="font-size: 9px; color: #4a5568;">✨ @mayaarts</div>
       </div>
     </div>
   </div>
@@ -2529,7 +2519,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#2d3748', '#4a5568', '#718096', '#ffffff'],
             fonts: ['Abril Fatface', 'Inter'],
-            features: ['ink-splash', 'artistic', 'calligraphy', 'organic-shapes', 'social-media']
+            features: ['ink-splash', 'artistic', 'calligraphy', 'organic-shapes', 'social-media-generic']
         }
     },
 

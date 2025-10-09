@@ -283,62 +283,73 @@ export function injectContactInfo(
         //  so any client with at least 1 social media handle should be able to choose any businesscard layout that has at least 1 social media field regardless of platform type
         //  make sure to default social media section to 3 dropdowns/fields, with all prepopulated for testing
 
-        console.log('💼 [Contact Utils] Processing social media fields...');
+        console.log('💼 [Contact Utils] Processing social media fields (sequential injection)...');
 
-        // Find all social media elements in the layout
-        const socialRegex = /<div[^>]*class=["'][^"']*bc-contact-social[^"']*["'][^>]*data-social-platform=["']([^"']+)["'][^>]*>([^<]*)<\/div>/gi;
+        // Find all social media elements in the layout (platform-agnostic)
+        const socialRegex = /<div[^>]*class=["'][^"']*bc-contact-social[^"']*["'][^>]*>([^<]*)<\/div>/gi;
         const socialMatches = [];
         let match;
 
-        // Collect all matches first
+        // Collect all bc-contact-social elements
         while ((match = socialRegex.exec(layoutHtml)) !== null) {
             socialMatches.push({
                 fullElement: match[0],
-                platform: match[1],
-                placeholderText: match[2]
+                placeholderText: match[1]
             });
         }
 
         if (socialMatches.length > 0) {
-            console.log(`  Found ${socialMatches.length} social media fields in layout`);
+            console.log(`  📍 Found ${socialMatches.length} social media slot(s) in layout`);
 
-            // Process each social media field
-            for (const socialMatch of socialMatches) {
-                const { fullElement, platform, placeholderText } = socialMatch;
+            // Get populated social media entries from form (in order)
+            const populatedSocial = formData.socialMedia?.filter(
+                s => s.label && s.label.trim() && s.value && s.value.trim()
+            ) || [];
 
-                console.log(`  🔍 Processing platform: ${platform}`);
+            console.log(`  📝 Found ${populatedSocial.length} populated social media field(s) in form`);
 
-                // Find matching platform in formData.socialMedia (case-insensitive)
-                const socialEntry = formData.socialMedia?.find(
-                    s => s.label && s.label.toLowerCase() === platform.toLowerCase()
-                );
+            // Log form order
+            if (populatedSocial.length > 0) {
+                populatedSocial.forEach((social, idx) => {
+                    console.log(`    ${idx + 1}. ${social.label}: ${social.value}`);
+                });
+            }
 
-                if (socialEntry && socialEntry.value && socialEntry.value.trim()) {
-                    // INJECT: Social media data exists
-                    console.log(`  ✅ Found ${platform}: ${socialEntry.value}`);
+            // Process each layout slot
+            socialMatches.forEach((socialMatch, slotIndex) => {
+                const { fullElement, placeholderText } = socialMatch;
 
-                    // Clean social media URL - remove protocol
+                console.log(`  🎯 Processing slot ${slotIndex + 1} of ${socialMatches.length}`);
+
+                // Check if we have a populated field for this slot
+                if (slotIndex < populatedSocial.length) {
+                    // INJECT: Use the nth populated social media field
+                    const socialEntry = populatedSocial[slotIndex];
+                    console.log(`    ✅ Injecting: ${socialEntry.label} - ${socialEntry.value}`);
+
+                    // Clean social media handle - remove protocol if URL
                     let cleanSocial = socialEntry.value.trim().replace(/^https?:\/\//, '');
 
-                    // Preserve emoji/prefix - covers various social media emojis
-                    const emojiMatch = placeholderText.match(/^([\u{1F300}-\u{1F9FF}\u{2600}-\u{27BF}\s💼🔗🌐✨📱]+)/u);
+                    // Preserve emoji/prefix from placeholder
+                    const emojiMatch = placeholderText.match(/^([\u{1F300}-\u{1F9FF}\u{2600}-\u{27BF}\s💼🔗🌐✨📱🐦💻📘]+)/u);
 
                     if (emojiMatch) {
                         cleanSocial = emojiMatch[1] + cleanSocial;
-                        console.log(`  ✨ Preserved emoji: "${emojiMatch[1]}"`);
+                        console.log(`    ✨ Preserved emoji: "${emojiMatch[1]}"`);
                     }
 
+                    // Inject the handle
                     result = simpleReplace(result, placeholderText, cleanSocial);
                 } else {
-                    // REMOVE: No social media data for this platform
-                    console.log(`  🙈 No ${platform} data found, removing element`);
+                    // REMOVE: No more populated fields for this slot
+                    console.log(`    🙈 No data for slot ${slotIndex + 1}, removing element`);
                     result = result.replace(fullElement, '');
                 }
-            }
+            });
 
-            console.log(`✅ [Contact Utils] Social media processing complete`);
+            console.log(`✅ [Contact Utils] Social media sequential injection complete`);
         } else {
-            console.log('  ℹ️ No social media fields found in layout');
+            console.log('  ℹ️ No social media slots found in layout');
         }
 
         // 9. INJECT YEAR ESTABLISHED (with hide if empty)
