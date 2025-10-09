@@ -83,120 +83,142 @@ export const ContactInfoForm = ({
 
                 {/* Left Column - Personal & Company Info + Slogan & Descriptor */}
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-4">
-                    <h4 className="text-base font-semibold text-gray-900 border-b border-blue-300 pb-1">Basic
-                        Information</h4>
+                    <h4 className="text-base font-semibold text-gray-900 border-b border-blue-300 pb-1">
+                        Basic Information
+                    </h4>
 
                     <div className="space-y-3">
+                        {/* Full Name - REQUIRED */}
                         <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">
-                                Full Name *
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Full Name <span className="text-red-600">*</span>
                             </label>
                             <input
                                 type="text"
                                 value={formData.name}
-                                onChange={(e) => handleFieldChange('name', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors bg-white text-sm"
+                                onChange={(e) => {
+                                    console.log('📝 [ContactInfoForm] Full Name changed:', e.target.value);
+                                    handleFieldChange('name', e.target.value);
+                                }}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors bg-white"
                                 placeholder="Your full name"
                             />
                         </div>
 
+                        {/* Company Name - REQUIRED */}
                         <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">
-                                Company Name *
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Company Name <span className="text-red-600">*</span>
                             </label>
                             <input
                                 type="text"
                                 value={formData.companyName}
-                                onChange={(e) => handleFieldChange('companyName', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors bg-white text-sm"
+                                onChange={(e) => {
+                                    console.log('📝 [ContactInfoForm] Company Name changed:', e.target.value);
+                                    handleFieldChange('companyName', e.target.value);
+                                }}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors bg-white"
                                 placeholder="Your company name"
                             />
                         </div>
 
+                        {/* Job Title */}
                         <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Job Title
                             </label>
                             <input
                                 type="text"
                                 value={formData.title}
-                                onChange={(e) => handleFieldChange('title', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors bg-white text-sm"
+                                onChange={(e) => {
+                                    console.log('📝 [ContactInfoForm] Job Title changed:', e.target.value);
+                                    handleFieldChange('title', e.target.value);
+                                }}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors bg-white"
                                 placeholder="Your job title"
                             />
                         </div>
+
+                        {/* Professional Credentials - CLEANED UP */}
                         <div>
-                            <label htmlFor="subtitle" className="block text-sm font-medium text-gray-700">
-                                Professional Credentials (Optional)
-                                <span className="text-xs text-gray-500 ml-2">
-                e.g., CFA, PhD, MBA, Licensed Professional
-            </span>
+                            <label htmlFor="subtitle" className="block text-sm font-medium text-gray-700 mb-1">
+                                Professional Credentials
                             </label>
                             <input
                                 type="text"
                                 id="subtitle"
                                 name="subtitle"
-                                placeholder="Chartered Financial Analyst"
-                                maxLength={50}
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                 value={formData.subtitle || ''}
-                                onChange={(e) => handleFieldChange('subtitle', e.target.value)}
+                                onChange={(e) => {
+                                    console.log('📝 [ContactInfoForm] Credentials changed:', e.target.value);
+                                    handleFieldChange('subtitle', e.target.value);
+                                }}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors bg-white"
+                                placeholder="CFA, PhD, MBA, etc."
+                                maxLength={50}
                             />
-                            <p className="mt-1 text-xs text-gray-500">
-                                Only shown on layouts that support credentials (e.g., BC009)
-                            </p>
                         </div>
 
-                        {/* Slogan - MOVED HERE */}
+                        {/* Slogan */}
                         <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Slogan
                             </label>
                             <input
                                 type="text"
                                 value={formData.slogan || ''}
-                                onChange={(e) => handleFieldChange('slogan', e.target.value)}
-                                className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
+                                onChange={(e) => {
+                                    console.log('📝 [ContactInfoForm] Slogan changed:', e.target.value);
+                                    handleFieldChange('slogan', e.target.value);
+                                }}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors bg-white"
                                 placeholder="Company tagline"
                             />
                         </div>
-                        {/* Year Established - NEW FIELD */}
+
+                        {/* Year Established - CLEANED UP */}
                         <div>
                             <label htmlFor="yearEstablished" className="block text-sm font-medium text-gray-700 mb-1">
-                                Year Established (optional)
+                                Year Established
                             </label>
                             <input
                                 type="text"
                                 id="yearEstablished"
                                 value={formData.yearEstablished || ''}
-                                onChange={(e) => setFormData({...formData, yearEstablished: e.target.value})}
-                                placeholder="e.g., Est. 1995, Since 2010, Founded 1952"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                onChange={(e) => {
+                                    console.log('📝 [ContactInfoForm] Year Established changed:', e.target.value);
+                                    setFormData({...formData, yearEstablished: e.target.value});
+                                }}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors bg-white"
+                                placeholder="Est. 1995"
                                 maxLength={50}
                             />
-                            <p className="text-xs text-gray-500 mt-1">
-                                Shows on vintage/heritage layouts if provided (e.g., "Est. 1952")
-                            </p>
                         </div>
+
+                        {/* Descriptor */}
                         <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Descriptor
                             </label>
                             <input
                                 type="text"
                                 value={formData.descriptor || ''}
-                                onChange={(e) => handleFieldChange('descriptor', e.target.value)}
-                                className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
+                                onChange={(e) => {
+                                    console.log('📝 [ContactInfoForm] Descriptor changed:', e.target.value);
+                                    handleFieldChange('descriptor', e.target.value);
+                                }}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors bg-white"
                                 placeholder="Additional description"
                             />
                         </div>
                     </div>
                 </div>
 
+
                 {/* Middle Column - Contact Details */}
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-4">
-                    <h3 className="text-sm font-semibold text-gray-900 border-b border-gray-200 pb-2">
-                        Contact Details
+                    <h3 className="text-base font-semibold text-gray-900 border-b border-gray-200 pb-2">
+                        Contact Details <span className="text-xs font-normal">(at least one phone or one email)</span> <span className="text-sm text-red-600 font-normal">*</span>
                     </h3>
 
                     {/* Phone Numbers - 3 Fixed Inputs */}

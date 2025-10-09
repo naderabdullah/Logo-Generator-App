@@ -1,17 +1,13 @@
 // FILE: src/app/utils/businessCardContactUtils.ts
-// PURPOSE: Enhanced with social media injection for BC019+ layouts
+// PURPOSE: Contact info injection with comprehensive hide-if-empty logic
 // CHANGES:
-//   - Added social media injection (bc-contact-social class)
-//   - Matches platform via data-social-platform attribute
-//   - Pulls from formData.socialMedia array by label
-//   - Preserves emojis and formatting
-//   - Comprehensive logging for BC018-BC020 debugging
-// ACTION: FULL FILE REPLACEMENT - READY FOR CLEAN SWAP
+//   - Added hide-if-empty logic for ALL optional fields
+//   - Title, Subtitle, Descriptor, Addresses now hide when empty
+//   - Prevents hardcoded placeholder values from appearing on business cards
+//   - Comprehensive logging for debugging
+// ACTION: FULL FILE REPLACEMENT
 
 import { BusinessCardData } from '../../../types/businessCard';
-
-// TODO: all optional (not required) contact info fields should be removed from businesscard preview if left empty in the form
-//  all required fields should be enforced by form validation hence no need for removal logic in the businesscard preview
 
 /**
  * FORMAT PHONE NUMBER
@@ -95,266 +91,129 @@ function simpleReplace(html: string, oldText: string, newText: string): string {
 }
 
 /**
- * MAIN INJECTION FUNCTION - ENHANCED WITH SOCIAL MEDIA SUPPORT
- * Now properly maps website + social media from correct form fields
+ * MAIN INJECTION FUNCTION - WITH COMPREHENSIVE HIDE-IF-EMPTY LOGIC
+ * Injects form data into BC layout HTML and hides empty optional fields
  */
 export function injectContactInfo(
     layoutHtml: string,
     formData: BusinessCardData
 ): string {
     try {
-        console.log('🚀 [Contact Utils] Starting injection with social media support (BC019+)');
+        console.log('🚀 [Contact Utils] Starting injection with hide-if-empty logic');
         console.log('📋 [Contact Utils] Form data summary:', {
             name: formData.name,
             title: formData.title,
             company: formData.companyName,
             subtitle: formData.subtitle,
             slogan: formData.slogan,
-            phones: formData.phones.length,
-            emails: formData.emails.length,
-            websites: formData.websites.length,
-            socialMedia: formData.socialMedia.length
+            descriptor: formData.descriptor,
+            yearEstablished: formData.yearEstablished,
+            phones: formData.phones?.length || 0,
+            emails: formData.emails?.length || 0,
+            addresses: formData.addresses?.length || 0,
+            websites: formData.websites?.length || 0,
+            socialMedia: formData.socialMedia?.length || 0
         });
 
         let result = layoutHtml;
 
-        // 1. INJECT NAME
+        // ============================================================================
+        // REQUIRED FIELDS - Always inject (form validation ensures they exist)
+        // ============================================================================
+
+        // 1. NAME (Required)
         if (formData.name && formData.name.trim()) {
             const placeholderName = extractTextBetweenTags(result, 'bc-contact-name');
             if (placeholderName) {
+                console.log('👤 [Contact Utils] Injecting name (required)');
                 result = simpleReplace(result, placeholderName, formData.name);
             }
         }
 
-        // 2. INJECT TITLE
-        if (formData.title && formData.title.trim()) {
-            const placeholderTitle = extractTextBetweenTags(result, 'bc-contact-title');
-            if (placeholderTitle) {
-                result = simpleReplace(result, placeholderTitle, formData.title);
-            }
-        }
-
-        // 3. INJECT SUBTITLE (credentials/degrees) - Used in BC012, BC020
-        if (formData.subtitle && formData.subtitle.trim()) {
-            const placeholderSubtitle = extractTextBetweenTags(result, 'bc-contact-subtitle');
-            if (placeholderSubtitle) {
-                console.log('📜 [Contact Utils] Injecting subtitle/credentials');
-                result = simpleReplace(result, placeholderSubtitle, formData.subtitle);
-            }
-        }
-
-        // 4. INJECT COMPANY
+        // 2. COMPANY (Required)
         if (formData.companyName && formData.companyName.trim()) {
             const placeholderCompany = extractTextBetweenTags(result, 'bc-contact-company');
             if (placeholderCompany) {
+                console.log('🏢 [Contact Utils] Injecting company (required)');
                 result = simpleReplace(result, placeholderCompany, formData.companyName);
             }
         }
 
-        // 4b. INJECT SLOGAN (for BC017+ layouts)
-        if (formData.slogan && formData.slogan.trim()) {
-            const placeholderSlogan = extractTextBetweenTags(result, 'bc-contact-slogan');
-            if (placeholderSlogan) {
+        // ============================================================================
+        // OPTIONAL FIELDS - Inject if populated, HIDE if empty
+        // ============================================================================
+
+        // 3. TITLE (Optional - hide if empty)
+        const titleRegex = /<[^>]*class=["'][^"']*bc-contact-title[^"']*["'][^>]*>([^<]*)<\/[^>]+>/i;
+        const titleMatch = titleRegex.exec(result);
+
+        if (titleMatch) {
+            const fullElement = titleMatch[0];
+            const placeholderText = titleMatch[1];
+
+            if (formData.title && formData.title.trim()) {
+                console.log('💼 [Contact Utils] Injecting title');
+                result = simpleReplace(result, placeholderText, formData.title);
+            } else {
+                console.log('🙈 [Contact Utils] Title empty, hiding element');
+                result = result.replace(fullElement, '');
+            }
+        }
+
+        // 4. SUBTITLE/CREDENTIALS (Optional - hide if empty)
+        const subtitleRegex = /<[^>]*class=["'][^"']*bc-contact-subtitle[^"']*["'][^>]*>([^<]*)<\/[^>]+>/i;
+        const subtitleMatch = subtitleRegex.exec(result);
+
+        if (subtitleMatch) {
+            const fullElement = subtitleMatch[0];
+            const placeholderText = subtitleMatch[1];
+
+            if (formData.subtitle && formData.subtitle.trim()) {
+                console.log('📜 [Contact Utils] Injecting subtitle/credentials');
+                result = simpleReplace(result, placeholderText, formData.subtitle);
+            } else {
+                console.log('🙈 [Contact Utils] Subtitle empty, hiding element');
+                result = result.replace(fullElement, '');
+            }
+        }
+
+        // 5. SLOGAN (Optional - hide if empty)
+        const sloganRegex = /<[^>]*class=["'][^"']*bc-contact-slogan[^"']*["'][^>]*>([^<]*)<\/[^>]+>/i;
+        const sloganMatch = sloganRegex.exec(result);
+
+        if (sloganMatch) {
+            const fullElement = sloganMatch[0];
+            const placeholderText = sloganMatch[1];
+
+            if (formData.slogan && formData.slogan.trim()) {
                 console.log('💬 [Contact Utils] Injecting slogan');
-                result = simpleReplace(result, placeholderSlogan, formData.slogan);
-            }
-        } else {
-            // Hide slogan element if no slogan provided
-            const sloganRegex = /<[^>]*class=["'][^"']*bc-contact-slogan[^"']*["'][^>]*>([^<]*)<\/div>/i;
-            const sloganMatch = sloganRegex.exec(layoutHtml);
-            if (sloganMatch) {
+                result = simpleReplace(result, placeholderText, formData.slogan);
+            } else {
                 console.log('🙈 [Contact Utils] Slogan empty, hiding element');
-                result = result.replace(sloganMatch[0], '');
+                result = result.replace(fullElement, '');
             }
         }
 
-        // 5. INJECT PHONES - Enhanced with better logging
-        if (formData.phones && formData.phones.length > 0) {
-            console.log(`📱 [Contact Utils] Processing ${formData.phones.length} phone numbers`);
-            const phoneRegex = /<[^>]*class=["'][^"']*bc-contact-phone[^"']*["'][^>]*>([^<]*)<\/div>/gi;
-            let match;
-            let phoneIndex = 0;
+        // 6. DESCRIPTOR (Optional - hide if empty)
+        const descriptorRegex = /<[^>]*class=["'][^"']*bc-contact-descriptor[^"']*["'][^>]*>([^<]*)<\/[^>]+>/i;
+        const descriptorMatch = descriptorRegex.exec(result);
 
-            while ((match = phoneRegex.exec(layoutHtml)) !== null && phoneIndex < formData.phones.length) {
-                const placeholderPhone = match[1];
-                const actualPhone = formData.phones[phoneIndex];
+        if (descriptorMatch) {
+            const fullElement = descriptorMatch[0];
+            const placeholderText = descriptorMatch[1];
 
-                if (actualPhone && actualPhone.value) {
-                    const formattedPhone = formatPhoneNumber(actualPhone.value);
-                    console.log(`  Phone ${phoneIndex + 1}: ${actualPhone.value} → ${formattedPhone}`);
-
-                    // Preserve emoji/prefix - expanded to cover all phone-related emojis
-                    // Covers: 📱 (mobile), ☎️ (phone), 📞 (telephone), 📠 (fax)
-                    const emojiMatch = placeholderPhone.match(/^([\u{1F300}-\u{1F9FF}\u{2600}-\u{27BF}\s☎️📱📞📠]+)/u);
-                    const labelMatch = placeholderPhone.match(/^([A-Za-z]+:)\s*/);
-
-                    let finalPhone = formattedPhone;
-                    if (emojiMatch) {
-                        finalPhone = emojiMatch[1] + formattedPhone;
-                        console.log(`  ✨ Preserved emoji: "${emojiMatch[1]}"`);
-                    } else if (labelMatch) {
-                        finalPhone = labelMatch[1] + ' ' + formattedPhone;
-                        console.log(`  ✨ Preserved label: "${labelMatch[1]}"`);
-                    }
-
-                    result = simpleReplace(result, placeholderPhone, finalPhone);
-                }
-                phoneIndex++;
+            if (formData.descriptor && formData.descriptor.trim()) {
+                console.log('📝 [Contact Utils] Injecting descriptor');
+                result = simpleReplace(result, placeholderText, formData.descriptor);
+            } else {
+                console.log('🙈 [Contact Utils] Descriptor empty, hiding element');
+                result = result.replace(fullElement, '');
             }
         }
 
-        // 6. INJECT EMAILS - Enhanced with better logging
-        if (formData.emails && formData.emails.length > 0) {
-            console.log(`✉️ [Contact Utils] Processing ${formData.emails.length} email addresses`);
-            const emailRegex = /<[^>]*class=["'][^"']*bc-contact-email[^"']*["'][^>]*>([^<]*)<\/div>/gi;
-            let match;
-            let emailIndex = 0;
-
-            while ((match = emailRegex.exec(layoutHtml)) !== null && emailIndex < formData.emails.length) {
-                const placeholderEmail = match[1];
-                const actualEmail = formData.emails[emailIndex];
-
-                if (actualEmail && actualEmail.value) {
-                    console.log(`  Email ${emailIndex + 1}: ${actualEmail.value}`);
-
-                    // Preserve emoji/prefix
-                    const emojiMatch = placeholderEmail.match(/^([\u{1F300}-\u{1F9FF}\s✉️]+)/u);
-                    const labelMatch = placeholderEmail.match(/^([A-Za-z]+:)\s*/);
-
-                    let finalEmail = actualEmail.value;
-                    if (emojiMatch) {
-                        finalEmail = emojiMatch[1] + actualEmail.value;
-                        console.log(`  ✨ Preserved emoji: "${emojiMatch[1]}"`);
-                    } else if (labelMatch) {
-                        finalEmail = labelMatch[1] + ' ' + actualEmail.value;
-                        console.log(`  ✨ Preserved label: "${labelMatch[1]}"`);
-                    }
-
-                    result = simpleReplace(result, placeholderEmail, finalEmail);
-                }
-                emailIndex++;
-            }
-        }
-
-        // 7. INJECT WEBSITES - Standard website fields only
-        if (formData.websites && formData.websites.length > 0) {
-            console.log(`🌐 [Contact Utils] Processing ${formData.websites.length} website URLs`);
-            const websiteRegex = /<[^>]*class=["'][^"']*bc-contact-website[^"']*["'][^>]*>([^<]*)<\/div>/gi;
-            let match;
-            let websiteIndex = 0;
-
-            while ((match = websiteRegex.exec(layoutHtml)) !== null && websiteIndex < formData.websites.length) {
-                const placeholderWebsite = match[1];
-                const actualWebsite = formData.websites[websiteIndex];
-
-                if (actualWebsite && actualWebsite.value) {
-                    console.log(`  Website ${websiteIndex + 1}: ${actualWebsite.value}`);
-
-                    // Clean website URL - remove protocol
-                    let cleanWebsite = actualWebsite.value.trim().replace(/^https?:\/\//, '');
-
-                    // Preserve emoji/prefix - expanded to include more emoji ranges
-                    // Covers: sparkles ✨, globe 🌐🌍, stars ⭐🌟, and other common website emojis
-                    const emojiMatch = placeholderWebsite.match(/^([\u{1F300}-\u{1F9FF}\u{2600}-\u{27BF}\s🌐🌍✨⭐🌟]+)/u);
-
-                    if (emojiMatch) {
-                        cleanWebsite = emojiMatch[1] + cleanWebsite;
-                        console.log(`  ✨ Preserved emoji: "${emojiMatch[1]}"`);
-                    }
-
-                    result = simpleReplace(result, placeholderWebsite, cleanWebsite);
-                }
-                websiteIndex++;
-            }
-
-            if (websiteIndex > 0) {
-                console.log(`✅ [Contact Utils] Injected ${websiteIndex} website fields`);
-            }
-        }
-
-        // 8. INJECT SOCIAL MEDIA - NEW FOR BC019+
-        // Matches platform via data-social-platform attribute
-        // FILE: src/app/utils/businessCardContactUtils.ts
-        // TODO the social media platform name must be selected from dropdown, then input field populated with handle
-        //  then businesscard layouts with social media will inject social media handles with priority for top listed handles
-        //  hence utils logic and layout classes should be platform agnostic
-        //  up to bc025 only bc019 and bc024 layouts contain social media fields
-        //  the goal is to minimize exclusion of clients from selection of a given businesscard layout due to not having the matching social media platform
-        //  so any client with at least 1 social media handle should be able to choose any businesscard layout that has at least 1 social media field regardless of platform type
-        //  make sure to default social media section to 3 dropdowns/fields, with all prepopulated for testing
-
-        console.log('💼 [Contact Utils] Processing social media fields (sequential injection)...');
-
-        // Find all social media elements in the layout (platform-agnostic)
-        const socialRegex = /<div[^>]*class=["'][^"']*bc-contact-social[^"']*["'][^>]*>([^<]*)<\/div>/gi;
-        const socialMatches = [];
-        let match;
-
-        // Collect all bc-contact-social elements
-        while ((match = socialRegex.exec(layoutHtml)) !== null) {
-            socialMatches.push({
-                fullElement: match[0],
-                placeholderText: match[1]
-            });
-        }
-
-        if (socialMatches.length > 0) {
-            console.log(`  📍 Found ${socialMatches.length} social media slot(s) in layout`);
-
-            // Get populated social media entries from form (in order)
-            const populatedSocial = formData.socialMedia?.filter(
-                s => s.label && s.label.trim() && s.value && s.value.trim()
-            ) || [];
-
-            console.log(`  📝 Found ${populatedSocial.length} populated social media field(s) in form`);
-
-            // Log form order
-            if (populatedSocial.length > 0) {
-                populatedSocial.forEach((social, idx) => {
-                    console.log(`    ${idx + 1}. ${social.label}: ${social.value}`);
-                });
-            }
-
-            // Process each layout slot
-            socialMatches.forEach((socialMatch, slotIndex) => {
-                const { fullElement, placeholderText } = socialMatch;
-
-                console.log(`  🎯 Processing slot ${slotIndex + 1} of ${socialMatches.length}`);
-
-                // Check if we have a populated field for this slot
-                if (slotIndex < populatedSocial.length) {
-                    // INJECT: Use the nth populated social media field
-                    const socialEntry = populatedSocial[slotIndex];
-                    console.log(`    ✅ Injecting: ${socialEntry.label} - ${socialEntry.value}`);
-
-                    // Clean social media handle - remove protocol if URL
-                    let cleanSocial = socialEntry.value.trim().replace(/^https?:\/\//, '');
-
-                    // Preserve emoji/prefix from placeholder
-                    const emojiMatch = placeholderText.match(/^([\u{1F300}-\u{1F9FF}\u{2600}-\u{27BF}\s💼🔗🌐✨📱🐦💻📘]+)/u);
-
-                    if (emojiMatch) {
-                        cleanSocial = emojiMatch[1] + cleanSocial;
-                        console.log(`    ✨ Preserved emoji: "${emojiMatch[1]}"`);
-                    }
-
-                    // Inject the handle
-                    result = simpleReplace(result, placeholderText, cleanSocial);
-                } else {
-                    // REMOVE: No more populated fields for this slot
-                    console.log(`    🙈 No data for slot ${slotIndex + 1}, removing element`);
-                    result = result.replace(fullElement, '');
-                }
-            });
-
-            console.log(`✅ [Contact Utils] Social media sequential injection complete`);
-        } else {
-            console.log('  ℹ️ No social media slots found in layout');
-        }
-
-        // 9. INJECT YEAR ESTABLISHED (with hide if empty)
-        const establishedRegex = /<[^>]*class=["'][^"']*bc-contact-established[^"']*["'][^>]*>([^<]*)<\/div>/i;
-        const establishedMatch = establishedRegex.exec(layoutHtml);
+        // 7. YEAR ESTABLISHED (Optional - hide if empty)
+        const establishedRegex = /<[^>]*class=["'][^"']*bc-contact-established[^"']*["'][^>]*>([^<]*)<\/[^>]+>/i;
+        const establishedMatch = establishedRegex.exec(result);
 
         if (establishedMatch) {
             const fullElement = establishedMatch[0];
@@ -369,11 +228,269 @@ export function injectContactInfo(
             }
         }
 
-        console.log('✅ [Contact Utils] Injection complete with social media support');
+        // ============================================================================
+        // CONTACT METHODS - At least one phone OR email required
+        // ============================================================================
+
+        // 8. PHONES (At least one required by validation)
+        if (formData.phones && formData.phones.length > 0) {
+            console.log(`📱 [Contact Utils] Processing ${formData.phones.length} phone numbers`);
+            const phoneRegex = /<div[^>]*class=["'][^"']*bc-contact-phone[^"']*["'][^>]*>([^<]*)<\/div>/gi;
+            const phoneMatches = [];
+            let match;
+
+            // Collect all phone elements
+            while ((match = phoneRegex.exec(result)) !== null) {
+                phoneMatches.push({
+                    fullElement: match[0],
+                    placeholderText: match[1]
+                });
+            }
+
+            // Get populated phones
+            const populatedPhones = formData.phones.filter(p => p.value && p.value.trim());
+            console.log(`  📝 Found ${populatedPhones.length} populated phone(s)`);
+
+            // Process each phone slot
+            phoneMatches.forEach((phoneMatch, slotIndex) => {
+                const { fullElement, placeholderText } = phoneMatch;
+
+                if (slotIndex < populatedPhones.length) {
+                    // Inject populated phone
+                    const phone = populatedPhones[slotIndex];
+                    const formattedPhone = formatPhoneNumber(phone.value);
+                    console.log(`  ✅ Phone ${slotIndex + 1}: ${phone.value} → ${formattedPhone}`);
+
+                    // Preserve emoji/prefix
+                    const emojiMatch = placeholderText.match(/^([\u{1F300}-\u{1F9FF}\u{2600}-\u{27BF}\s☎️📱📞📠]+)/u);
+                    const labelMatch = placeholderText.match(/^([A-Za-z]+:)\s*/);
+
+                    let finalPhone = formattedPhone;
+                    if (emojiMatch) {
+                        finalPhone = emojiMatch[1] + formattedPhone;
+                    } else if (labelMatch) {
+                        finalPhone = labelMatch[1] + ' ' + formattedPhone;
+                    }
+
+                    result = simpleReplace(result, placeholderText, finalPhone);
+                } else {
+                    // Hide empty phone slot
+                    console.log(`  🙈 No data for phone slot ${slotIndex + 1}, hiding element`);
+                    result = result.replace(fullElement, '');
+                }
+            });
+        }
+
+        // 9. EMAILS (At least one required by validation)
+        if (formData.emails && formData.emails.length > 0) {
+            console.log(`✉️ [Contact Utils] Processing ${formData.emails.length} email addresses`);
+            const emailRegex = /<div[^>]*class=["'][^"']*bc-contact-email[^"']*["'][^>]*>([^<]*)<\/div>/gi;
+            const emailMatches = [];
+            let match;
+
+            // Collect all email elements
+            while ((match = emailRegex.exec(result)) !== null) {
+                emailMatches.push({
+                    fullElement: match[0],
+                    placeholderText: match[1]
+                });
+            }
+
+            // Get populated emails
+            const populatedEmails = formData.emails.filter(e => e.value && e.value.trim());
+            console.log(`  📝 Found ${populatedEmails.length} populated email(s)`);
+
+            // Process each email slot
+            emailMatches.forEach((emailMatch, slotIndex) => {
+                const { fullElement, placeholderText } = emailMatch;
+
+                if (slotIndex < populatedEmails.length) {
+                    // Inject populated email
+                    const email = populatedEmails[slotIndex];
+                    console.log(`  ✅ Email ${slotIndex + 1}: ${email.value}`);
+
+                    // Preserve emoji/prefix
+                    const emojiMatch = placeholderText.match(/^([\u{1F300}-\u{1F9FF}\s✉️]+)/u);
+                    const labelMatch = placeholderText.match(/^([A-Za-z]+:)\s*/);
+
+                    let finalEmail = email.value;
+                    if (emojiMatch) {
+                        finalEmail = emojiMatch[1] + email.value;
+                    } else if (labelMatch) {
+                        finalEmail = labelMatch[1] + ' ' + email.value;
+                    }
+
+                    result = simpleReplace(result, placeholderText, finalEmail);
+                } else {
+                    // Hide empty email slot
+                    console.log(`  🙈 No data for email slot ${slotIndex + 1}, hiding element`);
+                    result = result.replace(fullElement, '');
+                }
+            });
+        }
+
+        // ============================================================================
+        // COMPLETELY OPTIONAL CONTACT METHODS - Hide all if empty
+        // ============================================================================
+
+        // 10. WEBSITES (Optional - hide if empty)
+        if (formData.websites && formData.websites.length > 0) {
+            console.log(`🌐 [Contact Utils] Processing ${formData.websites.length} websites`);
+            const websiteRegex = /<div[^>]*class=["'][^"']*bc-contact-website[^"']*["'][^>]*>([^<]*)<\/div>/gi;
+            const websiteMatches = [];
+            let match;
+
+            // Collect all website elements
+            while ((match = websiteRegex.exec(result)) !== null) {
+                websiteMatches.push({
+                    fullElement: match[0],
+                    placeholderText: match[1]
+                });
+            }
+
+            // Get populated websites
+            const populatedWebsites = formData.websites.filter(w => w.value && w.value.trim());
+            console.log(`  📝 Found ${populatedWebsites.length} populated website(s)`);
+
+            // Process each website slot
+            websiteMatches.forEach((websiteMatch, slotIndex) => {
+                const { fullElement, placeholderText } = websiteMatch;
+
+                if (slotIndex < populatedWebsites.length) {
+                    // Inject populated website
+                    const website = populatedWebsites[slotIndex];
+                    let cleanWebsite = website.value.trim().replace(/^https?:\/\//, '');
+                    console.log(`  ✅ Website ${slotIndex + 1}: ${website.value}`);
+
+                    // Preserve emoji/prefix
+                    const emojiMatch = placeholderText.match(/^([\u{1F300}-\u{1F9FF}\u{2600}-\u{27BF}\s🌐🌟]+)/u);
+
+                    if (emojiMatch) {
+                        cleanWebsite = emojiMatch[1] + cleanWebsite;
+                    }
+
+                    result = simpleReplace(result, placeholderText, cleanWebsite);
+                } else {
+                    // Hide empty website slot
+                    console.log(`  🙈 No data for website slot ${slotIndex + 1}, hiding element`);
+                    result = result.replace(fullElement, '');
+                }
+            });
+        } else {
+            // Hide all website elements if no websites provided
+            console.log('🙈 [Contact Utils] No websites provided, hiding all website elements');
+            const websiteRegex = /<div[^>]*class=["'][^"']*bc-contact-website[^"']*["'][^>]*>([^<]*)<\/div>/gi;
+            result = result.replace(websiteRegex, '');
+        }
+
+        // 11. ADDRESSES (Optional - hide if empty)
+        if (formData.addresses && formData.addresses.length > 0) {
+            console.log(`📍 [Contact Utils] Processing ${formData.addresses.length} addresses`);
+            const addressRegex = /<div[^>]*class=["'][^"']*bc-contact-address[^"']*["'][^>]*>([^<]*)<\/div>/gi;
+            const addressMatches = [];
+            let match;
+
+            // Collect all address elements
+            while ((match = addressRegex.exec(result)) !== null) {
+                addressMatches.push({
+                    fullElement: match[0],
+                    placeholderText: match[1]
+                });
+            }
+
+            // Get populated addresses
+            const populatedAddresses = formData.addresses.filter(a => a.value && a.value.trim());
+            console.log(`  📝 Found ${populatedAddresses.length} populated address(es)`);
+
+            // Process each address slot
+            addressMatches.forEach((addressMatch, slotIndex) => {
+                const { fullElement, placeholderText } = addressMatch;
+
+                if (slotIndex < populatedAddresses.length) {
+                    // Inject populated address
+                    const address = populatedAddresses[slotIndex];
+                    console.log(`  ✅ Address ${slotIndex + 1}: ${address.value}`);
+
+                    // Preserve emoji/prefix
+                    const emojiMatch = placeholderText.match(/^([\u{1F300}-\u{1F9FF}\u{2600}-\u{27BF}\s📍🏢]+)/u);
+
+                    let finalAddress = address.value;
+                    if (emojiMatch) {
+                        finalAddress = emojiMatch[1] + address.value;
+                    }
+
+                    result = simpleReplace(result, placeholderText, finalAddress);
+                } else {
+                    // Hide empty address slot
+                    console.log(`  🙈 No data for address slot ${slotIndex + 1}, hiding element`);
+                    result = result.replace(fullElement, '');
+                }
+            });
+        } else {
+            // Hide all address elements if no addresses provided
+            console.log('🙈 [Contact Utils] No addresses provided, hiding all address elements');
+            const addressRegex = /<div[^>]*class=["'][^"']*bc-contact-address[^"']*["'][^>]*>([^<]*)<\/div>/gi;
+            result = result.replace(addressRegex, '');
+        }
+
+        // 12. SOCIAL MEDIA (Optional - hide if empty)
+        console.log('💼 [Contact Utils] Processing social media fields...');
+        const socialRegex = /<div[^>]*class=["'][^"']*bc-contact-social[^"']*["'][^>]*>([^<]*)<\/div>/gi;
+        const socialMatches = [];
+        let match;
+
+        // Collect all social media elements
+        while ((match = socialRegex.exec(result)) !== null) {
+            socialMatches.push({
+                fullElement: match[0],
+                placeholderText: match[1]
+            });
+        }
+
+        if (socialMatches.length > 0) {
+            console.log(`  📍 Found ${socialMatches.length} social media slot(s) in layout`);
+
+            // Get populated social media entries
+            const populatedSocial = formData.socialMedia?.filter(
+                s => s.label && s.label.trim() && s.value && s.value.trim()
+            ) || [];
+
+            console.log(`  📝 Found ${populatedSocial.length} populated social media field(s)`);
+
+            // Process each social media slot
+            socialMatches.forEach((socialMatch, slotIndex) => {
+                const { fullElement, placeholderText } = socialMatch;
+
+                if (slotIndex < populatedSocial.length) {
+                    // Inject populated social media
+                    const social = populatedSocial[slotIndex];
+                    let cleanSocial = social.value.trim().replace(/^https?:\/\//, '');
+                    console.log(`  ✅ Social ${slotIndex + 1}: ${social.label} - ${social.value}`);
+
+                    // Preserve emoji/prefix
+                    const emojiMatch = placeholderText.match(/^([\u{1F300}-\u{1F9FF}\u{2600}-\u{27BF}\s💼🔗🌐✨📱🐦💻📘]+)/u);
+
+                    if (emojiMatch) {
+                        cleanSocial = emojiMatch[1] + cleanSocial;
+                    }
+
+                    result = simpleReplace(result, placeholderText, cleanSocial);
+                } else {
+                    // Hide empty social media slot
+                    console.log(`  🙈 No data for social slot ${slotIndex + 1}, hiding element`);
+                    result = result.replace(fullElement, '');
+                }
+            });
+        } else {
+            console.log('  ℹ️ No social media slots found in layout');
+        }
+
+        console.log('✅ [Contact Utils] Injection complete with comprehensive hide-if-empty logic');
         return result;
 
     } catch (error) {
         console.error('❌ [Contact Utils] Error during injection:', error);
+        console.error('Stack trace:', error);
         return layoutHtml;
     }
 }
@@ -388,31 +505,43 @@ export function validateContactInfo(formData: BusinessCardData): {
     console.log('🔍 [Contact Utils] Validating contact information...');
     const errors: string[] = [];
 
+    // Required: Full Name
     if (!formData.name || !formData.name.trim()) {
-        errors.push('Name is required');
+        errors.push('Full Name is required');
     }
 
+    // Required: Company Name
     if (!formData.companyName || !formData.companyName.trim()) {
-        errors.push('Company name is required');
+        errors.push('Company Name is required');
     }
 
-    if (formData.subtitle && formData.subtitle.trim()) {
-        console.log('✨ [Contact Utils] Subtitle/credentials provided:', formData.subtitle);
-    }
-
-    if (formData.slogan && formData.slogan.trim()) {
-        console.log('💬 [Contact Utils] Slogan provided:', formData.slogan);
-    }
-
+    // Required: At least one phone OR email
     const hasPhone = formData.phones && formData.phones.some(p => p.value && p.value.trim());
     const hasEmail = formData.emails && formData.emails.some(e => e.value && e.value.trim());
-    const hasWebsite = formData.websites && formData.websites.some(w => w.value && w.value.trim());
 
-    if (!hasPhone && !hasEmail && !hasWebsite) {
-        errors.push('At least one contact method (phone, email, or website) is required');
+    if (!hasPhone && !hasEmail) {
+        errors.push('At least one phone number OR email address is required');
     }
 
-    console.log(`${errors.length === 0 ? '✅' : '❌'} [Contact Utils] Validation complete: ${errors.length} errors`);
+    // Optional fields logging
+    if (formData.title && formData.title.trim()) {
+        console.log('  ✨ Title provided:', formData.title);
+    }
+    if (formData.subtitle && formData.subtitle.trim()) {
+        console.log('  ✨ Subtitle/credentials provided:', formData.subtitle);
+    }
+    if (formData.slogan && formData.slogan.trim()) {
+        console.log('  ✨ Slogan provided:', formData.slogan);
+    }
+    if (formData.descriptor && formData.descriptor.trim()) {
+        console.log('  ✨ Descriptor provided:', formData.descriptor);
+    }
+
+    console.log(`${errors.length === 0 ? '✅' : '❌'} [Contact Utils] Validation complete: ${errors.length} error(s)`);
+
+    if (errors.length > 0) {
+        console.log('  ❌ Errors:', errors);
+    }
 
     return {
         isValid: errors.length === 0,
