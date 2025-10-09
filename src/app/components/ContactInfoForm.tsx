@@ -195,122 +195,204 @@ export const ContactInfoForm = ({
 
                 {/* Middle Column - Contact Details */}
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-4">
-                    <h4 className="text-base font-semibold text-gray-900 border-b border-green-300 pb-1">Contact
-                        Details</h4>
+                    <h3 className="text-sm font-semibold text-gray-900 border-b border-gray-200 pb-2">
+                        Contact Details
+                    </h3>
 
-                    {/* Phone Numbers - 2 by default */}
-                    <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                            <label className="text-xs font-medium text-gray-700">Phone Numbers *</label>
-                            <button
-                                type="button"
-                                onClick={() => onAddField('phones')}
-                                className="text-purple-600 hover:text-purple-700 text-xs font-medium"
-                            >
-                                + Add Phone
-                            </button>
+                    {/* Phone Numbers - 3 Fixed Inputs */}
+                    <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-2">
+                            Phone Numbers
+                        </label>
+                        <div className="space-y-2">
+                            {/* Phone 1 */}
+                            <input
+                                type="tel"
+                                placeholder="Phone 1"
+                                value={formData.phones[0]?.value || ''}
+                                onChange={(e) => {
+                                    const newPhones = [...formData.phones];
+                                    if (!newPhones[0]) {
+                                        newPhones[0] = {value: e.target.value, label: 'Mobile', isPrimary: true};
+                                    } else {
+                                        newPhones[0].value = e.target.value;
+                                    }
+                                    setFormData({...formData, phones: newPhones});
+                                }}
+                                className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            />
+
+                            {/* Phone 2 */}
+                            <input
+                                type="tel"
+                                placeholder="Phone 2"
+                                value={formData.phones[1]?.value || ''}
+                                onChange={(e) => {
+                                    const newPhones = [...formData.phones];
+                                    while (newPhones.length < 2) {
+                                        newPhones.push({value: '', label: 'Office', isPrimary: false});
+                                    }
+                                    newPhones[1].value = e.target.value;
+                                    setFormData({...formData, phones: newPhones});
+                                }}
+                                className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            />
+
+                            {/* Phone 3 */}
+                            <input
+                                type="tel"
+                                placeholder="Phone 3"
+                                value={formData.phones[2]?.value || ''}
+                                onChange={(e) => {
+                                    const newPhones = [...formData.phones];
+                                    while (newPhones.length < 3) {
+                                        newPhones.push({value: '', label: 'Home', isPrimary: false});
+                                    }
+                                    newPhones[2].value = e.target.value;
+                                    setFormData({...formData, phones: newPhones});
+                                }}
+                                className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            />
                         </div>
-
-                        {formData.phones.length > 0 && (
-                            <div className="space-y-2">
-                                {formData.phones.map((phone, index) => (
-                                    <div key={index} className="flex gap-2">
-                                        <input
-                                            type="tel"
-                                            placeholder={index === 0 ? "Primary phone" : "Secondary phone"}
-                                            value={phone.value}
-                                            onChange={(e) => handleContactChange('phones', index, 'value', e.target.value)}
-                                            className="flex-1 px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
-                                        />
-                                        {formData.phones.length > 1 && (
-                                            <button
-                                                type="button"
-                                                onClick={() => onRemoveField('phones', index)}
-                                                className="text-red-500 hover:text-red-700 px-1 text-xs font-bold"
-                                            >
-                                                ×
-                                            </button>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
                     </div>
 
-                    {/* Email Addresses - 2 by default */}
-                    <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                            <label className="text-xs font-medium text-gray-700">Email Addresses *</label>
-                            <button
-                                type="button"
-                                onClick={() => onAddField('emails')}
-                                className="text-purple-600 hover:text-purple-700 text-xs font-medium"
-                            >
-                                + Add Email
-                            </button>
-                        </div>
+                    {/* Email Addresses - 3 Fixed Inputs */}
+                    <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-2">
+                            Email Addresses
+                        </label>
+                        <div className="space-y-2">
+                            {/* Email 1 */}
+                            <input
+                                type="email"
+                                placeholder="Email 1"
+                                value={formData.emails[0]?.value || ''}
+                                onChange={(e) => {
+                                    const newEmails = [...formData.emails];
+                                    if (!newEmails[0]) {
+                                        newEmails[0] = {value: e.target.value, label: 'Work', isPrimary: true};
+                                    } else {
+                                        newEmails[0].value = e.target.value;
+                                    }
+                                    setFormData({...formData, emails: newEmails});
+                                }}
+                                className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            />
 
-                        {formData.emails.length > 0 && (
-                            <div className="space-y-2">
-                                {formData.emails.map((email, index) => (
-                                    <div key={index} className="flex gap-2">
-                                        <input
-                                            type="email"
-                                            placeholder={index === 0 ? "Primary email" : "Secondary email"}
-                                            value={email.value}
-                                            onChange={(e) => handleContactChange('emails', index, 'value', e.target.value)}
-                                            className="flex-1 px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
-                                        />
-                                        {formData.emails.length > 1 && (
-                                            <button
-                                                type="button"
-                                                onClick={() => onRemoveField('emails', index)}
-                                                className="text-red-500 hover:text-red-700 px-1 text-xs font-bold"
-                                            >
-                                                ×
-                                            </button>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                            {/* Email 2 */}
+                            <input
+                                type="email"
+                                placeholder="Email 2"
+                                value={formData.emails[1]?.value || ''}
+                                onChange={(e) => {
+                                    const newEmails = [...formData.emails];
+                                    while (newEmails.length < 2) {
+                                        newEmails.push({value: '', label: 'Personal', isPrimary: false});
+                                    }
+                                    newEmails[1].value = e.target.value;
+                                    setFormData({...formData, emails: newEmails});
+                                }}
+                                className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            />
+
+                            {/* Email 3 */}
+                            <input
+                                type="email"
+                                placeholder="Email 3"
+                                value={formData.emails[2]?.value || ''}
+                                onChange={(e) => {
+                                    const newEmails = [...formData.emails];
+                                    while (newEmails.length < 3) {
+                                        newEmails.push({value: '', label: 'Other', isPrimary: false});
+                                    }
+                                    newEmails[2].value = e.target.value;
+                                    setFormData({...formData, emails: newEmails});
+                                }}
+                                className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            />
+                        </div>
                     </div>
 
-                    {/* Website URLs */}
-                    <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                            <label className="text-xs font-medium text-gray-700">Websites</label>
-                            <button
-                                type="button"
-                                onClick={() => onAddField('websites')}
-                                className="text-purple-600 hover:text-purple-700 text-xs font-medium"
-                            >
-                                + Add Website
-                            </button>
-                        </div>
+                    {/* Websites - 2 Fixed Inputs */}
+                    <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-2">
+                            Websites
+                        </label>
+                        <div className="space-y-2">
+                            {/* Website 1 */}
+                            <input
+                                type="url"
+                                placeholder="Website 1"
+                                value={formData.websites[0]?.value || ''}
+                                onChange={(e) => {
+                                    const newWebsites = [...formData.websites];
+                                    if (!newWebsites[0]) {
+                                        newWebsites[0] = {value: e.target.value, label: 'Company', isPrimary: true};
+                                    } else {
+                                        newWebsites[0].value = e.target.value;
+                                    }
+                                    setFormData({...formData, websites: newWebsites});
+                                }}
+                                className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            />
 
-                        {formData.websites.length > 0 && (
-                            <div className="space-y-2">
-                                {formData.websites.map((website, index) => (
-                                    <div key={index} className="flex gap-2">
-                                        <input
-                                            type="url"
-                                            placeholder="Website URL"
-                                            value={website.value}
-                                            onChange={(e) => handleContactChange('websites', index, 'value', e.target.value)}
-                                            className="flex-1 px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => onRemoveField('websites', index)}
-                                            className="text-red-500 hover:text-red-700 px-1 text-xs font-bold"
-                                        >
-                                            ×
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                            {/* Website 2 */}
+                            <input
+                                type="url"
+                                placeholder="Website 2"
+                                value={formData.websites[1]?.value || ''}
+                                onChange={(e) => {
+                                    const newWebsites = [...formData.websites];
+                                    while (newWebsites.length < 2) {
+                                        newWebsites.push({value: '', label: 'Portfolio', isPrimary: false});
+                                    }
+                                    newWebsites[1].value = e.target.value;
+                                    setFormData({...formData, websites: newWebsites});
+                                }}
+                                className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Addresses - 2 Fixed Inputs */}
+                    <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-2">
+                            Addresses
+                        </label>
+                        <div className="space-y-2">
+                            {/* Address 1 */}
+                            <input
+                                type="text"
+                                placeholder="Address 1"
+                                value={formData.addresses[0]?.value || ''}
+                                onChange={(e) => {
+                                    const newAddresses = [...formData.addresses];
+                                    if (!newAddresses[0]) {
+                                        newAddresses[0] = {value: e.target.value, label: '', isPrimary: true};
+                                    } else {
+                                        newAddresses[0].value = e.target.value;
+                                    }
+                                    setFormData({...formData, addresses: newAddresses});
+                                }}
+                                className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            />
+
+                            {/* Address 2 */}
+                            <input
+                                type="text"
+                                placeholder="Address 2"
+                                value={formData.addresses[1]?.value || ''}
+                                onChange={(e) => {
+                                    const newAddresses = [...formData.addresses];
+                                    while (newAddresses.length < 2) {
+                                        newAddresses.push({value: '', label: '', isPrimary: false});
+                                    }
+                                    newAddresses[1].value = e.target.value;
+                                    setFormData({...formData, addresses: newAddresses});
+                                }}
+                                className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            />
+                        </div>
                     </div>
                 </div>
 
@@ -322,10 +404,6 @@ export const ContactInfoForm = ({
 
                     {/* Social Media - 3 Fixed Dropdown + Input Pairs */}
                     <div className="space-y-3">
-                        <p className="text-xs text-gray-600 mb-2">
-                            Select platforms and enter handles. Order matters - first populated field gets injected first.
-                        </p>
-
                         {/* Social Media Field 1 */}
                         <div className="space-y-1">
                             <label className="block text-xs font-medium text-gray-700">
@@ -337,11 +415,11 @@ export const ContactInfoForm = ({
                                     onChange={(e) => {
                                         const newSocialMedia = [...formData.socialMedia];
                                         if (!newSocialMedia[0]) {
-                                            newSocialMedia[0] = { value: '', label: e.target.value, isPrimary: true };
+                                            newSocialMedia[0] = {value: '', label: e.target.value, isPrimary: true};
                                         } else {
                                             newSocialMedia[0].label = e.target.value;
                                         }
-                                        setFormData({ ...formData, socialMedia: newSocialMedia });
+                                        setFormData({...formData, socialMedia: newSocialMedia});
                                     }}
                                     className="w-32 px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
                                 >
@@ -356,11 +434,11 @@ export const ContactInfoForm = ({
                                     onChange={(e) => {
                                         const newSocialMedia = [...formData.socialMedia];
                                         if (!newSocialMedia[0]) {
-                                            newSocialMedia[0] = { value: e.target.value, label: '', isPrimary: true };
+                                            newSocialMedia[0] = {value: e.target.value, label: '', isPrimary: true};
                                         } else {
                                             newSocialMedia[0].value = e.target.value;
                                         }
-                                        setFormData({ ...formData, socialMedia: newSocialMedia });
+                                        setFormData({...formData, socialMedia: newSocialMedia});
                                     }}
                                     placeholder="@handle or profile URL"
                                     disabled={!formData.socialMedia[0]?.label}
@@ -380,10 +458,10 @@ export const ContactInfoForm = ({
                                     onChange={(e) => {
                                         const newSocialMedia = [...formData.socialMedia];
                                         while (newSocialMedia.length < 2) {
-                                            newSocialMedia.push({ value: '', label: '', isPrimary: false });
+                                            newSocialMedia.push({value: '', label: '', isPrimary: false});
                                         }
                                         newSocialMedia[1].label = e.target.value;
-                                        setFormData({ ...formData, socialMedia: newSocialMedia });
+                                        setFormData({...formData, socialMedia: newSocialMedia});
                                     }}
                                     className="w-32 px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
                                 >
@@ -398,10 +476,10 @@ export const ContactInfoForm = ({
                                     onChange={(e) => {
                                         const newSocialMedia = [...formData.socialMedia];
                                         while (newSocialMedia.length < 2) {
-                                            newSocialMedia.push({ value: '', label: '', isPrimary: false });
+                                            newSocialMedia.push({value: '', label: '', isPrimary: false});
                                         }
                                         newSocialMedia[1].value = e.target.value;
-                                        setFormData({ ...formData, socialMedia: newSocialMedia });
+                                        setFormData({...formData, socialMedia: newSocialMedia});
                                     }}
                                     placeholder="@handle or profile URL"
                                     disabled={!formData.socialMedia[1]?.label}
@@ -421,10 +499,10 @@ export const ContactInfoForm = ({
                                     onChange={(e) => {
                                         const newSocialMedia = [...formData.socialMedia];
                                         while (newSocialMedia.length < 3) {
-                                            newSocialMedia.push({ value: '', label: '', isPrimary: false });
+                                            newSocialMedia.push({value: '', label: '', isPrimary: false});
                                         }
                                         newSocialMedia[2].label = e.target.value;
-                                        setFormData({ ...formData, socialMedia: newSocialMedia });
+                                        setFormData({...formData, socialMedia: newSocialMedia});
                                     }}
                                     className="w-32 px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
                                 >
@@ -439,22 +517,16 @@ export const ContactInfoForm = ({
                                     onChange={(e) => {
                                         const newSocialMedia = [...formData.socialMedia];
                                         while (newSocialMedia.length < 3) {
-                                            newSocialMedia.push({ value: '', label: '', isPrimary: false });
+                                            newSocialMedia.push({value: '', label: '', isPrimary: false});
                                         }
                                         newSocialMedia[2].value = e.target.value;
-                                        setFormData({ ...formData, socialMedia: newSocialMedia });
+                                        setFormData({...formData, socialMedia: newSocialMedia});
                                     }}
                                     placeholder="@handle or profile URL"
                                     disabled={!formData.socialMedia[2]?.label}
                                     className="flex-1 px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-400"
                                 />
                             </div>
-                        </div>
-
-                        <div className="bg-purple-100 border border-purple-300 rounded p-2 mt-2">
-                            <p className="text-xs text-purple-800">
-                                💡 <strong>Injection Priority:</strong> First populated field injects into first social media slot in layout, second into second slot, etc.
-                            </p>
                         </div>
                     </div>
                 </div>
