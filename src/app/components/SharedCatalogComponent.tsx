@@ -372,7 +372,8 @@ export default function SharedCatalogComponent({
             setShowParametersModal(false);
             await fetchCatalog(currentPage, searchTerm, industryFilter, itemsPerPage);
         } catch (e: any) {
-            alert(e.message || 'Failed to remove from catalog');
+            console.log(e.message || 'Failed to remove from catalog');
+            // alert(e.message || 'Failed to remove from catalog');
         } finally {
             setRemoving(false);
         }

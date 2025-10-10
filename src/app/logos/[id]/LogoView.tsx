@@ -285,7 +285,7 @@ export default function LogoView({ logoId }: LogoViewProps) {
 
       if (!logoId) {
         console.error('❌ No logo ID available');
-        alert('Logo ID not found. Please try again.');
+        // alert('Logo ID not found. Please try again.');
         return;
       }
 
@@ -308,11 +308,11 @@ export default function LogoView({ logoId }: LogoViewProps) {
       } else {
         console.error('❌ Failed to fetch full logo data or missing image data');
         console.error('Full logo object:', fullLogo);
-        alert('Failed to load logo data. Please try again.');
+        // alert('Failed to load logo data. Please try again.');
       }
     } catch (error) {
       console.error('❌ Error fetching logo for business cards:', error);
-      alert('Error loading logo. Please try again.');
+      // alert('Error loading logo. Please try again.');
     }
   };
 

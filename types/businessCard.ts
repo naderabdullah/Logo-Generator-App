@@ -141,8 +141,8 @@ export interface TemplateSelectionProps {
 }
 
 export interface PreviewAndGenerateProps {
-    selectedTemplate: string;
-    formData: BusinessCardData;
+    selectedLayout: string;       // CHANGED: from selectedTemplate, this is the catalogId (e.g., "BC-001")
+    formData: BusinessCardData;   // Contains logo in formData.logo.logoDataUri
     isGenerating: boolean;
     onBack: () => void;
     onGenerate: () => void;
