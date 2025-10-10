@@ -1,6 +1,6 @@
 // FILE: src/app/components/PreviewAndGenerate.tsx
-// PURPOSE: Step 3 - Preview and generate PDF from injected business card HTML
-// UPDATED: Now uses native HTML preview (same as Step 2) for WYSIWYG consistency
+// PURPOSE: Step 3 - Preview and generate PDF from existing preview element
+// UPDATED: Now captures the existing preview instead of re-rendering
 
 'use client';
 
@@ -8,10 +8,10 @@ import { useState, useEffect } from 'react';
 import { PreviewAndGenerateProps } from '../../../types/businessCard';
 import { getBusinessCardLayoutById } from '../../data/businessCardLayouts';
 import { generateInjectedHTML } from '../utils/businessCardInjection';
-import { generateBusinessCardPDFFromHTML } from '@/lib/htmlBusinessCardToPDF';
+import { generateBusinessCardPDFFromExistingPreview } from '@/lib/htmlBusinessCardToPDF';
 
 export const PreviewAndGenerate = ({
-                                       selectedLayout,    // catalogId like "BC-001"
+                                       selectedLayout,
                                        formData,
                                        isGenerating,
                                        onBack,
@@ -42,13 +42,13 @@ export const PreviewAndGenerate = ({
                 console.log('🎴 ========================================');
                 console.log('📋 Layout:', layout.catalogId, '-', layout.name);
 
-                // Generate fully injected HTML (same utilities as Step 2)
-                console.log('📝 Injecting contact info and logo using same utilities as Step 2');
+                // Generate fully injected HTML
+                console.log('📝 Injecting contact info and logo');
                 const html = generateInjectedHTML(layout, formData);
 
                 setInjectedHTML(html);
 
-                console.log('✅ Step 3 Preview - Native HTML ready (matching Step 2 method)');
+                console.log('✅ Step 3 Preview - Native HTML ready');
                 console.log('🎴 ========================================');
 
             } catch (error) {
@@ -63,22 +63,24 @@ export const PreviewAndGenerate = ({
 
     }, [layout, formData, selectedLayout]);
 
-    // Handle PDF generation (unchanged - still uses html2canvas)
+    // UPDATED: Capture the existing preview element instead of re-rendering
     const handleGeneratePDF = async () => {
         try {
             console.log('🎴 ========================================');
             console.log('🎴 User clicked Generate PDF');
+            console.log('🎴 NEW: Capturing existing preview element');
             console.log('🎴 ========================================');
-
-            if (!injectedHTML) {
-                throw new Error('No card content available');
-            }
 
             // Call parent's onGenerate to set isGenerating state
             onGenerate();
 
-            console.log('📄 Generating PDF with 10 cards using html2canvas');
-            const pdfDataUri = await generateBusinessCardPDFFromHTML(injectedHTML, 10);
+            console.log('📄 Generating PDF by capturing .business-card-preview element');
+
+            // NEW APPROACH: Capture the existing preview element
+            const pdfDataUri = await generateBusinessCardPDFFromExistingPreview(
+                10, // cardCount
+                '.business-card-preview' // selector for the preview element
+            );
 
             // Create download
             console.log('💾 Creating download link');
@@ -129,7 +131,7 @@ export const PreviewAndGenerate = ({
                 </div>
             </div>
 
-            {/* Preview Section - NOW USING NATIVE HTML (SAME AS STEP 2) */}
+            {/* Preview Section */}
             <div className="flex justify-center">
                 <div className="bg-gradient-to-b from-gray-50 to-gray-100 rounded-2xl shadow-lg p-16 min-h-[400px] flex items-center justify-center">
                     {previewLoading ? (
@@ -146,7 +148,7 @@ export const PreviewAndGenerate = ({
                         </div>
                     ) : injectedHTML ? (
                         <div>
-                            {/* UNIFIED PREVIEW: Native HTML rendering (EXACT same as Step 2 modal) */}
+                            {/* CRITICAL: This div will be captured for PDF generation */}
                             <div
                                 className="business-card-preview shadow-lg"
                                 style={{
@@ -177,62 +179,34 @@ export const PreviewAndGenerate = ({
                             </div>
                         </div>
                         <div className="flex-1">
-                            <h4 className="font-semibold text-gray-900 mb-3">PDF Format</h4>
-                            <ul className="space-y-2 text-sm text-gray-600">
-                                <li className="flex items-center">
-                                    <svg className="w-4 h-4 mr-2 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                    </svg>
-                                    <span>Avery 8371 format</span>
-                                </li>
-                                <li className="flex items-center">
-                                    <svg className="w-4 h-4 mr-2 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                    </svg>
-                                    <span>10 cards per sheet</span>
-                                </li>
-                                <li className="flex items-center">
-                                    <svg className="w-4 h-4 mr-2 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                    </svg>
-                                    <span>US Letter size</span>
-                                </li>
+                            <h4 className="font-semibold text-gray-900 mb-1">PDF Specifications</h4>
+                            <ul className="text-sm text-gray-600 space-y-1">
+                                <li>• Format: Avery 8371 (10 cards per sheet)</li>
+                                <li>• Paper: US Letter (8.5" × 11")</li>
+                                <li>• Card Size: 3.5" × 2" (Standard)</li>
+                                <li>• Layout: 2 columns × 5 rows</li>
                             </ul>
                         </div>
                     </div>
                 </div>
 
-                {/* Print Quality */}
+                {/* Print Instructions */}
                 <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
                     <div className="flex items-start space-x-3">
                         <div className="flex-shrink-0">
                             <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                                 <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                                 </svg>
                             </div>
                         </div>
                         <div className="flex-1">
-                            <h4 className="font-semibold text-gray-900 mb-3">Print Ready</h4>
-                            <ul className="space-y-2 text-sm text-gray-600">
-                                <li className="flex items-start">
-                                    <svg className="w-4 h-4 mr-2 mt-0.5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                    </svg>
-                                    <span>Ready to print on card stock</span>
-                                </li>
-                                <li className="flex items-start">
-                                    <svg className="w-4 h-4 mr-2 mt-0.5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                    </svg>
-                                    <span>High-quality resolution (300 DPI)</span>
-                                </li>
-                                <li className="flex items-start">
-                                    <svg className="w-4 h-4 mr-2 mt-0.5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                    </svg>
-                                    <span>What you see is what you print</span>
-                                </li>
+                            <h4 className="font-semibold text-gray-900 mb-1">Printing Tips</h4>
+                            <ul className="text-sm text-gray-600 space-y-1">
+                                <li>• Use Avery 8371 perforated sheets</li>
+                                <li>• Print at 100% scale (no shrinking)</li>
+                                <li>• Use color printer for best results</li>
+                                <li>• Check alignment with test print</li>
                             </ul>
                         </div>
                     </div>
@@ -240,19 +214,19 @@ export const PreviewAndGenerate = ({
             </div>
 
             {/* Action Buttons */}
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center pt-4 border-t">
                 <button
                     onClick={onBack}
                     disabled={isGenerating}
-                    className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                    className="px-6 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
-                    ← Back to Layouts
+                    ← Back to Form
                 </button>
 
                 <button
                     onClick={handleGeneratePDF}
-                    disabled={isGenerating || previewLoading || !!previewError}
-                    className="px-8 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center space-x-2"
+                    disabled={isGenerating || !injectedHTML}
+                    className="px-8 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl flex items-center space-x-2"
                 >
                     {isGenerating ? (
                         <>
@@ -262,12 +236,17 @@ export const PreviewAndGenerate = ({
                     ) : (
                         <>
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
                             <span>Generate PDF (10 Cards)</span>
                         </>
                     )}
                 </button>
+            </div>
+
+            {/* Help Text */}
+            <div className="text-center text-sm text-gray-500">
+                <p>Your PDF will contain 10 business cards ready to print on Avery 8371 sheets</p>
             </div>
         </div>
     );
