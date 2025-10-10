@@ -28,7 +28,7 @@ export function calculateAvery8371Positions(): CardPosition[] {
 
     // Avery 8371 margins in mm - ADJUSTED based on print test
     const MARGIN_TOP = 9.525;   // 0.375" (3/8") - REDUCED by 1/8" from print test
-    const MARGIN_LEFT = 12.6;   // 0.5" from left edge
+    const MARGIN_LEFT = 12.5;   // 0.5" from left edge
 
     // Small gaps for perforation lines
     const GAP_X = 12.7;   // 0.5" horizontal gap between columns

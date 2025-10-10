@@ -15,7 +15,9 @@ export const PreviewAndGenerate = ({
                                        formData,
                                        isGenerating,
                                        onBack,
-                                       onGenerate
+                                       onGenerateStart,
+                                       onGenerateSuccess,
+                                       onGenerateError
                                    }: PreviewAndGenerateProps) => {
 
     const [injectedHTML, setInjectedHTML] = useState<string>('');
@@ -65,36 +67,46 @@ export const PreviewAndGenerate = ({
 
     // UPDATED: Capture the existing preview element instead of re-rendering
     const handleGeneratePDF = async () => {
+        console.log('🎴 ========================================');
+        console.log('🎴 User clicked Generate PDF');
+        console.log('🎴 ========================================');
+
+        // Start generation - set loading state
+        onGenerateStart();
+
         try {
-            console.log('🎴 ========================================');
-            console.log('🎴 User clicked Generate PDF');
-            console.log('🎴 NEW: Capturing existing preview element');
-            console.log('🎴 ========================================');
-
-            // Call parent's onGenerate to set isGenerating state
-            onGenerate();
-
             console.log('📄 Generating PDF by capturing .business-card-preview element');
 
-            // NEW APPROACH: Capture the existing preview element
+            // Capture the existing preview element
             const pdfDataUri = await generateBusinessCardPDFFromExistingPreview(
                 10, // cardCount
                 '.business-card-preview' // selector for the preview element
             );
+
+            console.log('✅ PDF generation successful');
 
             // Create download
             console.log('💾 Creating download link');
             const link = document.createElement('a');
             link.href = pdfDataUri;
             link.download = `business-cards-${Date.now()}.pdf`;
+            document.body.appendChild(link);
             link.click();
+            document.body.removeChild(link);
 
-            console.log('✅ PDF download initiated successfully');
+            console.log('✅ PDF download initiated');
             console.log('🎴 ========================================');
 
+            // Success - update state to show completion
+            onGenerateSuccess();
+
         } catch (error) {
+            console.error('❌ ========================================');
             console.error('❌ PDF generation failed:', error);
-            alert('❌ Failed to generate PDF. Please try again.');
+            console.error('❌ ========================================');
+
+            const errorMessage = error instanceof Error ? error.message : 'Failed to generate PDF. Please try again.';
+            onGenerateError(errorMessage);
         }
     };
 

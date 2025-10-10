@@ -145,7 +145,9 @@ export interface PreviewAndGenerateProps {
     formData: BusinessCardData;   // Contains logo in formData.logo.logoDataUri
     isGenerating: boolean;
     onBack: () => void;
-    onGenerate: () => void;
+    onGenerateStart: () => void;      // Called when generation starts
+    onGenerateSuccess: () => void;    // Called when PDF generated successfully
+    onGenerateError: (error: string) => void;
 }
 
 export interface StepIndicatorProps {

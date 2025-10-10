@@ -133,19 +133,20 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ step, label, isActive, is
     <div className="flex items-center space-x-2">
         <div className={`
             w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
-            ${isActive ? 'bg-purple-600 text-white' :
-            isCompleted ? 'bg-green-500 text-white' :
+            ${isCompleted ? 'bg-green-500 text-white' :
+            isActive ? 'bg-purple-600 text-white' :
                 'bg-gray-200 text-gray-600'}
         `}>
             {isCompleted ? '✓' : step}
         </div>
-        <span className={`text-sm ${isActive ? 'text-purple-600 font-medium' : 'text-gray-600'}`}>
+        <span
+            className={`text-sm ${isCompleted ? 'text-green-600 font-medium' : isActive ? 'text-purple-600 font-medium' : 'text-gray-600'}`}>
             {label}
         </span>
     </div>
 );
 
-export const BusinessCardModal: React.FC<BusinessCardModalProps> = ({ logo, isOpen, onClose }) => {
+export const BusinessCardModal: React.FC<BusinessCardModalProps> = ({logo, isOpen, onClose}) => {
     console.log('🎨 BusinessCardModal - Render with isOpen:', isOpen, 'logo:', !!logo);
 
     if (logo) {
@@ -164,6 +165,7 @@ export const BusinessCardModal: React.FC<BusinessCardModalProps> = ({ logo, isOp
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [themeFilter, setThemeFilter] = useState('all');
+    const [pdfGenerated, setPdfGenerated] = useState(false);
 
     // ✨ MODIFIED: Form data now uses getInitialFormData helper (ONLY CHANGE TO EXISTING CODE)
     const [formData, setFormData] = useState<BusinessCardData>(
@@ -265,22 +267,32 @@ export const BusinessCardModal: React.FC<BusinessCardModalProps> = ({ logo, isOp
             setSelectedLayout(null);
             setError(null);
             setIsGenerating(false);
+            setPdfGenerated(false);
         }
     }, [isOpen]);
 
-    // Reset isGenerating when PDF generation completes
     useEffect(() => {
-        if (isGenerating) {
-            // PDF generation happens in PreviewAndGenerate
-            // Reset after a delay to allow download to complete
-            const timer = setTimeout(() => {
-                console.log('✅ Resetting isGenerating state');
-                setIsGenerating(false);
-            }, 3000);
-
-            return () => clearTimeout(timer);
+        // When user leaves the preview step (goes back to layout or info),
+        // reset the PDF completion status since they're making changes
+        if (currentStep !== 'preview') {
+            console.log('🔄 Left preview step - resetting PDF completion status');
+            setPdfGenerated(false);
         }
-    }, [isGenerating]);
+    }, [currentStep]);
+
+    // // Reset isGenerating when PDF generation completes
+    // useEffect(() => {
+    //     if (isGenerating) {
+    //         // PDF generation happens in PreviewAndGenerate
+    //         // Reset after a delay to allow download to complete
+    //         const timer = setTimeout(() => {
+    //             console.log('✅ Resetting isGenerating state');
+    //             setIsGenerating(false);
+    //         }, 3000);
+    //
+    //         return () => clearTimeout(timer);
+    //     }
+    // }, [isGenerating]);
 
     // ============================================================================
     // ALL EXISTING HANDLERS - PRESERVED ORIGINAL
@@ -362,36 +374,29 @@ export const BusinessCardModal: React.FC<BusinessCardModalProps> = ({ logo, isOp
         }
     };
 
-    const handleGenerate = async () => {
-        if (!selectedLayout) {
-            console.error('❌ No layout selected');
-            setError('Please select a layout');
-            return;
-        }
+    const handleGenerateStart = () => {
+        console.log('🎴 PDF generation starting...');
+        setIsGenerating(true);
+        setError(null);
+    };
 
-        try {
-            console.log('🎴 ========================================');
-            console.log('🎴 BusinessCardModal - handleGenerate called');
-            console.log('🎴 ========================================');
-            console.log('📋 Selected layout:', selectedLayout);
-            console.log('📋 Form data present:', !!formData);
-            console.log('📋 Logo present:', !!logo);
+    const handleGenerateSuccess = () => {
+        console.log('✅ PDF generation completed successfully');
+        setIsGenerating(false);
+        setPdfGenerated(true);
+    };
 
-            setIsGenerating(true);
-            setError(null);
+    const handleGenerateError = (errorMessage: string) => {
+        console.error('❌ PDF generation failed:', errorMessage);
+        setError(errorMessage);
+        setIsGenerating(false);
+        setPdfGenerated(false);
+    };
 
-            // Note: Actual PDF generation happens in PreviewAndGenerate component
-            // This just sets the loading state
-            console.log('✅ Generation initiated - PreviewAndGenerate will handle PDF creation');
-
-        } catch (err) {
-            console.error('❌ ========================================');
-            console.error('❌ PDF generation error');
-            console.error('❌ ========================================');
-            console.error('❌ Error details:', err);
-            setError('Failed to generate PDF. Please try again.');
-            setIsGenerating(false);
-        }
+    const handlePdfComplete = () => {
+        console.log('✅ PDF generation completed successfully');
+        setIsGenerating(false);
+        setPdfGenerated(true);
     };
 
     if (!isOpen) return null;
@@ -437,7 +442,7 @@ export const BusinessCardModal: React.FC<BusinessCardModalProps> = ({ logo, isOp
                             step={3}
                             label="Preview"
                             isActive={currentStep === 'preview'}
-                            isCompleted={false}
+                            isCompleted={pdfGenerated}
                         />
                     </div>
                 </div>
@@ -485,11 +490,13 @@ export const BusinessCardModal: React.FC<BusinessCardModalProps> = ({ logo, isOp
 
                             {currentStep === 'preview' && (
                                 <PreviewAndGenerate
-                                    selectedLayout={selectedLayout}    // Changed from selectedTemplate
-                                    formData={formData}                // Contains logo in formData.logo
+                                    selectedLayout={selectedLayout}
+                                    formData={formData}
                                     isGenerating={isGenerating}
                                     onBack={() => setCurrentStep('layout')}
-                                    onGenerate={handleGenerate}
+                                    onGenerateStart={handleGenerateStart}
+                                    onGenerateSuccess={handleGenerateSuccess}
+                                    onGenerateError={handleGenerateError}
                                 />
                             )}
                         </div>
