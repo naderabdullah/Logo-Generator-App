@@ -175,6 +175,15 @@ export const BusinessCardModal: React.FC<BusinessCardModalProps> = ({logo, isOpe
     // Layout step pagination state - PRESERVED ORIGINAL
     const [layoutCurrentPage, setLayoutCurrentPage] = useState(1);
 
+    useEffect(() => {
+        // When search term or theme filter changes, reset to page 1
+        // This prevents showing empty pages when filtered results have fewer pages
+        console.log('🔄 BusinessCardModal - Filter changed, resetting pagination to page 1');
+        console.log('   Search term:', searchTerm);
+        console.log('   Theme filter:', themeFilter);
+        setLayoutCurrentPage(1);
+    }, [searchTerm, themeFilter]);
+
     // ============================================================================
     // 🧪 TEST MODE LOGGING - NEW ADDITION
     // ============================================================================
@@ -268,6 +277,9 @@ export const BusinessCardModal: React.FC<BusinessCardModalProps> = ({logo, isOpe
             setError(null);
             setIsGenerating(false);
             setPdfGenerated(false);
+            setSearchTerm('');
+            setThemeFilter('all');
+            setLayoutCurrentPage(1);
         }
     }, [isOpen]);
 
