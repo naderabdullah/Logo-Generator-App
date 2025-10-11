@@ -1,38 +1,18 @@
 // FILE: types/businessCard.ts
-// PURPOSE: Updated business card types with logo props for layout selection
-// CHANGES: Added logo prop to BusinessCardLayoutSelectionProps interface
+// PURPOSE: Business card type definitions - CSS/HTML implementation only
+// CHANGES: Removed all zone-based types (BusinessCardZone, BusinessCardTemplate, etc.)
+//          Kept only types needed for CSS/HTML implementation
 
-// Import existing types from the logo system
 import { StoredLogo } from '@/app/utils/indexedDBUtils';
 
-export interface BusinessCardProfile {
-    id: string;
-    name: string;
-    description: string;
-    thumbnail?: string;
-    template: BusinessCardTemplate;
-    isDefault: boolean;
-}
+// ============================================================================
+// CORE DATA TYPES - Used by CSS/HTML Implementation
+// ============================================================================
 
-export interface BusinessCardTemplate {
-    cardWidth: 88.9;   // Fixed: 3.5" in mm (was 50.8)
-    cardHeight: 50.8;  // Fixed: 2" in mm (was 88.9)
-    zones: BusinessCardZone[];
-    globalStyles: GlobalStyles;
-}
-
-export interface BusinessCardZone {
-    id: string;
-    type: 'logo' | 'company-name' | 'personal-info' | 'contact-block' | 'custom-text';
-    position: { x: number; y: number }; // mm from card top-left (0-50.8, 0-88.9)
-    dimensions: { width: number; height: number }; // mm
-    alignment: 'left' | 'center' | 'right';
-    styles: ZoneStyles;
-    logoSettings?: LogoSettings;
-    fieldMapping?: FieldMapping;
-    contactBlock?: ContactBlockSettings;
-}
-
+/**
+ * Business card contact and company information
+ * Used to populate the CSS/HTML layouts
+ */
 export interface BusinessCardData {
     companyName: string;
     name: string;
@@ -53,115 +33,66 @@ export interface BusinessCardData {
     socialMedia: ContactField[];
 }
 
+/**
+ * Individual contact field with label and priority
+ */
 export interface ContactField {
     value: string;
-    label?: string; // 'Mobile', 'Office', 'Fax'
+    label?: string; // 'Mobile', 'Office', 'Fax', 'Work', etc.
     isPrimary: boolean;
 }
 
+/**
+ * Social media field with platform information
+ */
 export interface SocialMediaField {
-    platform: string; // 'LinkedIn', 'Twitter', 'Instagram'
+    platform: string; // 'LinkedIn', 'Twitter', 'Instagram', 'Facebook'
     handle: string;
     url: string;
 }
 
-export interface LogoSettings {
-    maintainAspectRatio: boolean;
-    fitMode: 'contain' | 'cover' | 'fill';
-    maxWidth?: number;
-    maxHeight?: number;
-}
-
-export interface FieldMapping {
-    primary?: string;
-    secondary?: string[];
-    fallbackBehavior: 'hide' | 'collapse' | 'merge';
-}
-
-export interface ContactBlockSettings {
-    fields: ('phones' | 'emails' | 'websites' | 'social')[];
-    separator: string;
-    maxLines: number;
-    overflow: 'wrap' | 'truncate' | 'scale';
-}
-
-export interface GlobalStyles {
-    fontFamily: 'helvetica' | 'times' | 'courier';
-    backgroundColor?: string;
-    borderColor?: string;
-    borderWidth?: number;
-    borderRadius?: number;
-    padding: number;
-}
-
-export interface ZoneStyles {
-    fontSize?: number;
-    fontWeight?: 'normal' | 'bold';
-    fontStyle?: 'normal' | 'italic';
-    color?: string;
-    lineHeight?: number;
-    textTransform?: 'none' | 'uppercase' | 'lowercase';
-}
-
+/**
+ * Card position on Avery 8371 sheet
+ * Used for PDF layout calculations
+ */
 export interface CardPosition {
-    x: number;
-    y: number;
-    cardNumber: number;
+    x: number;      // X position in mm
+    y: number;      // Y position in mm
+    cardNumber: number;  // Card number (1-10)
 }
 
-// Component prop types
-export interface TemplatePreviewProps {
-    template?: BusinessCardTemplate;
-    templateId?: string;  // Add this prop
-    cardData: BusinessCardData;
-    scale?: number;
-}
+// ============================================================================
+// COMPONENT PROP TYPES - For Business Card Wizard
+// ============================================================================
 
+/**
+ * Main business card modal props
+ */
 export interface BusinessCardModalProps {
     logo?: StoredLogo;
     isOpen: boolean;
     onClose: () => void;
 }
 
+/**
+ * Step 1: Contact Information Form
+ */
 export interface ContactInfoFormProps {
     formData: BusinessCardData;
     setFormData: (data: BusinessCardData) => void;
     onNext: () => void;
     onAddField: (fieldType: 'phones' | 'emails' | 'websites') => void;
     onRemoveField: (fieldType: 'phones' | 'emails' | 'websites', index: number) => void;
-    logo?: StoredLogo; // ADDED: Logo prop for preview functionality
+    logo?: StoredLogo;
 }
 
-export interface TemplateSelectionProps {
-    selectedTemplate: string;
-    setSelectedTemplate: (templateId: string) => void;
-    formData: BusinessCardData;
-    onBack: () => void;
-    onNext: () => void;
-}
-
-export interface PreviewAndGenerateProps {
-    selectedLayout: string;       // CHANGED: from selectedTemplate, this is the catalogId (e.g., "BC-001")
-    formData: BusinessCardData;   // Contains logo in formData.logo.logoDataUri
-    isGenerating: boolean;
-    onBack: () => void;
-    onGenerateStart: () => void;      // Called when generation starts
-    onGenerateSuccess: () => void;    // Called when PDF generated successfully
-    onGenerateError: (error: string) => void;
-}
-
-export interface StepIndicatorProps {
-    step: number;
-    label: string;
-    isActive: boolean;
-    isCompleted: boolean;
-}
-
-// ADDED: BusinessCardLayoutSelection props with logo support
+/**
+ * Step 2: Layout Selection (100 CSS/HTML layouts)
+ */
 export interface BusinessCardLayoutSelectionProps {
-    selectedLayout: string | null;
+    selectedLayout: string | null;  // catalogId (e.g., "BC001")
     onLayoutSelect: (catalogId: string) => void;
-    formData: any;
+    formData: BusinessCardData;
     onNext: () => void;
     onBack: () => void;
     searchTerm?: string;
@@ -171,5 +102,28 @@ export interface BusinessCardLayoutSelectionProps {
     externalCurrentPage?: number;
     onPageChange?: (page: number) => void;
     hideFooter?: boolean;
-    logo?: StoredLogo | null; // ADDED: Logo prop for injection in enlarged modal
+    logo?: StoredLogo | null;
+}
+
+/**
+ * Step 3: Preview and Generate PDF
+ */
+export interface PreviewAndGenerateProps {
+    selectedLayout: string;  // catalogId from businessCardLayouts.ts
+    formData: BusinessCardData;
+    isGenerating: boolean;
+    onBack: () => void;
+    onGenerateStart: () => void;
+    onGenerateSuccess: () => void;
+    onGenerateError: (error: string) => void;
+}
+
+/**
+ * Step indicator component props
+ */
+export interface StepIndicatorProps {
+    step: number;
+    label: string;
+    isActive: boolean;
+    isCompleted: boolean;
 }
