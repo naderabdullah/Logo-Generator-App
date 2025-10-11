@@ -225,52 +225,53 @@ export const BusinessCardLayoutSelection = ({
     return (
         <div className="flex flex-col h-full">
             {/* NEW: Sticky Compact Header */}
-            <div className="sticky top-0 bg-white z-10 border-b border-gray-200 shadow-sm px-6 py-3 space-y-3">
-                {/* Filters */}
-                <div className="flex flex-col sm:flex-row gap-3">
-                    {/* Search */}
-                    <div className="flex-1">
-                        <div className="relative">
-                            <input
-                                type="text"
-                                placeholder="Search layouts..."
-                                value={searchTerm}
-                                onChange={(e) => handleSearchChange(e.target.value)}
-                                className="w-full px-3 py-1.5 pr-8 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                            />
-                            {searchTerm.length > 0 && (
-                                <button
-                                    onClick={() => handleSearchChange('')}
-                                    className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-full text-xs"
-                                >
-                                    ×
-                                </button>
-                            )}
+            <div className="sticky top-0 bg-white z-10 border-b border-gray-200 shadow-sm px-6 py-3">
+                {/* Single Row: Results + Filters */}
+                <div className="flex items-center gap-4">
+                    {/* Results Info - Left aligned */}
+                    <div className="text-sm text-gray-600 whitespace-nowrap">
+                        Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, paginatedData.totalItems)} of {paginatedData.totalItems} layouts
+                    </div>
+
+                    {/* Filters - Right side */}
+                    <div className="flex-1 flex items-center gap-3 justify-end">
+                        {/* Search */}
+                        <div className="flex-1 max-w-md">
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    placeholder="Search layouts..."
+                                    value={searchTerm}
+                                    onChange={(e) => handleSearchChange(e.target.value)}
+                                    className="w-full px-4 py-2 pr-8 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                />
+                                {searchTerm.length > 0 && (
+                                    <button
+                                        onClick={() => handleSearchChange('')}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-full text-sm"
+                                    >
+                                        ×
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Theme Filter */}
+                        <div>
+                            <select
+                                value={themeFilter}
+                                onChange={(e) => handleThemeFilterChange(e.target.value)}
+                                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            >
+                                <option value="all">All Themes</option>
+                                {getAllThemes().map(theme => (
+                                    <option key={theme} value={theme}>
+                                        {theme.charAt(0).toUpperCase() + theme.slice(1)}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
                     </div>
-
-                    {/* Theme Filter */}
-                    <div>
-                        <select
-                            value={themeFilter}
-                            onChange={(e) => handleThemeFilterChange(e.target.value)}
-                            className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        >
-                            <option value="all">All Themes</option>
-                            {getAllThemes().map(theme => (
-                                <option key={theme} value={theme}>
-                                    {theme.charAt(0).toUpperCase() + theme.slice(1)}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
-
-                {/* Results Info */}
-                <div className="text-xs text-gray-600">
-                    Showing {paginatedData.layouts.length} of {paginatedData.totalItems} layouts
-                    {searchTerm && ` for "${searchTerm}"`}
-                    {themeFilter !== 'all' && ` in ${themeFilter} theme`}
                 </div>
             </div>
             <div className="flex-1 overflow-y-auto space-y-6 py-4">
