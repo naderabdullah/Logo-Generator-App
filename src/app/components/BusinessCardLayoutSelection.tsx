@@ -224,10 +224,10 @@ export const BusinessCardLayoutSelection = ({
 
     return (
         <div className="flex flex-col h-full">
-            {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto space-y-6 pb-20">
+            {/* NEW: Sticky Compact Header */}
+            <div className="sticky top-0 bg-white z-10 border-b border-gray-200 shadow-sm px-6 py-3 space-y-3">
                 {/* Filters */}
-                <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex flex-col sm:flex-row gap-3">
                     {/* Search */}
                     <div className="flex-1">
                         <div className="relative">
@@ -236,12 +236,12 @@ export const BusinessCardLayoutSelection = ({
                                 placeholder="Search layouts..."
                                 value={searchTerm}
                                 onChange={(e) => handleSearchChange(e.target.value)}
-                                className="w-full px-4 py-2 pr-8 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                className="w-full px-3 py-1.5 pr-8 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                             />
                             {searchTerm.length > 0 && (
                                 <button
                                     onClick={() => handleSearchChange('')}
-                                    className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-full text-sm"
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-full text-xs"
                                 >
                                     ×
                                 </button>
@@ -254,7 +254,7 @@ export const BusinessCardLayoutSelection = ({
                         <select
                             value={themeFilter}
                             onChange={(e) => handleThemeFilterChange(e.target.value)}
-                            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                         >
                             <option value="all">All Themes</option>
                             {getAllThemes().map(theme => (
@@ -267,12 +267,13 @@ export const BusinessCardLayoutSelection = ({
                 </div>
 
                 {/* Results Info */}
-                <div className="text-sm text-gray-600">
+                <div className="text-xs text-gray-600">
                     Showing {paginatedData.layouts.length} of {paginatedData.totalItems} layouts
                     {searchTerm && ` for "${searchTerm}"`}
                     {themeFilter !== 'all' && ` in ${themeFilter} theme`}
                 </div>
-
+            </div>
+            <div className="flex-1 overflow-y-auto space-y-6 py-4">
                 {/* Layout Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {paginatedData.layouts.map(layout => (
@@ -286,14 +287,15 @@ export const BusinessCardLayoutSelection = ({
                             onClick={() => handleCardClick(layout)}
                         >
                             {/* Preview */}
-                            <div className="mb-4 bg-gray-100 rounded-lg p-4 flex items-center justify-center overflow-hidden">
+                            <div
+                                className="mb-4 bg-gray-100 rounded-lg p-4 flex items-center justify-center overflow-hidden">
                                 <div
                                     className="business-card-preview shadow-sm"
                                     style={{
                                         transform: 'scale(0.85)',
                                         transformOrigin: 'center',
                                     }}
-                                    dangerouslySetInnerHTML={{ __html: layout.jsx }}
+                                    dangerouslySetInnerHTML={{__html: layout.jsx}}
                                 />
                             </div>
 
@@ -325,7 +327,8 @@ export const BusinessCardLayoutSelection = ({
                                 {layout.metadata?.features && layout.metadata.features.length > 0 && (
                                     <div className="flex flex-wrap gap-1 mt-2">
                                         {layout.metadata.features.slice(0, 3).map((feature, idx) => (
-                                            <span key={idx} className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded">
+                                            <span key={idx}
+                                                  className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded">
                                                 {feature.replace('-', ' ')}
                                             </span>
                                         ))}
@@ -458,7 +461,8 @@ export const BusinessCardLayoutSelection = ({
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
                     <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
                         {/* Modal Header */}
-                        <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex justify-between items-center z-10">
+                        <div
+                            className="sticky top-0 bg-white border-b border-gray-200 p-4 flex justify-between items-center z-10">
                             <div className="flex-1">
                                 <h2 className="text-xl font-bold text-gray-900">{selectedCard.name}</h2>
                                 <p className="text-sm text-gray-600">
@@ -474,7 +478,8 @@ export const BusinessCardLayoutSelection = ({
                                     title="Previous"
                                 >
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                              d="M15 19l-7-7 7-7"/>
                                     </svg>
                                 </button>
 
@@ -485,7 +490,8 @@ export const BusinessCardLayoutSelection = ({
                                     title="Next"
                                 >
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                              d="M9 5l7 7-7 7"/>
                                     </svg>
                                 </button>
 
@@ -495,7 +501,8 @@ export const BusinessCardLayoutSelection = ({
                                     title="Close"
                                 >
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                              d="M6 18L18 6M6 6l12 12"/>
                                     </svg>
                                 </button>
                             </div>
@@ -505,12 +512,15 @@ export const BusinessCardLayoutSelection = ({
                         <div className="p-6 space-y-6">
                             {/* Preview Mode Indicator */}
                             <div className="flex justify-center">
-                                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-full text-sm">
-                                    <span className={`font-medium ${previewMode === 'generic' ? 'text-purple-600' : 'text-gray-500'}`}>
+                                <div
+                                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-full text-sm">
+                                    <span
+                                        className={`font-medium ${previewMode === 'generic' ? 'text-purple-600' : 'text-gray-500'}`}>
                                         Generic
                                     </span>
                                     <span className="text-gray-400">•</span>
-                                    <span className={`font-medium ${previewMode === 'injected' ? 'text-purple-600' : 'text-gray-500'}`}>
+                                    <span
+                                        className={`font-medium ${previewMode === 'injected' ? 'text-purple-600' : 'text-gray-500'}`}>
                                         Client's Info
                                     </span>
                                 </div>
@@ -538,10 +548,13 @@ export const BusinessCardLayoutSelection = ({
                                     <h4 className="font-medium mb-2">Layout Details</h4>
                                     <div className="space-y-2 text-sm">
                                         <div><span className="font-medium">Theme:</span> {selectedCard.theme}</div>
-                                        <div><span className="font-medium">Style:</span> {selectedCard.style.replace('-', ' ')}</div>
+                                        <div><span
+                                            className="font-medium">Style:</span> {selectedCard.style.replace('-', ' ')}
+                                        </div>
                                         <div>
                                             <span className="font-medium">Description:</span><br/>
-                                            <span className="inline-block min-h-[2.5rem] leading-5">{selectedCard.description}</span>
+                                            <span
+                                                className="inline-block min-h-[2.5rem] leading-5">{selectedCard.description}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -567,7 +580,7 @@ export const BusinessCardLayoutSelection = ({
                                                 <div
                                                     key={idx}
                                                     className="w-8 h-8 rounded border shadow-sm"
-                                                    style={{ backgroundColor: color }}
+                                                    style={{backgroundColor: color}}
                                                     title={color}
                                                 />
                                             ))}
@@ -580,7 +593,8 @@ export const BusinessCardLayoutSelection = ({
                                         <h4 className="font-medium mb-2">Typography</h4>
                                         <div className="space-y-1">
                                             {selectedCard.metadata.fonts.map((font, idx) => (
-                                                <span key={idx} className="text-sm bg-gray-100 px-2 py-1 rounded mr-2 inline-block">
+                                                <span key={idx}
+                                                      className="text-sm bg-gray-100 px-2 py-1 rounded mr-2 inline-block">
                                                     {font}
                                                 </span>
                                             ))}
@@ -604,9 +618,10 @@ export const BusinessCardLayoutSelection = ({
                                             <div className={`block w-14 h-8 rounded-full transition-colors ${
                                                 previewMode === 'injected' ? 'bg-purple-600' : 'bg-gray-300'
                                             }`}></div>
-                                            <div className={`absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform ${
-                                                previewMode === 'injected' ? 'translate-x-6' : 'translate-x-0'
-                                            }`}></div>
+                                            <div
+                                                className={`absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform ${
+                                                    previewMode === 'injected' ? 'translate-x-6' : 'translate-x-0'
+                                                }`}></div>
                                         </div>
                                         <div className="ml-3 text-sm font-medium text-gray-700">
                                             {previewMode === 'injected' ? `Client's Info` : 'Generic'}

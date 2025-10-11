@@ -568,7 +568,7 @@ export const ContactInfoForm = ({
                     <button
                         onClick={onNext}
                         disabled={!isFormValid()}
-                        className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-8 py-3 rounded-lg font-medium transition-colors"
+                        className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-8 py-3 mb-4 rounded-lg font-medium transition-colors"
                     >
                         Choose Business Card →
                     </button>
