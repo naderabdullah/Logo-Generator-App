@@ -1674,7 +1674,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
     background: rgba(0, 255, 65, 0.1);
     transform: rotate(45deg);
   "></div>
-  <div style="padding: 0.16in; position: relative; z-index: 2; height: 100%;">
+  <div style="padding: 0.12in; position: relative; z-index: 2; height: 100%;">
     <div style="
       display: flex;
       flex-direction: column;
@@ -1686,7 +1686,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
           font-size: 14px;
           font-weight: 700;
           color: #00ff41;
-          margin: 0 0 3px 0;
+          margin: 0 0 2px 0;
           text-transform: uppercase;
           letter-spacing: 2px;
           text-shadow: 0 0 10px #00ff41;
