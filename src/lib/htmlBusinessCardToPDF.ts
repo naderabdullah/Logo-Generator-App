@@ -15,8 +15,9 @@ import type { CardPosition } from '../../types/businessCard';
 // Business card dimensions (Avery 8371 standard)
 const CARD_WIDTH_MM = 88.9;   // 3.5 inches
 const CARD_HEIGHT_MM = 50.8;  // 2 inches
-const CARD_WIDTH_PX = 336;    // At 96 DPI (3.5" × 96)
-const CARD_HEIGHT_PX = 192;   // At 96 DPI (2" × 96)
+// 1.75 to 1 ratio must be maintained
+const CARD_WIDTH_PX = 1050;    // changed from 336
+const CARD_HEIGHT_PX = 600;   // changed from 192
 
 // ============================================================================
 // NEW APPROACH: CAPTURE EXISTING PREVIEW
@@ -87,7 +88,7 @@ async function captureExistingPreview(previewSelector: string = '.business-card-
         // Capture with html-to-image for better CSS gradient support
         const dataUrl = await toPng(previewElement, {
             quality: 1.0,
-            pixelRatio: 3,  // High quality
+            pixelRatio: 5,  // High quality
             cacheBust: true,
             width: captureWidth,
             height: captureHeight,
@@ -275,7 +276,7 @@ function placeCardsOnPDF(
                     CARD_WIDTH_MM,
                     CARD_HEIGHT_MM,
                     `card-${position.cardNumber}`,
-                    'FAST' // Compression
+                    'NONE' // Compression
                 );
 
                 successCount++;
