@@ -1674,7 +1674,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
     background: rgba(0, 255, 65, 0.1);
     transform: rotate(45deg);
   "></div>
-  <div style="padding: 0.12in; position: relative; z-index: 2; height: 100%;">
+  <div style="padding: 0.12in 0.12in 0.15in 0.12in; position: relative; z-index: 2; height: 100%; box-sizing: border-box;">
     <div style="
       display: flex;
       flex-direction: column;
@@ -1693,50 +1693,64 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
           line-height: 1;
         ">CYBER NEXUS</h1>
         <div class="bc-contact-slogan" style="
-          font-size: 7px;
-          color: #ff0080;
+          font-size: 9px;
+          color: #ff0099;
           margin-bottom: 6px;
           text-transform: uppercase;
           letter-spacing: 1px;
-          text-shadow: 0 0 5px #ff0080;
-        ">FUTURE TECH SYSTEMS</div>
-        <div class="logo-placeholder" style="
-          width: 0.6in;
-          height: 0.4in;
-          border: 1px solid #00ff41;
-          background: rgba(0, 255, 65, 0.05);
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 6px;
-          color: #00ff41;
-          font-weight: 700;
-          margin-bottom: 0;
-          margin-top: 0.1in;
-          text-shadow: 0 0 5px #00ff41;
-        ">LOGO</div>
-      </div>
-      <div>
-        <h2 class="bc-contact-name" style="
-          font-size: 11px;
-          color: #ffffff;
-          margin: 0 0 2px 0;
-          font-weight: 700;
-          letter-spacing: 1px;
-        ">ALEX STORM</h2>
-        <h3 class="bc-contact-title" style="
-          font-size: 8px;
-          color: #ff0080;
-          margin: 0 0 6px 0;
+          text-shadow: 0 0 10px #ff0099, 0 0 20px #ff0099;
           font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 1px;
-          text-shadow: 0 0 5px #ff0080;
-        ">CHIEF ARCHITECT</h3>
+        ">FUTURE TECH SYSTEMS</div>
+        <div style="
+          display: inline-block;
+          background: #ffffff;
+          border: 1px solid #00ff41;
+          border-radius: 4px;
+          box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+          padding: 6px;
+          margin-top: 0.1in;
+        ">
+          <div class="logo-placeholder" style="
+            width: 0.65in;
+            height: 0.45in;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 6px;
+            color: #00ff41;
+            font-weight: 700;
+          ">LOGO</div>
+        </div>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 10px;">
+        <div style="flex-shrink: 0;">
+          <h2 class="bc-contact-name" style="
+            font-size: 11px;
+            color: #ffffff;
+            margin: 0 0 2px 0;
+            font-weight: 700;
+            letter-spacing: 1px;
+          ">ALEX STORM</h2>
+          <h3 class="bc-contact-title" style="
+            font-size: 9px;
+            color: #ff0099;
+            margin: 0;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px #ff0099, 0 0 20px #ff0099;
+          ">CHIEF ARCHITECT</h3>
+        </div>
         <div class="bc-contact-info-block" style="
           font-size: 8px;
-          color: #00ff41;
+          color: #0a0a0a;
           line-height: 1.2;
+          background: #ffffff;
+          border: 1px solid #00ff41;
+          border-radius: 4px;
+          padding: 6px 8px;
+          box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+          flex-shrink: 0;
         ">
           <div class="bc-contact-phone" data-phone-type="mobile" style="margin-bottom: 2px;">📱 (555) 123-4567</div>
           <div class="bc-contact-email" data-email-type="primary" style="margin-bottom: 2px;">✉️ alex@cybernexus.tech</div>
