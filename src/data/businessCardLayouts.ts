@@ -24,6 +24,7 @@ export interface BusinessCardLayout {
         colors: string[];
         fonts: string[];
         features: string[];
+        allowEnlargedLogo?: boolean;
     };
 }
 
@@ -105,7 +106,8 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#ffffff', '#2d3748', '#718096', '#4a5568'],
             fonts: ['Arial'],
-            features: ['logo-left', 'contact-right', 'minimal-icons']
+            features: ['logo-left', 'contact-right', 'minimal-icons'],
+            allowEnlargedLogo: true
         }
     },
 
@@ -178,7 +180,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#ffffff', '#1a202c', '#2d3748', '#718096', '#e2e8f0'],
             fonts: ['Helvetica'],
-            features: ['center-aligned', 'thin-border', 'company-logo-top']
+            features: ['center-aligned', 'thin-border', 'company-logo-top'],
         }
     },
     {
@@ -273,7 +275,8 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#ffffff', '#0f172a', '#64748b', '#94a3b8'],
             fonts: ['Helvetica Neue'],
-            features: ['dot-grid-pattern', 'minimal-typography', 'ultra-clean']
+            features: ['dot-grid-pattern', 'minimal-typography', 'ultra-clean'],
+            allowEnlargedLogo: true,
         }
     },
 
@@ -357,7 +360,8 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#ffffff', '#1a202c', '#718096', '#4a5568'],
             fonts: ['system-ui'],
-            features: ['two-column', 'clean-spacing', 'right-logo']
+            features: ['two-column', 'clean-spacing', 'right-logo'],
+            allowEnlargedLogo: true
         }
     },
 
@@ -577,15 +581,10 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#667eea', '#764ba2', '#ffffff', '#1a202c'],
             fonts: ['Inter'],
-            features: ['grid-layout', 'gradient-border', 'modern-styling']
+            features: ['grid-layout', 'gradient-border', 'modern-styling'],
+            allowEnlargedLogo: true
         }
     },
-
-    // FILE: src/data/businessCardLayouts.ts
-// LAYOUT: BC007 - Modern Glassmorphism
-// CHANGE: Added LinkedIn social field under website
-// LOCATION: Replace existing BC007 object in BUSINESS_CARD_LAYOUTS array
-// INSTRUCTIONS: Surgical replacement of BC007 only
 
     {
         catalogId: 'BC007',
@@ -675,7 +674,9 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#667eea', '#764ba2', '#ffffff'],
             fonts: ['Inter'],
-            features: ['glassmorphism', 'backdrop-blur', 'modern-gradient', 'social-media']
+            features: ['glassmorphism', 'backdrop-blur', 'modern-gradient', 'social-media'],
+            allowEnlargedLogo: true
+
         }
     },
 
@@ -1090,7 +1091,8 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#ff4500', '#000000', '#ffffff'],
             fonts: ['Arial Black'],
-            features: ['brutalist', 'bold-borders', 'high-contrast', 'uppercase-typography']
+            features: ['brutalist', 'bold-borders', 'high-contrast', 'uppercase-typography'],
+            allowEnlargedLogo: true
         }
     },
 
@@ -1298,6 +1300,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             colors: ['#fefefe', '#0f172a', '#1e293b', '#64748b'],
             fonts: ['Georgia'],
             features: ['classic', 'serif', 'elegant', 'traditional', 'two-column-layout', 'descriptor-field']
+
         }
     },
 
@@ -1531,7 +1534,8 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#ffffff', '#ff6b6b', '#48bb78', '#a78bfa', '#2d3748'],
             fonts: ['Nunito'],
-            features: ['watercolor-effects', 'artistic', 'colorful', 'gradient-splashes', 'modern-artistic']
+            features: ['watercolor-effects', 'artistic', 'colorful', 'gradient-splashes', 'modern-artistic'],
+            allowEnlargedLogo: true
         }
     },
     {
@@ -1871,7 +1875,8 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#f8f9fa', '#e9ecef', '#d4af37', '#1a1a1a'],
             fonts: ['Playfair Display', 'Inter'],
-            features: ['marble-texture', 'luxury-gold', 'sophisticated', 'elegant-lines', 'circular-logo']
+            features: ['marble-texture', 'luxury-gold', 'sophisticated', 'elegant-lines', 'circular-logo'],
+            allowEnlargedLogo: true
         }
     },
 
@@ -2007,7 +2012,8 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#f8fafc', '#3b82f6', '#1e293b', '#475569'],
             fonts: ['Inter'],
-            features: ['tech', 'modern', 'quantum-elements', 'grid-contact', 'clean-geometric-circles', 'social-media-generic', 'vertical-logo']
+            features: ['tech', 'modern', 'quantum-elements', 'grid-contact', 'clean-geometric-circles', 'social-media-generic', 'vertical-logo'],
+            allowEnlargedLogo: true
         }
     },
     {
@@ -2109,7 +2115,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#1e40af', '#ffffff', '#1f2937', '#6b7280'],
             fonts: ['Arial'],
-            features: ['professional', 'corporate-header', 'credentials-display', 'two-column-grid', 'elevated-logo']
+            features: ['professional', 'corporate-header', 'credentials-display', 'two-column-grid', 'elevated-logo'],
         }
     },
 
@@ -2211,7 +2217,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#fbbf24', '#dc2626', '#ffffff', '#1f2937'],
             fonts: ['Arial Black'],
-            features: ['bold-colors', 'dynamic-shapes', 'high-energy', 'creative', 'slogan-field']
+            features: ['bold-colors', 'dynamic-shapes', 'high-energy', 'creative', 'slogan-field'],
         }
     },
 
@@ -2342,7 +2348,8 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#fefefe', '#fed7aa', '#f59e0b', '#ea580c', '#292524'],
             fonts: ['Inter'],
-            features: ['asymmetric-layout', 'warm-tones', 'angular-shapes', 'diagonal-stripe', 'modern-design']
+            features: ['asymmetric-layout', 'warm-tones', 'angular-shapes', 'diagonal-stripe', 'modern-design'],
+            allowEnlargedLogo: true
         }
     },
 
@@ -2441,7 +2448,8 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#ffffff', '#3b82f6', '#10b981', '#1f2937'],
             fonts: ['Inter'],
-            features: ['modern', 'geometric-shapes', 'gradient-logo', 'clean-layout', 'angular-design']
+            features: ['modern', 'geometric-shapes', 'gradient-logo', 'clean-layout', 'angular-design'],
+            allowEnlargedLogo: true
         }
     },
 
@@ -2562,7 +2570,8 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#2d3748', '#4a5568', '#718096', '#ffffff'],
             fonts: ['Abril Fatface', 'Inter'],
-            features: ['ink-splash', 'artistic', 'calligraphy', 'organic-shapes', 'social-media-generic']
+            features: ['ink-splash', 'artistic', 'calligraphy', 'organic-shapes', 'social-media-generic'],
+            allowEnlargedLogo: true
         }
     },
 
@@ -2660,7 +2669,8 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#ffffff', '#0f172a', '#64748b', '#94a3b8'],
             fonts: ['Helvetica Neue'],
-            features: ['dot-grid-pattern', 'minimal-typography', 'ultra-clean', 'two-column-layout']
+            features: ['dot-grid-pattern', 'minimal-typography', 'ultra-clean', 'two-column-layout'],
+            allowEnlargedLogo: true,
         }
     },
 
@@ -2777,7 +2787,8 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#ffffff', '#f3f4f6', '#3b82f6', '#1f2937'],
             fonts: ['Inter'],
-            features: ['asymmetric-layout', 'color-blocks', 'modern-design', 'angular-shapes']
+            features: ['asymmetric-layout', 'color-blocks', 'modern-design', 'angular-shapes'],
+            allowEnlargedLogo: true
         }
     },
 
@@ -2914,7 +2925,8 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#ffffff', '#fbbf24', '#ef4444', '#8b5cf6', '#10b981'],
             fonts: ['Inter'],
-            features: ['collage-style', 'mixed-media', 'creative-shapes', 'dashed-border', 'social-media-generic']
+            features: ['collage-style', 'mixed-media', 'creative-shapes', 'dashed-border', 'social-media-generic'],
+            allowEnlargedLogo: true
         }
     },
 
@@ -3014,14 +3026,9 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#334155', '#ffffff', '#1e293b', '#64748b'],
             fonts: ['Inter'],
-            features: ['tech', 'data-flow', 'modern', 'professional', 'location-field', 'header-logo']
+            features: ['tech', 'data-flow', 'modern', 'professional', 'location-field', 'header-logo'],
         }
     },
-
-    // FILE: src/data/businessCardLayouts.ts
-// SECTION: BC029 Layout - FIXED with bracket labels only
-// PURPOSE: Remove emojis, use ONLY bracket-style labels
-// ACTION: Replace BC029 object in BUSINESS_CARD_LAYOUTS array
 
     {
         catalogId: 'BC029',
@@ -3159,7 +3166,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#1e293b', '#10b981', '#3b82f6', '#f1f5f9'],
             fonts: ['Roboto Mono'],
-            features: ['circuit-board', 'tech-pattern', 'digital-elements', 'hardware', 'bracket-style-labels', 'dark-theme', 'no-emojis']
+            features: ['circuit-board', 'tech-pattern', 'digital-elements', 'hardware', 'bracket-style-labels', 'dark-theme', 'no-emojis'],
         }
     },
 
@@ -3277,7 +3284,9 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#ffffff', '#1f2937', '#d4af37', '#6b7280'],
             fonts: ['Playfair Display', 'Inter'],
-            features: ['monogram-logo', 'double-border', 'luxury-typography', 'elegant-spacing', 'credentials-display']
+            features: ['monogram-logo', 'double-border', 'luxury-typography', 'elegant-spacing', 'credentials-display'],
+            allowEnlargedLogo: true
+
         }
     },
 
@@ -3383,7 +3392,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#1f2937', '#ffffff', '#6b7280', '#374151'],
             fonts: ['Inter'],
-            features: ['split-layout', 'high-contrast', 'modern-typography', 'elevated-logo']
+            features: ['split-layout', 'high-contrast', 'modern-typography', 'elevated-logo'],
         }
     },
 
@@ -3474,7 +3483,8 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#ffffff', '#1f2937', '#6b7280', '#374151'],
             fonts: ['Times New Roman'],
-            features: ['legal-theme', 'double-border', 'traditional-layout', 'descriptor-field', 'multi-address']
+            features: ['legal-theme', 'double-border', 'traditional-layout', 'descriptor-field', 'multi-address'],
+            allowEnlargedLogo: true
         }
     },
 
@@ -3581,7 +3591,8 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#6366f1', '#8b5cf6', '#ec4899', '#ffffff', '#1f2937'],
             fonts: ['Inter'],
-            features: ['gradient-border', 'tech-theme', 'modern-design', 'slogan-field', 'social-media', 'gradient-logo']
+            features: ['gradient-border', 'tech-theme', 'modern-design', 'slogan-field', 'social-media', 'gradient-logo'],
+            allowEnlargedLogo: true
         }
     },
 
@@ -3660,7 +3671,8 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#ffffff', '#1a202c', '#e53e3e', '#718096'],
             fonts: ['Inter'],
-            features: ['color-blocks', 'modern-layout', 'creative', 'clean-white']
+            features: ['color-blocks', 'modern-layout', 'creative', 'clean-white'],
+            allowEnlargedLogo: true
         }
     },
 
@@ -3897,7 +3909,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
             dimensions: { width: '3.5in', height: '2in' },
             colors: ['#06b6d4', '#8b5cf6', '#ffffff', '#0f172a'],
             fonts: ['Arial Black'],
-            features: ['bold-colors', 'geometric-shapes', 'high-energy', 'creative', 'slogan-field', 'cool-tones', 'gradient-background', 'backdrop-blur']
+            features: ['bold-colors', 'geometric-shapes', 'high-energy', 'creative', 'slogan-field', 'cool-tones', 'gradient-background', 'backdrop-blur'],
         }
     }
 ];
@@ -3906,11 +3918,9 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
 
 export const getBusinessCardLayoutById = (catalogId: string): BusinessCardLayout | null => {
     try {
-        console.log(`🔍 Searching for business card layout: ${catalogId}`);
         const layout = BUSINESS_CARD_LAYOUTS.find(layout => layout.catalogId === catalogId);
 
         if (layout) {
-            console.log(`✅ Found business card layout: ${layout.name}`);
             return layout;
         } else {
             console.warn(`⚠️ Business card layout not found: ${catalogId}`);
@@ -3925,7 +3935,6 @@ export const getBusinessCardLayoutById = (catalogId: string): BusinessCardLayout
 export const getAllThemes = (): string[] => {
     try {
         const themes = [...new Set(BUSINESS_CARD_LAYOUTS.map(layout => layout.theme))];
-        console.log(`📋 Found ${themes.length} unique themes:`, themes);
         return themes.sort();
     } catch (error) {
         console.error('❌ Error getting themes:', error);
@@ -3935,9 +3944,7 @@ export const getAllThemes = (): string[] => {
 
 export const getBusinessCardLayoutsByTheme = (theme: string): BusinessCardLayout[] => {
     try {
-        console.log(`🎨 Filtering layouts by theme: ${theme}`);
         const layouts = BUSINESS_CARD_LAYOUTS.filter(layout => layout.theme === theme);
-        console.log(`✅ Found ${layouts.length} layouts for theme: ${theme}`);
         return layouts;
     } catch (error) {
         console.error(`❌ Error filtering by theme ${theme}:`, error);
@@ -3947,9 +3954,7 @@ export const getBusinessCardLayoutsByTheme = (theme: string): BusinessCardLayout
 
 export const getBusinessCardLayoutsByStyle = (style: 'contact-focused' | 'company-focused'): BusinessCardLayout[] => {
     try {
-        console.log(`🎯 Filtering layouts by style: ${style}`);
         const layouts = BUSINESS_CARD_LAYOUTS.filter(layout => layout.style === style);
-        console.log(`✅ Found ${layouts.length} layouts for style: ${style}`);
         return layouts;
     } catch (error) {
         console.error(`❌ Error filtering by style ${style}:`, error);
@@ -3959,7 +3964,6 @@ export const getBusinessCardLayoutsByStyle = (style: 'contact-focused' | 'compan
 
 export const searchBusinessCardLayouts = (query: string): BusinessCardLayout[] => {
     try {
-        console.log(`🔍 Searching layouts with query: "${query}"`);
         const lowercaseQuery = query.toLowerCase();
 
         const layouts = BUSINESS_CARD_LAYOUTS.filter(layout => {
@@ -3973,8 +3977,6 @@ export const searchBusinessCardLayouts = (query: string): BusinessCardLayout[] =
                 )
             );
         });
-
-        console.log(`✅ Found ${layouts.length} layouts matching: "${query}"`);
         return layouts;
     } catch (error) {
         console.error(`❌ Error searching layouts with query "${query}":`, error);
@@ -3995,8 +3997,6 @@ export const paginateBusinessCardLayouts = (
     hasPreviousPage: boolean;
 } => {
     try {
-        console.log(`📄 Paginating ${layouts.length} layouts: page ${page}, ${itemsPerPage} per page`);
-
         const totalItems = layouts.length;
         const totalPages = Math.ceil(totalItems / itemsPerPage);
         const startIndex = (page - 1) * itemsPerPage;
@@ -4012,7 +4012,6 @@ export const paginateBusinessCardLayouts = (
             hasPreviousPage: page > 1
         };
 
-        console.log(`✅ Pagination result: ${paginatedLayouts.length} layouts on page ${page} of ${totalPages}`);
         return result;
     } catch (error) {
         console.error('❌ Error paginating layouts:', error);
@@ -4030,7 +4029,6 @@ export const paginateBusinessCardLayouts = (
 export const getTotalLayoutCount = (): number => {
     try {
         const count = BUSINESS_CARD_LAYOUTS.length;
-        console.log(`📊 Total business card layouts: ${count}`);
         return count;
     } catch (error) {
         console.error('❌ Error getting layout count:', error);
@@ -4040,7 +4038,7 @@ export const getTotalLayoutCount = (): number => {
 
 export const validateBusinessCardLayout = (layout: BusinessCardLayout): { isValid: boolean; errors: string[] } => {
     try {
-        console.log(`🔍 Validating business card layout: ${layout.catalogId}`);
+
         const errors: string[] = [];
 
         // Required fields validation
@@ -4071,7 +4069,6 @@ export const validateBusinessCardLayout = (layout: BusinessCardLayout): { isVali
         }
 
         const isValid = errors.length === 0;
-        console.log(`${isValid ? '✅' : '❌'} Layout validation: ${layout.catalogId} - ${errors.length} errors`);
 
         return { isValid, errors };
     } catch (error) {
@@ -4081,7 +4078,6 @@ export const validateBusinessCardLayout = (layout: BusinessCardLayout): { isVali
 };
 
 // Validate all layouts on module load
-console.log('🔄 Validating all business card layouts...');
 const invalidLayouts = BUSINESS_CARD_LAYOUTS.filter(layout => {
     const { isValid } = validateBusinessCardLayout(layout);
     return !isValid;

@@ -1,9 +1,6 @@
 // FILE: src/utils/businessCardInjection.ts
-// PURPOSE: Wrapper utilities for Step 3 that use existing injection utilities
-// USES: Existing businessCardLogoUtils.ts and businessCardContactUtils.ts
-// NOTE: This is a thin wrapper to extract logo from formData and call existing utilities
 
-import { BusinessCardData } from '../../types/businessCard';
+import { BusinessCardData } from '../../../types/businessCard';
 import { BusinessCardLayout } from '@/data/businessCardLayouts';
 import {
     injectLogoIntoBusinessCard,
@@ -20,7 +17,6 @@ import { StoredLogo } from '@/app/utils/indexedDBUtils';
 function formDataToStoredLogo(formData: BusinessCardData): StoredLogo | null {
     try {
         if (!formData?.logo?.logoDataUri) {
-            console.log('⚠️ No logo data in formData');
             return null;
         }
 
@@ -33,7 +29,6 @@ function formDataToStoredLogo(formData: BusinessCardData): StoredLogo | null {
             userId: ''
         };
 
-        console.log('✅ Converted formData.logo to StoredLogo format');
         return storedLogo;
 
     } catch (error) {
@@ -54,27 +49,31 @@ export function generateInjectedHTML(
     formData: BusinessCardData
 ): string {
     try {
-        console.log('🎨 Generating fully injected HTML for:', layout.catalogId);
-        console.log('📋 Using existing injection utilities');
+
+        // Extract allowEnlargedLogo flag from layout metadata
+        const allowEnlargedLogo = layout.metadata?.allowEnlargedLogo === true;
 
         // Start with layout's base HTML
         let injectedHTML = layout.jsx;
 
         // Step 1: Inject contact information using EXISTING utility
-        console.log('📝 Step 1: Injecting contact info (using existing businessCardContactUtils)');
         injectedHTML = injectContact(injectedHTML, formData);
 
         // Step 2: Inject logo using EXISTING utility
         const storedLogo = formDataToStoredLogo(formData);
 
         if (storedLogo && validateLogo(storedLogo)) {
-            console.log('🎨 Step 2: Injecting logo (using existing businessCardLogoUtils)');
-            injectedHTML = injectLogoIntoBusinessCard(injectedHTML, storedLogo);
+
+            injectedHTML = injectLogoIntoBusinessCard(injectedHTML, storedLogo, {
+                objectFit: 'contain',
+                preserveAspectRatio: true,
+                allowEnlargedLogo: allowEnlargedLogo
+            });
+
         } else {
             console.log('⚠️ Step 2: Skipping logo injection (no valid logo in formData)');
         }
 
-        console.log('✅ Fully injected HTML generated successfully using existing utilities');
         return injectedHTML;
 
     } catch (error) {

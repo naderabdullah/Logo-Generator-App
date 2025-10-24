@@ -1,7 +1,4 @@
 // FILE: src/app/components/BusinessCardModal.tsx
-// MODIFICATIONS: ONLY test data pre-population feature added
-// ALL EXISTING UI AND FUNCTIONALITY PRESERVED
-// ACTION: FULL FILE REPLACEMENT (clean swap ready)
 
 'use client';
 import React, { useState, useEffect } from 'react';
@@ -10,10 +7,6 @@ import { ContactInfoForm } from './ContactInfoForm';
 import { BusinessCardLayoutSelection } from './BusinessCardLayoutSelection';
 import { PreviewAndGenerate } from './PreviewAndGenerate';
 import { StoredLogo } from '../utils/indexedDBUtils';
-
-// ============================================================================
-// 🧪 TEST DATA PRE-POPULATION FEATURE - NEW ADDITION
-// ============================================================================
 
 /**
  * TESTING FLAG - Set to true to pre-populate form with test data
@@ -66,7 +59,6 @@ const TEST_FORM_DATA = {
  */
 const getInitialFormData = (logo?: StoredLogo): BusinessCardData => {
     if (ENABLE_TEST_DATA) {
-        console.log('🧪 [TEST MODE] Pre-populating form with test data');
         return {
             ...TEST_FORM_DATA,
             logo: {
@@ -78,7 +70,6 @@ const getInitialFormData = (logo?: StoredLogo): BusinessCardData => {
     }
 
     // Production mode - empty form (EXISTING ORIGINAL CODE)
-    console.log('📋 [PRODUCTION MODE] Initializing empty form');
     return {
         companyName: '',
         name: '',
@@ -147,16 +138,6 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({ step, label, isActive, is
 );
 
 export const BusinessCardModal: React.FC<BusinessCardModalProps> = ({logo, isOpen, onClose}) => {
-    console.log('🎨 BusinessCardModal - Render with isOpen:', isOpen, 'logo:', !!logo);
-
-    if (logo) {
-        console.log('🎨 BusinessCardModal - Logo data:', {
-            logoId: logo.id,
-            name: logo.name,
-            hasImageData: !!logo.imageDataUri,
-            imageDataLength: logo.imageDataUri?.length
-        });
-    }
 
     // Wizard state - PRESERVED ORIGINAL
     const [currentStep, setCurrentStep] = useState<WizardStep>('info');
@@ -178,39 +159,8 @@ export const BusinessCardModal: React.FC<BusinessCardModalProps> = ({logo, isOpe
     useEffect(() => {
         // When search term or theme filter changes, reset to page 1
         // This prevents showing empty pages when filtered results have fewer pages
-        console.log('🔄 BusinessCardModal - Filter changed, resetting pagination to page 1');
-        console.log('   Search term:', searchTerm);
-        console.log('   Theme filter:', themeFilter);
         setLayoutCurrentPage(1);
     }, [searchTerm, themeFilter]);
-
-    // ============================================================================
-    // 🧪 TEST MODE LOGGING - NEW ADDITION
-    // ============================================================================
-
-    useEffect(() => {
-        if (ENABLE_TEST_DATA && isOpen) {
-            console.log('🧪 ============================================');
-            console.log('🧪 TEST MODE ACTIVE - Form Pre-populated');
-            console.log('🧪 ============================================');
-            console.log('🧪 Test Data Summary:', {
-                name: formData.name,
-                title: formData.title,
-                company: formData.companyName,
-                subtitle: formData.subtitle,
-                yearEstablished: formData.yearEstablished,
-                slogan: formData.slogan,
-                descriptor: formData.descriptor,
-                phonesCount: formData.phones.length,
-                emailsCount: formData.emails.length,
-                addressesCount: formData.addresses.length,
-                websitesCount: formData.websites.length,
-                socialMediaCount: formData.socialMedia.length
-            });
-            console.log('🧪 ⚠️  REMINDER: Set ENABLE_TEST_DATA = false for production!');
-            console.log('🧪 ============================================');
-        }
-    }, [isOpen]); // Log when modal opens
 
     // ============================================================================
     // ALL EXISTING useEffects - PRESERVED ORIGINAL
@@ -218,11 +168,6 @@ export const BusinessCardModal: React.FC<BusinessCardModalProps> = ({logo, isOpe
 
     useEffect(() => {
         if (logo) {
-            console.log('🎨 BusinessCardModal - Logo prop updated, setting form data:', {
-                logoId: logo.id,
-                hasImageData: !!logo.imageDataUri,
-                logoName: logo.name
-            });
 
             setFormData(prev => ({
                 ...prev, // Preserve all existing data (including test data!)
@@ -236,32 +181,9 @@ export const BusinessCardModal: React.FC<BusinessCardModalProps> = ({logo, isOpe
     }, [logo]);
 
     useEffect(() => {
-        console.log('🎨 BusinessCardModal - Form Data State Update:', {
-            step: currentStep,
-            selectedLayout,
-            formData: {
-                companyName: formData.companyName,
-                name: formData.name,
-                title: formData.title,
-                slogan: formData.slogan,
-                descriptor: formData.descriptor,
-                logoId: formData.logo.logoId,
-                hasLogoDataUri: !!formData.logo.logoDataUri,
-                phonesCount: formData.phones.length,
-                emailsCount: formData.emails.length,
-                addressesCount: formData.addresses.length,
-                websitesCount: formData.websites.length,
-                socialMediaCount: formData.socialMedia.length
-            }
-        });
-    }, [currentStep, selectedLayout, formData]);
-
-    useEffect(() => {
         if (isOpen) {
-            console.log('🎨 BusinessCardModal - Modal opened, preventing body scroll');
             document.body.style.overflow = 'hidden';
         } else {
-            console.log('🎨 BusinessCardModal - Modal closed, restoring body scroll');
             document.body.style.overflow = '';
         }
 
@@ -287,24 +209,10 @@ export const BusinessCardModal: React.FC<BusinessCardModalProps> = ({logo, isOpe
         // When user leaves the preview step (goes back to layout or info),
         // reset the PDF completion status since they're making changes
         if (currentStep !== 'preview') {
-            console.log('🔄 Left preview step - resetting PDF completion status');
             setPdfGenerated(false);
         }
     }, [currentStep]);
 
-    // // Reset isGenerating when PDF generation completes
-    // useEffect(() => {
-    //     if (isGenerating) {
-    //         // PDF generation happens in PreviewAndGenerate
-    //         // Reset after a delay to allow download to complete
-    //         const timer = setTimeout(() => {
-    //             console.log('✅ Resetting isGenerating state');
-    //             setIsGenerating(false);
-    //         }, 3000);
-    //
-    //         return () => clearTimeout(timer);
-    //     }
-    // }, [isGenerating]);
 
     // ============================================================================
     // ALL EXISTING HANDLERS - PRESERVED ORIGINAL
@@ -312,7 +220,6 @@ export const BusinessCardModal: React.FC<BusinessCardModalProps> = ({logo, isOpe
 
     const handleAddContactField = (type: 'phone' | 'email' | 'address' | 'website' | 'social') => {
         try {
-            console.log(`🎨 BusinessCardModal - Adding new ${type} field`);
 
             const newField: ContactField = {
                 value: '',
@@ -345,7 +252,6 @@ export const BusinessCardModal: React.FC<BusinessCardModalProps> = ({logo, isOpe
                 return updated;
             });
 
-            console.log(`✅ BusinessCardModal - Successfully added ${type} field`);
         } catch (error) {
             console.error(`❌ BusinessCardModal - Error adding ${type} field:`, error);
         }
@@ -353,7 +259,6 @@ export const BusinessCardModal: React.FC<BusinessCardModalProps> = ({logo, isOpe
 
     const handleRemoveContactField = (type: 'phone' | 'email' | 'address' | 'website' | 'social', index: number) => {
         try {
-            console.log(`🎨 BusinessCardModal - Removing ${type} field at index ${index}`);
 
             setFormData(prev => {
                 const updated = { ...prev };
@@ -379,34 +284,28 @@ export const BusinessCardModal: React.FC<BusinessCardModalProps> = ({logo, isOpe
                 }
                 return updated;
             });
-
-            console.log(`✅ BusinessCardModal - Successfully removed ${type} field at index ${index}`);
         } catch (error) {
             console.error(`❌ BusinessCardModal - Error removing ${type} field:`, error);
         }
     };
 
     const handleGenerateStart = () => {
-        console.log('🎴 PDF generation starting...');
         setIsGenerating(true);
         setError(null);
     };
 
     const handleGenerateSuccess = () => {
-        console.log('✅ PDF generation completed successfully');
         setIsGenerating(false);
         setPdfGenerated(true);
     };
 
     const handleGenerateError = (errorMessage: string) => {
-        console.error('❌ PDF generation failed:', errorMessage);
         setError(errorMessage);
         setIsGenerating(false);
         setPdfGenerated(false);
     };
 
     const handlePdfComplete = () => {
-        console.log('✅ PDF generation completed successfully');
         setIsGenerating(false);
         setPdfGenerated(true);
     };

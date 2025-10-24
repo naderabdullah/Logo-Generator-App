@@ -1,15 +1,17 @@
 // src/app/utils/businessCardLogoUtils.ts - FIXED: PRESERVE DOCUMENT FLOW
 
-import { StoredLogo } from '../../../types/logo';
+import { StoredLogo } from '@/app/utils/indexedDBUtils';
 
 export interface LogoInjectionOptions {
     objectFit: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
     preserveAspectRatio: boolean;
+    allowEnlargedLogo?: boolean;
 }
 
 const DEFAULT_LOGO_OPTIONS: LogoInjectionOptions = {
     objectFit: 'contain',
-    preserveAspectRatio: true
+    preserveAspectRatio: true,
+    allowEnlargedLogo: false
 };
 
 // STANDARDIZED LOGO SIZE - Upper range for prominent display
@@ -165,10 +167,16 @@ function analyzeLayoutConstraints(styleString: string, placeholderHTML: string):
 function getConstraintAwareLogoSize(
     containerDimensions: { width: string; height: string },
     styleString: string,
-    placeholderHTML: string
+    placeholderHTML: string,
+    allowEnlargedLogo?: boolean
 ): { width: string; height: string } {
     console.log('🎯 Determining constraint-aware logo size. Container:', containerDimensions);
 
+    if (allowEnlargedLogo === true) {
+        console.log('🚀 allowEnlargedLogo=true: BYPASSING constraint logic, using full 1.0in base');
+        console.log('   → Final size will be: 1.0in × 1.5 scale = 1.5in effective');
+        return { width: '1.0in', height: '1.0in' };
+    }
     // Analyze layout constraints to prevent overflow
     const constraints = analyzeLayoutConstraints(styleString, placeholderHTML);
 
@@ -282,8 +290,10 @@ function createLogoImageElement(
             return '';
         }
 
+        console.log('inside createLogoImageElement, options.allowEnlargedLogo: ', options.allowEnlargedLogo);
+
         // Get constraint-aware logo size (smart overflow prevention)
-        const logoSize = getConstraintAwareLogoSize(containerDimensions, styleString, placeholderHTML);
+        const logoSize = getConstraintAwareLogoSize(containerDimensions, styleString, placeholderHTML, options.allowEnlargedLogo);
         console.log('🖼️ Creating logo with enhanced constraint-aware sizing:', logoSize);
 
         const styles = [
@@ -295,6 +305,15 @@ function createLogoImageElement(
 
         if (options.preserveAspectRatio) {
             styles.push('object-position: center');
+        }
+
+        if (options.allowEnlargedLogo === true) {
+            console.log('✨ allowEnlargedLogo=true: Applying transform: scale(1.4)');
+            styles.push('transform: scale(1.4)');
+            styles.push('transform-origin: center center');
+            console.log('createLogoImageElement, styles');
+        } else {
+            console.log('📏 Using standard logo sizing');
         }
 
         // Escape any quotes in the image data URI to prevent HTML corruption
@@ -330,6 +349,9 @@ export function injectLogoIntoBusinessCard(
             htmlLength: businessCardHtml.length,
             targetSize: STANDARD_LOGO_SIZE
         });
+            console.log('🎨 Logo injection options received:', {
+                allowEnlargedLogo: options.allowEnlargedLogo
+            });
 
         // Early return if no logo provided
         if (!logo || !logo.imageDataUri) {
@@ -345,6 +367,10 @@ export function injectLogoIntoBusinessCard(
 
         // Merge options with defaults
         const finalOptions = { ...DEFAULT_LOGO_OPTIONS, ...options };
+
+            console.log('🔧 Final options:', {
+                allowEnlargedLogo: finalOptions.allowEnlargedLogo
+            });
 
         console.log('🔧 Using logo injection options:', finalOptions);
 

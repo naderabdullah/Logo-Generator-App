@@ -1,6 +1,4 @@
 // FILE: src/app/components/BusinessCardLayoutSelection.tsx
-// FUNCTION: BusinessCardLayoutSelection Component
-// PURPOSE: Business card layout selection with dual preview mode toggle in enlarged modal
 
 'use client';
 
@@ -42,15 +40,6 @@ export const BusinessCardLayoutSelection = ({
                                                 hideFooter = false,
                                                 logo = null
                                             }: BusinessCardLayoutSelectionProps) => {
-
-    // Log logo availability
-    useEffect(() => {
-        console.log('🎨 BusinessCardLayoutSelection - Logo prop received:', {
-            hasLogo: !!logo,
-            hasImageData: !!logo?.imageDataUri,
-            imageDataLength: logo?.imageDataUri?.length
-        });
-    }, [logo]);
 
     const allLayouts = BUSINESS_CARD_LAYOUTS;
 
@@ -107,13 +96,11 @@ export const BusinessCardLayoutSelection = ({
 
     // Handle layout selection
     const handleLayoutSelect = (layout: BusinessCardLayout) => {
-        console.log('📋 BusinessCardLayoutSelection - Layout selected:', layout.catalogId);
         onLayoutSelect(layout.catalogId);
     };
 
     // Handle card click
     const handleCardClick = (layout: BusinessCardLayout) => {
-        console.log('👁️ BusinessCardLayoutSelection - Opening enlarged view:', layout.catalogId);
         setSelectedCard(layout);
         setCurrentModalIndex(filteredLayouts.findIndex(l => l.catalogId === layout.catalogId));
         setIsModalOpen(true);
@@ -122,7 +109,6 @@ export const BusinessCardLayoutSelection = ({
 
     // Handle page change
     const handlePageChange = (newPage: number) => {
-        console.log('📄 BusinessCardLayoutSelection - Page change:', newPage);
         if (onPageChange) {
             onPageChange(newPage);
         } else {
@@ -148,7 +134,6 @@ export const BusinessCardLayoutSelection = ({
     const navigateToPrevious = useCallback(() => {
         if (currentModalIndex > 0) {
             const newIndex = currentModalIndex - 1;
-            console.log('⬅️ BusinessCardLayoutSelection - Previous card:', newIndex);
             setCurrentModalIndex(newIndex);
             setSelectedCard(filteredLayouts[newIndex]);
         }
@@ -157,7 +142,6 @@ export const BusinessCardLayoutSelection = ({
     const navigateToNext = useCallback(() => {
         if (currentModalIndex < filteredLayouts.length - 1) {
             const newIndex = currentModalIndex + 1;
-            console.log('➡️ BusinessCardLayoutSelection - Next card:', newIndex);
             setCurrentModalIndex(newIndex);
             setSelectedCard(filteredLayouts[newIndex]);
         }
@@ -165,7 +149,6 @@ export const BusinessCardLayoutSelection = ({
 
     // Close modal
     const closeModal = useCallback(() => {
-        console.log('❌ BusinessCardLayoutSelection - Closing modal');
         setIsModalOpen(false);
         setSelectedCard(null);
         setPreviewMode('injected');
@@ -174,7 +157,6 @@ export const BusinessCardLayoutSelection = ({
 
     // Handle search change
     const handleSearchChange = useCallback((value: string) => {
-        console.log('🔍 BusinessCardLayoutSelection - Search:', value);
         if (onSearchChange) {
             onSearchChange(value);
         }
@@ -182,7 +164,6 @@ export const BusinessCardLayoutSelection = ({
 
     // Handle theme filter change
     const handleThemeFilterChange = useCallback((theme: string) => {
-        console.log('🎨 BusinessCardLayoutSelection - Theme filter:', theme);
         if (onThemeFilterChange) {
             onThemeFilterChange(theme);
         }
@@ -191,22 +172,26 @@ export const BusinessCardLayoutSelection = ({
     // Generate injected HTML with logo and contact info
     const generateEnlargedModalHTML = (card: BusinessCardLayout): string => {
         try {
-            console.log('🎨 BusinessCardLayoutSelection - Generating modal HTML:', card.catalogId);
+
+            // Extract allowEnlargedLogo flag from card metadata
+            const allowEnlargedLogo = card.metadata?.allowEnlargedLogo === true;
+
             let processedHTML = card.jsx;
 
-            console.log('📝 BusinessCardLayoutSelection - Injecting contact info');
             processedHTML = injectContactInfo(processedHTML, formData);
 
             if (validateLogoForInjection(logo)) {
-                console.log('✅ BusinessCardLayoutSelection - Injecting logo');
-                processedHTML = injectLogoIntoBusinessCard(processedHTML, logo);
+                processedHTML = injectLogoIntoBusinessCard(processedHTML, logo, {
+                    objectFit: 'contain',
+                    preserveAspectRatio: true,
+                    allowEnlargedLogo: allowEnlargedLogo  // ← PASS THE FLAG
+                });
             } else {
                 console.log('ℹ️ BusinessCardLayoutSelection - No logo injection');
             }
 
             return processedHTML;
         } catch (error) {
-            console.error('❌ BusinessCardLayoutSelection - Error:', error);
             return card.jsx;
         }
     };
@@ -214,10 +199,8 @@ export const BusinessCardLayoutSelection = ({
     // Get HTML based on preview mode
     const getModalPreviewHTML = (card: BusinessCardLayout): string => {
         if (previewMode === 'generic') {
-            console.log('📝 BusinessCardLayoutSelection - Showing generic preview');
             return card.jsx;
         } else {
-            console.log('📝 BusinessCardLayoutSelection - Showing injected preview');
             return generateEnlargedModalHTML(card);
         }
     };
@@ -533,7 +516,7 @@ export const BusinessCardLayoutSelection = ({
                                     <div
                                         className="business-card-preview shadow-lg"
                                         style={{
-                                            transform: 'scale(1.5)',
+                                            transform: 'scale(1.4)',
                                             transformOrigin: 'center',
                                         }}
                                         dangerouslySetInnerHTML={{
