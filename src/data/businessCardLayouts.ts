@@ -29,11 +29,11 @@ export interface BusinessCardLayout {
 }
 
 export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
-    // MINIMALISTIC THEME LAYOUTS (1-15)
+    // MINIMALIST THEME LAYOUTS (1-15)
     {
         catalogId: 'BC001',
         name: 'Minimal Professional v1',
-        theme: 'minimalistic',
+        theme: 'minimalist',
         version: 1,
         description: 'Clean white background with subtle typography',
         style: 'contact-focused',
@@ -114,7 +114,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
     {
         catalogId: 'BC002',
         name: 'Minimal Professional v2',
-        theme: 'minimalistic',
+        theme: 'minimalist',
         version: 2,
         description: 'Center-aligned minimal design with thin borders',
         style: 'company-focused',
@@ -283,7 +283,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
     {
         catalogId: 'BC004',
         name: 'Minimal Clean Slate',
-        theme: 'minimalistic',
+        theme: 'minimalist',
         description: 'Ultra-clean with generous white space and perfect balance',
         style: 'contact-focused',
         jsx: `
@@ -2578,7 +2578,7 @@ export const BUSINESS_CARD_LAYOUTS: BusinessCardLayout[] = [
     {
         catalogId: 'BC025',
         name: 'Minimalist Dot Grid',
-        theme: 'minimalistic',
+        theme: 'minimalist',
         description: 'Ultra-minimal design with subtle dot grid pattern',
         style: 'contact-focused',
         jsx: `<div class="business-card" style="

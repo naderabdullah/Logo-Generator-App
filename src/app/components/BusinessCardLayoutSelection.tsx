@@ -290,20 +290,25 @@ export const BusinessCardLayoutSelection = ({
                                         <h3 className="font-semibold text-gray-900 text-sm">
                                             {layout.name}
                                         </h3>
-                                        <p className="text-xs text-gray-500 font-mono">{layout.catalogId}</p>
+                                        <p className="text-sm text-gray-500 font-mono">{layout.catalogId}</p>
                                     </div>
                                     <span className={`text-xs px-2 py-1 rounded shrink-0 ${
-                                        layout.theme === 'professional' ? 'bg-blue-100 text-blue-800' :
-                                            layout.theme === 'modern' ? 'bg-green-100 text-green-800' :
-                                                layout.theme === 'creative' ? 'bg-purple-100 text-purple-800' :
-                                                    layout.theme === 'minimalist' ? 'bg-gray-100 text-gray-800' :
-                                                        layout.theme === 'corporate' ? 'bg-indigo-100 text-indigo-800' :
-                                                            layout.theme === 'tech' ? 'bg-cyan-100 text-cyan-800' :
-                                                                layout.theme === 'trendy' ? 'bg-pink-100 text-pink-800' :
-                                                                    'bg-yellow-100 text-yellow-800'
+                                        layout.theme === 'minimalistic' ? 'bg-lime-100 text-lime-800' :
+                                            layout.theme === 'minimalist' ? 'bg-lime-100 text-lime-800' :
+                                                layout.theme === 'modern' ? 'bg-sky-100 text-sky-800' :
+                                                    layout.theme === 'trendy' ? 'bg-purple-100 text-purple-800' :
+                                                        layout.theme === 'classic' ? 'bg-amber-100 text-amber-800' :
+                                                            layout.theme === 'creative' ? 'bg-pink-100 text-pink-800' :
+                                                                layout.theme === 'professional' ? 'bg-indigo-100 text-indigo-800' :
+                                                                    layout.theme === 'luxury' ? 'bg-yellow-100 text-yellow-800' :
+                                                                        layout.theme === 'tech' ? 'bg-green-100 text-green-800' :
+                                                                            layout.theme === 'vintage' ? 'bg-orange-100 text-orange-800' :
+                                                                                layout.theme === 'artistic' ? 'bg-red-100 text-red-800' :
+                                                                                    layout.theme === 'corporate' ? 'bg-cyan-100 text-cyan-800' :
+                                                                                        'bg-gray-100 text-gray-800'
                                     }`}>
-                                        {layout.theme}
-                                    </span>
+    {layout.theme}
+</span>
                                 </div>
                                 <p className="text-sm text-gray-600">{layout.description}</p>
 
@@ -449,8 +454,8 @@ export const BusinessCardLayoutSelection = ({
                             className="sticky top-0 bg-white border-b border-gray-200 p-4 flex justify-between items-center z-10">
                             <div className="flex-1">
                                 <h2 className="text-xl font-bold text-gray-900">{selectedCard.name}</h2>
-                                <p className="text-sm text-gray-600">
-                                    {selectedCard.catalogId} • {selectedCard.theme} • {selectedCard.style.replace('-', ' ')}
+                                <p className="text-base text-gray-700 font-mono font-semibold">
+                                    {selectedCard.catalogId}
                                 </p>
                             </div>
 
@@ -496,7 +501,7 @@ export const BusinessCardLayoutSelection = ({
                         <div className="p-6 space-y-6">
                             {/* Preview Mode Indicator */}
                             <div className="flex justify-center">
-                                <div
+                            <div
                                     className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-full text-sm">
                                     <span
                                         className={`font-medium ${previewMode === 'generic' ? 'text-purple-600' : 'text-gray-500'}`}>
@@ -531,7 +536,26 @@ export const BusinessCardLayoutSelection = ({
                                 <div>
                                     <h4 className="font-medium mb-2">Layout Details</h4>
                                     <div className="space-y-2 text-sm">
-                                        <div><span className="font-medium">Theme:</span> {selectedCard.theme}</div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-medium">Theme:</span>
+                                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                                selectedCard.theme === 'minimalistic' ? 'bg-lime-100 text-lime-800' :
+                                                    selectedCard.theme === 'minimalist' ? 'bg-lime-100 text-lime-800' :
+                                                        selectedCard.theme === 'modern' ? 'bg-sky-100 text-sky-800' :
+                                                            selectedCard.theme === 'trendy' ? 'bg-purple-100 text-purple-800' :
+                                                                selectedCard.theme === 'classic' ? 'bg-amber-100 text-amber-800' :
+                                                                    selectedCard.theme === 'creative' ? 'bg-pink-100 text-pink-800' :
+                                                                        selectedCard.theme === 'professional' ? 'bg-indigo-100 text-indigo-800' :
+                                                                            selectedCard.theme === 'luxury' ? 'bg-yellow-100 text-yellow-800' :
+                                                                                selectedCard.theme === 'tech' ? 'bg-green-100 text-green-800' :
+                                                                                    selectedCard.theme === 'vintage' ? 'bg-orange-100 text-orange-800' :
+                                                                                        selectedCard.theme === 'artistic' ? 'bg-red-100 text-red-800' :
+                                                                                            selectedCard.theme === 'corporate' ? 'bg-cyan-100 text-cyan-800' :
+                                                                                                'bg-gray-100 text-gray-800'
+                                            }`}>
+        {selectedCard.theme}
+    </span>
+                                        </div>
                                         <div><span
                                             className="font-medium">Style:</span> {selectedCard.style.replace('-', ' ')}
                                         </div>
