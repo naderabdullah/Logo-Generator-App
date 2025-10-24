@@ -121,8 +121,8 @@ export const PreviewAndGenerate = ({
     return (
         <div className="space-y-8">
             <div className="text-center">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Review Your Business Card</h3>
-                <p className="text-gray-600">Check the preview and generate your printable PDF</p>
+                <h3 className="text-2xl font-bold text-gray-900 my-2">Review Your Business Card</h3>
+                <p className="text-gray-600 hidden">Check the preview and generate your printable PDF</p>
             </div>
 
             {/* Selected Layout Info */}
@@ -130,22 +130,31 @@ export const PreviewAndGenerate = ({
                 <div className="flex items-center justify-between">
                     <div>
                         <h4 className="font-semibold text-gray-900">{layout.name}</h4>
-                        <p className="text-sm text-gray-600">{layout.catalogId} • {layout.theme}</p>
+                        <p className="text-base text-gray-600">{layout.catalogId}</p>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        layout.theme === 'modern' ? 'bg-blue-100 text-blue-800' :
-                            layout.theme === 'minimalist' ? 'bg-gray-100 text-gray-800' :
-                                layout.theme === 'bold' ? 'bg-orange-100 text-orange-800' :
-                                    'bg-purple-100 text-purple-800'
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        layout.theme === 'minimalistic' ? 'bg-lime-100 text-lime-800' :
+                            layout.theme === 'minimalist' ? 'bg-lime-100 text-lime-800' :
+                                layout.theme === 'modern' ? 'bg-sky-100 text-sky-800' :
+                                    layout.theme === 'trendy' ? 'bg-purple-100 text-purple-800' :
+                                        layout.theme === 'classic' ? 'bg-amber-100 text-amber-800' :
+                                            layout.theme === 'creative' ? 'bg-pink-100 text-pink-800' :
+                                                layout.theme === 'professional' ? 'bg-indigo-100 text-indigo-800' :
+                                                    layout.theme === 'luxury' ? 'bg-yellow-100 text-yellow-800' :
+                                                        layout.theme === 'tech' ? 'bg-green-100 text-green-800' :
+                                                            layout.theme === 'vintage' ? 'bg-orange-100 text-orange-800' :
+                                                                layout.theme === 'artistic' ? 'bg-red-100 text-red-800' :
+                                                                    layout.theme === 'corporate' ? 'bg-cyan-100 text-cyan-800' :
+                                                                        'bg-slate-100 text-slate-800'
                     }`}>
-                        {layout.theme}
-                    </span>
+            {layout.theme}
+        </span>
                 </div>
             </div>
 
             {/* Preview Section */}
             <div className="flex justify-center">
-                <div className="bg-gradient-to-b from-gray-50 to-gray-100 rounded-2xl shadow-lg p-16 min-h-[400px] flex items-center justify-center">
+                <div className="bg-gradient-to-b from-gray-50 to-gray-100 rounded-2xl shadow-lg p-12 min-h-[400px] w-[750px] mx-auto flex items-center justify-center">
                     {previewLoading ? (
                         <div className="text-center py-20">
                             <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600 mx-auto mb-4"></div>
@@ -181,7 +190,7 @@ export const PreviewAndGenerate = ({
             {/* Information Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* PDF Specifications */}
-                <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
+                <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200 hidden">
                     <div className="flex items-start space-x-3">
                         <div className="flex-shrink-0">
                             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -203,7 +212,7 @@ export const PreviewAndGenerate = ({
                 </div>
 
                 {/* Print Instructions */}
-                <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
+                <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200 hidden">
                     <div className="flex items-start space-x-3">
                         <div className="flex-shrink-0">
                             <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">

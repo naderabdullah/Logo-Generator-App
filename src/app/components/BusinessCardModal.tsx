@@ -327,7 +327,8 @@ export const BusinessCardModal: React.FC<BusinessCardModalProps> = ({logo, isOpe
                         className="text-gray-400 hover:text-gray-600 transition-colors"
                     >
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                  d="M6 18L18 6M6 6l12 12"/>
                         </svg>
                     </button>
                 </div>
@@ -366,7 +367,7 @@ export const BusinessCardModal: React.FC<BusinessCardModalProps> = ({logo, isOpe
                 )}
 
                 {/* Main Content Area */}
-                <div className="flex-1 overflow-auto">
+                <div className={`flex-1 ${currentStep === 'layout' ? 'overflow-auto' : 'overflow-hidden'}`}>
                     <div className="max-w-full mx-auto">
                         <div className="px-6">
                             {currentStep === 'info' && (
