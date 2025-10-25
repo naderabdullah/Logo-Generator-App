@@ -367,7 +367,14 @@ export const BusinessCardModal: React.FC<BusinessCardModalProps> = ({logo, isOpe
                 )}
 
                 {/* Main Content Area */}
-                <div className={`flex-1 ${currentStep === 'layout' ? 'overflow-auto' : 'overflow-hidden'}`}>
+                {/* Main Content Area - UPDATED WITH SCROLL FIX */}
+                <div className={`flex-1 ${
+                    currentStep === 'layout'
+                        ? 'overflow-auto'
+                        : currentStep === 'info'
+                            ? 'overflow-y-auto overflow-x-hidden'
+                            : 'overflow-hidden'
+                }`}>
                     <div className="max-w-full mx-auto">
                         <div className="px-6">
                             {currentStep === 'info' && (
