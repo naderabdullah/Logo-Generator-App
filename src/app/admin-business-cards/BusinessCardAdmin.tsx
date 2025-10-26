@@ -12,7 +12,7 @@ import {
     getAllThemes,
     searchBusinessCardLayouts
 } from '../../data/businessCardLayouts';
-import { BusinessCardTileGrid } from '../components/BusinessCardTileGrid';
+import BusinessCardTileGrid from '../components/BusinessCardTileGrid';
 
 /**
  * Business Card Admin Component
