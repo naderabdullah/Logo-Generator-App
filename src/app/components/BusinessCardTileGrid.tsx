@@ -1,12 +1,17 @@
 // FILE: src/app/components/BusinessCardTileGrid.tsx
 // PURPOSE: EXACT REPLICA of wizard Step 2 grid/modal - reusable for admin and wizard
 // SOURCE: BusinessCardLayoutSelection.tsx (wizard step 2 - source of truth)
-// CHANGES: Modal content now TRULY matches wizard Step 2 exactly - copied with zero changes
-// CHANGE LOG: Fixed enlarged preview modal to exactly match wizard Step 2 (colors, fonts, dimensions, badges, two-column layout)
+// CHANGES: Fixed logo injection, navigation, preview modes, and ContactInfo display
+// CHANGE LOG:
+// - Fixed validateLogoForInjection function call (removed second parameter)
+// - Fixed default preview mode (now 'injected' for wizard, 'generic' for admin)
+// - Fixed logo injection with proper allowEnlargedLogo flag passing
+// - Added proper navigation functionality in enlarged modal
+// - Added comprehensive logging and error handling
 
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { BusinessCardLayout } from '@/data/businessCardLayouts';
 import { StoredLogo } from '@/app/utils/indexedDBUtils';
 import { injectLogoIntoBusinessCard, validateLogoForInjection } from '@/app/utils/businessCardLogoUtils';
@@ -59,20 +64,13 @@ export interface BusinessCardTileGridProps {
 /**
  * BusinessCardTileGrid - Reusable grid component
  *
- * IMPORTANT: This is NOW a TRUE EXACT REPLICA of the wizard Step 2 grid and modal.
- * Only behavior (selection/injection) is parameterized via mode prop.
- * All styling, structure, and layout in the modal are now identical to the source of truth.
- *
- * MODAL CONTENT UPDATE: Copied EXACTLY from BusinessCardLayoutSelection.tsx including:
- * - Two-column layout (Layout Details | Design Elements)
- * - Color swatches with visual boxes
- * - Font samples with styled text
- * - Dimensions display
- * - Theme/Style colored badges
- * - Purple feature badges
- * - Preview with scale(1.4) and bg-gray-100
- * - Toggle switch for preview mode (disabled in admin view)
- * - Toggle label at top (showing current mode)
+ * IMPORTANT: This is a TRUE EXACT REPLICA of the wizard Step 2 grid and modal.
+ * All features from the original Step 2 wizard are preserved:
+ * - Navigation between cards in modal (admin mode)
+ * - Toggle between Generic/Client's Info (wizard mode)
+ * - Proper logo injection with allowEnlargedLogo flag
+ * - Contact information injection
+ * - Two-column layout with design details
  */
 const BusinessCardTileGrid: React.FC<BusinessCardTileGridProps> = ({
                                                                        mode,
@@ -93,8 +91,12 @@ const BusinessCardTileGrid: React.FC<BusinessCardTileGridProps> = ({
     const [selectedCard, setSelectedCard] = useState<BusinessCardLayout | null>(null);
     const [currentModalIndex, setCurrentModalIndex] = useState(0);
 
-    // Preview mode state (wizard only) - always 'generic' in admin view
-    const [previewMode, setPreviewMode] = useState<PreviewMode>('generic');
+    // Preview mode state - defaults based on mode
+    // Admin view: always 'generic' (no injection available)
+    // Wizard view: defaults to 'injected' to show client's info immediately
+    const [previewMode, setPreviewMode] = useState<PreviewMode>(() => {
+        return mode === 'view' ? 'generic' : 'injected';
+    });
 
     // ============================================================================
     // LOGGING
@@ -105,82 +107,153 @@ const BusinessCardTileGrid: React.FC<BusinessCardTileGridProps> = ({
     }, [mode]);
 
     const logError = useCallback((message: string, error?: any) => {
-        console.error(`[BusinessCardTileGrid ${mode}] ❌ ${message}`, error || '');
+        console.error(`[BusinessCardTileGrid ${mode}] ERROR: ${message}`, error || '');
+    }, [mode]);
+
+    const logDebug = useCallback((message: string, data?: any) => {
+        console.log(`[BusinessCardTileGrid ${mode}] DEBUG: ${message}`, data || '');
     }, [mode]);
 
     // ============================================================================
-    // MODAL NAVIGATION (admin view only)
+    // COMPUTED VALUES
     // ============================================================================
 
+    // Theme options for filter dropdown
+    const themeOptions = useMemo(() => {
+        try {
+            return getAllThemes();
+        } catch (error) {
+            logError('Error getting theme options', error);
+            return [];
+        }
+    }, [logError]);
+
+    // ============================================================================
+    // MODAL MANAGEMENT
+    // ============================================================================
+
+    /**
+     * Open modal and set initial state
+     */
     const openModal = useCallback((layout: BusinessCardLayout) => {
         try {
-            logInfo(`Opening modal for: ${layout.catalogId}`);
-            setSelectedCard(layout);
+            logInfo('Opening modal for layout', { catalogId: layout.catalogId });
+
+            // Find the index of this layout in the current list
             const index = layouts.findIndex(l => l.catalogId === layout.catalogId);
-            setCurrentModalIndex(index);
+
+            setSelectedCard(layout);
+            setCurrentModalIndex(index >= 0 ? index : 0);
             setIsModalOpen(true);
 
-            // Always start with generic preview
-            setPreviewMode('generic');
+            // Reset preview mode based on component mode
+            // Admin always shows generic, wizard defaults to injected
+            setPreviewMode(mode === 'view' ? 'generic' : 'injected');
 
-            logInfo('Modal opened successfully', { index, catalogId: layout.catalogId });
+            // Prevent body scroll when modal is open
+            document.body.style.overflow = 'hidden';
+
+            logDebug('Modal opened', {
+                catalogId: layout.catalogId,
+                index: index,
+                previewMode: mode === 'view' ? 'generic' : 'injected'
+            });
         } catch (error) {
             logError('Error opening modal', error);
         }
-    }, [layouts, logInfo, logError]);
+    }, [layouts, mode, logInfo, logError, logDebug]);
 
+    /**
+     * Close modal and cleanup
+     */
     const closeModal = useCallback(() => {
         try {
             logInfo('Closing modal');
+
             setIsModalOpen(false);
             setSelectedCard(null);
-            setPreviewMode('generic');
+            // Reset preview mode to default for next open
+            setPreviewMode(mode === 'view' ? 'generic' : 'injected');
+            // Restore body scroll
+            document.body.style.overflow = '';
+
+            logDebug('Modal closed');
         } catch (error) {
             logError('Error closing modal', error);
         }
-    }, [logInfo, logError]);
+    }, [mode, logInfo, logError, logDebug]);
 
-    const navigateModal = useCallback((direction: 'prev' | 'next') => {
+    // ============================================================================
+    // MODAL NAVIGATION (Admin View Only)
+    // ============================================================================
+
+    /**
+     * Navigate to previous card in modal
+     */
+    const navigateToPrevious = useCallback(() => {
         try {
-            if (mode !== 'view') {
-                logInfo('Navigation only available in view mode');
-                return;
-            }
+            if (currentModalIndex > 0) {
+                const newIndex = currentModalIndex - 1;
+                const newCard = layouts[newIndex];
 
-            let newIndex = currentModalIndex;
-            if (direction === 'prev' && currentModalIndex > 0) {
-                newIndex = currentModalIndex - 1;
-            } else if (direction === 'next' && currentModalIndex < layouts.length - 1) {
-                newIndex = currentModalIndex + 1;
-            }
+                logDebug('Navigating to previous card', {
+                    fromIndex: currentModalIndex,
+                    toIndex: newIndex,
+                    catalogId: newCard?.catalogId
+                });
 
-            if (newIndex !== currentModalIndex) {
-                const newLayout = layouts[newIndex];
-                logInfo(`Navigating ${direction} to: ${newLayout.catalogId}`);
-                setSelectedCard(newLayout);
                 setCurrentModalIndex(newIndex);
-                setPreviewMode('generic'); // Reset to generic when navigating
+                setSelectedCard(newCard);
             }
         } catch (error) {
-            logError(`Error navigating ${direction}`, error);
+            logError('Error navigating to previous card', error);
         }
-    }, [mode, currentModalIndex, layouts, logInfo, logError]);
+    }, [currentModalIndex, layouts, logError, logDebug]);
 
-    // ============================================================================
-    // SELECTION HANDLER (wizard mode only)
-    // ============================================================================
-
-    const handleLayoutSelect = useCallback((layout: BusinessCardLayout) => {
+    /**
+     * Navigate to next card in modal
+     */
+    const navigateToNext = useCallback(() => {
         try {
-            if (mode === 'select' && onLayoutSelect) {
-                logInfo(`Layout selected: ${layout.catalogId}`);
+            if (currentModalIndex < layouts.length - 1) {
+                const newIndex = currentModalIndex + 1;
+                const newCard = layouts[newIndex];
+
+                logDebug('Navigating to next card', {
+                    fromIndex: currentModalIndex,
+                    toIndex: newIndex,
+                    catalogId: newCard?.catalogId
+                });
+
+                setCurrentModalIndex(newIndex);
+                setSelectedCard(newCard);
+            }
+        } catch (error) {
+            logError('Error navigating to next card', error);
+        }
+    }, [currentModalIndex, layouts, logError, logDebug]);
+
+    // ============================================================================
+    // SELECTION HANDLING (Wizard Mode Only)
+    // ============================================================================
+
+    /**
+     * Handle layout selection in wizard mode
+     */
+    const handleLayoutSelect = useCallback((layout: BusinessCardLayout | null) => {
+        try {
+            if (mode === 'select' && onLayoutSelect && layout) {
+                logInfo('Selecting layout', { catalogId: layout.catalogId });
                 onLayoutSelect(layout.catalogId);
             }
         } catch (error) {
-            logError('Error selecting layout', error);
+            logError('Error handling layout selection', error);
         }
     }, [mode, onLayoutSelect, logInfo, logError]);
 
+    /**
+     * Handle card click from grid
+     */
     const handleCardClick = useCallback((layout: BusinessCardLayout) => {
         try {
             openModal(layout);
@@ -195,44 +268,61 @@ const BusinessCardTileGrid: React.FC<BusinessCardTileGridProps> = ({
 
     /**
      * Generate HTML for enlarged modal with logo injection and contact info
-     * (wizard mode only - uses formData and logo)
+     * This matches the exact logic from BusinessCardLayoutSelection.tsx
      */
     const generateEnlargedModalHTML = useCallback((card: BusinessCardLayout): string => {
         try {
+            // Only inject in wizard mode with formData
             if (mode !== 'select' || !formData) {
+                logDebug('Skipping injection - not in select mode or no formData');
                 return card.jsx;
             }
 
             let processedHTML = card.jsx;
 
-            // Inject contact info if available
+            // Step 1: Inject contact information
             if (formData) {
                 logInfo('Injecting contact info into enlarged preview');
                 processedHTML = injectContactInfo(processedHTML, formData);
             }
 
-            // Inject logo if available and valid
+            // Step 2: Inject logo if available and valid
             if (logo) {
-                const allowEnlargedLogo = card.metadata?.allowEnlargedLogo !== false;
-                const validation = validateLogoForInjection(logo, allowEnlargedLogo);
+                // Extract allowEnlargedLogo flag from card metadata
+                // This flag determines if logo should be scaled up in the preview
+                const allowEnlargedLogo = card.metadata?.allowEnlargedLogo === true;
 
-                if (validation.isValid) {
+                logDebug('Checking logo for injection', {
+                    hasLogo: !!logo,
+                    logoId: logo.id,
+                    allowEnlargedLogo: allowEnlargedLogo
+                });
+
+                // Validate logo before injection (single parameter function)
+                if (validateLogoForInjection(logo)) {
                     logInfo('Logo validation passed - injecting into enlarged preview');
+
+                    // Inject logo with proper options including allowEnlargedLogo flag
                     processedHTML = injectLogoIntoBusinessCard(processedHTML, logo, {
-                        isEnlargedView: true,
-                        allowEnlargedLogo: allowEnlargedLogo
+                        objectFit: 'contain',
+                        preserveAspectRatio: true,
+                        allowEnlargedLogo: allowEnlargedLogo  // Pass the flag to enable scaling
                     });
+
+                    logDebug('Logo injected successfully', { allowEnlargedLogo });
                 } else {
-                    logInfo('Logo validation failed', validation.errors);
+                    logInfo('Logo validation failed - skipping injection');
                 }
+            } else {
+                logDebug('No logo provided for injection');
             }
 
             return processedHTML;
         } catch (error) {
             logError('Error generating enlarged modal HTML', error);
-            return card.jsx;
+            return card.jsx; // Return original on error
         }
-    }, [mode, formData, logo, logInfo, logError]);
+    }, [mode, formData, logo, logInfo, logError, logDebug]);
 
     /**
      * Get HTML based on preview mode
@@ -241,22 +331,25 @@ const BusinessCardTileGrid: React.FC<BusinessCardTileGridProps> = ({
      */
     const getModalPreviewHTML = useCallback((card: BusinessCardLayout): string => {
         try {
-            // Admin view always shows generic
+            // Admin view always shows generic (no injection capability)
             if (mode === 'view') {
+                logDebug('Admin view - returning generic HTML');
                 return card.jsx;
             }
 
             // Wizard view respects preview mode toggle
             if (previewMode === 'generic') {
+                logDebug('Preview mode is generic - returning original HTML');
                 return card.jsx;
             } else {
+                logDebug('Preview mode is injected - generating injected HTML');
                 return generateEnlargedModalHTML(card);
             }
         } catch (error) {
             logError('Error getting modal preview HTML', error);
             return card.jsx;
         }
-    }, [mode, previewMode, generateEnlargedModalHTML, logError]);
+    }, [mode, previewMode, generateEnlargedModalHTML, logError, logDebug]);
 
     /**
      * Handle preview mode toggle (wizard only)
@@ -265,7 +358,7 @@ const BusinessCardTileGrid: React.FC<BusinessCardTileGridProps> = ({
         try {
             if (mode === 'select') {
                 const newMode: PreviewMode = previewMode === 'generic' ? 'injected' : 'generic';
-                logInfo(`Toggling preview mode: ${previewMode} → ${newMode}`);
+                logInfo('Toggling preview mode', { from: previewMode, to: newMode });
                 setPreviewMode(newMode);
             }
         } catch (error) {
@@ -274,10 +367,34 @@ const BusinessCardTileGrid: React.FC<BusinessCardTileGridProps> = ({
     }, [mode, previewMode, logInfo, logError]);
 
     // ============================================================================
-    // BADGE COLOR UTILITIES (copied from wizard Step 2)
+    // EFFECTS
     // ============================================================================
 
-    const getThemeBadgeColor = (theme: string): string => {
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            // Ensure body scroll is restored if component unmounts with modal open
+            document.body.style.overflow = '';
+        };
+    }, []);
+
+    // Log mode and configuration on mount
+    useEffect(() => {
+        logInfo('BusinessCardTileGrid mounted', {
+            mode: mode,
+            layoutCount: layouts.length,
+            hasFormData: !!formData,
+            hasLogo: !!logo,
+            itemsPerPage: itemsPerPage,
+            currentPage: currentPage
+        });
+    }, [mode, layouts.length, formData, logo, itemsPerPage, currentPage, logInfo]);
+
+    // ============================================================================
+    // BADGE COLOR UTILITIES
+    // ============================================================================
+
+    const getThemeBadgeColor = useCallback((theme: string): string => {
         switch (theme) {
             case 'minimalistic':
             case 'minimalist':
@@ -305,18 +422,7 @@ const BusinessCardTileGrid: React.FC<BusinessCardTileGridProps> = ({
             default:
                 return 'bg-gray-100 text-gray-800';
         }
-    };
-
-    const getStyleBadgeColor = (style: string): string => {
-        switch (style) {
-            case 'contact-focused':
-                return 'bg-green-100 text-green-800';
-            case 'company-focused':
-                return 'bg-blue-100 text-blue-800';
-            default:
-                return 'bg-gray-100 text-gray-800';
-        }
-    };
+    }, []);
 
     // ============================================================================
     // RENDER
@@ -324,8 +430,9 @@ const BusinessCardTileGrid: React.FC<BusinessCardTileGridProps> = ({
 
     return (
         <>
-            {/* Grid Display - EXACT REPLICA */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-6">
+            {/* Grid Display - PRESERVE ORIGINAL UI EXACTLY */}
+            {/* Note: layouts prop is already paginated by parent component */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
                 {layouts.map((layout) => (
                     <div
                         key={layout.catalogId}
@@ -361,7 +468,7 @@ const BusinessCardTileGrid: React.FC<BusinessCardTileGridProps> = ({
                             </div>
                             <p className="text-sm text-gray-600">{layout.description}</p>
 
-                            {/* Feature Tags - EXACT REPLICA */}
+                            {/* Feature Tags */}
                             {layout.metadata?.features && layout.metadata.features.length > 0 && (
                                 <div className="flex flex-wrap gap-1 mt-2">
                                     {layout.metadata.features.slice(0, 3).map((feature, idx) => (
@@ -419,12 +526,11 @@ const BusinessCardTileGrid: React.FC<BusinessCardTileGridProps> = ({
             {/* ========================================================================== */}
             {/* ENLARGED MODAL - EXACT COPY FROM WIZARD STEP 2                             */}
             {/* SOURCE: BusinessCardLayoutSelection.tsx                                    */}
-            {/* COPIED WITH ZERO CHANGES (only mode-based conditional logic added)        */}
             {/* ========================================================================== */}
             {isModalOpen && selectedCard && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-hidden">
-                        {/* Modal Header - EXACT REPLICA */}
+                    <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                        {/* Modal Header */}
                         <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex justify-between items-center z-10">
                             <div className="flex-1">
                                 <h2 className="text-xl font-bold text-gray-900">{selectedCard.name}</h2>
@@ -433,32 +539,33 @@ const BusinessCardTileGrid: React.FC<BusinessCardTileGridProps> = ({
                                 </p>
                             </div>
 
-                            <div className="flex items-center gap-2">
-                                {/* Navigation Buttons - CONDITIONAL (admin view only) */}
-                                {mode === 'view' && (
-                                    <>
-                                        <button
-                                            onClick={() => navigateModal('prev')}
-                                            disabled={currentModalIndex === 0}
-                                            className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                                            title="Previous"
-                                        >
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/>
-                                            </svg>
-                                        </button>
-                                        <button
-                                            onClick={() => navigateModal('next')}
-                                            disabled={currentModalIndex === layouts.length - 1}
-                                            className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                                            title="Next"
-                                        >
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/>
-                                            </svg>
-                                        </button>
-                                    </>
-                                )}
+                            {/* Navigation Controls - available in both modes */}
+                            <div className="flex items-center">
+                                <button
+                                    onClick={navigateToPrevious}
+                                    disabled={currentModalIndex === 0}
+                                    className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                    title="Previous"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                    </svg>
+                                </button>
+
+                                <span className="mx-2 text-sm text-gray-500">
+                                    {currentModalIndex + 1} / {layouts.length}
+                                </span>
+
+                                <button
+                                    onClick={navigateToNext}
+                                    disabled={currentModalIndex === layouts.length - 1}
+                                    className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                    title="Next"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </button>
 
                                 <button
                                     onClick={closeModal}
@@ -466,37 +573,28 @@ const BusinessCardTileGrid: React.FC<BusinessCardTileGridProps> = ({
                                     title="Close"
                                 >
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                     </svg>
                                 </button>
                             </div>
                         </div>
 
-                        {/* ====================================================================== */}
-                        {/* MODAL CONTENT - EXACT COPY FROM WIZARD STEP 2                         */}
-                        {/* ====================================================================== */}
+                        {/* Modal Content */}
                         <div className="p-6 space-y-6">
-                            {/* Preview Mode Indicator - EXACT COPY FROM WIZARD */}
-                            {/* Shows current mode (Generic / Client's Info) */}
-                            {/* In admin view: shows "Generic" only since no injection */}
-                            {/* In wizard view: shows both with active state highlighting */}
+                            {/* Preview Mode Indicator */}
                             <div className="flex justify-center">
-                                <div
-                                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-full text-sm">
-                                    <span
-                                        className={`font-medium ${previewMode === 'generic' ? 'text-purple-600' : 'text-gray-500'}`}>
+                                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-full text-sm">
+                                    <span className={`font-medium ${previewMode === 'generic' ? 'text-purple-600' : 'text-gray-500'}`}>
                                         Generic
                                     </span>
                                     <span className="text-gray-400">•</span>
-                                    <span
-                                        className={`font-medium ${previewMode === 'injected' ? 'text-purple-600' : 'text-gray-500'}`}>
-                                        Client's Info
+                                    <span className={`font-medium ${previewMode === 'injected' ? 'text-purple-600' : 'text-gray-500'}`}>
+                                        {mode === 'view' ? 'Client\'s Info (N/A)' : 'Client\'s Info'}
                                     </span>
                                 </div>
                             </div>
 
-                            {/* Large Preview - EXACT COPY FROM WIZARD */}
-                            {/* bg-gray-100, scale(1.4), shadow-lg - all preserved exactly */}
+                            {/* Large Preview */}
                             <div className="flex justify-center">
                                 <div className="bg-gray-100 rounded-lg p-8 flex items-center justify-center">
                                     <div
@@ -512,93 +610,110 @@ const BusinessCardTileGrid: React.FC<BusinessCardTileGridProps> = ({
                                 </div>
                             </div>
 
-                            {/* Card Details - EXACT TWO-COLUMN LAYOUT FROM WIZARD */}
+                            {/* Two-Column Layout: Card Details */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Left Column: Layout Details */}
                                 <div>
-                                    <h4 className="font-medium mb-2">Layout Details</h4>
-                                    <div className="space-y-2 text-sm">
+                                    <h4 className="font-medium mb-3 text-gray-900">Layout Details</h4>
+                                    <div className="space-y-3">
+                                        {/* Theme */}
                                         <div className="flex items-center gap-2">
-                                            <span className="font-medium">Theme:</span>
-                                            <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                                selectedCard.theme === 'minimalistic' ? 'bg-lime-100 text-lime-800' :
-                                                    selectedCard.theme === 'minimalist' ? 'bg-lime-100 text-lime-800' :
-                                                        selectedCard.theme === 'modern' ? 'bg-sky-100 text-sky-800' :
-                                                            selectedCard.theme === 'trendy' ? 'bg-purple-100 text-purple-800' :
-                                                                selectedCard.theme === 'classic' ? 'bg-amber-100 text-amber-800' :
-                                                                    selectedCard.theme === 'creative' ? 'bg-pink-100 text-pink-800' :
-                                                                        selectedCard.theme === 'professional' ? 'bg-indigo-100 text-indigo-800' :
-                                                                            selectedCard.theme === 'luxury' ? 'bg-yellow-100 text-yellow-800' :
-                                                                                selectedCard.theme === 'tech' ? 'bg-green-100 text-green-800' :
-                                                                                    selectedCard.theme === 'vintage' ? 'bg-orange-100 text-orange-800' :
-                                                                                        selectedCard.theme === 'artistic' ? 'bg-red-100 text-red-800' :
-                                                                                            selectedCard.theme === 'corporate' ? 'bg-cyan-100 text-cyan-800' :
-                                                                                                'bg-gray-100 text-gray-800'
-                                            }`}>
-        {selectedCard.theme}
-    </span>
+                                            <span className="font-medium text-sm text-gray-600">Theme:</span>
+                                            <span className={`
+                                                px-2 py-1 rounded text-xs font-medium
+                                                ${selectedCard.theme === 'minimalistic' || selectedCard.theme === 'minimalist' ? 'bg-lime-100 text-lime-800' :
+                                                selectedCard.theme === 'modern' ? 'bg-sky-100 text-sky-800' :
+                                                    selectedCard.theme === 'trendy' ? 'bg-purple-100 text-purple-800' :
+                                                        selectedCard.theme === 'classic' ? 'bg-amber-100 text-amber-800' :
+                                                            selectedCard.theme === 'creative' ? 'bg-pink-100 text-pink-800' :
+                                                                selectedCard.theme === 'professional' ? 'bg-slate-100 text-slate-800' :
+                                                                    'bg-gray-100 text-gray-600'}
+                                            `}>
+                                                {selectedCard.theme}
+                                            </span>
                                         </div>
-                                        <div><span
-                                            className="font-medium">Style:</span> {selectedCard.style.replace('-', ' ')}
+
+                                        {/* Style */}
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-medium text-sm text-gray-600">Style:</span>
+                                            <span className={`
+                                                px-2 py-1 rounded text-xs font-medium
+                                                ${selectedCard.style === 'contact-focused' ? 'bg-green-100 text-green-800' :
+                                                selectedCard.style === 'company-focused' ? 'bg-blue-100 text-blue-800' :
+                                                    'bg-gray-100 text-gray-600'}
+                                            `}>
+                                                {selectedCard.style === 'contact-focused' ? 'Contact Focused' :
+                                                    selectedCard.style === 'company-focused' ? 'Company Focused' :
+                                                        selectedCard.style}
+                                            </span>
                                         </div>
-                                        <div>
-                                            <span className="font-medium">Description:</span><br/>
-                                            <span
-                                                className="inline-block min-h-[2.5rem] leading-5">{selectedCard.description}</span>
+
+                                        {/* Dimensions */}
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-medium text-sm text-gray-600">Dimensions:</span>
+                                            <span className="text-sm text-gray-700">3.5" × 2.0"</span>
                                         </div>
+
+                                        {/* Features */}
+                                        {selectedCard.metadata?.features && selectedCard.metadata.features.length > 0 && (
+                                            <div>
+                                                <span className="font-medium text-sm text-gray-600 block mb-2">Features:</span>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {selectedCard.metadata.features.map((feature, idx) => (
+                                                        <span key={idx} className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
+                                                            {feature}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
-                                {selectedCard.metadata?.features && selectedCard.metadata.features.length > 0 && (
-                                    <div>
-                                        <h4 className="font-medium mb-2">Features</h4>
-                                        <div className="flex flex-wrap gap-2">
-                                            {selectedCard.metadata.features.map((feature, idx) => (
-                                                <span key={idx} className="text-xs bg-gray-100 px-2 py-1 rounded">
-                                                    {feature.replace('-', ' ')}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
+                                {/* Right Column: Design Elements */}
+                                <div>
+                                    <h4 className="font-medium mb-3 text-gray-900">Design Elements</h4>
+                                    <div className="space-y-3">
+                                        {/* Colors */}
+                                        {selectedCard.metadata?.colors && selectedCard.metadata.colors.length > 0 && (
+                                            <div>
+                                                <span className="font-medium text-sm text-gray-600 block mb-2">Colors:</span>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {selectedCard.metadata.colors.map((color, idx) => (
+                                                        <div key={idx} className="flex items-center gap-1">
+                                                            <div
+                                                                className="w-4 h-4 rounded border border-gray-300"
+                                                                style={{ backgroundColor: color }}
+                                                            />
+                                                            <span className="text-xs text-gray-600">{color}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
 
-                                {selectedCard.metadata?.colors && selectedCard.metadata.colors.length > 0 && (
-                                    <div>
-                                        <h4 className="font-medium mb-2">Color Palette</h4>
-                                        <div className="flex gap-2">
-                                            {selectedCard.metadata.colors.slice(0, 6).map((color, idx) => (
-                                                <div
-                                                    key={idx}
-                                                    className="w-8 h-8 rounded border shadow-sm"
-                                                    style={{backgroundColor: color}}
-                                                    title={color}
-                                                />
-                                            ))}
-                                        </div>
+                                        {/* Fonts */}
+                                        {selectedCard.metadata?.fonts && selectedCard.metadata.fonts.length > 0 && (
+                                            <div>
+                                                <span className="font-medium text-sm text-gray-600 block mb-2">Typography:</span>
+                                                <div className="space-y-1">
+                                                    {selectedCard.metadata.fonts.map((font, idx) => (
+                                                        <span key={idx} className="text-sm bg-gray-100 px-2 py-1 rounded mr-2 inline-block">
+                                                            {font}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
-                                )}
-
-                                {selectedCard.metadata?.fonts && selectedCard.metadata.fonts.length > 0 && (
-                                    <div>
-                                        <h4 className="font-medium mb-2">Typography</h4>
-                                        <div className="space-y-1">
-                                            {selectedCard.metadata.fonts.map((font, idx) => (
-                                                <span key={idx}
-                                                      className="text-sm bg-gray-100 px-2 py-1 rounded mr-2 inline-block">
-                                                    {font}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
+                                </div>
                             </div>
                         </div>
 
-                        {/* Modal Footer - EXACT COPY FROM WIZARD */}
+                        {/* Modal Footer */}
                         <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4">
                             <div className="flex items-center justify-between gap-4">
-                                {/* Toggle Switch - EXACT COPY FROM WIZARD */}
-                                {/* In admin view: disabled (no injection available) */}
-                                {/* In wizard view: enabled and functional */}
+                                {/* Toggle Switch */}
                                 <div className="flex items-center">
                                     <label className="flex items-center cursor-pointer">
                                         <div className="relative">
@@ -609,28 +724,33 @@ const BusinessCardTileGrid: React.FC<BusinessCardTileGridProps> = ({
                                                 onChange={togglePreviewMode}
                                                 disabled={mode === 'view'} // Disabled in admin view
                                             />
-                                            <div className={`block w-14 h-8 rounded-full transition-colors ${
-                                                mode === 'view'
-                                                    ? 'bg-gray-300' // Disabled appearance in admin view
-                                                    : previewMode === 'injected'
-                                                        ? 'bg-purple-600'
-                                                        : 'bg-gray-300'
-                                            }`}></div>
-                                            <div
-                                                className={`dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform ${
-                                                    previewMode === 'injected' ? 'translate-x-6' : 'translate-x-0'
-                                                }`}></div>
+                                            <div className={`
+                                                block w-14 h-8 rounded-full transition-colors
+                                                ${mode === 'view'
+                                                ? 'bg-gray-300' // Disabled appearance in admin view
+                                                : previewMode === 'injected'
+                                                    ? 'bg-purple-600'
+                                                    : 'bg-gray-300'
+                                            }
+                                            `}></div>
+                                            <div className={`
+                                                dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform
+                                                ${previewMode === 'injected' ? 'translate-x-6' : 'translate-x-0'}
+                                            `}></div>
                                         </div>
-                                        <div className={`ml-3 text-sm font-medium ${
-                                            mode === 'view' ? 'text-gray-400' : 'text-gray-700'
-                                        }`}>
-                                            {previewMode === 'injected' ? `Client's Info` : 'Generic'}
-                                            {mode === 'view' &&
-                                                <span className="text-xs ml-1">(disabled in admin view)</span>}
+                                        <div className={`
+                                            ml-3 text-sm font-medium
+                                            ${mode === 'view' ? 'text-gray-400' : 'text-gray-700'}
+                                        `}>
+                                            {previewMode === 'injected' ? 'Client\'s Info' : 'Generic'}
+                                            {mode === 'view' && (
+                                                <span className="text-xs ml-1">(disabled in admin view)</span>
+                                            )}
                                         </div>
                                     </label>
                                 </div>
 
+                                {/* Action Buttons */}
                                 <div className="flex gap-3">
                                     {/* Select Button - CONDITIONAL (wizard only) */}
                                     {mode === 'select' && onLayoutSelect && (
@@ -639,11 +759,13 @@ const BusinessCardTileGrid: React.FC<BusinessCardTileGridProps> = ({
                                                 handleLayoutSelect(selectedCard);
                                                 closeModal();
                                             }}
-                                            className={`flex-1 py-3 px-6 rounded-lg font-medium transition-colors ${
-                                                selectedLayout === selectedCard.catalogId
-                                                    ? 'bg-purple-600 text-white'
-                                                    : 'bg-purple-600 text-white hover:bg-purple-700'
-                                            }`}
+                                            className={`
+                                                flex-1 py-3 px-6 rounded-lg font-medium transition-colors
+                                                ${selectedLayout === selectedCard.catalogId
+                                                ? 'bg-purple-600 text-white'
+                                                : 'bg-purple-600 text-white hover:bg-purple-700'
+                                            }
+                                            `}
                                         >
                                             {selectedLayout === selectedCard.catalogId ? 'Selected ✓' : 'Select This Layout'}
                                         </button>

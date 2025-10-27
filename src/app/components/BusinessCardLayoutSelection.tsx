@@ -1,13 +1,17 @@
 // FILE: src/app/components/BusinessCardLayoutSelection.tsx
+// PURPOSE: Step 2 of Business Card Wizard - Layout Selection
+// CHANGES: Now uses BusinessCardTileGrid component for consistency with admin view
+// CHANGE LOG:
+// - Replaced inline grid implementation with BusinessCardTileGrid component
+// - Maintained all existing functionality (search, filter, pagination)
+// - Preserved wizard-specific behaviors (selection, navigation to step 3)
 
 'use client';
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { BusinessCardLayout, BUSINESS_CARD_LAYOUTS } from '@/data/businessCardLayouts';
+import { BusinessCardLayout, BUSINESS_CARD_LAYOUTS, getAllThemes, searchBusinessCardLayouts } from '@/data/businessCardLayouts';
 import { StoredLogo } from '@/app/utils/indexedDBUtils';
-import { injectLogoIntoBusinessCard, validateLogoForInjection } from '@/app/utils/businessCardLogoUtils';
-import { getAllThemes } from '@/data/businessCardLayouts';
-import { injectContactInfo } from '@/app/utils/businessCardContactUtils';
+import BusinessCardTileGrid from './BusinessCardTileGrid';
 
 interface BusinessCardLayoutSelectionProps {
     selectedLayout: string | null;
@@ -25,198 +29,245 @@ interface BusinessCardLayoutSelectionProps {
     logo?: StoredLogo | null;
 }
 
-export const BusinessCardLayoutSelection = ({
-                                                selectedLayout,
-                                                onLayoutSelect,
-                                                formData,
-                                                onNext,
-                                                onBack,
-                                                searchTerm = '',
-                                                themeFilter = 'all',
-                                                onSearchChange,
-                                                onThemeFilterChange,
-                                                externalCurrentPage,
-                                                onPageChange,
-                                                hideFooter = false,
-                                                logo = null
-                                            }: BusinessCardLayoutSelectionProps) => {
+/**
+ * BusinessCardLayoutSelection Component
+ * Step 2 of the Business Card Wizard
+ *
+ * Now uses the shared BusinessCardTileGrid component for consistency
+ * while maintaining all wizard-specific functionality
+ */
+const BusinessCardLayoutSelection: React.FC<BusinessCardLayoutSelectionProps> = ({
+                                                                                     selectedLayout,
+                                                                                     onLayoutSelect,
+                                                                                     formData,
+                                                                                     onNext,
+                                                                                     onBack,
+                                                                                     searchTerm: externalSearchTerm,
+                                                                                     themeFilter: externalThemeFilter,
+                                                                                     onSearchChange,
+                                                                                     onThemeFilterChange,
+                                                                                     externalCurrentPage,
+                                                                                     onPageChange,
+                                                                                     hideFooter = false,
+                                                                                     logo
+                                                                                 }) => {
+    // ============================================================================
+    // STATE MANAGEMENT
+    // ============================================================================
 
-    const allLayouts = BUSINESS_CARD_LAYOUTS;
+    const [internalSearchTerm, setInternalSearchTerm] = useState('');
+    const [internalThemeFilter, setInternalThemeFilter] = useState('all');
+    const [currentPage, setCurrentPage] = useState(externalCurrentPage || 1);
+    const [itemsPerPage] = useState(12);
 
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedCard, setSelectedCard] = useState<BusinessCardLayout | null>(null);
-    const [currentModalIndex, setCurrentModalIndex] = useState(0);
+    // Use external values if provided, otherwise use internal state
+    const searchTerm = externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm;
+    const themeFilter = externalThemeFilter !== undefined ? externalThemeFilter : internalThemeFilter;
 
-    const [previewMode, setPreviewMode] = useState<'generic' | 'injected'>('injected');
+    // ============================================================================
+    // LOGGING
+    // ============================================================================
 
-    const [internalCurrentPage, setInternalCurrentPage] = useState(1);
-    const currentPage = externalCurrentPage || internalCurrentPage;
-    const itemsPerPage = 12;
-
-    // Filter and search layouts
-    const filteredLayouts = useMemo(() => {
-        let filtered = allLayouts;
-
-        if (themeFilter !== 'all') {
-            filtered = filtered.filter(layout => layout.theme === themeFilter);
-        }
-
-        if (searchTerm.trim()) {
-            const term = searchTerm.toLowerCase();
-            filtered = filtered.filter(layout =>
-                layout.catalogId.toLowerCase().includes(term) ||
-                layout.name.toLowerCase().includes(term) ||
-                layout.description?.toLowerCase().includes(term) ||
-                layout.theme.toLowerCase().includes(term) ||
-                layout.style.toLowerCase().includes(term) ||
-                layout.metadata?.features?.some(feature => feature.toLowerCase().includes(term))
-            );
-        }
-
-        return filtered;
-    }, [searchTerm, themeFilter, allLayouts]);
-
-    // Paginate layouts
-    const paginatedData = useMemo(() => {
-        const totalItems = filteredLayouts.length;
-        const totalPages = Math.ceil(totalItems / itemsPerPage);
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        const endIndex = startIndex + itemsPerPage;
-        const layouts = filteredLayouts.slice(startIndex, endIndex);
-
-        return {
-            layouts,
-            totalPages,
-            currentPage,
-            hasNextPage: currentPage < totalPages,
-            hasPrevPage: currentPage > 1,
-            totalItems
-        };
-    }, [filteredLayouts, currentPage, itemsPerPage]);
-
-    // Handle layout selection
-    const handleLayoutSelect = (layout: BusinessCardLayout) => {
-        onLayoutSelect(layout.catalogId);
-    };
-
-    // Handle card click
-    const handleCardClick = (layout: BusinessCardLayout) => {
-        setSelectedCard(layout);
-        setCurrentModalIndex(filteredLayouts.findIndex(l => l.catalogId === layout.catalogId));
-        setIsModalOpen(true);
-        setPreviewMode('injected'); // Reset to injected mode when opening
-    };
-
-    // Handle page change
-    const handlePageChange = (newPage: number) => {
-        if (onPageChange) {
-            onPageChange(newPage);
-        } else {
-            setInternalCurrentPage(newPage);
-        }
-    };
-
-    // Generate page numbers
-    const getPageNumbers = () => {
-        const totalPages = paginatedData.totalPages;
-        const currentPage = paginatedData.currentPage;
-        const maxVisible = 5;
-        if (totalPages <= maxVisible) {
-            return Array.from({ length: totalPages }, (_, i) => i + 1);
-        }
-
-        const start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-        const end = Math.min(totalPages, start + maxVisible - 1);
-        return Array.from({ length: end - start + 1 }, (_, i) => start + i);
-    };
-
-    // Modal navigation
-    const navigateToPrevious = useCallback(() => {
-        if (currentModalIndex > 0) {
-            const newIndex = currentModalIndex - 1;
-            setCurrentModalIndex(newIndex);
-            setSelectedCard(filteredLayouts[newIndex]);
-        }
-    }, [currentModalIndex, filteredLayouts]);
-
-    const navigateToNext = useCallback(() => {
-        if (currentModalIndex < filteredLayouts.length - 1) {
-            const newIndex = currentModalIndex + 1;
-            setCurrentModalIndex(newIndex);
-            setSelectedCard(filteredLayouts[newIndex]);
-        }
-    }, [currentModalIndex, filteredLayouts]);
-
-    // Close modal
-    const closeModal = useCallback(() => {
-        setIsModalOpen(false);
-        setSelectedCard(null);
-        setPreviewMode('injected');
-        document.body.style.overflow = '';
+    const logInfo = useCallback((message: string, data?: any) => {
+        console.log(`[BusinessCardLayoutSelection] ${message}`, data || '');
     }, []);
 
-    // Handle search change
-    const handleSearchChange = useCallback((value: string) => {
-        if (onSearchChange) {
-            onSearchChange(value);
-        }
-    }, [onSearchChange]);
+    const logError = useCallback((message: string, error?: any) => {
+        console.error(`[BusinessCardLayoutSelection] ERROR: ${message}`, error || '');
+    }, []);
 
-    // Handle theme filter change
-    const handleThemeFilterChange = useCallback((theme: string) => {
-        if (onThemeFilterChange) {
-            onThemeFilterChange(theme);
-        }
-    }, [onThemeFilterChange]);
+    // ============================================================================
+    // EFFECTS
+    // ============================================================================
 
-    // Generate injected HTML with logo and contact info
-    const generateEnlargedModalHTML = (card: BusinessCardLayout): string => {
+    // Sync external page changes
+    useEffect(() => {
+        if (externalCurrentPage && externalCurrentPage !== currentPage) {
+            setCurrentPage(externalCurrentPage);
+        }
+    }, [externalCurrentPage]);
+
+    // Log component mount
+    useEffect(() => {
+        logInfo('Component mounted', {
+            selectedLayout,
+            hasFormData: !!formData,
+            hasLogo: !!logo,
+            searchTerm,
+            themeFilter,
+            currentPage
+        });
+    }, []);
+
+    // ============================================================================
+    // FILTERING & PAGINATION
+    // ============================================================================
+
+    const filteredLayouts = useMemo(() => {
         try {
+            let layouts = [...BUSINESS_CARD_LAYOUTS];
 
-            // Extract allowEnlargedLogo flag from card metadata
-            const allowEnlargedLogo = card.metadata?.allowEnlargedLogo === true;
-
-            let processedHTML = card.jsx;
-
-            processedHTML = injectContactInfo(processedHTML, formData);
-
-            if (validateLogoForInjection(logo)) {
-                processedHTML = injectLogoIntoBusinessCard(processedHTML, logo, {
-                    objectFit: 'contain',
-                    preserveAspectRatio: true,
-                    allowEnlargedLogo: allowEnlargedLogo  // ← PASS THE FLAG
-                });
-            } else {
-                console.log('ℹ️ BusinessCardLayoutSelection - No logo injection');
+            // Apply search filter
+            if (searchTerm && searchTerm.trim()) {
+                layouts = searchBusinessCardLayouts(searchTerm);
+                logInfo(`Search applied: "${searchTerm}"`, { resultsCount: layouts.length });
             }
 
-            return processedHTML;
+            // Apply theme filter
+            if (themeFilter && themeFilter !== 'all') {
+                layouts = layouts.filter(layout => layout.theme === themeFilter);
+                logInfo(`Theme filter applied: "${themeFilter}"`, { resultsCount: layouts.length });
+            }
+
+            return layouts;
         } catch (error) {
-            return card.jsx;
+            logError('Error filtering layouts', error);
+            return BUSINESS_CARD_LAYOUTS;
         }
+    }, [searchTerm, themeFilter, logInfo, logError]);
+
+    const paginatedData = useMemo(() => {
+        try {
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const paginatedLayouts = filteredLayouts.slice(startIndex, endIndex);
+
+            const totalPages = Math.ceil(filteredLayouts.length / itemsPerPage);
+            const hasNextPage = currentPage < totalPages;
+            const hasPrevPage = currentPage > 1;
+
+            return {
+                layouts: paginatedLayouts,
+                totalPages,
+                totalItems: filteredLayouts.length,
+                hasNextPage,
+                hasPrevPage,
+                startIndex: filteredLayouts.length > 0 ? startIndex + 1 : 0,
+                endIndex: Math.min(endIndex, filteredLayouts.length)
+            };
+        } catch (error) {
+            logError('Error paginating layouts', error);
+            return {
+                layouts: [],
+                totalPages: 0,
+                totalItems: 0,
+                hasNextPage: false,
+                hasPrevPage: false,
+                startIndex: 0,
+                endIndex: 0
+            };
+        }
+    }, [filteredLayouts, currentPage, itemsPerPage, logError]);
+
+    // ============================================================================
+    // EVENT HANDLERS
+    // ============================================================================
+
+    const handleSearchChange = useCallback((value: string) => {
+        try {
+            logInfo('Search term changed', { from: searchTerm, to: value });
+
+            if (onSearchChange) {
+                onSearchChange(value);
+            } else {
+                setInternalSearchTerm(value);
+            }
+
+            // Reset to page 1 on search
+            handlePageChange(1);
+        } catch (error) {
+            logError('Error handling search change', error);
+        }
+    }, [searchTerm, onSearchChange, logInfo, logError]);
+
+    const handleThemeFilterChange = useCallback((theme: string) => {
+        try {
+            logInfo('Theme filter changed', { from: themeFilter, to: theme });
+
+            if (onThemeFilterChange) {
+                onThemeFilterChange(theme);
+            } else {
+                setInternalThemeFilter(theme);
+            }
+
+            // Reset to page 1 on filter change
+            handlePageChange(1);
+        } catch (error) {
+            logError('Error handling theme filter change', error);
+        }
+    }, [themeFilter, onThemeFilterChange, logInfo, logError]);
+
+    const handlePageChange = useCallback((page: number) => {
+        try {
+            logInfo('Page changed', { from: currentPage, to: page });
+
+            if (onPageChange) {
+                onPageChange(page);
+            } else {
+                setCurrentPage(page);
+            }
+        } catch (error) {
+            logError('Error handling page change', error);
+        }
+    }, [currentPage, onPageChange, logInfo, logError]);
+
+    const handleLayoutSelect = useCallback((catalogId: string) => {
+        try {
+            logInfo('Layout selected', { catalogId });
+            onLayoutSelect(catalogId);
+        } catch (error) {
+            logError('Error handling layout selection', error);
+        }
+    }, [onLayoutSelect, logInfo, logError]);
+
+    // ============================================================================
+    // PAGINATION HELPER
+    // ============================================================================
+
+    const getPageNumbers = () => {
+        const totalPages = paginatedData.totalPages;
+        const current = currentPage;
+        const delta = 2;
+        const range = [];
+        const rangeWithDots = [];
+        let l;
+
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= current - delta && i <= current + delta)) {
+                range.push(i);
+            }
+        }
+
+        range.forEach((i) => {
+            if (l) {
+                if (i - l === 2) {
+                    rangeWithDots.push(l + 1);
+                } else if (i - l !== 1) {
+                    rangeWithDots.push('...');
+                }
+            }
+            rangeWithDots.push(i);
+            l = i;
+        });
+
+        return rangeWithDots;
     };
 
-    // Get HTML based on preview mode
-    const getModalPreviewHTML = (card: BusinessCardLayout): string => {
-        if (previewMode === 'generic') {
-            return card.jsx;
-        } else {
-            return generateEnlargedModalHTML(card);
-        }
-    };
+    // ============================================================================
+    // RENDER
+    // ============================================================================
 
     return (
         <div className="flex flex-col h-full">
-            {/* NEW: Sticky Compact Header */}
+            {/* Sticky Header with Filters */}
             <div className="sticky top-0 bg-white z-10 border-b border-gray-200 shadow-sm px-6 py-3">
-                {/* Single Row: Results + Filters */}
                 <div className="flex items-center gap-4">
-                    {/* Results Info - Left aligned */}
+                    {/* Results Info */}
                     <div className="text-sm text-gray-600 whitespace-nowrap">
-                        Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, paginatedData.totalItems)} of {paginatedData.totalItems} layouts
+                        Showing {paginatedData.startIndex} to {paginatedData.endIndex} of {paginatedData.totalItems} layouts
                     </div>
 
-                    {/* Filters - Right side */}
+                    {/* Filters */}
                     <div className="flex-1 flex items-center gap-3 justify-end">
                         {/* Search */}
                         <div className="flex-1 max-w-md">
@@ -232,6 +283,7 @@ export const BusinessCardLayoutSelection = ({
                                     <button
                                         onClick={() => handleSearchChange('')}
                                         className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-full text-sm"
+                                        title="Clear search"
                                     >
                                         ×
                                     </button>
@@ -257,146 +309,49 @@ export const BusinessCardLayoutSelection = ({
                     </div>
                 </div>
             </div>
-            <div className="flex-1 overflow-y-auto space-y-6 py-4">
-                {/* Layout Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {paginatedData.layouts.map(layout => (
-                        <div
-                            key={layout.catalogId}
-                            className={`border-2 rounded-xl p-4 cursor-pointer transition-all hover:shadow-lg ${
-                                selectedLayout === layout.catalogId
-                                    ? 'border-purple-600 bg-purple-50'
-                                    : 'border-gray-200 hover:border-purple-300'
-                            }`}
-                            onClick={() => handleCardClick(layout)}
-                        >
-                            {/* Preview */}
-                            <div
-                                className="mb-4 bg-gray-100 rounded-lg p-4 flex items-center justify-center overflow-hidden">
-                                <div
-                                    className="business-card-preview shadow-sm"
-                                    style={{
-                                        transform: 'scale(0.85)',
-                                        transformOrigin: 'center',
-                                    }}
-                                    dangerouslySetInnerHTML={{__html: layout.jsx}}
-                                />
-                            </div>
 
-                            {/* Layout Info */}
-                            <div className="space-y-2">
-                                <div className="flex items-start justify-between gap-2">
-                                    <div>
-                                        <h3 className="font-semibold text-gray-900 text-sm">
-                                            {layout.name}
-                                        </h3>
-                                        <p className="text-sm text-gray-500 font-mono">{layout.catalogId}</p>
-                                    </div>
-                                    <span className={`text-xs px-2 py-1 rounded shrink-0 ${
-                                        layout.theme === 'minimalistic' ? 'bg-lime-100 text-lime-800' :
-                                            layout.theme === 'minimalist' ? 'bg-lime-100 text-lime-800' :
-                                                layout.theme === 'modern' ? 'bg-sky-100 text-sky-800' :
-                                                    layout.theme === 'trendy' ? 'bg-purple-100 text-purple-800' :
-                                                        layout.theme === 'classic' ? 'bg-amber-100 text-amber-800' :
-                                                            layout.theme === 'creative' ? 'bg-pink-100 text-pink-800' :
-                                                                layout.theme === 'professional' ? 'bg-indigo-100 text-indigo-800' :
-                                                                    layout.theme === 'luxury' ? 'bg-yellow-100 text-yellow-800' :
-                                                                        layout.theme === 'tech' ? 'bg-green-100 text-green-800' :
-                                                                            layout.theme === 'vintage' ? 'bg-orange-100 text-orange-800' :
-                                                                                layout.theme === 'artistic' ? 'bg-red-100 text-red-800' :
-                                                                                    layout.theme === 'corporate' ? 'bg-cyan-100 text-cyan-800' :
-                                                                                        'bg-gray-100 text-gray-800'
-                                    }`}>
-    {layout.theme}
-</span>
-                                </div>
-                                <p className="text-sm text-gray-600">{layout.description}</p>
+            {/* Main Content Area */}
+            <div className="flex-1 overflow-y-auto">
+                {/* BusinessCardTileGrid Component */}
+                <BusinessCardTileGrid
+                    mode="select"
+                    layouts={paginatedData.layouts}
+                    selectedLayout={selectedLayout}
+                    onLayoutSelect={handleLayoutSelect}
+                    formData={formData}
+                    logo={logo}
+                    itemsPerPage={itemsPerPage}
+                    currentPage={currentPage}
+                    onPageChange={handlePageChange}
+                />
 
-                                {/* Feature Tags */}
-                                {layout.metadata?.features && layout.metadata.features.length > 0 && (
-                                    <div className="flex flex-wrap gap-1 mt-2">
-                                        {layout.metadata.features.slice(0, 3).map((feature, idx) => (
-                                            <span key={idx}
-                                                  className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded">
-                                                {feature.replace('-', ' ')}
-                                            </span>
-                                        ))}
-                                        {layout.metadata.features.length > 3 && (
-                                            <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded">
-                                                +{layout.metadata.features.length - 3}
-                                            </span>
-                                        )}
-                                    </div>
-                                )}
-
-                                {/* Action Buttons */}
-                                <div className="flex gap-2 pt-2">
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleLayoutSelect(layout);
-                                        }}
-                                        className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
-                                            selectedLayout === layout.catalogId
-                                                ? 'bg-purple-600 text-white'
-                                                : 'bg-white border border-purple-600 text-purple-600 hover:bg-purple-50'
-                                        }`}
-                                    >
-                                        {selectedLayout === layout.catalogId ? 'Selected ✓' : 'Select'}
-                                    </button>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleCardClick(layout);
-                                        }}
-                                        className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                                        title="View Details"
-                                    >
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
-                                                  d="M15 12a3 3 0 11-6 0 3 3 0 0 1 6 0z"/>
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
-                                                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                        </svg>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                {/* No Results */}
+                {/* No Results Message */}
                 {paginatedData.layouts.length === 0 && (
-                    <div className="text-center py-12">
-                        <p className="text-gray-500 text-lg">No layouts found matching your criteria</p>
-                        <button
-                            onClick={() => {
-                                handleSearchChange('');
-                                handleThemeFilterChange('all');
-                            }}
-                            className="mt-4 text-purple-600 hover:text-purple-700 underline"
-                        >
-                            Clear filters
-                        </button>
+                    <div className="flex flex-col items-center justify-center py-12">
+                        <svg className="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M12 12h.01M12 12h-.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <h3 className="text-lg font-medium text-gray-900 mb-1">No layouts found</h3>
+                        <p className="text-sm text-gray-500">Try adjusting your search or filters</p>
                     </div>
                 )}
             </div>
 
-            {/* Fixed Footer */}
-            {!hideFooter && (
-                <div className="sticky bottom-0 border-t border-gray-200 bg-white px-6 py-3 z-40 shadow-lg">
+            {/* Footer with Pagination and Navigation */}
+            {!hideFooter && paginatedData.totalItems > 0 && (
+                <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4">
                     <div className="flex items-center justify-between">
                         {/* Left: Back Button */}
                         <button
                             onClick={onBack}
-                            className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                            className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                         >
-                            ← Back to Info
+                            ← Back
                         </button>
 
                         {/* Center: Pagination */}
                         {paginatedData.totalPages > 1 && (
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center gap-2">
                                 <button
                                     onClick={() => handlePageChange(currentPage - 1)}
                                     disabled={!paginatedData.hasPrevPage}
@@ -405,14 +360,21 @@ export const BusinessCardLayoutSelection = ({
                                     Previous
                                 </button>
 
-                                <div className="flex space-x-1">
-                                    {getPageNumbers().map((page) => {
+                                <div className="flex items-center gap-1">
+                                    {getPageNumbers().map((page, index) => {
+                                        if (page === '...') {
+                                            return (
+                                                <span key={`dots-${index}`} className="px-2 text-gray-400">
+                                                    ...
+                                                </span>
+                                            );
+                                        }
                                         return (
                                             <button
                                                 key={page}
-                                                onClick={() => handlePageChange(page)}
+                                                onClick={() => handlePageChange(page as number)}
                                                 className={`px-3 py-2 text-sm rounded-lg transition-colors ${
-                                                    page === currentPage
+                                                    currentPage === page
                                                         ? 'bg-purple-600 text-white'
                                                         : 'border border-gray-300 hover:bg-gray-50'
                                                 }`}
@@ -444,224 +406,8 @@ export const BusinessCardLayoutSelection = ({
                     </div>
                 </div>
             )}
-
-            {/* Enlarged Modal with Preview Mode Toggle */}
-            {isModalOpen && selectedCard && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-                        {/* Modal Header */}
-                        <div
-                            className="sticky top-0 bg-white border-b border-gray-200 p-4 flex justify-between items-center z-10">
-                            <div className="flex-1">
-                                <h2 className="text-xl font-bold text-gray-900">{selectedCard.name}</h2>
-                                <p className="text-base text-gray-700 font-mono font-semibold">
-                                    {selectedCard.catalogId}
-                                </p>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={navigateToPrevious}
-                                    disabled={currentModalIndex === 0}
-                                    className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                                    title="Previous"
-                                >
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                              d="M15 19l-7-7 7-7"/>
-                                    </svg>
-                                </button>
-
-                                <button
-                                    onClick={navigateToNext}
-                                    disabled={currentModalIndex === filteredLayouts.length - 1}
-                                    className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                                    title="Next"
-                                >
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                              d="M9 5l7 7-7 7"/>
-                                    </svg>
-                                </button>
-
-                                <button
-                                    onClick={closeModal}
-                                    className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors ml-2"
-                                    title="Close"
-                                >
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                              d="M6 18L18 6M6 6l12 12"/>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Modal Content */}
-                        <div className="p-6 space-y-6">
-                            {/* Preview Mode Indicator */}
-                            <div className="flex justify-center">
-                            <div
-                                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-full text-sm">
-                                    <span
-                                        className={`font-medium ${previewMode === 'generic' ? 'text-purple-600' : 'text-gray-500'}`}>
-                                        Generic
-                                    </span>
-                                    <span className="text-gray-400">•</span>
-                                    <span
-                                        className={`font-medium ${previewMode === 'injected' ? 'text-purple-600' : 'text-gray-500'}`}>
-                                        Client's Info
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* Large Preview */}
-                            <div className="flex justify-center">
-                                <div className="bg-gray-100 rounded-lg p-8 flex items-center justify-center">
-                                    <div
-                                        className="business-card-preview shadow-lg"
-                                        style={{
-                                            transform: 'scale(1.4)',
-                                            transformOrigin: 'center',
-                                        }}
-                                        dangerouslySetInnerHTML={{
-                                            __html: getModalPreviewHTML(selectedCard)
-                                        }}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Card Details */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <h4 className="font-medium mb-2">Layout Details</h4>
-                                    <div className="space-y-2 text-sm">
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-medium">Theme:</span>
-                                            <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                                selectedCard.theme === 'minimalistic' ? 'bg-lime-100 text-lime-800' :
-                                                    selectedCard.theme === 'minimalist' ? 'bg-lime-100 text-lime-800' :
-                                                        selectedCard.theme === 'modern' ? 'bg-sky-100 text-sky-800' :
-                                                            selectedCard.theme === 'trendy' ? 'bg-purple-100 text-purple-800' :
-                                                                selectedCard.theme === 'classic' ? 'bg-amber-100 text-amber-800' :
-                                                                    selectedCard.theme === 'creative' ? 'bg-pink-100 text-pink-800' :
-                                                                        selectedCard.theme === 'professional' ? 'bg-indigo-100 text-indigo-800' :
-                                                                            selectedCard.theme === 'luxury' ? 'bg-yellow-100 text-yellow-800' :
-                                                                                selectedCard.theme === 'tech' ? 'bg-green-100 text-green-800' :
-                                                                                    selectedCard.theme === 'vintage' ? 'bg-orange-100 text-orange-800' :
-                                                                                        selectedCard.theme === 'artistic' ? 'bg-red-100 text-red-800' :
-                                                                                            selectedCard.theme === 'corporate' ? 'bg-cyan-100 text-cyan-800' :
-                                                                                                'bg-gray-100 text-gray-800'
-                                            }`}>
-        {selectedCard.theme}
-    </span>
-                                        </div>
-                                        <div><span
-                                            className="font-medium">Style:</span> {selectedCard.style.replace('-', ' ')}
-                                        </div>
-                                        <div>
-                                            <span className="font-medium">Description:</span><br/>
-                                            <span
-                                                className="inline-block min-h-[2.5rem] leading-5">{selectedCard.description}</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {selectedCard.metadata?.features && selectedCard.metadata.features.length > 0 && (
-                                    <div>
-                                        <h4 className="font-medium mb-2">Features</h4>
-                                        <div className="flex flex-wrap gap-2">
-                                            {selectedCard.metadata.features.map((feature, idx) => (
-                                                <span key={idx} className="text-xs bg-gray-100 px-2 py-1 rounded">
-                                                    {feature.replace('-', ' ')}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {selectedCard.metadata?.colors && selectedCard.metadata.colors.length > 0 && (
-                                    <div>
-                                        <h4 className="font-medium mb-2">Color Palette</h4>
-                                        <div className="flex gap-2">
-                                            {selectedCard.metadata.colors.slice(0, 6).map((color, idx) => (
-                                                <div
-                                                    key={idx}
-                                                    className="w-8 h-8 rounded border shadow-sm"
-                                                    style={{backgroundColor: color}}
-                                                    title={color}
-                                                />
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {selectedCard.metadata?.fonts && selectedCard.metadata.fonts.length > 0 && (
-                                    <div>
-                                        <h4 className="font-medium mb-2">Typography</h4>
-                                        <div className="space-y-1">
-                                            {selectedCard.metadata.fonts.map((font, idx) => (
-                                                <span key={idx}
-                                                      className="text-sm bg-gray-100 px-2 py-1 rounded mr-2 inline-block">
-                                                    {font}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Action Buttons with Toggle */}
-                            <div className="flex gap-4 pt-4 border-t items-center">
-                                {/* Preview Mode Toggle */}
-                                <div className="flex items-center gap-3 pr-4 border-r border-gray-200">
-                                    <label className="flex items-center cursor-pointer group">
-                                        <div className="relative">
-                                            <input
-                                                type="checkbox"
-                                                className="sr-only"
-                                                checked={previewMode === 'injected'}
-                                                onChange={() => setPreviewMode(prev => prev === 'injected' ? 'generic' : 'injected')}
-                                            />
-                                            <div className={`block w-14 h-8 rounded-full transition-colors ${
-                                                previewMode === 'injected' ? 'bg-purple-600' : 'bg-gray-300'
-                                            }`}></div>
-                                            <div
-                                                className={`absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform ${
-                                                    previewMode === 'injected' ? 'translate-x-6' : 'translate-x-0'
-                                                }`}></div>
-                                        </div>
-                                        <div className="ml-3 text-sm font-medium text-gray-700">
-                                            {previewMode === 'injected' ? `Client's Info` : 'Generic'}
-                                        </div>
-                                    </label>
-                                </div>
-
-                                <button
-                                    onClick={() => {
-                                        handleLayoutSelect(selectedCard);
-                                        closeModal();
-                                    }}
-                                    className={`flex-1 py-3 px-6 rounded-lg font-medium transition-colors ${
-                                        selectedLayout === selectedCard.catalogId
-                                            ? 'bg-purple-600 text-white'
-                                            : 'bg-purple-600 text-white hover:bg-purple-700'
-                                    }`}
-                                >
-                                    {selectedLayout === selectedCard.catalogId ? 'Selected ✓' : 'Select This Layout'}
-                                </button>
-
-                                <button
-                                    onClick={closeModal}
-                                    className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                                >
-                                    Close
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };
+
+export default BusinessCardLayoutSelection;

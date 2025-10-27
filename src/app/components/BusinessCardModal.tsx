@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { BusinessCardData, ContactField } from '../../../types/businessCard';
 import { ContactInfoForm } from './ContactInfoForm';
-import { BusinessCardLayoutSelection } from './BusinessCardLayoutSelection';
+import BusinessCardLayoutSelection from './BusinessCardLayoutSelection';
 import { PreviewAndGenerate } from './PreviewAndGenerate';
 import { StoredLogo } from '../utils/indexedDBUtils';
 
