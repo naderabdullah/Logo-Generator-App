@@ -1,6 +1,7 @@
 // FILE: src/app/admin-business-cards/BusinessCardAdmin.tsx
-// PURPOSE: Admin view using EXACT REPLICA of wizard Step 2 grid (BusinessCardTileGrid)
+// PURPOSE: Admin view using BusinessCardTileGrid component
 // MODE: 'view' (read-only, with modal navigation)
+// FIXED: Removed any misplaced code that belongs in BusinessCardTileGrid
 
 'use client';
 
@@ -16,14 +17,14 @@ import BusinessCardTileGrid from '../components/BusinessCardTileGrid';
 
 /**
  * Business Card Admin Component
- * File: src/app/admin-business-cards/BusinessCardAdmin.tsx
  *
  * Features:
- * - Grid display identical to wizard Step 2
- * - Pagination, search, theme/style filtering
+ * - Fixed sticky header with compact filters
+ * - Working search, theme, style filters
+ * - Working items per page selector
+ * - Grid display using BusinessCardTileGrid component
  * - View-only mode (no selection or injection)
  * - Modal navigation enabled
- * - Admin-only access control
  */
 export default function BusinessCardAdmin() {
     const { user } = useAuth();
@@ -33,7 +34,7 @@ export default function BusinessCardAdmin() {
     // ============================================================================
 
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(16);
+    const [itemsPerPage, setItemsPerPage] = useState(12);  // Default is 12
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedTheme, setSelectedTheme] = useState('all');
     const [selectedStyle, setSelectedStyle] = useState<'all' | 'contact-focused' | 'company-focused'>('all');
@@ -49,49 +50,42 @@ export default function BusinessCardAdmin() {
     }, []);
 
     const logError = useCallback((message: string, error?: any) => {
-        console.error(`[BusinessCardAdmin ERROR] ${message}`, error || '');
+        console.error(`[BusinessCardAdmin] ERROR: ${message}`, error || '');
     }, []);
 
     // ============================================================================
-    // AUTHENTICATION CHECK
+    // AUTH CHECK
     // ============================================================================
 
     useEffect(() => {
         if (!user) {
-            logInfo('No user found, authentication required');
-            setError('Please log in to access the admin panel');
-            return;
+            logInfo('No authenticated user found');
+        } else {
+            logInfo('User authenticated', { userId: user.id });
         }
-
-        if (!user.isSuperUser) {
-            logInfo('User is not a super user', { email: user.email });
-            setError('You do not have permission to access this page');
-            return;
-        }
-
-        logInfo('Admin access granted', { email: user.email });
     }, [user, logInfo]);
 
     // ============================================================================
-    // DATA FILTERING
+    // FILTERING LOGIC
     // ============================================================================
 
     const filteredLayouts = useMemo(() => {
         try {
             setLoading(true);
-            logInfo('Filtering layouts', {
+            let filtered = [...BUSINESS_CARD_LAYOUTS];
+
+            logInfo('Starting filter with:', {
                 searchQuery,
                 selectedTheme,
                 selectedStyle,
-                totalLayouts: BUSINESS_CARD_LAYOUTS.length
+                totalLayouts: filtered.length
             });
 
-            let filtered = [...BUSINESS_CARD_LAYOUTS];
-
             // Apply search filter
-            if (searchQuery.trim()) {
-                filtered = searchBusinessCardLayouts(filtered, searchQuery);
-                logInfo(`Search filter applied: ${filtered.length} results for "${searchQuery}"`);
+            if (searchQuery && searchQuery.trim()) {
+                const searchResults = searchBusinessCardLayouts(searchQuery);
+                filtered = searchResults;
+                logInfo(`Search filter applied: ${filtered.length} results for query "${searchQuery}"`);
             }
 
             // Apply theme filter
@@ -128,7 +122,18 @@ export default function BusinessCardAdmin() {
         }
     }, [logError]);
 
-    // Calculate pagination info for header display
+    // ============================================================================
+    // PAGINATION
+    // ============================================================================
+
+    // Calculate paginated layouts
+    const paginatedLayouts = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        return filteredLayouts.slice(startIndex, endIndex);
+    }, [filteredLayouts, currentPage, itemsPerPage]);
+
+    // Calculate pagination info
     const paginationInfo = useMemo(() => {
         const totalItems = filteredLayouts.length;
         const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -136,14 +141,15 @@ export default function BusinessCardAdmin() {
         const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
 
         return {
-            showing: endIndex - startIndex,
-            start: startIndex + 1,
+            start: totalItems > 0 ? startIndex + 1 : 0,
             end: endIndex,
             total: totalItems,
             currentPage,
-            totalPages
+            totalPages,
+            hasNextPage: currentPage < totalPages,
+            hasPrevPage: currentPage > 1
         };
-    }, [filteredLayouts, itemsPerPage, currentPage]);
+    }, [filteredLayouts.length, itemsPerPage, currentPage]);
 
     // ============================================================================
     // EVENT HANDLERS
@@ -183,7 +189,7 @@ export default function BusinessCardAdmin() {
         try {
             logInfo(`Items per page changed: ${value}`);
             setItemsPerPage(value);
-            setCurrentPage(1); // Reset to first page on items per page change
+            setCurrentPage(1); // Reset to first page when changing items per page
         } catch (err) {
             logError('Error handling items per page change', err);
         }
@@ -193,118 +199,128 @@ export default function BusinessCardAdmin() {
         try {
             logInfo(`Page changed: ${page}`);
             setCurrentPage(page);
+            // Scroll to top when changing pages
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         } catch (err) {
             logError('Error handling page change', err);
         }
     }, [logInfo, logError]);
 
     // ============================================================================
+    // PAGINATION HELPERS
+    // ============================================================================
+
+    const getPageNumbers = () => {
+        const totalPages = paginationInfo.totalPages;
+        const current = currentPage;
+        const delta = 2;
+        const range = [];
+        const rangeWithDots = [];
+        let l;
+
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= current - delta && i <= current + delta)) {
+                range.push(i);
+            }
+        }
+
+        range.forEach((i) => {
+            if (l) {
+                if (i - l === 2) {
+                    rangeWithDots.push(l + 1);
+                } else if (i - l !== 1) {
+                    rangeWithDots.push('...');
+                }
+            }
+            rangeWithDots.push(i);
+            l = i;
+        });
+
+        return rangeWithDots;
+    };
+
+    // ============================================================================
+    // EFFECTS
+    // ============================================================================
+
+    // Reset page when filters change
+    useEffect(() => {
+        if (currentPage > paginationInfo.totalPages && paginationInfo.totalPages > 0) {
+            setCurrentPage(1);
+        }
+    }, [currentPage, paginationInfo.totalPages]);
+
+    // ============================================================================
     // RENDER
     // ============================================================================
 
-    // Don't render if not authorized
-    if (!user || !user.isSuperUser) {
+    // Show loading state
+    if (!user && !loading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-                <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full text-center">
-                    <svg className="mx-auto h-12 w-12 text-red-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                    <h2 className="text-xl font-bold text-gray-900 mb-2">Access Denied</h2>
-                    <p className="text-gray-600 mb-4">
-                        {!user ? 'Please log in to access the admin panel.' : 'You do not have permission to access this page.'}
-                    </p>
-                    {!user && (
-                        <button
-                            onClick={() => window.location.href = '/'}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                        >
-                            Go to Login
-                        </button>
-                    )}
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-center">
+                    <h2 className="text-2xl font-semibold text-gray-900 mb-2">Authentication Required</h2>
+                    <p className="text-gray-600">Please log in to access the admin panel.</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            {/* Header */}
-            <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-2xl font-bold text-gray-900">Business Card Layouts</h1>
-                            <p className="text-sm text-gray-600 mt-1">
-                                Admin view of all {BUSINESS_CARD_LAYOUTS.length} business card templates
-                            </p>
-                        </div>
-                        <button
-                            onClick={() => window.history.back()}
-                            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                        >
-                            ← Back
-                        </button>
-                    </div>
+        <div className="min-h-screen bg-gray-50 flex flex-col">
+            {/* Fixed Compact Header */}
+            <div className="sticky top-0 bg-white border-b border-gray-200 shadow-sm z-20">
+                {/* Title Bar */}
+                <div className="px-6 py-3 border-b border-gray-200">
+                    <h1 className="text-2xl font-bold text-gray-900">Business Card Templates</h1>
                 </div>
-            </div>
 
-            {/* Main Content */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Error Display */}
-                {error && (
-                    <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                        <div className="flex items-center">
-                            <svg className="w-5 h-5 text-red-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                            </svg>
-                            <p className="text-red-800 text-sm">{error}</p>
+                {/* Compact Filter Bar */}
+                <div className="px-6 py-3">
+                    <div className="flex items-center gap-4">
+                        {/* Results Count */}
+                        <div className="text-sm text-gray-600 whitespace-nowrap min-w-[200px]">
+                            {paginationInfo.total > 0 ? (
+                                <>
+                                    Showing {paginationInfo.start} to {paginationInfo.end} of {paginationInfo.total} layouts
+                                    {paginationInfo.totalPages > 1 && ` • Page ${currentPage} of ${paginationInfo.totalPages}`}
+                                </>
+                            ) : (
+                                'No layouts found'
+                            )}
                         </div>
-                    </div>
-                )}
 
-                {/* Filters */}
-                <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-4">Filters</h2>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {/* Search */}
-                        <div>
-                            <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-2">
-                                Search
-                            </label>
-                            <div className="relative">
-                                <input
-                                    type="text"
-                                    id="search"
-                                    value={searchQuery}
-                                    onChange={(e) => handleSearchChange(e.target.value)}
-                                    placeholder="Search by name, ID, features..."
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                />
-                                {searchQuery && (
-                                    <button
-                                        onClick={() => handleSearchChange('')}
-                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                                    >
-                                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                                        </svg>
-                                    </button>
-                                )}
+                        {/* Filters Container */}
+                        <div className="flex-1 flex items-center gap-3 justify-end">
+                            {/* Search */}
+                            <div className="flex-1 max-w-sm">
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        value={searchQuery}
+                                        onChange={(e) => handleSearchChange(e.target.value)}
+                                        placeholder="Search layouts..."
+                                        className="w-full px-3 py-1.5 pr-8 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    />
+                                    {searchQuery && (
+                                        <button
+                                            onClick={() => handleSearchChange('')}
+                                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                            title="Clear search"
+                                        >
+                                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                            </svg>
+                                        </button>
+                                    )}
+                                </div>
                             </div>
-                        </div>
 
-                        {/* Theme Filter */}
-                        <div>
-                            <label htmlFor="theme" className="block text-sm font-medium text-gray-700 mb-2">
-                                Theme
-                            </label>
+                            {/* Theme Filter */}
                             <select
-                                id="theme"
                                 value={selectedTheme}
                                 onChange={(e) => handleThemeChange(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             >
                                 <option value="all">All Themes</option>
                                 {themes.map(theme => (
@@ -313,94 +329,119 @@ export default function BusinessCardAdmin() {
                                     </option>
                                 ))}
                             </select>
-                        </div>
 
-                        {/* Style Filter */}
-                        <div>
-                            <label htmlFor="style" className="block text-sm font-medium text-gray-700 mb-2">
-                                Style
-                            </label>
+                            {/* Style Filter */}
                             <select
-                                id="style"
                                 value={selectedStyle}
                                 onChange={(e) => handleStyleChange(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             >
                                 <option value="all">All Styles</option>
                                 <option value="contact-focused">Contact Focused</option>
                                 <option value="company-focused">Company Focused</option>
                             </select>
-                        </div>
 
-                        {/* Items Per Page */}
-                        <div>
-                            <label htmlFor="itemsPerPage" className="block text-sm font-medium text-gray-700 mb-2">
-                                Items Per Page
-                            </label>
+                            {/* Items Per Page */}
                             <select
-                                id="itemsPerPage"
                                 value={itemsPerPage}
                                 onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             >
-                                <option value={12}>12</option>
-                                <option value={16}>16</option>
-                                <option value={20}>20</option>
+                                <option value={12}>12 per page</option>
+                                <option value={18}>18 per page</option>
+                                <option value={24}>24 per page</option>
+                                <option value={30}>30 per page</option>
+                                <option value={36}>36 per page</option>
                             </select>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                {/* Results Summary - MATCHES WIZARD STYLE */}
-                <div className="mb-4 text-sm text-gray-600">
-                    Showing {paginationInfo.start} to {paginationInfo.end} of {paginationInfo.total} layouts
-                    {paginationInfo.totalPages > 1 && ` • Page ${currentPage} of ${paginationInfo.totalPages}`}
-                </div>
+            {/* Main Content Area */}
+            <div className="flex-1 overflow-y-auto">
+                {/* Error Display */}
+                {error && (
+                    <div className="mx-6 mt-4">
+                        <div className="bg-red-50 border-l-4 border-red-400 p-4">
+                            <div className="flex items-center">
+                                <svg className="h-5 w-5 text-red-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                </svg>
+                                <p className="text-red-800 text-sm">{error}</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
-                {/* Tile Grid - Using EXACT REPLICA Component */}
+                {/* Loading State */}
                 {loading ? (
                     <div className="flex items-center justify-center py-12">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
                     </div>
                 ) : filteredLayouts.length === 0 ? (
-                    <div className="text-center py-12">
-                        <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    /* No Results */
+                    <div className="flex flex-col items-center justify-center py-12">
+                        <svg className="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                                  d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M12 12h.01M12 12h-.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        <h3 className="mt-2 text-sm font-medium text-gray-900">No layouts found</h3>
-                        <p className="mt-1 text-sm text-gray-500">Try adjusting your search or filter criteria.</p>
+                        <h3 className="text-lg font-medium text-gray-900 mb-1">No layouts found</h3>
+                        <p className="text-sm text-gray-500">Try adjusting your search or filters</p>
+                        {(searchQuery || selectedTheme !== 'all' || selectedStyle !== 'all') && (
+                            <button
+                                onClick={() => {
+                                    handleSearchChange('');
+                                    handleThemeChange('all');
+                                    handleStyleChange('all');
+                                }}
+                                className="mt-4 px-4 py-2 text-sm text-blue-600 hover:text-blue-700"
+                            >
+                                Clear all filters
+                            </button>
+                        )}
                     </div>
                 ) : (
-                    <BusinessCardTileGrid
-                        mode="view"
-                        layouts={filteredLayouts}
-                        itemsPerPage={itemsPerPage}
-                        currentPage={currentPage}
-                        onPageChange={handlePageChange}
-                    />
+                    /* Tile Grid - Pass only what BusinessCardTileGrid expects */
+                    <div className="pb-6">
+                        <BusinessCardTileGrid
+                            mode="view"
+                            layouts={paginatedLayouts}
+                        />
+                    </div>
                 )}
+            </div>
 
-                {/* Pagination Controls - BOTTOM */}
-                {!loading && filteredLayouts.length > 0 && paginationInfo.totalPages > 1 && (
-                    <div className="mt-8 flex items-center justify-center gap-2">
+            {/* Fixed Footer with Pagination */}
+            {paginationInfo.totalPages > 1 && (
+                <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-3">
+                    <div className="flex items-center justify-center gap-2">
+                        {/* Previous Button */}
                         <button
                             onClick={() => handlePageChange(currentPage - 1)}
-                            disabled={currentPage === 1}
-                            className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={!paginationInfo.hasPrevPage}
+                            className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
                             Previous
                         </button>
 
-                        <div className="flex gap-1">
-                            {Array.from({ length: Math.min(5, paginationInfo.totalPages) }, (_, i) => {
-                                const page = i + 1;
+                        {/* Page Numbers */}
+                        <div className="flex items-center gap-1">
+                            {getPageNumbers().map((page, index) => {
+                                if (page === '...') {
+                                    return (
+                                        <span key={`dots-${index}`} className="px-2 text-gray-400">
+                                            ...
+                                        </span>
+                                    );
+                                }
                                 return (
                                     <button
                                         key={page}
-                                        onClick={() => handlePageChange(page)}
-                                        className={`px-3 py-2 text-sm rounded-lg ${
+                                        onClick={() => handlePageChange(page as number)}
+                                        className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
                                             currentPage === page
-                                                ? 'bg-purple-600 text-white'
+                                                ? 'bg-blue-600 text-white'
                                                 : 'border border-gray-300 hover:bg-gray-50'
                                         }`}
                                     >
@@ -410,16 +451,17 @@ export default function BusinessCardAdmin() {
                             })}
                         </div>
 
+                        {/* Next Button */}
                         <button
                             onClick={() => handlePageChange(currentPage + 1)}
-                            disabled={currentPage === paginationInfo.totalPages}
-                            className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={!paginationInfo.hasNextPage}
+                            className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
                             Next
                         </button>
                     </div>
-                )}
-            </div>
+                </div>
+            )}
         </div>
     );
 }

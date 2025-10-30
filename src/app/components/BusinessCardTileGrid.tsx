@@ -432,7 +432,7 @@ const BusinessCardTileGrid: React.FC<BusinessCardTileGridProps> = ({
         <>
             {/* Grid Display - PRESERVE ORIGINAL UI EXACTLY */}
             {/* Note: layouts prop is already paginated by parent component */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
                 {layouts.map((layout) => (
                     <div
                         key={layout.catalogId}
@@ -524,14 +524,13 @@ const BusinessCardTileGrid: React.FC<BusinessCardTileGridProps> = ({
             </div>
 
             {/* ========================================================================== */}
-            {/* ENLARGED MODAL - EXACT COPY FROM WIZARD STEP 2                             */}
-            {/* SOURCE: BusinessCardLayoutSelection.tsx                                    */}
+            {/* ENLARGED MODAL - FIXED HEIGHT TO PREVENT JUMPING                           */}
             {/* ========================================================================== */}
             {isModalOpen && selectedCard && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-                        {/* Modal Header */}
-                        <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex justify-between items-center z-10">
+                    <div className="bg-white rounded-lg max-w-4xl w-full h-[85vh] flex flex-col overflow-hidden">
+                        {/* Modal Header - Fixed height, no scroll */}
+                        <div className="bg-white border-b border-gray-200 p-4 flex justify-between items-center flex-shrink-0">
                             <div className="flex-1">
                                 <h2 className="text-xl font-bold text-gray-900">{selectedCard.name}</h2>
                                 <p className="text-base text-gray-700 font-mono font-semibold">
@@ -579,139 +578,145 @@ const BusinessCardTileGrid: React.FC<BusinessCardTileGridProps> = ({
                             </div>
                         </div>
 
-                        {/* Modal Content */}
-                        <div className="p-6 space-y-6">
-                            {/* Preview Mode Indicator */}
-                            <div className="flex justify-center">
-                                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-full text-sm">
+                        {/* Modal Content - Scrollable with fixed height */}
+                        <div className="flex-1 overflow-y-auto p-6">
+                            <div className="space-y-6">
+                                {/* Preview Mode Indicator */}
+                                <div className="flex justify-center">
+                                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-full text-sm">
                                     <span className={`font-medium ${previewMode === 'generic' ? 'text-purple-600' : 'text-gray-500'}`}>
                                         Generic
                                     </span>
-                                    <span className="text-gray-400">•</span>
-                                    <span className={`font-medium ${previewMode === 'injected' ? 'text-purple-600' : 'text-gray-500'}`}>
+                                        <span className="text-gray-400">•</span>
+                                        <span className={`font-medium ${previewMode === 'injected' ? 'text-purple-600' : 'text-gray-500'}`}>
                                         {mode === 'view' ? 'Client\'s Info (N/A)' : 'Client\'s Info'}
                                     </span>
+                                    </div>
                                 </div>
-                            </div>
 
-                            {/* Large Preview */}
-                            <div className="flex justify-center">
-                                <div className="bg-gray-100 rounded-lg p-8 flex items-center justify-center">
-                                    <div
-                                        className="business-card-preview shadow-lg"
-                                        style={{
-                                            transform: 'scale(1.4)',
-                                            transformOrigin: 'center',
-                                        }}
-                                        dangerouslySetInnerHTML={{
-                                            __html: getModalPreviewHTML(selectedCard)
-                                        }}
-                                    />
+                                {/* Large Preview */}
+                                <div className="flex justify-center">
+                                    <div className="bg-gray-100 rounded-lg p-8 flex items-center justify-center">
+                                        <div
+                                            className="business-card-preview shadow-lg"
+                                            style={{
+                                                transform: 'scale(1.4)',
+                                                transformOrigin: 'center',
+                                            }}
+                                            dangerouslySetInnerHTML={{
+                                                __html: getModalPreviewHTML(selectedCard)
+                                            }}
+                                        />
+                                    </div>
                                 </div>
-                            </div>
 
-                            {/* Two-Column Layout: Card Details */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {/* Left Column: Layout Details */}
-                                <div>
-                                    <h4 className="font-medium mb-3 text-gray-900">Layout Details</h4>
-                                    <div className="space-y-3">
-                                        {/* Theme */}
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-medium text-sm text-gray-600">Theme:</span>
-                                            <span className={`
+                                {/* Two-Column Layout: Card Details */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {/* Left Column: Layout Details */}
+                                    <div>
+                                        <h4 className="font-medium mb-3 text-gray-900">Layout Details</h4>
+                                        <div className="space-y-3">
+                                            {/* Theme */}
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-medium text-sm text-gray-600">Theme:</span>
+                                                <span className={`
                                                 px-2 py-1 rounded text-xs font-medium
                                                 ${selectedCard.theme === 'minimalistic' || selectedCard.theme === 'minimalist' ? 'bg-lime-100 text-lime-800' :
-                                                selectedCard.theme === 'modern' ? 'bg-sky-100 text-sky-800' :
-                                                    selectedCard.theme === 'trendy' ? 'bg-purple-100 text-purple-800' :
-                                                        selectedCard.theme === 'classic' ? 'bg-amber-100 text-amber-800' :
-                                                            selectedCard.theme === 'creative' ? 'bg-pink-100 text-pink-800' :
-                                                                selectedCard.theme === 'professional' ? 'bg-slate-100 text-slate-800' :
-                                                                    'bg-gray-100 text-gray-600'}
+                                                    selectedCard.theme === 'modern' ? 'bg-sky-100 text-sky-800' :
+                                                        selectedCard.theme === 'trendy' ? 'bg-purple-100 text-purple-800' :
+                                                            selectedCard.theme === 'classic' ? 'bg-amber-100 text-amber-800' :
+                                                                selectedCard.theme === 'creative' ? 'bg-pink-100 text-pink-800' :
+                                                                    selectedCard.theme === 'professional' ? 'bg-slate-100 text-slate-800' :
+                                                                        'bg-gray-100 text-gray-600'}
                                             `}>
                                                 {selectedCard.theme}
                                             </span>
-                                        </div>
+                                            </div>
 
-                                        {/* Style */}
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-medium text-sm text-gray-600">Style:</span>
-                                            <span className={`
+                                            {/* Style */}
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-medium text-sm text-gray-600">Style:</span>
+                                                <span className={`
                                                 px-2 py-1 rounded text-xs font-medium
                                                 ${selectedCard.style === 'contact-focused' ? 'bg-green-100 text-green-800' :
-                                                selectedCard.style === 'company-focused' ? 'bg-blue-100 text-blue-800' :
-                                                    'bg-gray-100 text-gray-600'}
+                                                    selectedCard.style === 'company-focused' ? 'bg-blue-100 text-blue-800' :
+                                                        'bg-gray-100 text-gray-600'}
                                             `}>
                                                 {selectedCard.style === 'contact-focused' ? 'Contact Focused' :
                                                     selectedCard.style === 'company-focused' ? 'Company Focused' :
                                                         selectedCard.style}
                                             </span>
-                                        </div>
-
-                                        {/* Dimensions */}
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-medium text-sm text-gray-600">Dimensions:</span>
-                                            <span className="text-sm text-gray-700">3.5" × 2.0"</span>
-                                        </div>
-
-                                        {/* Features */}
-                                        {selectedCard.metadata?.features && selectedCard.metadata.features.length > 0 && (
-                                            <div>
-                                                <span className="font-medium text-sm text-gray-600 block mb-2">Features:</span>
-                                                <div className="flex flex-wrap gap-1">
-                                                    {selectedCard.metadata.features.map((feature, idx) => (
-                                                        <span key={idx} className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
-                                                            {feature}
-                                                        </span>
-                                                    ))}
-                                                </div>
                                             </div>
-                                        )}
-                                    </div>
-                                </div>
 
-                                {/* Right Column: Design Elements */}
-                                <div>
-                                    <h4 className="font-medium mb-3 text-gray-900">Design Elements</h4>
-                                    <div className="space-y-3">
-                                        {/* Colors */}
-                                        {selectedCard.metadata?.colors && selectedCard.metadata.colors.length > 0 && (
-                                            <div>
-                                                <span className="font-medium text-sm text-gray-600 block mb-2">Colors:</span>
-                                                <div className="flex flex-wrap gap-2">
-                                                    {selectedCard.metadata.colors.map((color, idx) => (
-                                                        <div key={idx} className="flex items-center gap-1">
-                                                            <div
-                                                                className="w-4 h-4 rounded border border-gray-300"
-                                                                style={{ backgroundColor: color }}
-                                                            />
-                                                            <span className="text-xs text-gray-600">{color}</span>
+                                            {/* Dimensions */}
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-medium text-sm text-gray-600">Dimensions:</span>
+                                                <span className="text-sm text-gray-700">3.5" × 2.0"</span>
+                                            </div>
+
+                                            {/* Features */}
+                                            {selectedCard.metadata?.features && selectedCard.metadata.features.length > 0 && (
+                                                <div>
+                                                    <span className="font-medium text-sm text-gray-600 block mb-2">Features:</span>
+                                                    <div className="h-[5rem] overflow-y-auto pr-1">
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {selectedCard.metadata.features.map((feature, idx) => (
+                                                                <span key={idx} className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded inline-block">
+                                                                {feature}
+                                                            </span>
+                                                            ))}
                                                         </div>
-                                                    ))}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        )}
+                                            )}
+                                        </div>
+                                    </div>
 
-                                        {/* Fonts */}
-                                        {selectedCard.metadata?.fonts && selectedCard.metadata.fonts.length > 0 && (
-                                            <div>
-                                                <span className="font-medium text-sm text-gray-600 block mb-2">Typography:</span>
-                                                <div className="space-y-1">
-                                                    {selectedCard.metadata.fonts.map((font, idx) => (
-                                                        <span key={idx} className="text-sm bg-gray-100 px-2 py-1 rounded mr-2 inline-block">
-                                                            {font}
-                                                        </span>
-                                                    ))}
+                                    {/* Right Column: Design Elements */}
+                                    <div>
+                                        <h4 className="font-medium mb-3 text-gray-900">Design Elements</h4>
+                                        <div className="space-y-3">
+                                            {/* Colors */}
+                                            {selectedCard.metadata?.colors && selectedCard.metadata.colors.length > 0 && (
+                                                <div>
+                                                    <span className="font-medium text-sm text-gray-600 block mb-2">Colors:</span>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {selectedCard.metadata.colors.map((color, idx) => (
+                                                            <div key={idx} className="flex items-center gap-1">
+                                                                <div
+                                                                    className="w-4 h-4 rounded border border-gray-300"
+                                                                    style={{ backgroundColor: color }}
+                                                                />
+                                                                <span className="text-xs text-gray-600">{color}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        )}
+                                            )}
+
+                                            {/* Fonts */}
+                                            {selectedCard.metadata?.fonts && selectedCard.metadata.fonts.length > 0 && (
+                                                <div>
+                                                    <span className="font-medium text-sm text-gray-600 block mb-2">Typography:</span>
+                                                    <div className="h-[3.75rem] overflow-y-auto pr-1">
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {selectedCard.metadata.fonts.map((font, idx) => (
+                                                                <span key={idx} className="text-sm bg-gray-100 px-2 py-1 rounded inline-block">
+                                                                {font}
+                                                            </span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Modal Footer */}
-                        <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4">
+                        {/* Modal Footer - Fixed at bottom */}
+                        <div className="bg-white border-t border-gray-200 p-4 flex-shrink-0">
                             <div className="flex items-center justify-between gap-4">
                                 {/* Toggle Switch */}
                                 <div className="flex items-center">
